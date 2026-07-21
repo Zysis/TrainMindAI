@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="TrainMind AI basketball icon">
+  <title>TrainMind AI basketball</title>
+  <defs>
+    <clipPath id="tmBall">
+      <circle cx="30" cy="34" r="26"/>
+    </clipPath>
+  </defs>
+  <circle cx="30" cy="34" r="26" fill="#F59E0B"/>
+  <g fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" clip-path="url(#tmBall)">
+    <line x1="30" y1="8" x2="30" y2="60"/>
+    <line x1="4" y1="34" x2="56" y2="34"/>
+    <path d="M 8 16 Q 24 34 8 52"/>
+    <path d="M 52 16 Q 36 34 52 52"/>
+  </g>
+  <path d="M 54 6 C 54 11 56 13 60 13 C 56 13 54 15 54 20 C 54 15 52 13 48 13 C 52 13 54 11 54 6 Z" fill="#0D9488"/>
+</svg>

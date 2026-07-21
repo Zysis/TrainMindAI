@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && pnpm turbo build --filter=@trainmind/web",
+  "installCommand": "cd ../.. && pnpm install",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@api-url"
+  }
+}

@@ -1,0 +1,246 @@
+# ============================================
+# TrainMind AI — Docker Compose (Deploy su VPS)
+# Build delle immagini direttamente sul server.
+# Uso:
+#   docker compose -f docker-compose.deploy.yml --env-file .env.deploy build
+#   docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d
+# Migrazioni DB (one-shot):
+#   docker compose -f docker-compose.deploy.yml --env-file .env.deploy run --rm migrate
+# ============================================
+
+services:
+  # ─── Reverse proxy (HTTPS automatico) ────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: trainmind-caddy
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+      ATHLETE_DOMAIN: ${ATHLETE_DOMAIN}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - trainmind-network
+    depends_on:
+      - web
+      - api
+
+  # ─── Web Frontend ─────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN}
+        NEXT_PUBLIC_APP_URL: https://${APP_DOMAIN}
+        NEXT_PUBLIC_ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+    container_name: trainmind-web
+    restart: always
+    expose:
+      - '3000'
+    environment:
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3000']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ─── API Backend ──────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: trainmind-api
+    restart: always
+    expose:
+      - '3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trainmind}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trainmind_db}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: '15m'
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
+      ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
+      CORS_ORIGIN: https://${APP_DOMAIN}
+      AI_SERVICE_URL: http://ai-service:3002
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      REPORT_FROM_EMAIL: ${REPORT_FROM_EMAIL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3001/api/v1/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ─── Athlete App (PWA per gli atleti) ─────────────────
+  athlete:
+    build:
+      context: ../trainmind-athlete
+      dockerfile: Dockerfile
+    container_name: trainmind-athlete
+    restart: always
+    expose:
+      - '3003'
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3003']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ─── Migrazioni DB (one-shot, profilo "tools") ────────
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: builder
+    profiles: ['tools']
+    working_dir: /app
+    command: ['pnpm', '--filter', '@trainmind/db', 'run', 'migrate:deploy']
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trainmind}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trainmind_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+
+  # ─── AI Service ───────────────────────────────────────
+  ai-service:
+    build:
+      context: ./apps/ai-service
+      dockerfile: Dockerfile
+    container_name: trainmind-ai
+    restart: always
+    expose:
+      - '3002'
+    environment:
+      # In produzione niente LLM locale: si usa OpenAI
+      LOCAL_LLM_ENABLED: 'false'
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+      CHROMA_PERSIST_DIRECTORY: /data/chroma
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trainmind}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trainmind_db}
+      AI_SERVICE_PORT: 3002
+      AI_SERVICE_HOST: 0.0.0.0
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    volumes:
+      - ai_chroma_data:/data/chroma
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:3002/health")']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # ─── PostgreSQL ───────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: trainmind-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-trainmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-trainmind_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-trainmind} -d ${POSTGRES_DB:-trainmind_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ─── Redis ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: trainmind-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  postgres_data:
+  redis_data:
+  ai_chroma_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  trainmind-network:
+    driver: bridge

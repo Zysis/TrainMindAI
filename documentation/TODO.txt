@@ -1,0 +1,13 @@
+cambiare il nome SESSIONI in WEEK
+- calendario - OK
+- allenamenti in campo e partite devono avere i cronometri e per le partite una cosa che non ho ben capito da Mario - OK
+- gli esercizi sono stati sostituiti quando è stata fatta la demo (ritornare agli ex precedenti) - OK
+- dashboard per squadra - OK
+- report per squadra e per giocatore
+- adattamenti AI
+- traduzioni: IT, EN, ES
+- light/dark mode - OK
+- far fare a claude il check per la produzione (clean code, etc...), SOLID
+- agganciare modello al posto di API
+- trasformare la web-app in app - OK
+- aggiungere app per giocatori collegata al coach di riferimento (invio piani di allenamento da parte del coach e invio wellness da parte del giocatore)

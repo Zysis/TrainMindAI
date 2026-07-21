@@ -1,0 +1,427 @@
+{
+  "oneRMPercentageTable": {
+    "description": "Tabella di conversione da percentuale di 1RM a numero di ripetizioni massimali con carico",
+    "disclaimer": "Valori approssimativi, variabili in base a esperienza atleta e tipo di esercizio",
+    "table": [
+      {
+        "percentage": 100,
+        "reps": 1,
+        "description": "1 Ripetizione Massimale (1RM)"
+      },
+      {
+        "percentage": 95,
+        "reps": 2,
+        "description": "2 ripetizioni a massimo sforzo"
+      },
+      {
+        "percentage": 93,
+        "reps": 3,
+        "description": "3 ripetizioni con grande difficoltà"
+      },
+      {
+        "percentage": 90,
+        "reps": 4,
+        "description": "4 ripetizioni - Forza pura"
+      },
+      {
+        "percentage": 87,
+        "reps": 5,
+        "description": "5 ripetizioni - Zona forza massima"
+      },
+      {
+        "percentage": 85,
+        "reps": 6,
+        "description": "6 ripetizioni - Transizione forza/ipertrofia"
+      },
+      {
+        "percentage": 83,
+        "reps": 7,
+        "description": "7 ripetizioni"
+      },
+      {
+        "percentage": 80,
+        "reps": 8,
+        "description": "8 ripetizioni - Zona ipertrofia-forza"
+      },
+      {
+        "percentage": 77,
+        "reps": 9,
+        "description": "9 ripetizioni"
+      },
+      {
+        "percentage": 75,
+        "reps": 10,
+        "description": "10 ripetizioni - Zona ipertrofia classica"
+      },
+      {
+        "percentage": 73,
+        "reps": 11,
+        "description": "11 ripetizioni"
+      },
+      {
+        "percentage": 71,
+        "reps": 12,
+        "description": "12 ripetizioni - Ipertrofia alta volume"
+      },
+      {
+        "percentage": 70,
+        "reps": 12,
+        "description": "12+ ripetizioni - Volume elevato"
+      },
+      {
+        "percentage": 67,
+        "reps": 15,
+        "description": "15 ripetizioni - Resistenza muscolare"
+      },
+      {
+        "percentage": 65,
+        "reps": 20,
+        "description": "20 ripetizioni - Resistenza elevata"
+      },
+      {
+        "percentage": 60,
+        "reps": 25,
+        "description": "25 ripetizioni - Endurance muscolare"
+      },
+      {
+        "percentage": 50,
+        "reps": 40,
+        "description": "40 ripetizioni - Resistenza cardiovascolare"
+      }
+    ]
+  },
+  "rpeScale": {
+    "description": "Rate of Perceived Exertion (RPE) - Scala di Sforzo Percepito, 1-10",
+    "applicationNotes": "Valutazione soggettiva dello sforzo. 10 = non potresti fare altri reps; 1 = nessuno sforzo",
+    "scale": [
+      {
+        "rpe": 1,
+        "description": "Nessuno sforzo",
+        "examples": "Respirazione tranquilla, conversazione facile",
+        "trainingApplicatione": "Warm-up leggero, mobilità"
+      },
+      {
+        "rpe": 2,
+        "description": "Sforzo minimo",
+        "examples": "Molto facile, nessuna fatica percepita",
+        "trainingApplication": "Movimento generale, attivazione"
+      },
+      {
+        "rpe": 3,
+        "description": "Sforzo leggero",
+        "examples": "Facile, nessuna difficoltà, potrei ripetere molte volte",
+        "trainingApplication": "Riscaldamento specifico leggero"
+      },
+      {
+        "rpe": 4,
+        "description": "Sforzo leggero-moderato",
+        "examples": "Ancora facile, consapevolezza di sforzo minimo",
+        "trainingApplication": "Ipertrofia alta volume, resistenza"
+      },
+      {
+        "rpe": 5,
+        "description": "Sforzo moderato",
+        "examples": "Moderato, respirazione leggermente elevata, potrei continuare agevolmente",
+        "trainingApplication": "Allenamento tecnico, possesso basket moderato"
+      },
+      {
+        "rpe": 6,
+        "description": "Sforzo moderato-alto",
+        "examples": "Più impegnativo, respiro più profondo, potrei fare altri 2-3 reps",
+        "trainingApplication": "Allenamento di resistenza, ipertrofia volume moderato"
+      },
+      {
+        "rpe": 7,
+        "description": "Sforzo alto",
+        "examples": "Abbastanza difficile, respiro accelerato, potrei fare altri 1-2 reps, muscoli 'sentono' lo sforzo",
+        "trainingApplication": "Zona ipertrofia-forza, possesso basket intenso"
+      },
+      {
+        "rpe": 8,
+        "description": "Sforzo molto alto",
+        "examples": "Difficile, respiro molto accelerato, difficile aggiungere reps, muscoli affaticati",
+        "trainingApplication": "Zona forza-potenza, 1-2 reps lasciati nel serbatoio (RIR 1-2)"
+      },
+      {
+        "rpe": 9,
+        "description": "Sforzo massimale quasi totale",
+        "examples": "Molto difficile, respiro molto accelerato, potrei fare al massimo 1 rep ancora",
+        "trainingApplication": "Forza massima, 1 sola rep nel serbatoio (RIR 1), scrimmage full intensity"
+      },
+      {
+        "rpe": 10,
+        "description": "Sforzo massimale totale (a cedimento)",
+        "examples": "Impossibile fare altri reps, cedimento muscolare, respiro affannoso",
+        "trainingApplication": "Test 1RM, cedimento muscolare volontario (uso occasionale)"
+      }
+    ],
+    "conversionTable": [
+      {
+        "rpe": 10,
+        "rir": 0,
+        "rpsEstimate": "~0-1 reps"
+      },
+      {
+        "rpe": 9,
+        "rir": 1,
+        "rpsEstimate": "~1-2 reps"
+      },
+      {
+        "rpe": 8,
+        "rir": 2,
+        "rpsEstimate": "~2-3 reps"
+      },
+      {
+        "rpe": 7,
+        "rir": 3,
+        "rpsEstimate": "~3-4 reps"
+      },
+      {
+        "rpe": 6,
+        "rir": 4,
+        "rpsEstimate": "~4-5 reps"
+      }
+    ]
+  },
+  "vbtVelocityZones": {
+    "description": "Velocity-Based Training (VBT) - Zone di velocità di movimento per diversi obiettivi di allenamento",
+    "disclaimer": "Valori approssimativi in metri/secondo (m/s), variabili per tipo di esercizio e atleta",
+    "unitOfMeasure": "metri/secondo (m/s)",
+    "zones": [
+      {
+        "zone": "1-Strength",
+        "nameEN": "Maximum Strength / Strength",
+        "velocityRange": "0.5-1.0 m/s",
+        "percentageRM": "80-93%+ 1RM",
+        "typicalReps": "1-5 reps",
+        "seriesSuggested": "3-5 series",
+        "focusArea": "Forza massima e neuromuscolare",
+        "examples": "Squat pesante, stacchi 1-3 reps, panca massimale",
+        "basketballApplication": "Sviluppo forza base per jump e explosiveness"
+      },
+      {
+        "zone": "2-StrengthSpeed",
+        "nameEN": "Strength-Speed",
+        "velocityRange": "1.0-1.3 m/s",
+        "percentageRM": "75-85% 1RM",
+        "typicalReps": "3-6 reps",
+        "seriesSuggested": "3-4 series",
+        "focusArea": "Transizione tra forza e velocità",
+        "examples": "Squat 5 reps, Power clean, leg press moderato",
+        "basketballApplication": "Espressione di potenza con carichi moderati"
+      },
+      {
+        "zone": "3-PowerSpeed",
+        "nameEN": "Speed-Strength / Power",
+        "velocityRange": "1.3-2.0 m/s",
+        "percentageRM": "60-80% 1RM",
+        "typicalReps": "3-8 reps",
+        "seriesSuggested": "3-4 series",
+        "focusArea": "Potenza esplosiva massimale",
+        "examples": "Jump squat, medicine ball throw, box jump, plyometrica",
+        "basketballApplication": "Sviluppo salto verticale, accelerazione, scatti"
+      },
+      {
+        "zone": "4-Speed",
+        "nameEN": "Speed",
+        "velocityRange": "2.0+ m/s",
+        "percentageRM": "30-60% 1RM",
+        "typicalReps": "6-15+ reps",
+        "seriesSuggested": "2-3 series",
+        "focusArea": "Velocità di movimento pura",
+        "examples": "Pallone medico lanciato, leg press leggero veloce, footwork rapido",
+        "basketballApplication": "Velocità di movimento, agilità, footwork rapido"
+      },
+      {
+        "zone": "5-Hypertrophy",
+        "nameEN": "Hypertrophy / Muscular Endurance",
+        "velocityRange": "0.5-1.5 m/s (variabile, focus sul tempo sotto tensione)",
+        "percentageRM": "65-80% 1RM",
+        "typicalReps": "8-15 reps",
+        "seriesSuggested": "3-4 series",
+        "focusArea": "Crescita muscolare e resistenza muscolare",
+        "examples": "Squat 10 reps moderato, leg press, macchine, accessori",
+        "basketballApplication": "Base muscolare, prevenzione infortuni, resistenza muscolare"
+      }
+    ],
+    "applicationNotes": "In allenamento con VBT, la velocità di movimento diminuisce con l'affaticamento. Quando la velocità scende sotto la soglia target, terminare la serie per evitare affaticamento eccessivo."
+  },
+  "borgCR10Scale": {
+    "description": "Borg CR10 Scale (Category Ratio 10) - Scala di sforzo percepito da 0 a 10 con descrizioni",
+    "applicationContext": "Utilizzata per monitoraggio dell'RPE durante allenamento cardiovascolare e metabolico",
+    "scaleDetails": [
+      {
+        "score": 0,
+        "descriptor": "Niente",
+        "description": "Nessuno sforzo percepito, a riposo totale",
+        "heartRateEstimate": "50-60 bpm (a riposo)"
+      },
+      {
+        "score": 0.5,
+        "descriptor": "Estremamente leggero",
+        "description": "Appena percettibile, minimo sforzo",
+        "heartRateEstimate": "~60-70 bpm"
+      },
+      {
+        "score": 1,
+        "descriptor": "Molto leggero",
+        "description": "Sforzo minimo, respirazione leggermente elevata",
+        "heartRateEstimate": "~70-80 bpm"
+      },
+      {
+        "score": 2,
+        "descriptor": "Leggero",
+        "description": "Sforzo facile, conversazione facile, respiro moderato",
+        "heartRateEstimate": "~80-100 bpm"
+      },
+      {
+        "score": 3,
+        "descriptor": "Moderato",
+        "description": "Sforzo moderato, respiro leggermente accelerato, ancora conversazione facile",
+        "heartRateEstimate": "~100-120 bpm"
+      },
+      {
+        "score": 4,
+        "descriptor": "Un po' duro",
+        "description": "Sforzo notevole, respiro accelerato, conversazione possibile ma difficile",
+        "heartRateEstimate": "~120-140 bpm"
+      },
+      {
+        "score": 5,
+        "descriptor": "Duro",
+        "description": "Sforzo forte, respiro affannoso, difficile mantenere conversazione",
+        "heartRateEstimate": "~140-160 bpm"
+      },
+      {
+        "score": 6,
+        "descriptor": "Molto duro",
+        "description": "Sforzo molto intenso, respiro molto accelerato, impossibile conversazione",
+        "heartRateEstimate": "~160-175 bpm"
+      },
+      {
+        "score": 7,
+        "descriptor": "Estremamente duro",
+        "description": "Sforzo prossimo al massimale, respiro affannoso, muscoli brucianti",
+        "heartRateEstimate": "~175-190 bpm"
+      },
+      {
+        "score": 8,
+        "descriptor": "Massimale quasi totale",
+        "description": "Sforzo quasi massimale, respiro molto affannoso, sensazione di cedimento muscolare",
+        "heartRateEstimate": "~185-200 bpm"
+      },
+      {
+        "score": 9,
+        "descriptor": "Massimale totale",
+        "description": "Sforzo massimale assoluto, impossibile continuare, cedimento muscolare",
+        "heartRateEstimate": "200+ bpm (massimale raggiunto)"
+      },
+      {
+        "score": 10,
+        "descriptor": "Massimo assoluto",
+        "description": "Cedimento totale, impossibile eseguire ulteriori movimenti",
+        "heartRateEstimate": "Massimale teorico (raro in pratica)"
+      }
+    ],
+    "basketballApplications": {
+      "warmup": "Borg 1-2 (leggero movimento, mobilità)",
+      "technicalWork": "Borg 2-3 (lavoro tecnico, controllo palla)",
+      "possessionModerate": "Borg 4-5 (possesso moderato, allenamento intermedio)",
+      "scrimmageIntense": "Borg 6-7 (scrimmage intenso, 5v5 competitivo)",
+      "maxEffort": "Borg 8-9 (test massimali, sprint 100%)"
+    }
+  },
+  "trainingIntensityMapping": {
+    "description": "Mappa di conversione tra diversi sistemi di valutazione dell'intensità",
+    "table": [
+      {
+        "percentageRM": "50-60%",
+        "rpe": "3-4",
+        "borgCR10": "2-3",
+        "vbtZone": "Ipertrofia / Resistenza",
+        "reps": "15-25",
+        "applicationContext": "Riscaldamento, resistenza muscolare, recovery"
+      },
+      {
+        "percentageRM": "60-70%",
+        "rpe": "4-5",
+        "borgCR10": "3-4",
+        "vbtZone": "Ipertrofia bassa intensità",
+        "reps": "10-15",
+        "applicationContext": "Allenamento base, ipertrofia volume"
+      },
+      {
+        "percentageRM": "70-80%",
+        "rpe": "6-7",
+        "borgCR10": "4-5",
+        "vbtZone": "Ipertrofia-Forza",
+        "reps": "8-10",
+        "applicationContext": "Zona principale per ipertrofia, allenamento muscolare"
+      },
+      {
+        "percentageRM": "80-87%",
+        "rpe": "7-8",
+        "borgCR10": "5-6",
+        "vbtZone": "Forza-Potenza",
+        "reps": "5-8",
+        "applicationContext": "Sviluppo forza, transizione a potenza"
+      },
+      {
+        "percentageRM": "87-93%",
+        "rpe": "8-9",
+        "borgCR10": "6-7",
+        "vbtZone": "Forza massima",
+        "reps": "2-5",
+        "applicationContext": "Forza pura, lavoro neuromuscolare"
+      },
+      {
+        "percentageRM": "93-100%",
+        "rpe": "9-10",
+        "borgCR10": "7-9",
+        "vbtZone": "Massimale",
+        "reps": "1-3",
+        "applicationContext": "Test 1RM, forza massimale"
+      }
+    ]
+  },
+  "basketballSpecificIntensityGuidelines": {
+    "description": "Linee guida di intensità specifiche per il basket",
+    "drillIntensities": [
+      {
+        "drillType": "Footwork / Dribbling Tecnico",
+        "recommendedIntensity": "RPE 3-4 / Borg 2-3",
+        "purpose": "Controllo palla, movimento tecnico, coordinazione"
+      },
+      {
+        "drillType": "Possesso (Basso Contatto)",
+        "recommendedIntensity": "RPE 4-5 / Borg 3-4",
+        "purpose": "Allenamento tattico, posizionamento, decisione"
+      },
+      {
+        "drillType": "Possesso (Moderato Contatto)",
+        "recommendedIntensity": "RPE 5-6 / Borg 4-5",
+        "purpose": "Competizione controllata, movimento sotto pressione"
+      },
+      {
+        "drillType": "Possesso (Alto Contatto)",
+        "recommendedIntensity": "RPE 6-7 / Borg 5-6",
+        "purpose": "Competizione elevata, situazioni di gioco reali"
+      },
+      {
+        "drillType": "Scrimmage 5v5 (Ricreativo)",
+        "recommendedIntensity": "RPE 6-7 / Borg 5-6",
+        "purpose": "Gioco generale, mantenimento fitness"
+      },
+      {
+        "drillType": "Scrimmage 5v5 (Competitivo)",
+        "recommendedIntensity": "RPE 7-8 / Borg 6-7",
+        "purpose": "Simulazione gara, massima intensità allenamento"
+      },
+      {
+        "drillType": "Test Fitness (Vertical Jump, Sprint)",
+        "recommendedIntensity": "RPE 9-10 / Borg 8-9",
+        "purpose": "Valutazione massimale della performance"
+      }
+    ]
+  }
+}

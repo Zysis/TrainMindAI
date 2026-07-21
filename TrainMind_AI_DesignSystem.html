@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainMind AI — Design System & Wireframes</title>
+<style>
+  :root {
+    /* ── PRIMARY PALETTE ── */
+    --teal-900: #0D3B3B;
+    --teal-800: #115E59;
+    --teal-700: #0F766E;
+    --teal-600: #0D9488;
+    --teal-500: #14B8A6;
+    --teal-400: #2DD4BF;
+    --teal-300: #5EEAD4;
+    --teal-200: #99F6E4;
+    --teal-100: #CCFBF1;
+    --teal-50:  #F0FDFA;
+
+    /* ── NEUTRAL PALETTE ── */
+    --slate-950: #0B1120;
+    --slate-900: #0F172A;
+    --slate-800: #1E293B;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748B;
+    --slate-400: #94A3B8;
+    --slate-300: #CBD5E1;
+    --slate-200: #E2E8F0;
+    --slate-100: #F1F5F9;
+    --slate-50:  #F8FAFC;
+
+    /* ── SEMANTIC ── */
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --danger:  #EF4444;
+    --info:    #3B82F6;
+
+    /* ── ACCENT ── */
+    --lime: #84CC16;
+    --amber: #F59E0B;
+
+    --sidebar-w: 240px;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--slate-50);
+    color: var(--slate-800);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── DOCUMENT LAYOUT ── */
+  .doc-header {
+    background: linear-gradient(135deg, var(--teal-900), var(--slate-900));
+    color: white;
+    padding: 60px 40px;
+    text-align: center;
+  }
+  .doc-header h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; }
+  .doc-header p { font-size: 1.1rem; opacity: 0.8; margin-top: 8px; }
+  .doc-header .badge {
+    display: inline-block; margin-top: 16px;
+    background: var(--teal-600); padding: 6px 16px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .doc-nav {
+    background: white; border-bottom: 1px solid var(--slate-200);
+    padding: 16px 40px; position: sticky; top: 0; z-index: 100;
+    display: flex; gap: 8px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .doc-nav a {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 500;
+    color: var(--slate-600); text-decoration: none; transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .doc-nav a:hover { background: var(--teal-50); color: var(--teal-700); border-color: var(--teal-200); }
+
+  .section {
+    max-width: 1200px; margin: 0 auto; padding: 60px 40px;
+  }
+  .section + .section { border-top: 1px solid var(--slate-200); }
+
+  h2.section-title {
+    font-size: 1.8rem; font-weight: 800; color: var(--slate-900);
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  h2.section-title span { color: var(--teal-600); }
+  .section-subtitle { color: var(--slate-500); font-size: 1rem; margin-bottom: 40px; }
+
+  h3 { font-size: 1.15rem; font-weight: 700; color: var(--slate-800); margin: 32px 0 16px; }
+  h4 { font-size: 0.95rem; font-weight: 600; color: var(--slate-600); margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  p.body-text { color: var(--slate-600); font-size: 0.95rem; margin-bottom: 16px; max-width: 720px; }
+
+  /* ── COLOR SWATCHES ── */
+  .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 16px 0 32px; }
+  .swatch {
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: white;
+  }
+  .swatch-color { height: 64px; }
+  .swatch-info { padding: 8px 10px; }
+  .swatch-name { font-size: 0.75rem; font-weight: 600; color: var(--slate-700); }
+  .swatch-hex { font-size: 0.7rem; color: var(--slate-400); font-family: 'SF Mono', monospace; }
+
+  /* ── TYPOGRAPHY SAMPLES ── */
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--slate-100); }
+  .type-label { width: 120px; flex-shrink: 0; font-size: 0.75rem; color: var(--slate-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .type-sample { flex: 1; color: var(--slate-800); }
+  .type-spec { width: 200px; flex-shrink: 0; font-size: 0.75rem; color: var(--slate-400); font-family: monospace; text-align: right; }
+
+  /* ── COMPONENT SHOWCASE ── */
+  .component-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin: 16px 0; }
+  .component-card {
+    background: white; border: 1px solid var(--slate-200); border-radius: var(--radius-lg);
+    padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .component-card h4 { margin-top: 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: var(--radius); font-size: 0.875rem;
+    font-weight: 600; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--teal-600); color: white; }
+  .btn-secondary { background: var(--slate-100); color: var(--slate-700); border: 1px solid var(--slate-200); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-ghost { background: transparent; color: var(--teal-600); }
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+  .btn + .btn { margin-left: 8px; }
+
+  .input-demo {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--slate-300);
+    border-radius: var(--radius); font-size: 0.875rem; color: var(--slate-800);
+    background: white; outline: none; transition: border-color 0.2s;
+  }
+  .input-demo:focus { border-color: var(--teal-500); box-shadow: 0 0 0 3px rgba(20,184,166,0.1); }
+  .input-label { font-size: 0.8rem; font-weight: 600; color: var(--slate-600); margin-bottom: 6px; display: block; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .tag-teal { background: var(--teal-100); color: var(--teal-800); }
+  .tag-amber { background: #FEF3C7; color: #92400E; }
+  .tag-red { background: #FEE2E2; color: #991B1B; }
+  .tag-green { background: #DCFCE7; color: #166534; }
+  .tag-blue { background: #DBEAFE; color: #1E40AF; }
+
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--teal-600);
+    color: white; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .avatar-sm { width: 32px; height: 32px; font-size: 0.75rem; }
+
+  .stat-card-demo {
+    background: white; border: 1px solid var(--slate-200); border-radius: var(--radius-lg);
+    padding: 20px; min-width: 160px;
+  }
+  .stat-card-demo .label { font-size: 0.75rem; color: var(--slate-500); font-weight: 500; }
+  .stat-card-demo .value { font-size: 1.8rem; font-weight: 800; color: var(--slate-900); margin: 4px 0; }
+  .stat-card-demo .change { font-size: 0.8rem; font-weight: 600; }
+  .stat-card-demo .change.up { color: var(--success); }
+  .stat-card-demo .change.down { color: var(--danger); }
+
+  /* ── SPACING ── */
+  .spacing-row { display: flex; align-items: center; gap: 16px; margin: 8px 0; }
+  .spacing-bar { background: var(--teal-300); height: 16px; border-radius: 3px; }
+  .spacing-label { font-size: 0.75rem; color: var(--slate-500); width: 60px; font-family: monospace; }
+  .spacing-px { font-size: 0.7rem; color: var(--slate-400); width: 50px; font-family: monospace; }
+
+  /* ── WIREFRAME CONTAINER ── */
+  .wireframe-wrapper {
+    margin: 32px 0;
+  }
+  .wireframe-label {
+    font-size: 0.8rem; font-weight: 700; color: var(--slate-500);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .wireframe-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-500); }
+
+  .device-frame {
+    border: 2px solid var(--slate-300); border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: var(--slate-100);
+  }
+  .device-frame.desktop { max-width: 100%; }
+  .device-frame.mobile { width: 375px; }
+  .device-topbar {
+    background: var(--slate-200); padding: 8px 16px; display: flex; align-items: center; gap: 6px;
+  }
+  .device-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .device-dot.red { background: #FF5F57; }
+  .device-dot.yellow { background: #FFBD2E; }
+  .device-dot.green { background: #28C840; }
+
+  .wf { font-size: 0.8rem; }
+
+  /* ── WIREFRAME INTERNAL STYLES ── */
+  .wf-app { display: flex; height: 600px; background: var(--slate-50); }
+  .wf-app.mobile-app { flex-direction: column; height: 700px; }
+
+  .wf-sidebar {
+    width: 220px; background: var(--slate-900); color: white; padding: 20px 0;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .wf-sidebar-logo {
+    padding: 0 20px 20px; font-weight: 800; font-size: 1rem;
+    border-bottom: 1px solid var(--slate-700); margin-bottom: 12px;
+    color: var(--teal-400); letter-spacing: -0.02em;
+  }
+  .wf-sidebar-item {
+    padding: 10px 20px; font-size: 0.82rem; color: var(--slate-400);
+    display: flex; align-items: center; gap: 10px; cursor: default; transition: all 0.15s;
+  }
+  .wf-sidebar-item:hover { background: var(--slate-800); color: var(--slate-200); }
+  .wf-sidebar-item.active { background: var(--teal-900); color: var(--teal-300); border-right: 3px solid var(--teal-400); }
+  .wf-sidebar-icon { width: 18px; height: 18px; background: currentColor; border-radius: 4px; opacity: 0.5; flex-shrink: 0; }
+  .wf-sidebar-section { padding: 16px 20px 6px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate-600); }
+
+  .wf-main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .wf-topbar {
+    background: white; border-bottom: 1px solid var(--slate-200); padding: 14px 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+  .wf-topbar-title { font-weight: 700; font-size: 1.1rem; color: var(--slate-900); }
+  .wf-topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+  .wf-content { padding: 24px; flex: 1; overflow-y: auto; }
+
+  .wf-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .wf-stat {
+    background: white; border: 1px solid var(--slate-200); border-radius: var(--radius-lg);
+    padding: 16px; position: relative; overflow: hidden;
+  }
+  .wf-stat::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--teal-500);
+  }
+  .wf-stat .label { font-size: 0.7rem; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; }
+  .wf-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--slate-900); margin: 4px 0 2px; }
+  .wf-stat .sub { font-size: 0.7rem; color: var(--success); font-weight: 600; }
+  .wf-stat .sub.warn { color: var(--warning); }
+
+  .wf-card {
+    background: white; border: 1px solid var(--slate-200); border-radius: var(--radius-lg);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .wf-card-title { font-weight: 700; font-size: 0.9rem; color: var(--slate-800); margin-bottom: 12px; }
+
+  .wf-chart-placeholder {
+    background: linear-gradient(180deg, var(--teal-50), white);
+    border: 1px dashed var(--teal-300); border-radius: var(--radius);
+    height: 180px; display: flex; align-items: center; justify-content: center;
+    color: var(--teal-600); font-size: 0.8rem; font-weight: 600;
+    position: relative; overflow: hidden;
+  }
+  .wf-chart-placeholder svg { position: absolute; bottom: 0; left: 0; right: 0; }
+
+  .wf-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .wf-table th {
+    text-align: left; padding: 10px 12px; font-weight: 600; color: var(--slate-500);
+    border-bottom: 2px solid var(--slate-200); font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .wf-table td { padding: 12px; border-bottom: 1px solid var(--slate-100); color: var(--slate-700); }
+  .wf-table tr:hover td { background: var(--slate-50); }
+
+  .wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .wf-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── CHAT UI ── */
+  .wf-chat { display: flex; flex-direction: column; height: 100%; }
+  .wf-chat-messages { flex: 1; padding: 24px; overflow-y: auto; }
+  .wf-chat-bubble {
+    max-width: 80%; margin-bottom: 16px; padding: 14px 18px;
+    border-radius: 16px; font-size: 0.85rem; line-height: 1.5;
+  }
+  .wf-chat-bubble.user {
+    background: var(--teal-600); color: white; margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .wf-chat-bubble.ai {
+    background: white; border: 1px solid var(--slate-200);
+    border-bottom-left-radius: 4px; color: var(--slate-700);
+  }
+  .wf-chat-bubble.ai .ai-label { font-size: 0.7rem; font-weight: 700; color: var(--teal-600); margin-bottom: 6px; }
+  .wf-chat-input-area {
+    padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .wf-chat-input {
+    flex: 1; padding: 12px 16px; border: 1px solid var(--slate-300);
+    border-radius: 24px; font-size: 0.85rem; outline: none; background: var(--slate-50);
+  }
+  .wf-send-btn {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--teal-600);
+    border: none; color: white; font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .wf-mobile-nav {
+    display: flex; background: white; border-top: 1px solid var(--slate-200);
+    padding: 8px 0 12px; flex-shrink: 0;
+  }
+  .wf-mobile-nav-item {
+    flex: 1; text-align: center; font-size: 0.6rem; color: var(--slate-400);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .wf-mobile-nav-item.active { color: var(--teal-600); }
+  .wf-mobile-nav-icon { width: 22px; height: 22px; background: currentColor; border-radius: 6px; opacity: 0.4; }
+  .wf-mobile-nav-item.active .wf-mobile-nav-icon { opacity: 0.8; }
+
+  /* ── MOBILE TOPBAR ── */
+  .wf-mobile-topbar {
+    background: var(--slate-900); color: white; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+  .wf-mobile-topbar .logo { font-weight: 800; color: var(--teal-400); font-size: 0.95rem; }
+  .wf-mobile-content { flex: 1; overflow-y: auto; padding: 16px; background: var(--slate-50); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .progress-fill.teal { background: var(--teal-500); }
+  .progress-fill.green { background: var(--success); }
+  .progress-fill.amber { background: var(--warning); }
+
+  /* ── TWO COL WIREFRAME LAYOUT ── */
+  .wireframe-pair { display: grid; grid-template-columns: 1fr 375px; gap: 32px; align-items: start; margin: 32px 0; }
+  @media (max-width: 900px) { .wireframe-pair { grid-template-columns: 1fr; } }
+
+  /* ── CALENDAR ── */
+  .wf-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .wf-cal-day {
+    padding: 6px; border-radius: 6px; font-size: 0.7rem; text-align: center; min-height: 48px;
+    background: white; border: 1px solid var(--slate-100); position: relative;
+  }
+  .wf-cal-day.today { border-color: var(--teal-500); background: var(--teal-50); }
+  .wf-cal-day .num { font-weight: 700; color: var(--slate-700); }
+  .wf-cal-day .ev { font-size: 0.55rem; margin-top: 2px; padding: 1px 4px; border-radius: 3px; }
+  .wf-cal-day .ev.train { background: var(--teal-100); color: var(--teal-800); }
+  .wf-cal-day .ev.match { background: #FEE2E2; color: #991B1B; }
+  .wf-cal-day .ev.rest { background: var(--slate-100); color: var(--slate-600); }
+  .wf-cal-header { font-size: 0.65rem; font-weight: 700; color: var(--slate-400); text-align: center; padding: 8px 0; text-transform: uppercase; }
+
+  /* ── ICONS (simple CSS) ── */
+  .icon-circle { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .icon-circle.teal { background: var(--teal-100); color: var(--teal-700); }
+  .icon-circle.amber { background: #FEF3C7; color: #B45309; }
+  .icon-circle.red { background: #FEE2E2; color: #DC2626; }
+  .icon-circle.blue { background: #DBEAFE; color: #2563EB; }
+
+  /* ── PROFILE HEADER ── */
+  .wf-profile-header {
+    background: linear-gradient(135deg, var(--teal-800), var(--slate-800));
+    border-radius: var(--radius-lg); padding: 24px; color: white;
+    display: flex; align-items: center; gap: 20px; margin-bottom: 24px;
+  }
+  .wf-profile-avatar {
+    width: 72px; height: 72px; border-radius: 50%; background: var(--teal-500);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 800; flex-shrink: 0;
+  }
+  .wf-profile-name { font-size: 1.3rem; font-weight: 800; }
+  .wf-profile-meta { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
+  .wf-profile-tags { display: flex; gap: 6px; margin-top: 8px; }
+  .wf-profile-tag {
+    padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
+    background: rgba(255,255,255,0.15); color: white;
+  }
+
+  /* ── MINI CHART SVG ── */
+  .mini-chart { width: 100%; height: 60px; }
+
+  /* ── REPORT ── */
+  .wf-report-block {
+    border-left: 3px solid var(--teal-500); padding-left: 16px; margin-bottom: 16px;
+  }
+  .wf-report-block .title { font-weight: 700; font-size: 0.85rem; color: var(--slate-800); }
+  .wf-report-block .desc { font-size: 0.78rem; color: var(--slate-500); margin-top: 2px; }
+
+  /* ── EXERCISE CARD ── */
+  .wf-exercise {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; border-bottom: 1px solid var(--slate-100);
+  }
+  .wf-exercise-thumb {
+    width: 48px; height: 48px; border-radius: 8px; background: var(--slate-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; color: var(--slate-400); flex-shrink: 0;
+  }
+  .wf-exercise-name { font-weight: 600; font-size: 0.82rem; color: var(--slate-800); }
+  .wf-exercise-detail { font-size: 0.72rem; color: var(--slate-500); }
+  .wf-exercise-sets { margin-left: auto; font-weight: 700; font-size: 0.85rem; color: var(--teal-600); }
+
+  /* ── LOGIN ── */
+  .wf-login-container {
+    display: flex; height: 100%; background: var(--slate-50);
+  }
+  .wf-login-left {
+    flex: 1; background: linear-gradient(135deg, var(--teal-900), var(--slate-900));
+    display: flex; align-items: center; justify-content: center; color: white; padding: 40px;
+  }
+  .wf-login-left h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+  .wf-login-left p { font-size: 0.85rem; opacity: 0.7; max-width: 280px; }
+  .wf-login-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .wf-login-form { width: 100%; max-width: 300px; }
+  .wf-login-form h3 { font-size: 1.2rem; font-weight: 800; color: var(--slate-900); margin-bottom: 24px; }
+  .wf-login-field { margin-bottom: 16px; }
+  .wf-login-field label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-600); margin-bottom: 6px; }
+  .wf-login-field input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--slate-300);
+    border-radius: var(--radius); font-size: 0.85rem; outline: none;
+  }
+  .wf-login-btn {
+    width: 100%; padding: 12px; background: var(--teal-600); color: white;
+    border: none; border-radius: var(--radius); font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; margin-top: 8px;
+  }
+
+  /* ── SETTINGS ── */
+  .wf-settings-group { margin-bottom: 24px; }
+  .wf-settings-group h4 { margin-bottom: 12px; }
+  .wf-setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--slate-100);
+  }
+  .wf-setting-label { font-size: 0.85rem; color: var(--slate-700); }
+  .wf-setting-desc { font-size: 0.72rem; color: var(--slate-400); }
+  .wf-toggle {
+    width: 44px; height: 24px; border-radius: 12px; background: var(--slate-300);
+    position: relative; cursor: pointer;
+  }
+  .wf-toggle.on { background: var(--teal-500); }
+  .wf-toggle::after {
+    content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+    background: white; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .wf-toggle.on::after { transform: translateX(20px); }
+
+  /* ── PRINT ── */
+  @media print {
+    .doc-nav { display: none; }
+    .device-frame { break-inside: avoid; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- HEADER -->
+<!-- ══════════════════════════════════════════════ -->
+<header class="doc-header">
+  <h1>TrainMind AI</h1>
+  <p>Design System & Wireframes</p>
+  <div class="badge">Versione 1.0 — Aprile 2026</div>
+</header>
+
+<!-- ── NAV ── -->
+<nav class="doc-nav">
+  <a href="#colors">Colori</a>
+  <a href="#typography">Tipografia</a>
+  <a href="#spacing">Spaziature</a>
+  <a href="#components">Componenti</a>
+  <a href="#layout">Layout</a>
+  <a href="#wf-login">Login</a>
+  <a href="#wf-dashboard">Dashboard</a>
+  <a href="#wf-athletes">Atleti</a>
+  <a href="#wf-profile">Profilo Atleta</a>
+  <a href="#wf-chat">Chat AI</a>
+  <a href="#wf-scheda">Scheda</a>
+  <a href="#wf-calendar">Calendario</a>
+  <a href="#wf-report">Report</a>
+  <a href="#wf-settings">Impostazioni</a>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 1. COLORS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="colors">
+  <h2 class="section-title">01. <span>Palette Colori</span></h2>
+  <p class="section-subtitle">Teal come primario, Slate per i neutri, semantici per feedback</p>
+
+  <h3>Primary — Teal</h3>
+  <div class="color-grid">
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-900)"></div><div class="swatch-info"><div class="swatch-name">Teal 900</div><div class="swatch-hex">#0D3B3B</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-800)"></div><div class="swatch-info"><div class="swatch-name">Teal 800</div><div class="swatch-hex">#115E59</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-700)"></div><div class="swatch-info"><div class="swatch-name">Teal 700</div><div class="swatch-hex">#0F766E</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-600)"></div><div class="swatch-info"><div class="swatch-name">Teal 600</div><div class="swatch-hex">#0D9488</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-500)"></div><div class="swatch-info"><div class="swatch-name">Teal 500</div><div class="swatch-hex">#14B8A6</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-400)"></div><div class="swatch-info"><div class="swatch-name">Teal 400</div><div class="swatch-hex">#2DD4BF</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-300)"></div><div class="swatch-info"><div class="swatch-name">Teal 300</div><div class="swatch-hex">#5EEAD4</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-200)"></div><div class="swatch-info"><div class="swatch-name">Teal 200</div><div class="swatch-hex">#99F6E4</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-100)"></div><div class="swatch-info"><div class="swatch-name">Teal 100</div><div class="swatch-hex">#CCFBF1</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--teal-50)"></div><div class="swatch-info"><div class="swatch-name">Teal 50</div><div class="swatch-hex">#F0FDFA</div></div></div>
+  </div>
+
+  <h3>Neutral — Slate</h3>
+  <div class="color-grid">
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-950)"></div><div class="swatch-info"><div class="swatch-name">Slate 950</div><div class="swatch-hex">#0B1120</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-900)"></div><div class="swatch-info"><div class="swatch-name">Slate 900</div><div class="swatch-hex">#0F172A</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-800)"></div><div class="swatch-info"><div class="swatch-name">Slate 800</div><div class="swatch-hex">#1E293B</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-700)"></div><div class="swatch-info"><div class="swatch-name">Slate 700</div><div class="swatch-hex">#334155</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-600)"></div><div class="swatch-info"><div class="swatch-name">Slate 600</div><div class="swatch-hex">#475569</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-500)"></div><div class="swatch-info"><div class="swatch-name">Slate 500</div><div class="swatch-hex">#64748B</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-300)"></div><div class="swatch-info"><div class="swatch-name">Slate 300</div><div class="swatch-hex">#CBD5E1</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-200)"></div><div class="swatch-info"><div class="swatch-name">Slate 200</div><div class="swatch-hex">#E2E8F0</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-100)"></div><div class="swatch-info"><div class="swatch-name">Slate 100</div><div class="swatch-hex">#F1F5F9</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--slate-50)"></div><div class="swatch-info"><div class="swatch-name">Slate 50</div><div class="swatch-hex">#F8FAFC</div></div></div>
+  </div>
+
+  <h3>Semantici</h3>
+  <div class="color-grid">
+    <div class="swatch"><div class="swatch-color" style="background:var(--success)"></div><div class="swatch-info"><div class="swatch-name">Success</div><div class="swatch-hex">#22C55E</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--warning)"></div><div class="swatch-info"><div class="swatch-name">Warning</div><div class="swatch-hex">#F59E0B</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--danger)"></div><div class="swatch-info"><div class="swatch-name">Danger</div><div class="swatch-hex">#EF4444</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:var(--info)"></div><div class="swatch-info"><div class="swatch-name">Info</div><div class="swatch-hex">#3B82F6</div></div></div>
+  </div>
+
+  <h3>Regole d'uso</h3>
+  <p class="body-text"><strong>Teal 600</strong> per azioni primarie (bottoni, link, elementi interattivi). <strong>Teal 900 + Slate 900</strong> per la sidebar scura. <strong>Slate 50</strong> come sfondo pagina. <strong>Bianco</strong> per le card. I colori semantici si usano solo per feedback (successo, errore, avviso).</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 2. TYPOGRAPHY -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="typography">
+  <h2 class="section-title">02. <span>Tipografia</span></h2>
+  <p class="section-subtitle">Inter come font primario per UI, SF Mono per dati numerici</p>
+
+  <div class="type-row">
+    <div class="type-label">Display</div>
+    <div class="type-sample" style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;color:var(--slate-900)">Dashboard Overview</div>
+    <div class="type-spec">32px / 800 / -0.02em</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Heading 1</div>
+    <div class="type-sample" style="font-size:1.5rem;font-weight:700;color:var(--slate-900)">Lista Atleti</div>
+    <div class="type-spec">24px / 700 / normal</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Heading 2</div>
+    <div class="type-sample" style="font-size:1.15rem;font-weight:700;color:var(--slate-800)">Metriche Performance</div>
+    <div class="type-spec">18px / 700 / normal</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Heading 3</div>
+    <div class="type-sample" style="font-size:0.95rem;font-weight:600;color:var(--slate-700)">Dettaglio Esercizio</div>
+    <div class="type-spec">15px / 600 / normal</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Body</div>
+    <div class="type-sample" style="font-size:0.875rem;color:var(--slate-700)">L'atleta ha completato 4 serie da 8 ripetizioni al 75% del 1RM con RPE 7.</div>
+    <div class="type-spec">14px / 400 / 1.6</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Caption</div>
+    <div class="type-sample" style="font-size:0.75rem;color:var(--slate-500)">Ultimo aggiornamento: 2 ore fa</div>
+    <div class="type-spec">12px / 500 / normal</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Overline</div>
+    <div class="type-sample" style="font-size:0.7rem;font-weight:600;color:var(--slate-400);text-transform:uppercase;letter-spacing:0.08em">CARICO SETTIMANALE</div>
+    <div class="type-spec">11px / 600 / uppercase</div>
+  </div>
+  <div class="type-row">
+    <div class="type-label">Mono / Data</div>
+    <div class="type-sample" style="font-size:1.5rem;font-weight:800;font-family:'SF Mono',monospace;color:var(--slate-900)">142.5 kg</div>
+    <div class="type-spec">SF Mono / 800 / tabular</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 3. SPACING -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="spacing">
+  <h2 class="section-title">03. <span>Spaziature e Griglia</span></h2>
+  <p class="section-subtitle">Base 4px con scala geometrica. Griglia a 8px per allineamento.</p>
+
+  <div class="spacing-row"><div class="spacing-label">4px</div><div class="spacing-bar" style="width:16px"></div><div class="spacing-px">xs — gap minimo</div></div>
+  <div class="spacing-row"><div class="spacing-label">8px</div><div class="spacing-bar" style="width:32px"></div><div class="spacing-px">sm — padding inline</div></div>
+  <div class="spacing-row"><div class="spacing-label">12px</div><div class="spacing-bar" style="width:48px"></div><div class="spacing-px">md — gap componenti</div></div>
+  <div class="spacing-row"><div class="spacing-label">16px</div><div class="spacing-bar" style="width:64px"></div><div class="spacing-px">lg — padding card</div></div>
+  <div class="spacing-row"><div class="spacing-label">24px</div><div class="spacing-bar" style="width:96px"></div><div class="spacing-px">xl — padding content</div></div>
+  <div class="spacing-row"><div class="spacing-label">32px</div><div class="spacing-bar" style="width:128px"></div><div class="spacing-px">2xl — gap sezioni</div></div>
+  <div class="spacing-row"><div class="spacing-label">48px</div><div class="spacing-bar" style="width:192px"></div><div class="spacing-px">3xl — margin sezioni</div></div>
+
+  <h3>Border Radius</h3>
+  <p class="body-text"><strong>8px</strong> per bottoni, input, tag. <strong>12px</strong> per card e pannelli. <strong>16px</strong> per frame e modali. <strong>50%</strong> per avatar.</p>
+
+  <h3>Ombre</h3>
+  <p class="body-text"><strong>Livello 1:</strong> 0 1px 3px rgba(0,0,0,0.04) — card a riposo. <strong>Livello 2:</strong> 0 4px 12px rgba(0,0,0,0.08) — card hover/elevata. <strong>Livello 3:</strong> 0 8px 24px rgba(0,0,0,0.12) — modali e dropdown.</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 4. COMPONENTS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="components">
+  <h2 class="section-title">04. <span>Componenti UI</span></h2>
+  <p class="section-subtitle">Libreria dei building block riutilizzabili</p>
+
+  <div class="component-grid">
+    <!-- Buttons -->
+    <div class="component-card">
+      <h4>Bottoni</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+        <button class="btn btn-primary">Primario</button>
+        <button class="btn btn-secondary">Secondario</button>
+        <button class="btn btn-danger btn-sm">Elimina</button>
+        <button class="btn btn-ghost btn-sm">Link</button>
+      </div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="component-card">
+      <h4>Input</h4>
+      <div style="margin-top:12px">
+        <label class="input-label">Nome Atleta</label>
+        <input class="input-demo" type="text" placeholder="Cerca atleta..." value="">
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="component-card">
+      <h4>Tag & Badge</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+        <span class="tag tag-teal">Attivo</span>
+        <span class="tag tag-green">Recuperato</span>
+        <span class="tag tag-amber">Infortunato</span>
+        <span class="tag tag-red">Alto rischio</span>
+        <span class="tag tag-blue">In valutazione</span>
+      </div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="component-card">
+      <h4>Avatar</h4>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+        <div class="avatar">MR</div>
+        <div class="avatar" style="background:var(--slate-600)">LP</div>
+        <div class="avatar" style="background:var(--teal-800)">GV</div>
+        <div class="avatar-sm avatar" style="background:var(--teal-500)">+5</div>
+      </div>
+    </div>
+
+    <!-- Stat Card -->
+    <div class="component-card">
+      <h4>Stat Card</h4>
+      <div class="stat-card-demo" style="margin-top:12px">
+        <div class="label">ACWR Medio</div>
+        <div class="value">0.87</div>
+        <div class="change up">+0.04 vs settimana scorsa</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="component-card">
+      <h4>Progress Bar</h4>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+        <div><div style="font-size:0.72rem;color:var(--slate-500);margin-bottom:4px">Completamento scheda — 75%</div><div class="progress-bar"><div class="progress-fill teal" style="width:75%"></div></div></div>
+        <div><div style="font-size:0.72rem;color:var(--slate-500);margin-bottom:4px">Readiness — 92%</div><div class="progress-bar"><div class="progress-fill green" style="width:92%"></div></div></div>
+        <div><div style="font-size:0.72rem;color:var(--slate-500);margin-bottom:4px">Rischio infortunio — 45%</div><div class="progress-bar"><div class="progress-fill amber" style="width:45%"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Icon Circles -->
+    <div class="component-card">
+      <h4>Icone Status</h4>
+      <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+        <div class="icon-circle teal" title="Forza">F</div>
+        <div class="icon-circle amber" title="Alert">!</div>
+        <div class="icon-circle red" title="Infortunio">X</div>
+        <div class="icon-circle blue" title="Recovery">R</div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--slate-400);margin-top:8px">Forza · Alert · Infortunio · Recovery</div>
+    </div>
+
+    <!-- Toggle -->
+    <div class="component-card">
+      <h4>Toggle</h4>
+      <div style="display:flex;gap:16px;align-items:center;margin-top:12px">
+        <div class="wf-toggle on"></div>
+        <span style="font-size:0.82rem;color:var(--slate-600)">Attivo</span>
+        <div class="wf-toggle"></div>
+        <span style="font-size:0.82rem;color:var(--slate-400)">Disattivo</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- 5. LAYOUT PATTERN -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="layout">
+  <h2 class="section-title">05. <span>Layout Pattern</span></h2>
+  <p class="section-subtitle">Desktop: sidebar scura + topbar + content area. Mobile: topbar + content + bottom nav.</p>
+
+  <h3>Desktop — Struttura Base</h3>
+  <p class="body-text">Sidebar fissa (220px) in Slate 900 con navigazione principale. Topbar bianca con titolo pagina e azioni contestuali. Content area in Slate 50 con card bianche. La sidebar collassa in un hamburger menu sotto i 1024px.</p>
+
+  <h3>Mobile — Struttura Base</h3>
+  <p class="body-text">Topbar compatta in Slate 900 con logo e azioni. Content scrollabile a tutto schermo. Bottom navigation con 5 tab (Dashboard, Atleti, Chat AI, Calendario, Profilo). La bottom nav evidenzia la tab attiva in Teal 600.</p>
+
+  <h3>Breakpoint</h3>
+  <p class="body-text"><strong>Mobile:</strong> 0-639px. <strong>Tablet:</strong> 640-1023px (sidebar collassata). <strong>Desktop:</strong> 1024px+ (sidebar visibile).</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- WIREFRAMES -->
+<!-- ══════════════════════════════════════════════ -->
+
+<!-- ─── LOGIN ─── -->
+<div class="section" id="wf-login">
+  <h2 class="section-title">W1. <span>Login / Onboarding</span></h2>
+  <p class="section-subtitle">Schermata di accesso con branding e form di autenticazione</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP — 1440px</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-login-container" style="height:500px">
+        <div class="wf-login-left">
+          <div>
+            <div style="font-size:1.8rem;font-weight:800;color:var(--teal-400);margin-bottom:4px">TrainMind AI</div>
+            <h2>Allena con intelligenza</h2>
+            <p>La piattaforma AI per preparatori fisici che trasforma dati in performance.</p>
+            <div style="margin-top:24px;display:flex;gap:16px">
+              <div style="text-align:center"><div style="font-size:1.4rem;font-weight:800">500+</div><div style="font-size:0.7rem;opacity:0.6">Esercizi</div></div>
+              <div style="text-align:center"><div style="font-size:1.4rem;font-weight:800">AI</div><div style="font-size:0.7rem;opacity:0.6">Powered</div></div>
+              <div style="text-align:center"><div style="font-size:1.4rem;font-weight:800">24/7</div><div style="font-size:0.7rem;opacity:0.6">Accesso</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="wf-login-right">
+          <div class="wf-login-form">
+            <h3>Accedi al tuo account</h3>
+            <div class="wf-login-field"><label>Email</label><input type="email" placeholder="nome@esempio.com"></div>
+            <div class="wf-login-field"><label>Password</label><input type="password" placeholder="La tua password"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+              <label style="font-size:0.75rem;color:var(--slate-500);display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:var(--teal-600)"> Ricordami</label>
+              <a href="#" style="font-size:0.75rem;color:var(--teal-600);text-decoration:none">Password dimenticata?</a>
+            </div>
+            <button class="wf-login-btn">Accedi</button>
+            <div style="text-align:center;margin-top:16px;font-size:0.8rem;color:var(--slate-400)">Oppure accedi con SSO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE — 375px</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div style="height:600px;display:flex;flex-direction:column;background:var(--slate-50)">
+        <div style="background:linear-gradient(135deg,var(--teal-900),var(--slate-900));padding:40px 24px;color:white;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--teal-400)">TrainMind AI</div>
+          <div style="font-size:0.85rem;opacity:0.6;margin-top:4px">Allena con intelligenza</div>
+        </div>
+        <div style="flex:1;padding:24px;display:flex;flex-direction:column;justify-content:center">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--slate-900);margin-bottom:20px">Accedi</div>
+          <div class="wf-login-field"><label style="display:block;font-size:0.75rem;font-weight:600;color:var(--slate-600);margin-bottom:4px">Email</label><input type="email" placeholder="nome@esempio.com" style="width:100%;padding:10px 12px;border:1px solid var(--slate-300);border-radius:8px;font-size:0.85rem"></div>
+          <div class="wf-login-field"><label style="display:block;font-size:0.75rem;font-weight:600;color:var(--slate-600);margin-bottom:4px">Password</label><input type="password" placeholder="La tua password" style="width:100%;padding:10px 12px;border:1px solid var(--slate-300);border-radius:8px;font-size:0.85rem"></div>
+          <button class="wf-login-btn" style="margin-top:8px">Accedi</button>
+          <div style="text-align:center;margin-top:12px;font-size:0.75rem;color:var(--teal-600)">Password dimenticata?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── DASHBOARD ─── -->
+<div class="section" id="wf-dashboard">
+  <h2 class="section-title">W2. <span>Dashboard Home</span></h2>
+  <p class="section-subtitle">Panoramica generale: stat card, grafici carico, alert, attivit\u00E0 recenti</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP — 1440px</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <!-- Sidebar -->
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Calendario</div>
+          <div class="wf-sidebar-section">Analisi</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Report</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> AI Coach</div>
+          <div class="wf-sidebar-section">Sistema</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Impostazioni</div>
+        </div>
+        <!-- Main -->
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Dashboard</div>
+            <div class="wf-topbar-actions">
+              <span style="font-size:0.8rem;color:var(--slate-500)">Mar 2, 2026</span>
+              <div class="avatar-sm avatar">ZZ</div>
+            </div>
+          </div>
+          <div class="wf-content">
+            <!-- Stats -->
+            <div class="wf-stat-row">
+              <div class="wf-stat"><div class="label">ATLETI ATTIVI</div><div class="val">72</div><div class="sub">+3 questo mese</div></div>
+              <div class="wf-stat"><div class="label">SESSIONI SETTIMANA</div><div class="val">48</div><div class="sub warn">-5 vs target</div></div>
+              <div class="wf-stat"><div class="label">ACWR MEDIO</div><div class="val">0.87</div><div class="sub">Zona ottimale</div></div>
+              <div class="wf-stat"><div class="label">INFORTUNATI</div><div class="val">4</div><div class="sub warn">2 in return-to-play</div></div>
+            </div>
+
+            <div class="wf-grid-2">
+              <!-- Chart -->
+              <div class="wf-card">
+                <div class="wf-card-title">Carico Settimanale Team</div>
+                <div class="wf-chart-placeholder">
+                  <svg width="100%" height="100%" viewBox="0 0 400 160" preserveAspectRatio="none">
+                    <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#14B8A6" stop-opacity="0.3"/><stop offset="100%" stop-color="#14B8A6" stop-opacity="0"/></linearGradient></defs>
+                    <path d="M0,140 L50,100 L100,110 L150,80 L200,60 L250,70 L300,40 L350,50 L400,30 L400,160 L0,160Z" fill="url(#g1)"/>
+                    <polyline points="0,140 50,100 100,110 150,80 200,60 250,70 300,40 350,50 400,30" fill="none" stroke="#0D9488" stroke-width="2.5"/>
+                  </svg>
+                  Grafico carico (area chart)
+                </div>
+              </div>
+              <!-- Alerts -->
+              <div class="wf-card">
+                <div class="wf-card-title">Alert Attivi</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:0.8rem">
+                    <div class="icon-circle red" style="width:28px;height:28px;font-size:0.7rem">!</div>
+                    <div><div style="font-weight:600;color:#991B1B">Marco R. — ACWR 1.62</div><div style="font-size:0.7rem;color:#B91C1C">Rischio sovraccarico. Ridurre volume.</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#FEF3C7;border-radius:8px;font-size:0.8rem">
+                    <div class="icon-circle amber" style="width:28px;height:28px;font-size:0.7rem">!</div>
+                    <div><div style="font-weight:600;color:#92400E">Luca P. — RPE crescente</div><div style="font-size:0.7rem;color:#B45309">RPE medio 8.5 da 3 sessioni. Verificare.</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--teal-50);border-radius:8px;font-size:0.8rem">
+                    <div class="icon-circle teal" style="width:28px;height:28px;font-size:0.7rem">i</div>
+                    <div><div style="font-weight:600;color:var(--teal-800)">3 atleti in return-to-play</div><div style="font-size:0.7rem;color:var(--teal-700)">Aggiornamenti disponibili.</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE -->
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE — 375px</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div class="logo">TrainMind AI</div><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.65rem">ZZ</div></div>
+        <div class="wf-mobile-content" style="padding:12px">
+          <div style="font-weight:700;font-size:1rem;color:var(--slate-900);margin-bottom:12px">Dashboard</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">ATLETI ATTIVI</div><div class="val" style="font-size:1.2rem">72</div></div>
+            <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">SESSIONI SETT.</div><div class="val" style="font-size:1.2rem">48</div></div>
+            <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">ACWR MEDIO</div><div class="val" style="font-size:1.2rem">0.87</div></div>
+            <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">INFORTUNATI</div><div class="val" style="font-size:1.2rem">4</div></div>
+          </div>
+          <div class="wf-card" style="padding:12px">
+            <div class="wf-card-title" style="font-size:0.8rem">Alert Attivi</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#FEF2F2;border-radius:6px;font-size:0.72rem;margin-bottom:6px">
+              <div style="color:#DC2626;font-weight:700">!</div>
+              <div><strong style="color:#991B1B">Marco R.</strong> — ACWR 1.62</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#FEF3C7;border-radius:6px;font-size:0.72rem">
+              <div style="color:#F59E0B;font-weight:700">!</div>
+              <div><strong style="color:#92400E">Luca P.</strong> — RPE alto</div>
+            </div>
+          </div>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item active"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── LISTA ATLETI ─── -->
+<div class="section" id="wf-athletes">
+  <h2 class="section-title">W3. <span>Lista Atleti</span></h2>
+  <p class="section-subtitle">Tabella searchable con filtri per stato, ruolo, rischio</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Calendario</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Atleti <span style="font-size:0.8rem;font-weight:400;color:var(--slate-400);margin-left:8px">72 totali</span></div>
+            <div class="wf-topbar-actions">
+              <input class="input-demo" type="text" placeholder="Cerca atleta..." style="width:200px;padding:8px 12px;font-size:0.8rem">
+              <button class="btn btn-primary btn-sm">+ Nuovo Atleta</button>
+            </div>
+          </div>
+          <div class="wf-content">
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+              <span class="tag tag-teal" style="cursor:pointer">Tutti (72)</span>
+              <span class="tag" style="background:var(--slate-100);color:var(--slate-600);cursor:pointer">Attivi (65)</span>
+              <span class="tag" style="background:var(--slate-100);color:var(--slate-600);cursor:pointer">Infortunati (4)</span>
+              <span class="tag" style="background:var(--slate-100);color:var(--slate-600);cursor:pointer">Return-to-Play (3)</span>
+            </div>
+            <div class="wf-card" style="padding:0;overflow:hidden">
+              <table class="wf-table">
+                <thead><tr><th>Atleta</th><th>Ruolo</th><th>Stato</th><th>ACWR</th><th>RPE Ultimo</th><th>Prossima Sessione</th></tr></thead>
+                <tbody>
+                  <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.6rem">MR</div><strong>Marco Rossi</strong></div></td><td>Play Guard</td><td><span class="tag tag-green">Attivo</span></td><td><strong>0.92</strong></td><td>7</td><td>Oggi 16:00</td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.6rem;background:var(--slate-600)">LP</div><strong>Luca Paolini</strong></div></td><td>Ala</td><td><span class="tag tag-amber">Alert</span></td><td><strong style="color:var(--warning)">1.35</strong></td><td>8.5</td><td>Oggi 16:00</td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.6rem;background:var(--teal-800)">GV</div><strong>Giulia Verdi</strong></div></td><td>Centro</td><td><span class="tag tag-red">Infortunata</span></td><td>—</td><td>—</td><td>Return-to-play</td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.6rem;background:var(--info)">AB</div><strong>Andrea Bianchi</strong></div></td><td>Guardia</td><td><span class="tag tag-green">Attivo</span></td><td><strong>0.85</strong></td><td>6</td><td>Domani 10:00</td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm avatar" style="width:28px;height:28px;font-size:0.6rem;background:var(--danger)">FN</div><strong>Fabio Neri</strong></div></td><td>Ala Grande</td><td><span class="tag tag-blue">Valutazione</span></td><td><strong>0.78</strong></td><td>5</td><td>Domani 10:00</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div class="logo">Atleti</div><div style="font-size:0.75rem;color:var(--teal-400)">+ Nuovo</div></div>
+        <div class="wf-mobile-content" style="padding:12px">
+          <input class="input-demo" type="text" placeholder="Cerca atleta..." style="padding:10px 14px;font-size:0.85rem;margin-bottom:10px;border-radius:24px">
+          <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto">
+            <span class="tag tag-teal" style="white-space:nowrap;font-size:0.68rem">Tutti</span>
+            <span class="tag" style="background:var(--slate-100);color:var(--slate-600);white-space:nowrap;font-size:0.68rem">Attivi</span>
+            <span class="tag" style="background:var(--slate-100);color:var(--slate-600);white-space:nowrap;font-size:0.68rem">Infortunati</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;background:white;padding:12px;border-radius:10px;border:1px solid var(--slate-200)">
+              <div class="avatar" style="width:36px;height:36px;font-size:0.7rem">MR</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:0.82rem">Marco Rossi</div><div style="font-size:0.68rem;color:var(--slate-500)">Play Guard</div></div>
+              <span class="tag tag-green" style="font-size:0.6rem">Attivo</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:white;padding:12px;border-radius:10px;border:1px solid var(--slate-200)">
+              <div class="avatar" style="width:36px;height:36px;font-size:0.7rem;background:var(--slate-600)">LP</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:0.82rem">Luca Paolini</div><div style="font-size:0.68rem;color:var(--slate-500)">Ala</div></div>
+              <span class="tag tag-amber" style="font-size:0.6rem">Alert</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:white;padding:12px;border-radius:10px;border:1px solid var(--slate-200)">
+              <div class="avatar" style="width:36px;height:36px;font-size:0.7rem;background:var(--teal-800)">GV</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:0.82rem">Giulia Verdi</div><div style="font-size:0.68rem;color:var(--slate-500)">Centro</div></div>
+              <span class="tag tag-red" style="font-size:0.6rem">Infortunata</span>
+            </div>
+          </div>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item active"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── PROFILO ATLETA ─── -->
+<div class="section" id="wf-profile">
+  <h2 class="section-title">W4. <span>Profilo Atleta</span></h2>
+  <p class="section-subtitle">Dettaglio completo: anagrafica, metriche, grafici, storico schede</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title" style="display:flex;align-items:center;gap:8px"><span style="color:var(--slate-400);font-weight:400">Atleti /</span> Marco Rossi</div>
+            <div class="wf-topbar-actions">
+              <button class="btn btn-secondary btn-sm">Modifica</button>
+              <button class="btn btn-primary btn-sm">Crea Scheda AI</button>
+            </div>
+          </div>
+          <div class="wf-content">
+            <!-- Profile Header -->
+            <div class="wf-profile-header">
+              <div class="wf-profile-avatar">MR</div>
+              <div>
+                <div class="wf-profile-name">Marco Rossi</div>
+                <div class="wf-profile-meta">Play Guard — 24 anni — 188 cm — 85 kg</div>
+                <div class="wf-profile-tags">
+                  <span class="wf-profile-tag">Attivo</span>
+                  <span class="wf-profile-tag">Serie A2</span>
+                  <span class="wf-profile-tag">ACWR 0.92</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats row -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+              <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">1RM SQUAT</div><div class="val" style="font-size:1.1rem">142.5 kg</div><div class="sub" style="font-size:0.65rem">+5 kg</div></div>
+              <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">CMJ</div><div class="val" style="font-size:1.1rem">38.2 cm</div><div class="sub" style="font-size:0.65rem">+1.5 cm</div></div>
+              <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">SPRINT 20M</div><div class="val" style="font-size:1.1rem">3.12 s</div><div class="sub" style="font-size:0.65rem">-0.04 s</div></div>
+              <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">WELLNESS</div><div class="val" style="font-size:1.1rem">7.8/10</div><div class="sub warn" style="font-size:0.65rem">-0.5</div></div>
+              <div class="wf-stat" style="padding:12px"><div class="label" style="font-size:0.6rem">RPE MEDIO</div><div class="val" style="font-size:1.1rem">6.8</div><div class="sub" style="font-size:0.65rem">Stabile</div></div>
+            </div>
+
+            <div class="wf-grid-2">
+              <div class="wf-card">
+                <div class="wf-card-title">Carico vs Recovery (4 settimane)</div>
+                <div class="wf-chart-placeholder" style="height:150px">
+                  <svg width="100%" height="100%" viewBox="0 0 400 130" preserveAspectRatio="none">
+                    <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#14B8A6" stop-opacity="0.2"/><stop offset="100%" stop-color="#14B8A6" stop-opacity="0"/></linearGradient></defs>
+                    <polyline points="0,90 60,70 120,80 180,50 240,60 300,35 360,45 400,30" fill="none" stroke="#0D9488" stroke-width="2"/>
+                    <polyline points="0,100 60,95 120,85 180,90 240,80 300,75 360,70 400,65" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4"/>
+                  </svg>
+                  Carico (solida) vs Recovery (tratteggiata)
+                </div>
+              </div>
+              <div class="wf-card">
+                <div class="wf-card-title">Wellness Quotidiano</div>
+                <div class="wf-chart-placeholder" style="height:150px">
+                  <svg width="100%" height="100%" viewBox="0 0 400 130" preserveAspectRatio="none">
+                    <rect x="20" y="40" width="40" height="80" rx="4" fill="#14B8A6" opacity="0.7"/>
+                    <rect x="80" y="50" width="40" height="70" rx="4" fill="#14B8A6" opacity="0.7"/>
+                    <rect x="140" y="30" width="40" height="90" rx="4" fill="#14B8A6" opacity="0.8"/>
+                    <rect x="200" y="55" width="40" height="65" rx="4" fill="#F59E0B" opacity="0.7"/>
+                    <rect x="260" y="45" width="40" height="75" rx="4" fill="#14B8A6" opacity="0.7"/>
+                    <rect x="320" y="35" width="40" height="85" rx="4" fill="#14B8A6" opacity="0.8"/>
+                  </svg>
+                  Sonno, Fatica, DOMS, Stress (bar chart)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div style="font-size:0.8rem;color:var(--slate-400)">< Atleti</div><div style="font-size:0.75rem;color:var(--teal-400)">Modifica</div></div>
+        <div class="wf-mobile-content" style="padding:12px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div class="avatar" style="width:48px;height:48px;font-size:1rem">MR</div>
+            <div><div style="font-weight:700;font-size:1rem">Marco Rossi</div><div style="font-size:0.72rem;color:var(--slate-500)">Play Guard — 24 anni</div><span class="tag tag-green" style="font-size:0.6rem;margin-top:4px">Attivo</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+            <div class="wf-stat" style="padding:8px"><div class="label" style="font-size:0.55rem">SQUAT</div><div class="val" style="font-size:0.95rem">142.5</div></div>
+            <div class="wf-stat" style="padding:8px"><div class="label" style="font-size:0.55rem">CMJ</div><div class="val" style="font-size:0.95rem">38.2</div></div>
+            <div class="wf-stat" style="padding:8px"><div class="label" style="font-size:0.55rem">WELLNESS</div><div class="val" style="font-size:0.95rem">7.8</div></div>
+          </div>
+          <div class="wf-card" style="padding:12px">
+            <div class="wf-card-title" style="font-size:0.8rem">Carico Settimanale</div>
+            <div class="wf-chart-placeholder" style="height:100px;font-size:0.7rem">Grafico area</div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px">Crea Scheda AI</button>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item active"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── CHAT AI ─── -->
+<div class="section" id="wf-chat">
+  <h2 class="section-title">W5. <span>Chat AI</span></h2>
+  <p class="section-subtitle">Interfaccia conversazionale per richieste e AI Coach Assistant</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+          <div class="wf-sidebar-section">Conversazioni recenti</div>
+          <div class="wf-sidebar-item" style="font-size:0.75rem;opacity:0.6"><div class="wf-sidebar-icon" style="width:14px;height:14px"></div> Mesociclo Marco R.</div>
+          <div class="wf-sidebar-item" style="font-size:0.75rem;opacity:0.6"><div class="wf-sidebar-icon" style="width:14px;height:14px"></div> Return-to-play Giulia</div>
+          <div class="wf-sidebar-item" style="font-size:0.75rem;opacity:0.6"><div class="wf-sidebar-icon" style="width:14px;height:14px"></div> Prevenzione caviglia</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Chat AI <span class="tag tag-teal" style="margin-left:8px">AI Coach</span></div>
+            <div class="wf-topbar-actions"><button class="btn btn-secondary btn-sm">Nuova Chat</button></div>
+          </div>
+          <div class="wf-chat">
+            <div class="wf-chat-messages" style="background:var(--slate-50)">
+              <div class="wf-chat-bubble user">Fammi un mesociclo di forza di 4 settimane per Marco Rossi. Rientra da una distorsione alla caviglia di grado 2, guarito da 3 settimane. Focus su stabilizzazione + forza progressiva lower body.</div>
+              <div class="wf-chat-bubble ai">
+                <div class="ai-label">TrainMind AI</div>
+                <div>Ho analizzato il profilo di Marco Rossi e i suoi dati recenti. Ecco il mesociclo proposto:</div>
+                <div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:8px;padding:12px;margin:10px 0;font-size:0.78rem">
+                  <div style="font-weight:700;color:var(--teal-800);margin-bottom:6px">Mesociclo Forza — 4 Settimane</div>
+                  <div><strong>Sett. 1-2:</strong> Fase Accumulo — Volume alto, 65-70% 1RM</div>
+                  <div><strong>Sett. 3:</strong> Fase Intensificazione — 75-80% 1RM</div>
+                  <div><strong>Sett. 4:</strong> Deload — 50-60% 1RM</div>
+                  <div style="margin-top:8px;color:var(--teal-700)">Focus: stabilizzazione caviglia integrata in ogni sessione</div>
+                </div>
+                <div style="font-size:0.78rem">Vuoi che generi la scheda dettagliata settimana per settimana?</div>
+              </div>
+              <div class="wf-chat-bubble user">Si, genera la prima settimana con esercizi specifici</div>
+              <div class="wf-chat-bubble ai">
+                <div class="ai-label">TrainMind AI</div>
+                <div style="background:white;border:1px solid var(--slate-200);border-radius:8px;padding:12px;margin:8px 0;font-size:0.78rem">
+                  <div style="font-weight:700;margin-bottom:8px">Settimana 1 — Sessione A (Forza Lower)</div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--slate-100)"><span>1. Goblet Squat</span><span style="color:var(--teal-600)">3x10 @ 65%</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--slate-100)"><span>2. RDL Bilanciere</span><span style="color:var(--teal-600)">3x8 @ 70%</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--slate-100)"><span>3. Step-Up (stability)</span><span style="color:var(--teal-600)">3x8/lato</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0"><span>4. Single-Leg Balance</span><span style="color:var(--teal-600)">3x30s/lato</span></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn btn-primary btn-sm" style="font-size:0.72rem">Salva Scheda</button>
+                  <button class="btn btn-secondary btn-sm" style="font-size:0.72rem">Modifica</button>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.72rem">Rigenera</button>
+                </div>
+              </div>
+            </div>
+            <div class="wf-chat-input-area">
+              <input class="wf-chat-input" placeholder="Scrivi una richiesta o poni una domanda all'AI Coach...">
+              <div class="wf-send-btn">&#9654;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div class="logo">Chat AI</div><div style="font-size:0.75rem;color:var(--teal-400)">Nuova</div></div>
+        <div class="wf-chat" style="flex:1">
+          <div class="wf-chat-messages" style="background:var(--slate-50);flex:1;padding:12px">
+            <div class="wf-chat-bubble user" style="max-width:90%;font-size:0.78rem;padding:10px 14px">Mesociclo forza 4 settimane per Marco, post-distorsione caviglia</div>
+            <div class="wf-chat-bubble ai" style="max-width:90%;font-size:0.78rem;padding:10px 14px">
+              <div class="ai-label" style="font-size:0.65rem">TrainMind AI</div>
+              <div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:6px;padding:8px;margin:6px 0;font-size:0.7rem">
+                <div style="font-weight:700;color:var(--teal-800)">Mesociclo Forza — 4 Sett.</div>
+                <div>S1-2: Accumulo 65-70%</div>
+                <div>S3: Intensificazione 75-80%</div>
+                <div>S4: Deload 50-60%</div>
+              </div>
+            </div>
+          </div>
+          <div class="wf-chat-input-area" style="padding:10px 12px">
+            <input class="wf-chat-input" placeholder="Scrivi..." style="font-size:0.8rem;padding:10px 14px">
+            <div class="wf-send-btn" style="width:36px;height:36px;font-size:0.9rem">&#9654;</div>
+          </div>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item active"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── SCHEDA ALLENAMENTO ─── -->
+<div class="section" id="wf-scheda">
+  <h2 class="section-title">W6. <span>Scheda Allenamento</span></h2>
+  <p class="section-subtitle">Visualizzazione e compilazione della sessione di allenamento</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Schede</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Scheda: Forza Lower Body — Marco Rossi</div>
+            <div class="wf-topbar-actions">
+              <span class="tag tag-teal">Settimana 1 / Sessione A</span>
+              <button class="btn btn-secondary btn-sm">Esporta</button>
+              <button class="btn btn-primary btn-sm">Registra Sessione</button>
+            </div>
+          </div>
+          <div class="wf-content">
+            <div class="wf-grid-2">
+              <div>
+                <div class="wf-card" style="padding:0;overflow:hidden">
+                  <div style="padding:16px 20px;border-bottom:1px solid var(--slate-200);display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-weight:700;font-size:0.9rem;color:var(--slate-800)">Esercizi</span>
+                    <span style="font-size:0.72rem;color:var(--slate-400)">6 esercizi — ~55 min</span>
+                  </div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">1. Goblet Squat</div><div class="wf-exercise-detail">Quadricipiti, Glutei — Stabilit\u00E0 caviglia</div></div><div class="wf-exercise-sets">3x10 @ 65%</div></div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">2. RDL Bilanciere</div><div class="wf-exercise-detail">Hamstring, Glutei, Erector Spinae</div></div><div class="wf-exercise-sets">3x8 @ 70%</div></div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">3. Step-Up</div><div class="wf-exercise-detail">Quadricipiti, Glutei — Unilaterale</div></div><div class="wf-exercise-sets">3x8/lato</div></div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">4. Leg Curl</div><div class="wf-exercise-detail">Hamstring — Isolamento</div></div><div class="wf-exercise-sets">3x12</div></div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">5. Single-Leg Balance</div><div class="wf-exercise-detail">Stabilizzazione caviglia, Propriocezione</div></div><div class="wf-exercise-sets">3x30s/lato</div></div>
+                  <div class="wf-exercise"><div class="wf-exercise-thumb">VIDEO</div><div><div class="wf-exercise-name">6. Calf Raise</div><div class="wf-exercise-detail">Gastrocnemio, Soleo</div></div><div class="wf-exercise-sets">3x15</div></div>
+                </div>
+              </div>
+              <div>
+                <div class="wf-card">
+                  <div class="wf-card-title">Parametri Sessione</div>
+                  <div style="display:flex;flex-direction:column;gap:12px;font-size:0.82rem">
+                    <div style="display:flex;justify-content:space-between"><span style="color:var(--slate-500)">Tipo</span><strong>Forza — Lower Body</strong></div>
+                    <div style="display:flex;justify-content:space-between"><span style="color:var(--slate-500)">Durata stimata</span><strong>55 min</strong></div>
+                    <div style="display:flex;justify-content:space-between"><span style="color:var(--slate-500)">Intensit\u00E0 target</span><strong>65-70% 1RM</strong></div>
+                    <div style="display:flex;justify-content:space-between"><span style="color:var(--slate-500)">RPE target</span><strong>6-7</strong></div>
+                    <div style="display:flex;justify-content:space-between"><span style="color:var(--slate-500)">Recupero tra serie</span><strong>90-120 s</strong></div>
+                  </div>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-title">Note AI</div>
+                  <div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:8px;padding:12px;font-size:0.8rem;color:var(--teal-800)">
+                    Caviglia dx in fase di consolidamento. Privilegiare range of motion controllato negli esercizi bilaterali. Monitorare dolore/gonfiore post-sessione. Se RPE > 7, ridurre volume del 15% nella sessione successiva.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE — Modalit\u00E0 registrazione a bordo campo</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div style="font-size:0.8rem;color:var(--slate-400)">< Scheda</div><div style="font-size:0.75rem;color:var(--teal-400)">Salva</div></div>
+        <div class="wf-mobile-content" style="padding:12px">
+          <div style="font-weight:700;font-size:0.95rem;color:var(--slate-900)">Marco Rossi — Forza Lower</div>
+          <div style="font-size:0.72rem;color:var(--slate-500);margin-bottom:12px">Settimana 1, Sessione A</div>
+
+          <div style="background:white;border:1px solid var(--slate-200);border-radius:10px;overflow:hidden;margin-bottom:8px">
+            <div style="padding:12px;border-bottom:1px solid var(--slate-100)">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-weight:600;font-size:0.82rem">1. Goblet Squat</div><div style="font-size:0.68rem;color:var(--teal-600)">3x10 @ 65% (92 kg)</div></div>
+                <span class="tag tag-green" style="font-size:0.55rem">Fatto</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem"><div style="color:var(--slate-400);font-size:0.6rem">SERIE 1</div><strong>10x92</strong></div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem"><div style="color:var(--slate-400);font-size:0.6rem">SERIE 2</div><strong>10x92</strong></div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem"><div style="color:var(--slate-400);font-size:0.6rem">SERIE 3</div><strong>9x92</strong></div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem"><div style="color:var(--slate-400);font-size:0.6rem">RPE</div><strong>7</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:white;border:2px solid var(--teal-500);border-radius:10px;overflow:hidden;margin-bottom:8px">
+            <div style="padding:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-weight:600;font-size:0.82rem">2. RDL Bilanciere</div><div style="font-size:0.68rem;color:var(--teal-600)">3x8 @ 70% (100 kg)</div></div>
+                <span class="tag tag-amber" style="font-size:0.55rem">In corso</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <div style="flex:1;background:var(--teal-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem;border:1px solid var(--teal-200)"><div style="color:var(--teal-600);font-size:0.6rem">SERIE 1</div><strong>8x100</strong></div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem;border:1px dashed var(--slate-300)"><div style="color:var(--slate-400);font-size:0.6rem">SERIE 2</div>—</div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem;border:1px dashed var(--slate-300)"><div style="color:var(--slate-400);font-size:0.6rem">SERIE 3</div>—</div>
+                <div style="flex:1;background:var(--slate-50);padding:6px 8px;border-radius:6px;text-align:center;font-size:0.7rem;border:1px dashed var(--slate-300)"><div style="color:var(--slate-400);font-size:0.6rem">RPE</div>—</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:white;border:1px solid var(--slate-200);border-radius:10px;padding:12px;margin-bottom:8px;opacity:0.6">
+            <div style="font-weight:600;font-size:0.82rem">3. Step-Up</div>
+            <div style="font-size:0.68rem;color:var(--slate-400)">3x8/lato</div>
+          </div>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── CALENDARIO ─── -->
+<div class="section" id="wf-calendar">
+  <h2 class="section-title">W7. <span>Calendario</span></h2>
+  <p class="section-subtitle">Vista mensile con sessioni, partite e giorni di recupero</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf" style="height:550px">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Calendario</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Calendario — <span style="color:var(--teal-600)">Aprile 2026</span></div>
+            <div class="wf-topbar-actions">
+              <button class="btn btn-ghost btn-sm">&lt;</button>
+              <button class="btn btn-secondary btn-sm">Oggi</button>
+              <button class="btn btn-ghost btn-sm">&gt;</button>
+              <button class="btn btn-primary btn-sm">+ Evento</button>
+            </div>
+          </div>
+          <div class="wf-content" style="padding:16px">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <span style="display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--slate-500)"><span style="width:10px;height:10px;border-radius:3px;background:var(--teal-500)"></span> Allenamento</span>
+              <span style="display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--slate-500)"><span style="width:10px;height:10px;border-radius:3px;background:var(--danger)"></span> Partita</span>
+              <span style="display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--slate-500)"><span style="width:10px;height:10px;border-radius:3px;background:var(--slate-300)"></span> Recupero</span>
+            </div>
+            <div class="wf-cal-grid">
+              <div class="wf-cal-header">Lun</div><div class="wf-cal-header">Mar</div><div class="wf-cal-header">Mer</div><div class="wf-cal-header">Gio</div><div class="wf-cal-header">Ven</div><div class="wf-cal-header">Sab</div><div class="wf-cal-header">Dom</div>
+              <div class="wf-cal-day" style="opacity:0.4"><div class="num">30</div></div>
+              <div class="wf-cal-day" style="opacity:0.4"><div class="num">31</div></div>
+              <div class="wf-cal-day"><div class="num">1</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day today"><div class="num">2</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day"><div class="num">3</div><div class="ev rest">Recupero</div></div>
+              <div class="wf-cal-day"><div class="num">4</div><div class="ev match">Partita</div></div>
+              <div class="wf-cal-day"><div class="num">5</div><div class="ev rest">Recupero</div></div>
+              <div class="wf-cal-day"><div class="num">6</div><div class="ev train">Potenza</div></div>
+              <div class="wf-cal-day"><div class="num">7</div><div class="ev train">Agility</div></div>
+              <div class="wf-cal-day"><div class="num">8</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day"><div class="num">9</div><div class="ev rest">Recupero</div></div>
+              <div class="wf-cal-day"><div class="num">10</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day"><div class="num">11</div><div class="ev match">Partita</div></div>
+              <div class="wf-cal-day"><div class="num">12</div><div class="ev rest">Recupero</div></div>
+              <div class="wf-cal-day"><div class="num">13</div><div class="ev train">Potenza</div></div>
+              <div class="wf-cal-day"><div class="num">14</div><div class="ev train">Agility</div></div>
+              <div class="wf-cal-day"><div class="num">15</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day"><div class="num">16</div><div class="ev rest">Recupero</div></div>
+              <div class="wf-cal-day"><div class="num">17</div><div class="ev train">Forza</div></div>
+              <div class="wf-cal-day"><div class="num">18</div><div class="ev match">Partita</div></div>
+              <div class="wf-cal-day"><div class="num">19</div><div class="ev rest">Recupero</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> MOBILE</div>
+    <div class="device-frame mobile">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app mobile-app wf" style="height:640px">
+        <div class="wf-mobile-topbar"><div class="logo">Aprile 2026</div><div style="display:flex;gap:12px"><span style="color:var(--slate-400);font-size:0.85rem">&lt;</span><span style="color:var(--slate-400);font-size:0.85rem">&gt;</span></div></div>
+        <div class="wf-mobile-content" style="padding:12px">
+          <div class="wf-cal-grid" style="margin-bottom:16px">
+            <div class="wf-cal-header" style="font-size:0.55rem">L</div><div class="wf-cal-header" style="font-size:0.55rem">M</div><div class="wf-cal-header" style="font-size:0.55rem">M</div><div class="wf-cal-header" style="font-size:0.55rem">G</div><div class="wf-cal-header" style="font-size:0.55rem">V</div><div class="wf-cal-header" style="font-size:0.55rem">S</div><div class="wf-cal-header" style="font-size:0.55rem">D</div>
+            <div class="wf-cal-day" style="min-height:36px;opacity:0.4"><div class="num" style="font-size:0.65rem">30</div></div>
+            <div class="wf-cal-day" style="min-height:36px;opacity:0.4"><div class="num" style="font-size:0.65rem">31</div></div>
+            <div class="wf-cal-day" style="min-height:36px"><div class="num" style="font-size:0.65rem">1</div><div style="width:6px;height:6px;border-radius:50%;background:var(--teal-500);margin:2px auto 0"></div></div>
+            <div class="wf-cal-day today" style="min-height:36px"><div class="num" style="font-size:0.65rem">2</div><div style="width:6px;height:6px;border-radius:50%;background:var(--teal-500);margin:2px auto 0"></div></div>
+            <div class="wf-cal-day" style="min-height:36px"><div class="num" style="font-size:0.65rem">3</div></div>
+            <div class="wf-cal-day" style="min-height:36px"><div class="num" style="font-size:0.65rem">4</div><div style="width:6px;height:6px;border-radius:50%;background:var(--danger);margin:2px auto 0"></div></div>
+            <div class="wf-cal-day" style="min-height:36px"><div class="num" style="font-size:0.65rem">5</div></div>
+          </div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--slate-800);margin-bottom:8px">Oggi, 2 Aprile</div>
+          <div style="background:white;border-left:3px solid var(--teal-500);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--slate-200);border-left:3px solid var(--teal-500)">
+            <div style="font-weight:600;font-size:0.82rem">Forza Lower Body</div>
+            <div style="font-size:0.7rem;color:var(--slate-500)">16:00 — Team First Roster</div>
+            <div style="font-size:0.68rem;color:var(--teal-600);margin-top:2px">12 atleti assegnati</div>
+          </div>
+          <div style="background:white;border-left:3px solid var(--teal-300);border-radius:8px;padding:12px;border:1px solid var(--slate-200);border-left:3px solid var(--teal-300)">
+            <div style="font-weight:600;font-size:0.82rem">Return-to-Play — Giulia V.</div>
+            <div style="font-size:0.7rem;color:var(--slate-500)">17:30 — Sessione individuale</div>
+          </div>
+        </div>
+        <div class="wf-mobile-nav">
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Home</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Atleti</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Chat AI</div>
+          <div class="wf-mobile-nav-item active"><div class="wf-mobile-nav-icon"></div>Calendario</div>
+          <div class="wf-mobile-nav-item"><div class="wf-mobile-nav-icon"></div>Altro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── REPORT ─── -->
+<div class="section" id="wf-report">
+  <h2 class="section-title">W8. <span>Report</span></h2>
+  <p class="section-subtitle">Report automatici per staff tecnico, medico sportivo e preparatore</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Schede</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Calendario</div>
+          <div class="wf-sidebar-section">Analisi</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Report</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Report</div>
+            <div class="wf-topbar-actions">
+              <select style="padding:6px 12px;border:1px solid var(--slate-300);border-radius:6px;font-size:0.8rem;color:var(--slate-600)"><option>Settimana 13 (Mar 30 - Apr 5)</option></select>
+              <button class="btn btn-primary btn-sm">Genera Report AI</button>
+            </div>
+          </div>
+          <div class="wf-content">
+            <div class="wf-grid-3" style="margin-bottom:20px">
+              <div class="wf-card" style="text-align:center;cursor:pointer;border:2px solid var(--teal-500)">
+                <div class="icon-circle teal" style="margin:0 auto 8px">S</div>
+                <div style="font-weight:700;font-size:0.85rem">Staff Tecnico</div>
+                <div style="font-size:0.7rem;color:var(--slate-500)">Readiness team, carichi, stato forma</div>
+              </div>
+              <div class="wf-card" style="text-align:center;cursor:pointer">
+                <div class="icon-circle red" style="margin:0 auto 8px">M</div>
+                <div style="font-weight:700;font-size:0.85rem">Medico Sportivo</div>
+                <div style="font-size:0.7rem;color:var(--slate-500)">Infortunati, return-to-play, rischi</div>
+              </div>
+              <div class="wf-card" style="text-align:center;cursor:pointer">
+                <div class="icon-circle blue" style="margin:0 auto 8px">P</div>
+                <div style="font-weight:700;font-size:0.85rem">Preparatore</div>
+                <div style="font-size:0.7rem;color:var(--slate-500)">Trend, aderenza piano, progressione</div>
+              </div>
+            </div>
+
+            <div class="wf-card">
+              <div class="wf-card-title">Report Staff Tecnico — Settimana 13</div>
+              <div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.82rem;color:var(--teal-800)">
+                <strong>Sintesi AI:</strong> Il team presenta un livello di readiness complessivo dell'82%. 3 atleti in zona di attenzione per ACWR elevato. Il carico medio settimanale \u00E8 in linea con la periodizzazione pianificata.
+              </div>
+              <div class="wf-grid-2">
+                <div>
+                  <div class="wf-report-block"><div class="title">Readiness Media</div><div class="desc">82% — In linea con target (80-85%)</div></div>
+                  <div class="wf-report-block"><div class="title">Sessioni Completate</div><div class="desc">48/52 — Aderenza 92%</div></div>
+                  <div class="wf-report-block"><div class="title">Alert Attivi</div><div class="desc">3 atleti con ACWR > 1.3</div></div>
+                </div>
+                <div>
+                  <div class="wf-chart-placeholder" style="height:160px">
+                    <svg width="100%" height="100%" viewBox="0 0 300 130" preserveAspectRatio="none">
+                      <rect x="20" y="30" width="30" height="90" rx="4" fill="#14B8A6" opacity="0.8"/>
+                      <rect x="65" y="40" width="30" height="80" rx="4" fill="#14B8A6" opacity="0.8"/>
+                      <rect x="110" y="25" width="30" height="95" rx="4" fill="#14B8A6" opacity="0.8"/>
+                      <rect x="155" y="50" width="30" height="70" rx="4" fill="#F59E0B" opacity="0.8"/>
+                      <rect x="200" y="35" width="30" height="85" rx="4" fill="#14B8A6" opacity="0.8"/>
+                      <rect x="245" y="45" width="30" height="75" rx="4" fill="#14B8A6" opacity="0.8"/>
+                    </svg>
+                    Readiness per giorno
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px;display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm">Esporta PDF</button>
+                <button class="btn btn-secondary btn-sm">Esporta DOCX</button>
+                <button class="btn btn-ghost btn-sm">Condividi</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── IMPOSTAZIONI ─── -->
+<div class="section" id="wf-settings">
+  <h2 class="section-title">W9. <span>Impostazioni</span></h2>
+  <p class="section-subtitle">Configurazione account, preferenze AI, gestione team</p>
+
+  <div class="wireframe-wrapper">
+    <div class="wireframe-label"><div class="dot"></div> DESKTOP</div>
+    <div class="device-frame desktop">
+      <div class="device-topbar"><div class="device-dot red"></div><div class="device-dot yellow"></div><div class="device-dot green"></div></div>
+      <div class="wf-app wf" style="height:520px">
+        <div class="wf-sidebar">
+          <div class="wf-sidebar-logo">TrainMind AI</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Dashboard</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Atleti</div>
+          <div class="wf-sidebar-item"><div class="wf-sidebar-icon"></div> Chat AI</div>
+          <div class="wf-sidebar-section">Sistema</div>
+          <div class="wf-sidebar-item active"><div class="wf-sidebar-icon"></div> Impostazioni</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-topbar">
+            <div class="wf-topbar-title">Impostazioni</div>
+          </div>
+          <div class="wf-content">
+            <div style="display:flex;gap:8px;margin-bottom:24px">
+              <button class="btn btn-primary btn-sm">Profilo</button>
+              <button class="btn btn-secondary btn-sm">AI & Preferenze</button>
+              <button class="btn btn-secondary btn-sm">Team</button>
+              <button class="btn btn-secondary btn-sm">Abbonamento</button>
+              <button class="btn btn-secondary btn-sm">Notifiche</button>
+            </div>
+
+            <div class="wf-grid-2">
+              <div class="wf-card">
+                <div class="wf-card-title">Preferenze AI</div>
+                <div class="wf-settings-group">
+                  <div class="wf-setting-row">
+                    <div><div class="wf-setting-label">Auto-adattamento schede</div><div class="wf-setting-desc">L'AI propone modifiche basate sui risultati</div></div>
+                    <div class="wf-toggle on"></div>
+                  </div>
+                  <div class="wf-setting-row">
+                    <div><div class="wf-setting-label">Alert ACWR automatici</div><div class="wf-setting-desc">Notifica quando ACWR > 1.3 o < 0.8</div></div>
+                    <div class="wf-toggle on"></div>
+                  </div>
+                  <div class="wf-setting-row">
+                    <div><div class="wf-setting-label">Report settimanali</div><div class="wf-setting-desc">Genera report automatico ogni luned\u00EC</div></div>
+                    <div class="wf-toggle on"></div>
+                  </div>
+                  <div class="wf-setting-row">
+                    <div><div class="wf-setting-label">Suggerimenti deload</div><div class="wf-setting-desc">L'AI suggerisce settimane di scarico</div></div>
+                    <div class="wf-toggle"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="wf-card">
+                <div class="wf-card-title">Profilo</div>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div><label class="input-label">Nome</label><input class="input-demo" value="ZZ" style="font-size:0.85rem"></div>
+                  <div><label class="input-label">Email</label><input class="input-demo" value="coach@trainmind.app" style="font-size:0.85rem"></div>
+                  <div><label class="input-label">Organizzazione</label><input class="input-demo" value="TrainMind AI" style="font-size:0.85rem"></div>
+                  <div><label class="input-label">Sport</label><input class="input-demo" value="Basket" style="font-size:0.85rem" disabled></div>
+                  <button class="btn btn-primary btn-sm" style="align-self:flex-start">Salva Modifiche</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- FOOTER -->
+<!-- ══════════════════════════════════════════════ -->
+<div style="background:var(--slate-900);color:var(--slate-400);text-align:center;padding:40px;font-size:0.85rem">
+  <div style="font-weight:700;color:var(--teal-400);font-size:1rem;margin-bottom:8px">TrainMind AI</div>
+  <div>Design System & Wireframes v1.0 — Aprile 2026</div>
+  <div style="margin-top:4px;font-size:0.75rem;opacity:0.6">Documento riservato</div>
+</div>
+
+</body>
+</html>

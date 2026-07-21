@@ -1,0 +1,110 @@
+# ============================================
+# TrainMind AI — Docker Compose (Staging)
+# ============================================
+
+services:
+  # ─── Web Frontend ─────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: trainmind-web-staging
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: 'http://api:3001'
+      NODE_ENV: 'production'
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ─── API Backend ─────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: trainmind-api-staging
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: 'production'
+      DATABASE_URL: 'postgresql://trainmind:trainmind_staging@db:5432/trainmind_staging'
+      REDIS_URL: 'redis://redis:6379'
+      API_PORT: '3001'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3001/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ─── PostgreSQL ───────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: trainmind-db-staging
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: trainmind
+      POSTGRES_PASSWORD: trainmind_staging
+      POSTGRES_DB: trainmind_staging
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U trainmind -d trainmind_staging']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - trainmind-network
+
+  # ─── Redis ───────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: trainmind-redis-staging
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data_staging:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trainmind-network
+
+volumes:
+  postgres_data_staging:
+    driver: local
+  redis_data_staging:
+    driver: local
+
+networks:
+  trainmind-network:
+    driver: bridge

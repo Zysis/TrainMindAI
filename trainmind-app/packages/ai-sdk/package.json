@@ -1,0 +1,32 @@
+{
+  "name": "@trainmind/ai-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript client for the TrainMind AI service",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit",
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

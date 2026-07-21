@@ -1,0 +1,163 @@
+# ============================================
+# TrainMind AI — Docker Compose (Production)
+# ============================================
+
+services:
+  # ─── Web Frontend ─────────────────────────────────────
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY}/web:latest
+    container_name: trainmind-web
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL:-http://api:3001}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ─── API Backend ──────────────────────────────────────
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY}/api:latest
+    container_name: trainmind-api
+    restart: always
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: '15m'
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.trainmind.ai}
+      AI_SERVICE_URL: http://ai-service:3002
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      REPORT_FROM_EMAIL: ${REPORT_FROM_EMAIL:-noreply@trainmind.ai}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3001/api/v1/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  # ─── AI Service ───────────────────────────────────────
+  ai-service:
+    image: ghcr.io/${GITHUB_REPOSITORY}/ai-service:latest
+    container_name: trainmind-ai
+    restart: always
+    ports:
+      - '3002:3002'
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: gpt-4o
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+      CHROMA_PERSIST_DIRECTORY: /data/chroma
+      DATABASE_URL: ${DATABASE_URL}
+      AI_SERVICE_PORT: 3002
+      AI_SERVICE_HOST: 0.0.0.0
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    volumes:
+      - ai_chroma_data:/data/chroma
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1'
+
+  # ─── PostgreSQL ───────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: trainmind-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-trainmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-trainmind_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-trainmind} -d ${POSTGRES_DB:-trainmind_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  # ─── Redis ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: trainmind-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ai_chroma_data:
+    driver: local
+
+networks:
+  trainmind-network:
+    driver: bridge

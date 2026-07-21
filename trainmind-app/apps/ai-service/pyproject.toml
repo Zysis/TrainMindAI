@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trainmind-ai-service"
+version = "1.0.0"
+description = "FastAPI AI Service for TrainMind Basketball Athletic Training Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    {name = "TrainMind Team", email = "dev@trainmind.ai"}
+]
+license = {text = "MIT"}
+keywords = ["fastapi", "ai", "rag", "basketball", "training"]
+
+[project.urls]
+Homepage = "https://trainmind.ai"
+Documentation = "https://docs.trainmind.ai"
+Repository = "https://github.com/trainmind/ai-service"
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

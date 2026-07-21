@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables (contiene secrets)
+.env
+
+# Dati generati (rigenerabili dalla pipeline)
+data/chunks/chunks.json
+data/chunks/embeddings.npy
+data/chunks/chunks_with_embeddings.json
+data/sft/train.jsonl
+data/sft/eval.jsonl
+
+# Output del training (pesanti, non versionare)
+outputs/lora/
+outputs/eval/
+
+# Modelli scaricati
+models/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage

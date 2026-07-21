@@ -1,0 +1,4087 @@
+[
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chin-ups",
+    "slug": "chin-ups",
+    "muscle_group_source": "biceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-curl",
+    "slug": "barbell-curl",
+    "muscle_group_source": "biceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-preacher-curl",
+    "slug": "dumbbell-preacher-curl",
+    "muscle_group_source": "biceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-curl",
+    "slug": "dumbbell-incline-curl",
+    "muscle_group_source": "biceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bilateral-bayesian-curl",
+    "slug": "cable-bilateral-bayesian-curl",
+    "muscle_group_source": "long-head-bicep"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-bayesian-curl",
+    "slug": "cable-single-arm-bayesian-curl",
+    "muscle_group_source": "long-head-bicep"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-hammer-curl",
+    "slug": "dumbbell-hammer-curl",
+    "muscle_group_source": "short-head-bicep"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-row-unilateral",
+    "slug": "dumbbell-row-unilateral",
+    "muscle_group_source": "traps-middle"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pull-ups",
+    "slug": "pull-ups",
+    "muscle_group_source": "traps-middle"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-deadlift",
+    "slug": "barbell-deadlift",
+    "muscle_group_source": "traps-middle"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-incline-shrug",
+    "slug": "kettlebell-incline-shrug",
+    "muscle_group_source": "traps-middle"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-45-degree-back-extension",
+    "slug": "machine-45-degree-back-extension",
+    "muscle_group_source": "lowerback"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-low-bar-good-morning",
+    "slug": "barbell-low-bar-good-morning",
+    "muscle_group_source": "lowerback"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/supermans",
+    "slug": "supermans",
+    "muscle_group_source": "lowerback"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hand-plank",
+    "slug": "hand-plank",
+    "muscle_group_source": "abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-situp",
+    "slug": "barbell-situp",
+    "muscle_group_source": "abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-russian-twist",
+    "slug": "dumbbell-russian-twist",
+    "muscle_group_source": "abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/laying-leg-raises",
+    "slug": "laying-leg-raises",
+    "muscle_group_source": "abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hanging-knee-raises",
+    "slug": "hanging-knee-raises",
+    "muscle_group_source": "lower-abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/long-lever-plank",
+    "slug": "long-lever-plank",
+    "muscle_group_source": "lower-abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/crunches",
+    "slug": "crunches",
+    "muscle_group_source": "upper-abdominals"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-standing-calf-raises",
+    "slug": "machine-standing-calf-raises",
+    "muscle_group_source": "calves"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-calf-raises",
+    "slug": "machine-seated-calf-raises",
+    "muscle_group_source": "calves"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-calf-raises",
+    "slug": "barbell-calf-raises",
+    "muscle_group_source": "calves"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/calves-stretch-variation-one",
+    "slug": "calves-stretch-variation-one",
+    "muscle_group_source": "calves"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-tibialis-raise",
+    "slug": "dumbbell-seated-tibialis-raise",
+    "muscle_group_source": "tibialis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/seated-tibialis-raise",
+    "slug": "seated-tibialis-raise",
+    "muscle_group_source": "tibialis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-tibialis-raise",
+    "slug": "standing-tibialis-raise",
+    "muscle_group_source": "tibialis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-standing-tibialis-raise",
+    "slug": "dumbbell-standing-tibialis-raise",
+    "muscle_group_source": "tibialis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-seated-calf-raise",
+    "slug": "kettlebell-seated-calf-raise",
+    "muscle_group_source": "soleus"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-calf-raise",
+    "slug": "dumbbell-seated-calf-raise",
+    "muscle_group_source": "soleus"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-seated-calf-raise",
+    "slug": "barbell-seated-calf-raise",
+    "muscle_group_source": "soleus"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/calf-raises",
+    "slug": "calf-raises",
+    "muscle_group_source": "gastrocnemius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-calf-raise",
+    "slug": "dumbbell-calf-raise",
+    "muscle_group_source": "gastrocnemius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-reverse-curl",
+    "slug": "dumbbell-reverse-curl",
+    "muscle_group_source": "forearms"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-reverse-curl",
+    "slug": "barbell-reverse-curl",
+    "muscle_group_source": "forearms"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-wrist-extension",
+    "slug": "dumbbell-wrist-extension",
+    "muscle_group_source": "wrist-extensors"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-farmer-walk",
+    "slug": "dumbbell-farmer-walk",
+    "muscle_group_source": "wrist-extensors"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-farmers-carry",
+    "slug": "kettlebell-farmers-carry",
+    "muscle_group_source": "wrist-flexors"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-wrist-curl",
+    "slug": "dumbbell-wrist-curl",
+    "muscle_group_source": "wrist-flexors"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-squat",
+    "slug": "barbell-squat",
+    "muscle_group_source": "glutes"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-stiff-leg-deadlifts",
+    "slug": "barbell-stiff-leg-deadlifts",
+    "muscle_group_source": "glutes"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-hip-thrust",
+    "slug": "barbell-hip-thrust",
+    "muscle_group_source": "glutes"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-goblet-squat",
+    "slug": "dumbbell-goblet-squat",
+    "muscle_group_source": "glutes"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-curtsy-lunge",
+    "slug": "barbell-curtsy-lunge",
+    "muscle_group_source": "gluteus-medius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-lateral-lunge-single",
+    "slug": "kettlebell-lateral-lunge-single",
+    "muscle_group_source": "gluteus-medius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-hip-abduction",
+    "slug": "cable-standing-hip-abduction",
+    "muscle_group_source": "gluteus-medius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-hip-and-glute-abduction",
+    "slug": "machine-hip-and-glute-abduction",
+    "muscle_group_source": "gluteus-medius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-goblet-good-morning",
+    "slug": "dumbbell-goblet-good-morning",
+    "muscle_group_source": "gluteus-maximus"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/glute-ham-raise",
+    "slug": "glute-ham-raise",
+    "muscle_group_source": "hamstrings"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-hamstring-curl",
+    "slug": "machine-hamstring-curl",
+    "muscle_group_source": "hamstrings"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/nordic-hamstring-curl",
+    "slug": "nordic-hamstring-curl",
+    "muscle_group_source": "medial-hamstrings"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-hamstring-curl",
+    "slug": "cable-hamstring-curl",
+    "muscle_group_source": "medial-hamstrings"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-romanian-deadlift",
+    "slug": "dumbbell-romanian-deadlift",
+    "muscle_group_source": "lateral-hamstrings"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-lat-prayer",
+    "slug": "cable-lat-prayer",
+    "muscle_group_source": "lats"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-overhead-press",
+    "slug": "barbell-overhead-press",
+    "muscle_group_source": "shoulders"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-overhead-press",
+    "slug": "dumbbell-seated-overhead-press",
+    "muscle_group_source": "shoulders"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-low-single-arm-lateral-raise",
+    "slug": "cable-low-single-arm-lateral-raise",
+    "muscle_group_source": "shoulders"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-upright-row",
+    "slug": "barbell-upright-row",
+    "muscle_group_source": "shoulders"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-bench-press",
+    "slug": "dumbbell-incline-bench-press",
+    "muscle_group_source": "anterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-chest-flys",
+    "slug": "dumbbell-incline-chest-flys",
+    "muscle_group_source": "anterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-face-pulls",
+    "slug": "machine-face-pulls",
+    "muscle_group_source": "posterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-reverse-fly",
+    "slug": "machine-reverse-fly",
+    "muscle_group_source": "posterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-rear-delt-fly",
+    "slug": "dumbbell-seated-rear-delt-fly",
+    "muscle_group_source": "posterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pull-apart",
+    "slug": "band-pull-apart",
+    "muscle_group_source": "posterior-deltoid"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-pushdown",
+    "slug": "cable-rope-pushdown",
+    "muscle_group_source": "triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-close-grip-bench-press",
+    "slug": "barbell-close-grip-bench-press",
+    "muscle_group_source": "triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-skullcrusher",
+    "slug": "dumbbell-skullcrusher",
+    "muscle_group_source": "triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bench-dips",
+    "slug": "bench-dips",
+    "muscle_group_source": "triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-overhead-tricep-extension",
+    "slug": "cable-rope-overhead-tricep-extension",
+    "muscle_group_source": "long-head-triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-decline-skull-crusher",
+    "slug": "kettlebell-decline-skull-crusher",
+    "muscle_group_source": "long-head-triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-skullcrusher",
+    "slug": "barbell-skullcrusher",
+    "muscle_group_source": "long-head-triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/diamond-push-ups",
+    "slug": "diamond-push-ups",
+    "muscle_group_source": "lateral-head-triceps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-silverback-shrug",
+    "slug": "barbell-silverback-shrug",
+    "muscle_group_source": "traps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-30-degree-shrug",
+    "slug": "cable-30-degree-shrug",
+    "muscle_group_source": "traps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-shrug",
+    "slug": "dumbbell-shrug",
+    "muscle_group_source": "traps"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-standing-shrugs",
+    "slug": "smith-machine-standing-shrugs",
+    "muscle_group_source": "upper-trapezius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-pulldown",
+    "slug": "machine-pulldown",
+    "muscle_group_source": "lower-trapezius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/underhand-pulldown",
+    "slug": "underhand-pulldown",
+    "muscle_group_source": "lower-trapezius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/narrow-pulldown",
+    "slug": "narrow-pulldown",
+    "muscle_group_source": "lower-trapezius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/neutral-pulldown",
+    "slug": "neutral-pulldown",
+    "muscle_group_source": "lower-trapezius"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-leg-extension",
+    "slug": "machine-leg-extension",
+    "muscle_group_source": "quads"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-step-up",
+    "slug": "barbell-step-up",
+    "muscle_group_source": "quads"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forward-lunges",
+    "slug": "forward-lunges",
+    "muscle_group_source": "inner-thigh"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-bulgarian-split-squat",
+    "slug": "dumbbell-bulgarian-split-squat",
+    "muscle_group_source": "inner-thigh"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-leg-extension",
+    "slug": "cable-standing-leg-extension",
+    "muscle_group_source": "rectus-femoris"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-goblet-sissy-squat",
+    "slug": "machine-goblet-sissy-squat",
+    "muscle_group_source": "rectus-femoris"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-sissy-squat",
+    "slug": "machine-sissy-squat",
+    "muscle_group_source": "rectus-femoris"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-sissy-squat",
+    "slug": "smith-machine-sissy-squat",
+    "muscle_group_source": "rectus-femoris"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-bench-press",
+    "slug": "barbell-bench-press",
+    "muscle_group_source": "chest"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/push-up",
+    "slug": "push-up",
+    "muscle_group_source": "chest"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-pec-fly",
+    "slug": "machine-pec-fly",
+    "muscle_group_source": "chest"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-incline-bench-press",
+    "slug": "barbell-incline-bench-press",
+    "muscle_group_source": "upper-pectoralis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-guillotine-incline-bench-press",
+    "slug": "dumbbell-guillotine-incline-bench-press",
+    "muscle_group_source": "upper-pectoralis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-chest-press",
+    "slug": "cable-chest-press",
+    "muscle_group_source": "mid-lower-pectoralis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-pec-fly",
+    "slug": "cable-pec-fly",
+    "muscle_group_source": "mid-lower-pectoralis"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-pinch-grip-farmers-carry",
+    "slug": "plate-pinch-grip-farmers-carry",
+    "muscle_group_source": "hands"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-pinch-grip-deadlift",
+    "slug": "plate-pinch-grip-deadlift",
+    "muscle_group_source": "hands"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-suitcase-deadlift",
+    "slug": "barbell-suitcase-deadlift",
+    "muscle_group_source": "hands"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/alphabet",
+    "slug": "alphabet",
+    "muscle_group_source": "feet"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/big-toe-abduction",
+    "slug": "big-toe-abduction",
+    "muscle_group_source": "feet"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/big-toe-dorsiflexion",
+    "slug": "big-toe-dorsiflexion",
+    "muscle_group_source": "feet"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-doming",
+    "slug": "standing-doming",
+    "muscle_group_source": "feet"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-neck-mobility-circumductions",
+    "slug": "standing-neck-mobility-circumductions",
+    "muscle_group_source": "neck"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-neck-extensions",
+    "slug": "standing-neck-extensions",
+    "muscle_group_source": "neck"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-neck-flexions",
+    "slug": "standing-neck-flexions",
+    "muscle_group_source": "neck"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/standing-neck-rotations",
+    "slug": "standing-neck-rotations",
+    "muscle_group_source": "neck"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-squat",
+    "slug": "bodyweight-squat",
+    "muscle_group_source": "groin"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-hip-adduction",
+    "slug": "machine-hip-adduction",
+    "muscle_group_source": "groin"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-bent-over-row",
+    "slug": "barbell-bent-over-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-curl",
+    "slug": "ez-bar-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-drag-curl",
+    "slug": "barbell-drag-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-close-grip-curl",
+    "slug": "ez-bar-close-grip-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-preacher-curl",
+    "slug": "ez-bar-preacher-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-landmine-row",
+    "slug": "barbell-landmine-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-high-pull",
+    "slug": "barbell-high-pull",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-snatch-grip-high-pull",
+    "slug": "barbell-snatch-grip-high-pull",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-sumo-deadlift",
+    "slug": "barbell-sumo-deadlift",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-romanian-deadlift",
+    "slug": "barbell-romanian-deadlift",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-low-bar-squat",
+    "slug": "barbell-low-bar-squat",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-roll-outs",
+    "slug": "barbell-roll-outs",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-front-squat-olympic",
+    "slug": "barbell-front-squat-olympic",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-sit-up",
+    "slug": "landmine-sit-up",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-larsen-bench-press",
+    "slug": "barbell-larsen-bench-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-calf-jump",
+    "slug": "barbell-calf-jump",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-toes-up-calf-raise",
+    "slug": "barbell-toes-up-calf-raise",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-calf-raise",
+    "slug": "landmine-calf-raise",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-wrist-curl",
+    "slug": "barbell-wrist-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-behind-the-back-wrist-curl",
+    "slug": "barbell-behind-the-back-wrist-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-wrist-extension",
+    "slug": "barbell-wrist-extension",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-reverse-preacher-curl",
+    "slug": "ez-bar-reverse-preacher-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-reverse-curl",
+    "slug": "ez-bar-reverse-curl",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-curtsy-lunge",
+    "slug": "landmine-curtsy-lunge",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-goblet-curtsy-lunge",
+    "slug": "landmine-goblet-curtsy-lunge",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-staggered-deadlift",
+    "slug": "barbell-staggered-deadlift",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-long-landmine-row",
+    "slug": "barbell-long-landmine-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-meadows-row",
+    "slug": "barbell-meadows-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-pronated-pendlay-row",
+    "slug": "barbell-pronated-pendlay-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-front-raise",
+    "slug": "barbell-front-raise",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-front-raise",
+    "slug": "ez-bar-front-raise",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-snatch",
+    "slug": "landmine-snatch",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-behind-the-neck-seated-overhead-press",
+    "slug": "barbell-behind-the-neck-seated-overhead-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-laying-triceps-extensions",
+    "slug": "barbell-laying-triceps-extensions",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-overhead-tricep-extension",
+    "slug": "barbell-overhead-tricep-extension",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-overhead-tricep-extension",
+    "slug": "ez-bar-overhead-tricep-extension",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-j-m-press",
+    "slug": "barbell-j-m-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-shrug",
+    "slug": "barbell-shrug",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-z-press",
+    "slug": "barbell-z-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-behind-the-back-30-degree-shrug",
+    "slug": "barbell-behind-the-back-30-degree-shrug",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ez-bar-upright-row",
+    "slug": "ez-bar-upright-row",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-high-bar-squat",
+    "slug": "barbell-high-bar-squat",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-landmine-sissy-squat",
+    "slug": "barbell-landmine-sissy-squat",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-floor-press",
+    "slug": "barbell-floor-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-guillotine-incline-bench-press",
+    "slug": "barbell-guillotine-incline-bench-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-high-incline-bench-press",
+    "slug": "barbell-high-incline-bench-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-reverse-grip-bench-press",
+    "slug": "barbell-reverse-grip-bench-press",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-landmine-side-bend",
+    "slug": "barbell-landmine-side-bend",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-alternating-lunge-and-twist",
+    "slug": "landmine-alternating-lunge-and-twist",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/landmine-kneeling-twist",
+    "slug": "landmine-kneeling-twist",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-suitcase-carry",
+    "slug": "barbell-suitcase-carry",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/barbell-banded-back-squat",
+    "slug": "barbell-banded-back-squat",
+    "muscle_group_source": "barbell"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-curl",
+    "slug": "dumbbell-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-rear-delt-row",
+    "slug": "dumbbell-rear-delt-row",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-hammer-curl",
+    "slug": "dumbbell-incline-hammer-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-reverse-curl",
+    "slug": "dumbbell-incline-reverse-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-zottman-curl",
+    "slug": "dumbbell-incline-zottman-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-drag-curl",
+    "slug": "dumbbell-drag-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-standing-single-arm-curl",
+    "slug": "dumbbell-standing-single-arm-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-silverback-shrug",
+    "slug": "dumbbell-silverback-shrug",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-row-bilateral",
+    "slug": "dumbbell-row-bilateral",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-superman",
+    "slug": "dumbbell-superman",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-situp",
+    "slug": "dumbbell-situp",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-plank-pullthrough",
+    "slug": "dumbbell-plank-pullthrough",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-hollow-hold",
+    "slug": "dumbbell-hollow-hold",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-larsen-press",
+    "slug": "dumbbell-larsen-press",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-single-arm-larsen-press",
+    "slug": "dumbbell-single-arm-larsen-press",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-crunch",
+    "slug": "dumbbell-crunch",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-suitcase-crunch",
+    "slug": "dumbbell-suitcase-crunch",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-single-leg-calf-raise",
+    "slug": "dumbbell-single-leg-calf-raise",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-bench-wrist-extension",
+    "slug": "dumbbell-bench-wrist-extension",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-single-arm-bench-braced-reverse-incline-curl",
+    "slug": "dumbbell-single-arm-bench-braced-reverse-incline-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-hip-thrust",
+    "slug": "dumbbell-hip-thrust",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-glute-bridge",
+    "slug": "dumbbell-glute-bridge",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-standing-hip-abduction",
+    "slug": "dumbbell-standing-hip-abduction",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-goblet-curtsy-lunge",
+    "slug": "dumbbell-goblet-curtsy-lunge",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-goblet-alternating-curtsy-lunge",
+    "slug": "dumbbell-goblet-alternating-curtsy-lunge",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-leg-curl",
+    "slug": "dumbbell-leg-curl",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-single-leg-stiff-leg-deadlift",
+    "slug": "dumbbell-single-leg-stiff-leg-deadlift",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-cross-body-romanian-deadlift",
+    "slug": "dumbbell-cross-body-romanian-deadlift",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-pullover",
+    "slug": "dumbbell-pullover",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-alternating-pendlay-row",
+    "slug": "dumbbell-alternating-pendlay-row",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-lateral-raise",
+    "slug": "dumbbell-lateral-raise",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-front-raise",
+    "slug": "dumbbell-front-raise",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-bayesian-lateral-raise",
+    "slug": "dumbbell-bayesian-lateral-raise",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/laying-lateral-raise",
+    "slug": "laying-lateral-raise",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-rear-delt-fly",
+    "slug": "dumbbell-rear-delt-fly",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/internally-rotated-seated-rear-delt-fly",
+    "slug": "internally-rotated-seated-rear-delt-fly",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-bench-press",
+    "slug": "dumbbell-bench-press",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-overhead-tricep-extension",
+    "slug": "dumbbell-seated-overhead-tricep-extension",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-decline-skullcrusher",
+    "slug": "dumbbell-decline-skullcrusher",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-rolling-tricep-extension",
+    "slug": "dumbbell-rolling-tricep-extension",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-skullover",
+    "slug": "dumbbell-incline-skullover",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-high-incline-skullover",
+    "slug": "dumbbell-high-incline-skullover",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-seated-shrug",
+    "slug": "dumbbell-seated-shrug",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-laying-30-degree-shrug",
+    "slug": "dumbbell-laying-30-degree-shrug",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-goblet-lateral-lunge",
+    "slug": "dumbbell-goblet-lateral-lunge",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-alternating-single-arm-thruster",
+    "slug": "dumbbell-alternating-single-arm-thruster",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-chest-fly",
+    "slug": "dumbbell-chest-fly",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-incline-chest-fly",
+    "slug": "dumbbell-incline-chest-fly",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-reverse-grip-bench-press",
+    "slug": "dumbbell-reverse-grip-bench-press",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-weighted-dip",
+    "slug": "dumbbell-weighted-dip",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-single-arm-chest-press",
+    "slug": "dumbbell-single-arm-chest-press",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-wood-chopper",
+    "slug": "dumbbell-wood-chopper",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-half-kneeling-wood-chopper",
+    "slug": "dumbbell-half-kneeling-wood-chopper",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-kneeling-wood-chopper",
+    "slug": "dumbbell-kneeling-wood-chopper",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/dumbbell-laying-reverse-fly",
+    "slug": "dumbbell-laying-reverse-fly",
+    "muscle_group_source": "dumbbells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-close-grip-inverted-curl",
+    "slug": "bodyweight-close-grip-inverted-curl",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-inverted-curl",
+    "slug": "bodyweight-inverted-curl",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-concentration-curl",
+    "slug": "bodyweight-concentration-curl",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/elevated-pike-press",
+    "slug": "elevated-pike-press",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/inverted-row",
+    "slug": "inverted-row",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-pike-press",
+    "slug": "bodyweight-pike-press",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/single-legged-romanian-deadlifts",
+    "slug": "single-legged-romanian-deadlifts",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/good-mornings",
+    "slug": "good-mornings",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-superman-pull",
+    "slug": "bodyweight-superman-pull",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hollow-hold",
+    "slug": "hollow-hold",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/walking-calf-raises",
+    "slug": "walking-calf-raises",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/tip-toe-walking",
+    "slug": "tip-toe-walking",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-donkey-calf-raise",
+    "slug": "bodyweight-donkey-calf-raise",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-single-leg-calf-raise",
+    "slug": "bodyweight-single-leg-calf-raise",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-overhand-inverted-row",
+    "slug": "bodyweight-overhand-inverted-row",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-standing-inverted-row",
+    "slug": "bodyweight-standing-inverted-row",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/glute-bridge",
+    "slug": "glute-bridge",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kickbacks",
+    "slug": "kickbacks",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/curtsy-lunge",
+    "slug": "curtsy-lunge",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-alternating-curtsy-lunge",
+    "slug": "bodyweight-alternating-curtsy-lunge",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-hip-abduction",
+    "slug": "bodyweight-hip-abduction",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/box-jump",
+    "slug": "box-jump",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/depth-jump",
+    "slug": "depth-jump",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-reverse-lunge",
+    "slug": "bodyweight-reverse-lunge",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-staggered-waiters-bow",
+    "slug": "bodyweight-staggered-waiters-bow",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-waiters-bow",
+    "slug": "bodyweight-waiters-bow",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-assisted-chin-up",
+    "slug": "bodyweight-assisted-chin-up",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-plank-arm-lift",
+    "slug": "bodyweight-plank-arm-lift",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ring-standing-pushup",
+    "slug": "ring-standing-pushup",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forward-arm-circle",
+    "slug": "forward-arm-circle",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pole-overhead-squat",
+    "slug": "pole-overhead-squat",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/backward-arm-circle",
+    "slug": "backward-arm-circle",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/box-dips",
+    "slug": "box-dips",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/incline-push-up",
+    "slug": "incline-push-up",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/decline-push-up",
+    "slug": "decline-push-up",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ring-skullcrusher",
+    "slug": "ring-skullcrusher",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-box-assisted-dips",
+    "slug": "bodyweight-box-assisted-dips",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/elevated-pike-shoulder-shrug",
+    "slug": "elevated-pike-shoulder-shrug",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-pike-shrug",
+    "slug": "bodyweight-pike-shrug",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/jump-squats",
+    "slug": "jump-squats",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bulgarian-split-squat",
+    "slug": "bulgarian-split-squat",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-reverse-step-up",
+    "slug": "bodyweight-reverse-step-up",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-assisted-sissy-squat",
+    "slug": "bodyweight-assisted-sissy-squat",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-clapping-push-up",
+    "slug": "bodyweight-clapping-push-up",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-diamond-knee-push-ups",
+    "slug": "bodyweight-diamond-knee-push-ups",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-russian-twist",
+    "slug": "bodyweight-russian-twist",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/side-plank-up-down",
+    "slug": "side-plank-up-down",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/side-plank-reach-through",
+    "slug": "side-plank-reach-through",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/elbow-side-plank",
+    "slug": "elbow-side-plank",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ring-rear-delt-fly",
+    "slug": "ring-rear-delt-fly",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bodyweight-butterfly-stretch",
+    "slug": "bodyweight-butterfly-stretch",
+    "muscle_group_source": "bodyweight"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-cable-row",
+    "slug": "machine-seated-cable-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-bicep-curl",
+    "slug": "machine-bicep-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-plate-loaded-preacher-curl",
+    "slug": "machine-seated-plate-loaded-preacher-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-standing-plate-loaded-preacher-curl",
+    "slug": "machine-standing-plate-loaded-preacher-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-low-row",
+    "slug": "machine-plate-loaded-low-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-back-extension",
+    "slug": "machine-back-extension",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-reverse-hyperextension",
+    "slug": "machine-reverse-hyperextension",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-roll-outs",
+    "slug": "machine-roll-outs",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-crunch",
+    "slug": "machine-crunch",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-crunch",
+    "slug": "machine-plate-loaded-crunch",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rower-pike",
+    "slug": "rower-pike",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rower-knee-tuck",
+    "slug": "rower-knee-tuck",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-calf-raise",
+    "slug": "machine-plate-loaded-calf-raise",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-45-degree-calf-raise",
+    "slug": "machine-45-degree-calf-raise",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-horizontal-leg-press-calf-raise",
+    "slug": "machine-horizontal-leg-press-calf-raise",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-leg-press",
+    "slug": "machine-leg-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-belt-squat",
+    "slug": "machine-belt-squat",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/vertical-leg-press",
+    "slug": "vertical-leg-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/gluteator",
+    "slug": "gluteator",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-hip-abduction",
+    "slug": "machine-hip-abduction",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-glute-kickback",
+    "slug": "machine-glute-kickback",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-hamstring-curl",
+    "slug": "machine-seated-hamstring-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-kneeling-hamstring-curl",
+    "slug": "machine-plate-loaded-kneeling-hamstring-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/seated-leg-curl",
+    "slug": "seated-leg-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-leg-curl",
+    "slug": "machine-seated-leg-curl",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-row",
+    "slug": "machine-plate-loaded-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-t-bar-row",
+    "slug": "machine-plate-loaded-t-bar-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-overhand-row",
+    "slug": "machine-overhand-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-rear-deltoid-row",
+    "slug": "machine-rear-deltoid-row",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-cable-v-bar-push-downs",
+    "slug": "machine-cable-v-bar-push-downs",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-dips",
+    "slug": "machine-dips",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-tricep-pushdown",
+    "slug": "machine-tricep-pushdown",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-overhead-tricep-extension",
+    "slug": "machine-overhead-tricep-extension",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-seated-shrug",
+    "slug": "machine-seated-shrug",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-standing-shrug",
+    "slug": "machine-standing-shrug",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-leg-extension",
+    "slug": "machine-plate-loaded-leg-extension",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-hip-and-glute-adduction",
+    "slug": "machine-hip-and-glute-adduction",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-bent-arm-pec-fly",
+    "slug": "machine-bent-arm-pec-fly",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-low-incline-bench-press",
+    "slug": "machine-plate-loaded-low-incline-bench-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-plate-loaded-decline-chest-press",
+    "slug": "machine-plate-loaded-decline-chest-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-assisted-parallel-bar-dips",
+    "slug": "machine-assisted-parallel-bar-dips",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-standing-lateral-raise",
+    "slug": "machine-standing-lateral-raise",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-front-military-press",
+    "slug": "machine-front-military-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-neutral-overhead-press",
+    "slug": "machine-neutral-overhead-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/machine-overhand-overhead-press",
+    "slug": "machine-overhand-overhead-press",
+    "muscle_group_source": "machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/single-leg-deadlift",
+    "slug": "single-leg-deadlift",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/halo",
+    "slug": "halo",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/partner-situp-toss",
+    "slug": "partner-situp-toss",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plank",
+    "slug": "plank",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/slam",
+    "slug": "slam",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/clean-and-press-slam",
+    "slug": "clean-and-press-slam",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ball-headlock-squat",
+    "slug": "ball-headlock-squat",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ball-offset-squat",
+    "slug": "ball-offset-squat",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/overhead-reverse-lunge",
+    "slug": "overhead-reverse-lunge",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hip-abduction",
+    "slug": "hip-abduction",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/medicine-ball-lateral-lunge-slam",
+    "slug": "medicine-ball-lateral-lunge-slam",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/press-jack",
+    "slug": "press-jack",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/self-toss",
+    "slug": "self-toss",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/squat-reach",
+    "slug": "squat-reach",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-press-partner-toss",
+    "slug": "chest-press-partner-toss",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/medicine-ball-push-up",
+    "slug": "medicine-ball-push-up",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/walkover-pushup",
+    "slug": "walkover-pushup",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-press-slam",
+    "slug": "chest-press-slam",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-press-toss",
+    "slug": "chest-press-toss",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/half-kneeling-wood-chopper",
+    "slug": "half-kneeling-wood-chopper",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/medicine-ball-kneeling-wood-chopper",
+    "slug": "medicine-ball-kneeling-wood-chopper",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/partner-side-toss",
+    "slug": "partner-side-toss",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rainbow-slam",
+    "slug": "rainbow-slam",
+    "muscle_group_source": "medicine-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-goblet-curl",
+    "slug": "kettlebell-goblet-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-curl",
+    "slug": "kettlebell-single-arm-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-preacher-curl",
+    "slug": "kettlebell-preacher-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-concentration-curl",
+    "slug": "kettlebell-concentration-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-drag-curl",
+    "slug": "kettlebell-drag-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-silverback-shrug-single",
+    "slug": "kettlebell-silverback-shrug-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-row-single",
+    "slug": "kettlebell-row-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-deadlift-single",
+    "slug": "kettlebell-deadlift-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-staggered-deadlift-single",
+    "slug": "kettlebell-staggered-deadlift-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-swing",
+    "slug": "kettlebell-swing",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-goblet-good-morning",
+    "slug": "kettlebell-goblet-good-morning",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-leg-deadlift",
+    "slug": "kettlebell-single-leg-deadlift",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-russian-twist",
+    "slug": "kettlebell-russian-twist",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-windmill",
+    "slug": "kettlebell-windmill",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-situp",
+    "slug": "kettlebell-situp",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-larsen-press",
+    "slug": "kettlebell-larsen-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-larsen-press",
+    "slug": "kettlebell-single-arm-larsen-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-calf-raise",
+    "slug": "kettlebell-calf-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-leg-calf-raise",
+    "slug": "kettlebell-single-leg-calf-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-goblet-calf-raise",
+    "slug": "kettlebell-goblet-calf-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-tibialis-raise",
+    "slug": "kettlebell-tibialis-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-seated-calf-raise-double",
+    "slug": "kettlebell-seated-calf-raise-double",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-calf-raise",
+    "slug": "kettlebell-single-arm-calf-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-leg-single-arm-calf-raise",
+    "slug": "kettlebell-single-leg-single-arm-calf-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-wrist-curl",
+    "slug": "kettlebell-wrist-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-wrist-extension",
+    "slug": "kettlebell-wrist-extension",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-bench-wrist-extension",
+    "slug": "kettlebell-bench-wrist-extension",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-reverse-curl",
+    "slug": "kettlebell-single-arm-reverse-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-bench-wrist-curl",
+    "slug": "kettlebell-bench-wrist-curl",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-farmers-march",
+    "slug": "kettlebell-single-arm-farmers-march",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-forward-lunge",
+    "slug": "kettlebell-single-arm-forward-lunge",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-step-up",
+    "slug": "kettlebell-step-up",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-hip-thrust",
+    "slug": "kettlebell-hip-thrust",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-goblet-squat",
+    "slug": "kettlebell-goblet-squat",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-front-rack-curtsy-lunge-double",
+    "slug": "kettlebell-front-rack-curtsy-lunge-double",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-front-rack-lateral-lunge-double",
+    "slug": "kettlebell-front-rack-lateral-lunge-double",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-front-rack-single-arm-lateral-lunge",
+    "slug": "kettlebell-front-rack-single-arm-lateral-lunge",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/Kettlebell-single-arm-curtsy-lunge",
+    "slug": "Kettlebell-single-arm-curtsy-lunge",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-alternating-curtsy-lunge",
+    "slug": "kettlebell-alternating-curtsy-lunge",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-alternating-single-arm-thruster",
+    "slug": "kettlebell-alternating-single-arm-thruster",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-thruster",
+    "slug": "kettlebell-single-arm-thruster",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-row",
+    "slug": "kettlebell-single-arm-row",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-pullover",
+    "slug": "kettlebell-pullover",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-shoulder-extension",
+    "slug": "kettlebell-shoulder-extension",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-upright-row",
+    "slug": "kettlebell-upright-row",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-front-raise",
+    "slug": "kettlebell-front-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-rear-delt-row",
+    "slug": "kettlebell-rear-delt-row",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-long-lever-lateral-raise",
+    "slug": "kettlebell-long-lever-lateral-raise",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-seated-overhead-press",
+    "slug": "kettlebell-seated-overhead-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-upright-row-single",
+    "slug": "kettlebell-upright-row-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-thruster",
+    "slug": "kettlebell-thruster",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-push-press",
+    "slug": "kettlebell-single-arm-push-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-rear-delt-row-double",
+    "slug": "kettlebell-rear-delt-row-double",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-rear-delt-fly",
+    "slug": "kettlebell-single-arm-rear-delt-fly",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-rear-delt-row",
+    "slug": "kettlebell-single-arm-rear-delt-row",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-chest-press-single",
+    "slug": "kettlebell-chest-press-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-press",
+    "slug": "kettlebell-single-arm-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-walkover-pushup",
+    "slug": "kettlebell-walkover-pushup",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-tate-press",
+    "slug": "kettlebell-tate-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-overhead-tricep-extension",
+    "slug": "kettlebell-overhead-tricep-extension",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-shrug-single",
+    "slug": "kettlebell-shrug-single",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-shrug",
+    "slug": "kettlebell-shrug",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-silverback-shrug",
+    "slug": "kettlebell-silverback-shrug",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-lateral-lunge",
+    "slug": "kettlebell-lateral-lunge",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-chest-fly",
+    "slug": "kettlebell-single-arm-chest-fly",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-high-incline-bench-press",
+    "slug": "kettlebell-high-incline-bench-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-incline-bench-press",
+    "slug": "kettlebell-incline-bench-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-chest-press",
+    "slug": "kettlebell-single-arm-chest-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-single-arm-high-incline-chest-press",
+    "slug": "kettlebell-single-arm-high-incline-chest-press",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-wood-chopper",
+    "slug": "kettlebell-wood-chopper",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-gorilla-row",
+    "slug": "kettlebell-gorilla-row",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-farmers-march",
+    "slug": "kettlebell-farmers-march",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/kettlebell-walking-farmers-march",
+    "slug": "kettlebell-walking-farmers-march",
+    "muscle_group_source": "kettlebells"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/biceps-stretch-variation-one",
+    "slug": "biceps-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/biceps-stretch-variation-two",
+    "slug": "biceps-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/biceps-stretch-variation-three",
+    "slug": "biceps-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/biceps-stretch-variation-four",
+    "slug": "biceps-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/traps-mid-back-stretch-variation-one",
+    "slug": "traps-mid-back-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/traps-mid-back-stretch-variation-two",
+    "slug": "traps-mid-back-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lower-back-stretch-variation-one",
+    "slug": "lower-back-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lower-back-stretch-variation-two",
+    "slug": "lower-back-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lower-back-stretch-variation-three",
+    "slug": "lower-back-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lower-back-stretch-variation-four",
+    "slug": "lower-back-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/abdominals-stretch-variation-one",
+    "slug": "abdominals-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/abdominals-stretch-variation-two",
+    "slug": "abdominals-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/abdominals-stretch-variation-three",
+    "slug": "abdominals-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/abdominals-stretch-variation-four",
+    "slug": "abdominals-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/calves-stretch-variation-two",
+    "slug": "calves-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/calves-stretch-variation-three",
+    "slug": "calves-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forearms-stretch-variation-one",
+    "slug": "forearms-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forearms-stretch-variation-two",
+    "slug": "forearms-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forearms-stretch-variation-three",
+    "slug": "forearms-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/forearms-stretch-variation-four",
+    "slug": "forearms-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/glutes-stretch-variation-one",
+    "slug": "glutes-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/glutes-stretch-variation-two",
+    "slug": "glutes-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/glutes-stretch-variation-three",
+    "slug": "glutes-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hamstrings-stretch-variation-one",
+    "slug": "hamstrings-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hamstrings-stretch-variation-two",
+    "slug": "hamstrings-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hamstrings-stretch-variation-three",
+    "slug": "hamstrings-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/hamstrings-stretch-variation-four",
+    "slug": "hamstrings-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lats-stretch-variation-one",
+    "slug": "lats-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lats-stretch-variation-two",
+    "slug": "lats-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/lats-stretch-variation-three",
+    "slug": "lats-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/shoulders-stretch-variation-one",
+    "slug": "shoulders-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/shoulders-stretch-variation-two",
+    "slug": "shoulders-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/shoulders-stretch-variation-three",
+    "slug": "shoulders-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/shoulders-stretch-variation-four",
+    "slug": "shoulders-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/alternating-pole-rotation",
+    "slug": "alternating-pole-rotation",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pole-rotation",
+    "slug": "pole-rotation",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/triceps-stretch-variation-one",
+    "slug": "triceps-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/triceps-stretch-variation-two",
+    "slug": "triceps-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/triceps-stretch-variation-three",
+    "slug": "triceps-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/traps-stretch-variation-one",
+    "slug": "traps-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/traps-stretch-variation-two",
+    "slug": "traps-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/traps-stretch-variation-three",
+    "slug": "traps-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/quads-stretch-variation-one",
+    "slug": "quads-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/quads-stretch-variation-two",
+    "slug": "quads-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/quads-stretch-variation-three",
+    "slug": "quads-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/quads-stretch-variation-four",
+    "slug": "quads-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-stretch-variation-one",
+    "slug": "chest-stretch-variation-one",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-stretch-variation-two",
+    "slug": "chest-stretch-variation-two",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-stretch-variation-three",
+    "slug": "chest-stretch-variation-three",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chest-stretch-variation-four",
+    "slug": "chest-stretch-variation-four",
+    "muscle_group_source": "stretches"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-hammer-curl",
+    "slug": "cable-single-arm-hammer-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-pull-in",
+    "slug": "cable-pull-in",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-twisting-curl",
+    "slug": "cable-twisting-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-curl",
+    "slug": "cable-bar-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-hammer-curl",
+    "slug": "cable-rope-hammer-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-silverback-shrug",
+    "slug": "cable-silverback-shrug",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-row-bar-standing-row",
+    "slug": "cable-row-bar-standing-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-underhand-grip-row",
+    "slug": "cable-single-arm-underhand-grip-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-neutral-grip-row",
+    "slug": "cable-single-arm-neutral-grip-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-straight-leg-glute-glute-kickback",
+    "slug": "cable-standing-straight-leg-glute-glute-kickback",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-romanian-deadlift",
+    "slug": "cable-bar-romanian-deadlift",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-goblet-squat",
+    "slug": "cable-goblet-squat",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-leg-deadlift",
+    "slug": "cable-single-leg-deadlift",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-row-bar-kneeling-crunch",
+    "slug": "cable-row-bar-kneeling-crunch",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-crunch",
+    "slug": "cable-standing-crunch",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-low-to-high-wood-chopper",
+    "slug": "cable-standing-low-to-high-wood-chopper",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-high-to-low-wood-chopper",
+    "slug": "cable-standing-high-to-low-wood-chopper",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-kneeling-crunch",
+    "slug": "cable-rope-kneeling-crunch",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-kneeling-oblique-crunch",
+    "slug": "cable-rope-kneeling-oblique-crunch",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-calve-raise",
+    "slug": "cable-calve-raise",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-calve-raise",
+    "slug": "cable-bar-calve-raise",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-belt-calf-raise",
+    "slug": "cable-belt-calf-raise",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-wrist-extension",
+    "slug": "cable-wrist-extension",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-wrist-curl",
+    "slug": "cable-wrist-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-reverse-curl",
+    "slug": "cable-single-arm-reverse-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-reverse-grip-curl",
+    "slug": "cable-bar-reverse-grip-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-seated-bayesian-reverse-curl",
+    "slug": "cable-seated-bayesian-reverse-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-reverse-bayesian-curl",
+    "slug": "cable-reverse-bayesian-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-quadruped-hip-abduction",
+    "slug": "cable-quadruped-hip-abduction",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-pull-through",
+    "slug": "cable-pull-through",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-glute-kickback",
+    "slug": "cable-standing-glute-kickback",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-seated-leg-curl",
+    "slug": "cable-seated-leg-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-leg-laying-leg-curl",
+    "slug": "cable-single-leg-laying-leg-curl",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-staggered-romanian-deadlift",
+    "slug": "cable-bar-staggered-romanian-deadlift",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bent-over-bar-pullover",
+    "slug": "cable-bent-over-bar-pullover",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-lat-prayer",
+    "slug": "cable-single-arm-lat-prayer",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-overhead-press",
+    "slug": "cable-overhead-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-upright-row",
+    "slug": "cable-upright-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-low-bilateral-lateral-raise",
+    "slug": "cable-low-bilateral-lateral-raise",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-single-arm-chest-press",
+    "slug": "cable-standing-single-arm-chest-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-single-arm-incline-chest-press",
+    "slug": "cable-standing-single-arm-incline-chest-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-high-single-arm-rear-delt-fly",
+    "slug": "cable-high-single-arm-rear-delt-fly",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-archer-row",
+    "slug": "cable-archer-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-high-internally-rotated-reverse-fly",
+    "slug": "cable-high-internally-rotated-reverse-fly",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-rope-skullcrusher",
+    "slug": "cable-rope-skullcrusher",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-cross-pushdown",
+    "slug": "cable-cross-pushdown",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-overhead-tricep-press",
+    "slug": "cable-overhead-tricep-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-overhead-tricep-extension",
+    "slug": "cable-single-arm-overhead-tricep-extension",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-pushdown",
+    "slug": "cable-bar-pushdown",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bar-reverse-grip-pushdown",
+    "slug": "cable-bar-reverse-grip-pushdown",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-tricep-kickback",
+    "slug": "cable-tricep-kickback",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-30-degree-shrug",
+    "slug": "cable-single-arm-30-degree-shrug",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-split-squat",
+    "slug": "cable-split-squat",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-belt-squat",
+    "slug": "cable-belt-squat",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-standing-hip-adduction",
+    "slug": "cable-standing-hip-adduction",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-decline-press-around",
+    "slug": "cable-decline-press-around",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-incline-press-around",
+    "slug": "cable-incline-press-around",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-incline-bench-press",
+    "slug": "cable-incline-bench-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-incline-bench-press",
+    "slug": "cable-single-arm-incline-bench-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-incline-fly-around",
+    "slug": "cable-incline-fly-around",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bench-chest-fly",
+    "slug": "cable-bench-chest-fly",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-bench-press",
+    "slug": "cable-bench-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-pallof-press",
+    "slug": "cable-pallof-press",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-wood-chopper",
+    "slug": "cable-wood-chopper",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-half-kneeling-high-to-low-wood-chopper",
+    "slug": "cable-half-kneeling-high-to-low-wood-chopper",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-half-kneeling-low-to-high-wood-chopper",
+    "slug": "cable-half-kneeling-low-to-high-wood-chopper",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-single-arm-rear-delt-row",
+    "slug": "cable-single-arm-rear-delt-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cable-supinating-row",
+    "slug": "cable-supinating-row",
+    "muscle_group_source": "cables"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-bayesian-curl",
+    "slug": "band-bayesian-curl",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-row",
+    "slug": "band-row",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-kneeling-single-arm-pulldown",
+    "slug": "band-kneeling-single-arm-pulldown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-bayesian-hammer-curl",
+    "slug": "band-bayesian-hammer-curl",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-bayesian-reverse-curl",
+    "slug": "band-bayesian-reverse-curl",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-horizontal-shrug",
+    "slug": "band-horizontal-shrug",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-high-face-pull",
+    "slug": "band-high-face-pull",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-rear-delt-fly",
+    "slug": "band-rear-delt-fly",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-romanian-deadlift",
+    "slug": "band-romanian-deadlift",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-good-morning",
+    "slug": "band-good-morning",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pullthrough",
+    "slug": "band-pullthrough",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-standing-glute-kickback",
+    "slug": "mini-band-standing-glute-kickback",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-crunch",
+    "slug": "band-crunch",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-leg-raise",
+    "slug": "mini-band-leg-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-walking-mountain-climber",
+    "slug": "mini-band-walking-mountain-climber",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-mountain-climber",
+    "slug": "mini-band-mountain-climber",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-calf-raise",
+    "slug": "band-calf-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-kneeling-row",
+    "slug": "mini-band-kneeling-row",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-bent-over-row",
+    "slug": "mini-band-bent-over-row",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-squat",
+    "slug": "band-squat",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-glute-kickback",
+    "slug": "band-glute-kickback",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-leg-press",
+    "slug": "band-leg-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-hip-abduction",
+    "slug": "band-hip-abduction",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-clamshell",
+    "slug": "mini-band-clamshell",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/side-walks-resisted",
+    "slug": "side-walks-resisted",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-fire-hydrant",
+    "slug": "mini-band-fire-hydrant",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-single-leg-deadlift",
+    "slug": "mini-band-single-leg-deadlift",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-standing-good-morning",
+    "slug": "band-standing-good-morning",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pullover",
+    "slug": "band-pullover",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-overhead-fly",
+    "slug": "mini-band-overhead-fly",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-single-arm-overhead-press",
+    "slug": "band-single-arm-overhead-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-face-pull",
+    "slug": "band-face-pull",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-lateral-raise",
+    "slug": "band-lateral-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-single-arm-lateral-raise",
+    "slug": "band-single-arm-lateral-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-upright-row",
+    "slug": "band-upright-row",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-front-raise",
+    "slug": "band-front-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-overhead-press",
+    "slug": "band-overhead-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pushup",
+    "slug": "band-pushup",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pushdown",
+    "slug": "band-pushdown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-single-arm-chest-press",
+    "slug": "band-single-arm-chest-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-skullcrusher",
+    "slug": "band-skullcrusher",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-overhead-tricep-extension",
+    "slug": "band-overhead-tricep-extension",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-shrug",
+    "slug": "band-shrug",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-half-kneeling-single-arm-pulldown",
+    "slug": "band-half-kneeling-single-arm-pulldown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-kneeling-pulldown",
+    "slug": "band-kneeling-pulldown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-seated-pulldown",
+    "slug": "band-seated-pulldown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-seated-single-arm-pulldown",
+    "slug": "band-seated-single-arm-pulldown",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-spanish-squat",
+    "slug": "band-spanish-squat",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-squat",
+    "slug": "mini-band-squat",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-hip-adduction",
+    "slug": "band-hip-adduction",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-laying-hip-flexion",
+    "slug": "mini-band-laying-hip-flexion",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-single-leg-raise",
+    "slug": "mini-band-single-leg-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-standing-hip-flexion",
+    "slug": "mini-band-standing-hip-flexion",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-single-arm-pec-fly",
+    "slug": "band-single-arm-pec-fly",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-single-arm-internally-rotated-chest-fly",
+    "slug": "band-single-arm-internally-rotated-chest-fly",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-bench-press",
+    "slug": "band-bench-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-press-around",
+    "slug": "band-press-around",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pallof-press",
+    "slug": "band-pallof-press",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-wood-chopper",
+    "slug": "band-wood-chopper",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-side-bend",
+    "slug": "band-side-bend",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/band-pallof-press-to-wood-chopper",
+    "slug": "band-pallof-press-to-wood-chopper",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mini-band-bent-arm-lateral-raise",
+    "slug": "mini-band-bent-arm-lateral-raise",
+    "muscle_group_source": "band"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-bicep-curl",
+    "slug": "plate-bicep-curl",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-curl-to-overhead-press",
+    "slug": "plate-curl-to-overhead-press",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-curl-to-overhead-press-to-tricep-extension",
+    "slug": "plate-curl-to-overhead-press-to-tricep-extension",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-squat-hold-curl",
+    "slug": "plate-squat-hold-curl",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-internally-rotated-rear-delt-fly",
+    "slug": "plate-internally-rotated-rear-delt-fly",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-rear-delt-fly",
+    "slug": "plate-rear-delt-fly",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-weighted-inverted-row",
+    "slug": "plate-weighted-inverted-row",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/weighted-pull-ups",
+    "slug": "weighted-pull-ups",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-deadlift",
+    "slug": "plate-deadlift",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-single-leg-pinch-grip-deadlift",
+    "slug": "plate-single-leg-pinch-grip-deadlift",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-good-morning-anterior",
+    "slug": "plate-good-morning-anterior",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-good-morning",
+    "slug": "plate-good-morning",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-overhead-carry",
+    "slug": "plate-overhead-carry",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-russian-twist",
+    "slug": "plate-russian-twist",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-situp",
+    "slug": "plate-situp",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/weighted-forearm-plank",
+    "slug": "weighted-forearm-plank",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-pinch-grip-side-bend",
+    "slug": "plate-pinch-grip-side-bend",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-pinch-grip-row",
+    "slug": "plate-pinch-grip-row",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-squat",
+    "slug": "plate-squat",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-clean-and-press",
+    "slug": "plate-clean-and-press",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-squat-reach",
+    "slug": "plate-squat-reach",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-clean",
+    "slug": "plate-clean",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-curtsy-lunge",
+    "slug": "plate-curtsy-lunge",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-hip-abduction",
+    "slug": "plate-hip-abduction",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-alternating-deadstop-row",
+    "slug": "plate-alternating-deadstop-row",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-glute-bridge-to-pullover",
+    "slug": "plate-glute-bridge-to-pullover",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-squat-hold-reach",
+    "slug": "plate-squat-hold-reach",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-halo",
+    "slug": "plate-halo",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-overhead-tricep-extension",
+    "slug": "plate-overhead-tricep-extension",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-overhead-press-to-tricep-extension",
+    "slug": "plate-overhead-press-to-tricep-extension",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/weighted-diamond-push-ups",
+    "slug": "weighted-diamond-push-ups",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-overhead-shrug",
+    "slug": "plate-overhead-shrug",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-deficit-pushup",
+    "slug": "plate-deficit-pushup",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-glute-bridge-to-chest-press",
+    "slug": "plate-glute-bridge-to-chest-press",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/weighted-push-ups",
+    "slug": "weighted-push-ups",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/weighted-knee-push-ups",
+    "slug": "weighted-knee-push-ups",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-weighted-dip",
+    "slug": "plate-weighted-dip",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-reverse-lunge-twist",
+    "slug": "plate-reverse-lunge-twist",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/plate-standing-twist",
+    "slug": "plate-standing-twist",
+    "muscle_group_source": "plate"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-curl",
+    "slug": "trx-curl",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-hammer-curl",
+    "slug": "trx-hammer-curl",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-reverse-curl",
+    "slug": "trx-reverse-curl",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-rotating-row",
+    "slug": "trx-rotating-row",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-rear-delt-fly",
+    "slug": "trx-rear-delt-fly",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-rear-delt-row",
+    "slug": "trx-rear-delt-row",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-w-raise",
+    "slug": "trx-w-raise",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-ab-rollout",
+    "slug": "trx-ab-rollout",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-forearm-plank",
+    "slug": "trx-forearm-plank",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-hand-plank",
+    "slug": "trx-hand-plank",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-kneeling-ab-rollout",
+    "slug": "trx-kneeling-ab-rollout",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-knee-tuck",
+    "slug": "trx-knee-tuck",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-mountain-climber",
+    "slug": "trx-mountain-climber",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-pike",
+    "slug": "trx-pike",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-calf-raise",
+    "slug": "trx-calf-raise",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-curtsy-lunge",
+    "slug": "trx-curtsy-lunge",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-glute-bridge",
+    "slug": "trx-glute-bridge",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-jumping-squat",
+    "slug": "trx-jumping-squat",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-lateral-lunge",
+    "slug": "trx-lateral-lunge",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-hamstring-curl",
+    "slug": "trx-hamstring-curl",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-single-arm-row",
+    "slug": "trx-single-arm-row",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-i-raise",
+    "slug": "trx-i-raise",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-pushup",
+    "slug": "trx-pushup",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-y-raise",
+    "slug": "trx-y-raise",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-skullcrusher",
+    "slug": "trx-skullcrusher",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-reverse-lunge",
+    "slug": "trx-reverse-lunge",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-pec-fly",
+    "slug": "trx-pec-fly",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-forearm-side-plank",
+    "slug": "trx-forearm-side-plank",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/trx-oblique-crunch",
+    "slug": "trx-oblique-crunch",
+    "muscle_group_source": "trx"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/corpe-pose",
+    "slug": "corpe-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/crow-pose",
+    "slug": "crow-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/downward-dog",
+    "slug": "downward-dog",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/downward-dog-with-fingers-facing-feet",
+    "slug": "downward-dog-with-fingers-facing-feet",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cat-pose",
+    "slug": "cat-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/easy-seated-twist-pose",
+    "slug": "easy-seated-twist-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/revolved-side-angle-pose-with-prayer-hands-beginner",
+    "slug": "revolved-side-angle-pose-with-prayer-hands-beginner",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/revolved-side-angle-pose-with-prayer-hands",
+    "slug": "revolved-side-angle-pose-with-prayer-hands",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/happy-baby",
+    "slug": "happy-baby",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/sphinx-pose",
+    "slug": "sphinx-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/cobra-pose",
+    "slug": "cobra-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/urdhva-dhanurasana-wheel-pose",
+    "slug": "urdhva-dhanurasana-wheel-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/downward-dog-toe-to-heel",
+    "slug": "downward-dog-toe-to-heel",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pyramid-pose-calf-blocks",
+    "slug": "pyramid-pose-calf-blocks",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/walk-your-downward-dog",
+    "slug": "walk-your-downward-dog",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/table-top-pose-variation-1",
+    "slug": "table-top-pose-variation-1",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/table-top-pose-variation-2",
+    "slug": "table-top-pose-variation-2",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/table-top-pose-variation-3",
+    "slug": "table-top-pose-variation-3",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/vajrasana-variation-1",
+    "slug": "vajrasana-variation-1",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/double-pigeon-pose",
+    "slug": "double-pigeon-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/half-lotus",
+    "slug": "half-lotus",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pigeon-pose",
+    "slug": "pigeon-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/reclining-pigeon-pose",
+    "slug": "reclining-pigeon-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/half-monkey-pose",
+    "slug": "half-monkey-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/seated-forward-bend",
+    "slug": "seated-forward-bend",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pyramid-pose-blocks",
+    "slug": "pyramid-pose-blocks",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pyramid-pose",
+    "slug": "pyramid-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/child-pose-arms-extended",
+    "slug": "child-pose-arms-extended",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/child-pose-arms-extended-left-right",
+    "slug": "child-pose-arms-extended-left-right",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/child-pose-arms-on-side",
+    "slug": "child-pose-arms-on-side",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/extended-side-angle-pose",
+    "slug": "extended-side-angle-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/eagle-arm-pose",
+    "slug": "eagle-arm-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/headstand",
+    "slug": "headstand",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/wide-legged-forward-fall",
+    "slug": "wide-legged-forward-fall",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/puppy-pose",
+    "slug": "puppy-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/reverse-prayer",
+    "slug": "reverse-prayer",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/child-pose-elbows-on-block",
+    "slug": "child-pose-elbows-on-block",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/one-arm-cow-face-pose",
+    "slug": "one-arm-cow-face-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pyramid-prayer",
+    "slug": "pyramid-prayer",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bow-tie-pose",
+    "slug": "bow-tie-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/eagle-arms-chin-into-chest",
+    "slug": "eagle-arms-chin-into-chest",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/easy-pose-neck-stretch",
+    "slug": "easy-pose-neck-stretch",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/half-neck-rolls",
+    "slug": "half-neck-rolls",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/chair-pose",
+    "slug": "chair-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/crescent-moon-pose",
+    "slug": "crescent-moon-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/crescent-moon-pose-quad-stretch",
+    "slug": "crescent-moon-pose-quad-stretch",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/crescent-moon-pose-quad-stretch-with-block",
+    "slug": "crescent-moon-pose-quad-stretch-with-block",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bow-pose",
+    "slug": "bow-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/mountain",
+    "slug": "mountain",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/supported-matsyasana-pose",
+    "slug": "supported-matsyasana-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/tree-pose",
+    "slug": "tree-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/gate-pose-variation-arm-extended-on-side",
+    "slug": "gate-pose-variation-arm-extended-on-side",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/revolved-head-to-knee",
+    "slug": "revolved-head-to-knee",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/seated-side-bend-pose",
+    "slug": "seated-side-bend-pose",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/supine-twist-lying",
+    "slug": "supine-twist-lying",
+    "muscle_group_source": "yoga"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-single-leg-hip-thrust",
+    "slug": "bosu-ball-single-leg-hip-thrust",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-superman",
+    "slug": "bosu-ball-superman",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-forearm-plank",
+    "slug": "bosu-ball-forearm-plank",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-hand-plank",
+    "slug": "bosu-ball-hand-plank",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-plank-glute-kickback",
+    "slug": "bosu-ball-plank-glute-kickback",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-situp",
+    "slug": "bosu-ball-situp",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-toe-tap",
+    "slug": "bosu-ball-toe-tap",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-up-and-over",
+    "slug": "bosu-ball-up-and-over",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-calf-raise",
+    "slug": "bosu-ball-calf-raise",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-burpee",
+    "slug": "bosu-ball-burpee",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-feet-elevated-glute-bridge",
+    "slug": "bosu-ball-feet-elevated-glute-bridge",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-half-burpee",
+    "slug": "bosu-ball-half-burpee",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-hip-thrust",
+    "slug": "bosu-ball-hip-thrust",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-hand-sideplank-hip-abduction",
+    "slug": "bosu-ball-hand-sideplank-hip-abduction",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-lateral-lunge",
+    "slug": "bosu-ball-lateral-lunge",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-pullover",
+    "slug": "bosu-ball-pullover",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-row",
+    "slug": "bosu-ball-row",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-pike-pushup",
+    "slug": "bosu-ball-pike-pushup",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-front-raise",
+    "slug": "bosu-ball-front-raise",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-offset-pushup",
+    "slug": "bosu-ball-offset-pushup",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-pushup",
+    "slug": "bosu-ball-pushup",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-walkover-pushup",
+    "slug": "bosu-ball-walkover-pushup",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-pike-shrug",
+    "slug": "bosu-ball-pike-shrug",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-reverse-lunge",
+    "slug": "bosu-ball-reverse-lunge",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-forearm-sideplank",
+    "slug": "bosu-ball-forearm-sideplank",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-hand-sideplank",
+    "slug": "bosu-ball-hand-sideplank",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/bosu-ball-wood-chopper",
+    "slug": "bosu-ball-wood-chopper",
+    "muscle_group_source": "bosu-ball"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/stationary-bike",
+    "slug": "stationary-bike",
+    "muscle_group_source": "cardio"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/jump-rope",
+    "slug": "jump-rope",
+    "muscle_group_source": "cardio"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/elliptical",
+    "slug": "elliptical",
+    "muscle_group_source": "cardio"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/butt-kick",
+    "slug": "butt-kick",
+    "muscle_group_source": "cardio"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-drag-curl",
+    "slug": "smith-machine-drag-curl",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-underhand-row",
+    "slug": "smith-machine-underhand-row",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-overhand-row",
+    "slug": "smith-machine-overhand-row",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-inverted-row",
+    "slug": "smith-machine-inverted-row",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-assisted-pullup",
+    "slug": "smith-machine-assisted-pullup",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-staggered-deadlift",
+    "slug": "smith-machine-staggered-deadlift",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-sumo-romanian-deadlift",
+    "slug": "smith-machine-sumo-romanian-deadlift",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-hanging-knee-tuck",
+    "slug": "smith-machine-hanging-knee-tuck",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-reverse-crunch-hip-raise",
+    "slug": "smith-machine-reverse-crunch-hip-raise",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-situp",
+    "slug": "smith-machine-situp",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-seated-calf-raise",
+    "slug": "smith-machine-seated-calf-raise",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-calf-raise",
+    "slug": "smith-machine-calf-raise",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-glute-kickback",
+    "slug": "smith-machine-glute-kickback",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-leg-press",
+    "slug": "smith-machine-leg-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-single-leg-hip-thrust",
+    "slug": "smith-machine-single-leg-hip-thrust",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-squat",
+    "slug": "smith-machine-squat",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-hip-thrust",
+    "slug": "smith-machine-hip-thrust",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-romanian-deadlift",
+    "slug": "smith-machine-romanian-deadlift",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-upright-row",
+    "slug": "smith-machine-upright-row",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-seated-overhead-press",
+    "slug": "smith-machine-seated-overhead-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-bench-press",
+    "slug": "smith-machine-bench-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-incline-bench-press",
+    "slug": "smith-machine-incline-bench-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-skullcrusher",
+    "slug": "smith-machine-skullcrusher",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-guillotine-bench-press",
+    "slug": "smith-machine-guillotine-bench-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-close-grip-bench-press",
+    "slug": "smith-machine-close-grip-bench-press",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-bodyweight-skullcrusher",
+    "slug": "smith-machine-bodyweight-skullcrusher",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-split-squat",
+    "slug": "smith-machine-split-squat",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-pushup",
+    "slug": "smith-machine-pushup",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-oblique-crunch",
+    "slug": "smith-machine-oblique-crunch",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-side-plank-up-down",
+    "slug": "smith-machine-side-plank-up-down",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/smith-machine-side-bend",
+    "slug": "smith-machine-side-bend",
+    "muscle_group_source": "smith-machine"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/ankle-circle",
+    "slug": "ankle-circle",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/wall-angels",
+    "slug": "wall-angels",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/inchworm",
+    "slug": "inchworm",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/abductor-leg-raise-side-lying",
+    "slug": "abductor-leg-raise-side-lying",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rotator-cuff-external-rotations-1",
+    "slug": "rotator-cuff-external-rotations-1",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rotator-cuff-external-rotations-2",
+    "slug": "rotator-cuff-external-rotations-2",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rotator-cuff-external-rotations-3",
+    "slug": "rotator-cuff-external-rotations-3",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/rotator-cuff-mobilisation-lacrosse-ball",
+    "slug": "rotator-cuff-mobilisation-lacrosse-ball",
+    "muscle_group_source": "recovery"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-reverse-expansion-bicep-curls-kneeling",
+    "slug": "pilates-reverse-expansion-bicep-curls-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-roll-down-with-bicep-curl-seated",
+    "slug": "pilates-back-rowing-preps-roll-down-with-bicep-curl-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-bicep-curls-seated",
+    "slug": "pilates-back-rowing-preps-bicep-curls-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-single-arm-rotations-back-rowing-seated-row",
+    "slug": "pilates-single-arm-rotations-back-rowing-seated-row",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-open-elbow-seated",
+    "slug": "pilates-back-rowing-preps-open-elbow-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-plow-back-rowing-preps",
+    "slug": "pilates-plow-back-rowing-preps",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-arms-pulling-straps-plow-prone-on-the-box",
+    "slug": "pilates-arms-pulling-straps-plow-prone-on-the-box",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-long-arm-adduction-side-kneeling",
+    "slug": "pilates-long-arm-adduction-side-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-control-front-plank-position",
+    "slug": "pilates-control-front-plank-position",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-arms-pulling-straps-airplane-prone-on-the-box",
+    "slug": "pilates-arms-pulling-straps-airplane-prone-on-the-box",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-hip-rolls",
+    "slug": "pilates-hip-rolls",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-long-stretch-plank-position",
+    "slug": "pilates-long-stretch-plank-position",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-hundred-straight-legs",
+    "slug": "pilates-hundred-straight-legs",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-hundred",
+    "slug": "pilates-hundred",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-footwork-lower-and-lift",
+    "slug": "pilates-footwork-lower-and-lift",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-running-lying-on-the-back",
+    "slug": "pilates-running-lying-on-the-back",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-single-leg-bicycle",
+    "slug": "pilates-single-leg-bicycle",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-single-leg-one-leg-bent",
+    "slug": "pilates-single-leg-one-leg-bent",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-footwork-high-half-toe",
+    "slug": "pilates-footwork-high-half-toe",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-footwork-heels-on-the-bar",
+    "slug": "pilates-footwork-heels-on-the-bar",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-feet-pulling-straps-hamstring-curls-prone-on-the-long-box",
+    "slug": "pilates-feet-pulling-straps-hamstring-curls-prone-on-the-long-box",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-short-spine",
+    "slug": "pilates-short-spine",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-scooter",
+    "slug": "pilates-scooter",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-hamtring-curls-prone",
+    "slug": "pilates-hamtring-curls-prone",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-backstroke-prep-lying-on-box",
+    "slug": "pilates-backstroke-prep-lying-on-box",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-midback-series-triceps-press-lying",
+    "slug": "pilates-midback-series-triceps-press-lying",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-triceps-seated",
+    "slug": "pilates-back-rowing-preps-triceps-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-front-rowing-preps-offering-seated",
+    "slug": "pilates-front-rowing-preps-offering-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/reverse-expansion-salute-kneeling",
+    "slug": "reverse-expansion-salute-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-reverse-expansion-teardrops-inward-kneeling",
+    "slug": "pilates-reverse-expansion-teardrops-inward-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-reverse-expansion-teardrops-outward-kneeling",
+    "slug": "pilates-reverse-expansion-teardrops-outward-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-front-rowing-preps-straight-forward-seated",
+    "slug": "pilates-front-rowing-preps-straight-forward-seated",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-side-twist-kneeling",
+    "slug": "pilates-side-twist-kneeling",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-star-prep",
+    "slug": "pilates-star-prep",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-roll-down-with-obliques",
+    "slug": "pilates-back-rowing-preps-roll-down-with-obliques",
+    "muscle_group_source": "pilates"
+  },
+  {
+    "url": "https://musclewiki.com/it-it/exercise/pilates-back-rowing-preps-airplane-seated",
+    "slug": "pilates-back-rowing-preps-airplane-seated",
+    "muscle_group_source": "pilates"
+  }
+]

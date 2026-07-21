@@ -1,0 +1,820 @@
+[
+  {
+    "id": "rtp-ankle-sprain-001",
+    "name": "Protocollo RTP Distorsione Caviglia (Gradi 1-3)",
+    "injuryType": "Distorsione caviglia",
+    "severity": "Gradi 1-3",
+    "description": "Protocollo Return-to-Play per distorsioni di caviglia da grado 1 (stiramento legamentoso senza rottura) a grado 3 (rottura completa). Include progressione da immobilizzazione a sport-specifico.",
+    "totalDuration": "2-6 settimane a seconda del grado",
+    "phases": [
+      {
+        "phase": "PHASE_1",
+        "name": "Protezione e Gestione del Dolore",
+        "duration": "1-2 settimane",
+        "description": "Fase immediatamente successiva all'infortunio, focus su riduzione del gonfiore e protezione.",
+        "criteria": [
+          "Dolore a riposo < 3/10",
+          "Gonfiore stabile o decrescente",
+          "Assenza di versamento articolare significativo"
+        ],
+        "activities": [
+          "RICE protocol (Rest, Ice, Compression, Elevation)",
+          "Mobilità passiva e attiva dolor-free",
+          "Isometrica caviglia (contrazione senza movimento)",
+          "Elevazione arto (30+ minuti, 4-6 volte al giorno)"
+        ],
+        "restrictions": [
+          "No carico completo sull'arto",
+          "No attività sport-specifica",
+          "Immobilizzazione con tape o brace consigliata",
+          "No movimenti rotazionali rapidi"
+        ],
+        "progressionCriteria": "Dolore < 3/10 a riposo, gonfiore significativamente ridotto"
+      },
+      {
+        "phase": "PHASE_2",
+        "name": "Carico Progressivo e Propriocezione",
+        "duration": "1-2 settimane",
+        "description": "Introduzione graduale del carico con focus su propriocezione e stabilizzazione.",
+        "criteria": [
+          "Dolore < 4/10 con carico parziale",
+          "Gonfiore minimo",
+          "Deambulazione indolore con ausili se necessario"
+        ],
+        "activities": [
+          "Cammino con carico progressivo (bastoni, parete come supporto)",
+          "Balance statico su due piedi (Bosu, superficie stabile)",
+          "Range of motion attivo complet (flessione, estensione, inversione, eversione)",
+          "Contrazione muscolare caviglia contro resistenza moderata",
+          "Sollevamento tallone bilaterale su step"
+        ],
+        "restrictions": [
+          "No carico completo su una sola gamba per >30 secondi",
+          "No attività aerobica ad alto impatto (corsa, salti)",
+          "No movimenti laterali rapidi",
+          "Tape o brace ancora consigliato"
+        ],
+        "progressionCriteria": "Deambulazione senza zoppia, dolore < 2/10 con carico parziale, range completo passivo"
+      },
+      {
+        "phase": "PHASE_3",
+        "name": "Forza e Stabilità",
+        "duration": "2-3 settimane",
+        "description": "Sviluppo di forza muscolare intorno alla caviglia e stabilità propriocettiva avanzata.",
+        "criteria": [
+          "Dolore < 2/10 con carico completo",
+          "Assenza di gonfiore con attività",
+          "Equilibrio su una gamba > 20 secondi",
+          "Range completo di movimento senza limitazioni"
+        ],
+        "activities": [
+          "Carico completo bilaterale e unilaterale (squat, step-up)",
+          "Balance su superfici instabili (Bosu, tavola oscillante) con occhi aperti e chiusi",
+          "Sollevamento tallone unilaterale (calf raise)",
+          "Resistenza contro banda elastica (inversione, eversione, plantare/dorsale)",
+          "Cambio direzione controllato (movimenti a T, L)",
+          "Propriocezione avanzata: palla tra i piedi, perturbazioni esterne"
+        ],
+        "restrictions": [
+          "No attività pienamente sport-specifica",
+          "No sprint o cambi direzione ad alta velocità",
+          "No salti a max intensità",
+          "Tape consigliato per attività ad alto rischio"
+        ],
+        "progressionCriteria": "Test hop > 80% arto controlaterale, forza > 80% contralaterale, no dolore con carichi moderati"
+      },
+      {
+        "phase": "PHASE_4",
+        "name": "Ritorno all'Attività Sportiva (Fase 1)",
+        "duration": "1-2 settimane",
+        "description": "Integrazione progressiva di movimenti basketball-specifici con intensità controllata.",
+        "criteria": [
+          "Test hop > 85% arto controlaterale",
+          "Forza caviglia > 85% contralaterale",
+          "Nessun gonfiore post-allenamento",
+          "Dolore assente o minimo (<1/10) con attività moderata"
+        ],
+        "activities": [
+          "Cammino laterale (shuffle) a bassa velocità",
+          "Salti su due piedi (hop) con controllo",
+          "Cambio direzione con raggio ampio (curve ampie)",
+          "Esercizi di footwork specifici basket (defensive slide, triple threat position)",
+          "Dribbling in linea dritta a bassa/media velocità",
+          "Passe ricevute statiche e con movimento limitato",
+          "Tiro da posizioni fisse",
+          "Allenanmento con altri giocatori a bassa intensità (50% sforzo)"
+        ],
+        "restrictions": [
+          "No attività a massima intensità",
+          "No diretta competizione",
+          "No gioco di 1v1 ad alta intensità",
+          "Tape e brace ancora consigliati"
+        ],
+        "progressionCriteria": "Nessun incremento di gonfiore post-allenamento, dolore costante < 1/10, forma tecnica mantenuta"
+      },
+      {
+        "phase": "PHASE_5",
+        "name": "Clearance Competitiva e Return to Play",
+        "duration": "Variabile, tipicamente 3-7 giorni",
+        "description": "Ultima fase con allenamento a intensità full e clearance medica per ritorno al gioco competitivo.",
+        "criteria": [
+          "Test hop > 90% arto controlaterale",
+          "Forza caviglia > 90% contralaterale",
+          "Test Y-Balance risultati simmetrici (< 4 cm differenza)",
+          "Nessun gonfiore con attività max",
+          "Dolore assente con attività sport-specifica massimale"
+        ],
+        "activities": [
+          "Allenamento full intensity con squadra",
+          "1v1 defensivo ad alta intensità",
+          "Possesso con pressione completa",
+          "Scrimmage 5v5 a intensità competitiva",
+          "Salti e cambio direzione rapido esplosivi",
+          "Movimenti defensivi aggressivi",
+          "Test funzionali: lane agility test, t-test, vertical jump, hop test"
+        ],
+        "restrictions": [
+          "Nessuna restrizione tecnica"
+        ],
+        "progressionCriteria": "Clearance medica completata, nessun sintomo durante e dopo allenamento full intensity, fiducia atleta ripristinata"
+      }
+    ],
+    "clearanceCriteria": [
+      "Test hop > 90% arto controlaterale (single leg, triple hop)",
+      "Forza caviglia > 90% contralaterale (dinamometria)",
+      "Y-Balance test simmetrico (differenza < 4 cm)",
+      "Nessun gonfiore o instabilità funzionale",
+      "Completamento di allenamento full intensity senza incremento sintomi",
+      "Clearance medica documentata",
+      "Fiducia psicologica atleta ripristinata"
+    ],
+    "basketballSpecific": {
+      "movements": ["Lateral shuffle", "Forward/backward running", "Cutting movements", "Jumping on one leg", "Defensive stance", "Dribbling"],
+      "progressionTimeline": "Fase 1-2: Giorni 1-14, Fase 3: Giorni 15-28, Fase 4: Giorni 29-42, Fase 5: Giorni 43-49"
+    },
+    "notes": "La distorsione di caviglia è l'infortunio più frequente nel basket. Un protocollo ben strutturato riduce il rischio di ricorrenza. La propriocezione è cruciale e spesso trascurata."
+  },
+  {
+    "id": "rtp-acl-postop-002",
+    "name": "Protocollo RTP LCA Post-Chirurgico",
+    "injuryType": "Lesione LCA post-chirurgica",
+    "severity": "Post-ricostruzione chirurgica",
+    "description": "Protocollo Return-to-Play per atleti che hanno subito ricostruzione chirurgica del legamento crociato anteriore (ACL). Include progressione da immobilizzazione a ritorno al gioco competitivo in 6-9 mesi.",
+    "totalDuration": "6-9 mesi (timeline critico)",
+    "phases": [
+      {
+        "phase": "PHASE_1",
+        "name": "Protezione Articolare e Mobilità (Settimane 0-4)",
+        "duration": "4 settimane",
+        "description": "Fase immediatamente post-chirurgica, focus su riduzione gonfiore, protezione innesto e ripresa mobilità.",
+        "criteria": [
+          "Gonfiore stabile",
+          "Dolore < 4/10 a riposo e con movimento passivo",
+          "Range di movimento passivo > 90° flessione",
+          "Quadricipite contratto, anche se debole"
+        ],
+        "activities": [
+          "Elevazione arto (30+ minuti, 4-6 volte/giorno)",
+          "Icing regolare (15-20 min, 4-6 volte/giorno)",
+          "Range di movimento passivo (0-90° flessioneincremento), poi attivo",
+          "Isometrica quadricipite e glutei (co-contrazione senza movimento)",
+          "Deambulazione con ausili (stampelle, strap immobilizzazione)",
+          "Inizio fisioterapia specializzata 3-5 giorni post-op"
+        ],
+        "restrictions": [
+          "Immobilizzazione per 2-4 settimane (schema personale atleta)",
+          "No carico completo",
+          "No flessione > 90° se tollerata male",
+          "No movimento rotatorio",
+          "No esercizi isometrici in estensione completa nei primi giorni"
+        ],
+        "progressionCriteria": "Flessione passiva 0-120°, gonfiore decrescente, deambulazione con ausili indolore, isometrica quad contratto"
+      },
+      {
+        "phase": "PHASE_2",
+        "name": "Riacquisizione Movimento e Carico Progressivo (Settimane 5-12)",
+        "duration": "8 settimane",
+        "description": "Progressione da movimenti passivi a attivi, inizio carico protetto, focus su quadricipite e stabilità.",
+        "criteria": [
+          "Flessione attiva > 110°",
+          "Estensione passiva 0° (senza deficit)",
+          "Gonfiore minimo",
+          "Quadricipite contratto bilateralmente",
+          "Deambulazione senza ausili"
+        ],
+        "activities": [
+          "Range di movimento attivo progressivo (flessione, estensione)",
+          "Carico progressivo (crutches → bastoncino → carico peso)",
+          "Sollevamento gamba tesa (SLR - Straight Leg Raise) per quad",
+          "Co-contrazione isometrica quad-ham in varie angolazioni",
+          "Adductor e abductor contro resistenza leggera",
+          "Inizio piscina: deambulazione, esercizi in gravità ridotta",
+          "Balance statico su due piedi",
+          "Squat parziale (0-45°) con supporto"
+        ],
+        "restrictions": [
+          "No carico completo su una sola gamba",
+          "No movimento rotatorio significativo",
+          "No resistenza progressiva pesante",
+          "No esercizi pliometrici",
+          "No sport-specifico"
+        ],
+        "progressionCriteria": "Flessione attiva > 120°, estensione attiva 0° senza deficit, carico completo raggiunto fine fase 2, quad 3-4/5 strength"
+      },
+      {
+        "phase": "PHASE_3",
+        "name": "Forza e Stabilità (Settimane 13-20)",
+        "duration": "8 settimane",
+        "description": "Sviluppo di forza muscolare intorno al ginocchio, stabilità dinamica, inizio movimenti funzionali.",
+        "criteria": [
+          "Range completo di movimento (estensione 0°, flessione > 125°)",
+          "Quad strength > 70% contralaterale (dinamometria)",
+          "Nessun gonfiore post-esercizio",
+          "Salto su due piedi senza compenso",
+          "Squat completo bilanciato"
+        ],
+        "activities": [
+          "Squat progressivo (da parziale a full ROM)",
+          "Leg press con aumento progressivo di carico",
+          "Stacco da terra (deadlift) con carico leggero",
+          "Sollevamento tallone (calf raise)",
+          "Leg extension e leg curl con resistenza moderata",
+          "Balance su una gamba su superfici stabili e instabili",
+          "Cammino laterale (shuffle) a bassa velocità",
+          "Step-up su step basso",
+          "Nuoto o eliptical (basso impatto)",
+          "Inizio propriocezione: equilibrio su Bosu, tavola oscillante"
+        ],
+        "restrictions": [
+          "No salti o pliometrica",
+          "No movimento rotatorio ad alta velocità",
+          "No attività ad alto impatto (corsa, basket)",
+          "No resistenza massimale pesante"
+        ],
+        "progressionCriteria": "Quad > 70% contralaterale, squat completo controllato, balance una gamba > 30 sec, nessun gonfiore post-allenamento"
+      },
+      {
+        "phase": "PHASE_4",
+        "name": "Potenza e Sport-Specifico (Settimane 21-28)",
+        "duration": "8 settimane",
+        "description": "Introduzione di movimenti esplosivi e basketball-specifici con intensità progressiva.",
+        "criteria": [
+          "Quad strength > 85% contralaterale",
+          "Hip strength simmetrica e adeguata",
+          "Test hop > 75% contralaterale",
+          "Stabilità dinamica provata",
+          "Assenza sintomi con movimenti moderati"
+        ],
+        "activities": [
+          "Squat con salto (jump squat) - inizio basso",
+          "Step-up veloce su panca",
+          "Box step-down (eccentrico)",
+          "Salti su due piedi (double leg hop) con controllo",
+          "Inizio corsa: tapis roulant progressivo (velocità moderata, no incline)",
+          "Cambio direzione lento (curve ampie)",
+          "Shuffle laterale controllato",
+          "Esercizi pliometrici leggeri (mini jump, lateral bound)",
+          "Propriocezione avanzata: balance con occhi chiusi, con perturbazioni",
+          "Dribbling statico, lento movimento con palla"
+        ],
+        "restrictions": [
+          "No corse in linea dritta ad alta velocità",
+          "No cambio direzione rapido o cut aggressivo",
+          "No salti a massima altezza",
+          "No attività full contact",
+          "Protezione ginocchio (brace) consigliata"
+        ],
+        "progressionCriteria": "Test hop > 80% contralaterale, quadricipite > 85% strength, movimenti basketball basso intensità controllati, nessun gonfiore post-allenamento"
+      },
+      {
+        "phase": "PHASE_5",
+        "name": "Clearance Competitiva e Return to Play (Settimane 29-36)",
+        "duration": "8 settimane (fino a clearance)",
+        "description": "Fase finale con ritorno progressivo al gioco competitivo, allenamento a intensità full e clearance medica completa.",
+        "criteria": [
+          "Test hop > 90% contralaterale (singolo, triplo, crossover hop)",
+          "Quad strength > 90% contralaterale (dinamometria)",
+          "Y-Balance test simmetrico (< 4 cm differenza)",
+          "Nessun gonfiore o instabilità funzionale con attività max",
+          "Confidence test >90% (psicologico)"
+        ],
+        "activities": [
+          "Corsa completa (velocità variabile, sprints)",
+          "Cambio direzione rapido (T-test, shuttle run, lane agility)",
+          "Salti esplosivi (vertical jump, single leg hop, triple hop)",
+          "Movimenti defensivi basket (defensive slide, backpedal, transition)",
+          "Allenamento 1v1 a bassa/media intensità",
+          "Possesso con pressione progressiva",
+          "Scrimmage 3v3 e poi 5v5 a intensità crescente",
+          "Gioco amichevole contro squadra parallela",
+          "Test funzionali: Lane agility, T-test, Vertical jump, Single leg hop"
+        ],
+        "restrictions": [
+          "Nessuna restrizione tecnica post-clearance"
+        ],
+        "progressionCriteria": "Clearance medica completata, nessun sintomo con full intensity, hop test e strength > 90%, fiducia psicologica ripristinata, ritorno al gioco competitivo autorizzato"
+      }
+    ],
+    "clearanceCriteria": [
+      "Mesi dall'intervento: 6-9 (minimo 6 per ritorno competitivo)",
+      "Test hop > 90% contralaterale (tutte le varianti)",
+      "Quad strength > 90% contralaterale",
+      "Hip strength e stabilità adeguate",
+      "Y-Balance test simmetrico",
+      "Confidence test >90%",
+      "Clearance medica (ortopedico + fisioterapista)",
+      "Assenza sintomi con full intensity training x2 settimane",
+      "Completamento RTP protocol fino PHASE_5"
+    ],
+    "basketballSpecific": {
+      "movements": ["Sprinting", "Cutting (45-90°)", "Deceleration", "Jumping", "Change of direction", "Defensive slide", "Transition play"],
+      "progressionTimeline": "PHASE 1: Settimane 1-4, PHASE 2: Settimane 5-12, PHASE 3: Settimane 13-20, PHASE 4: Settimane 21-28, PHASE 5: Settimane 29-36"
+    },
+    "notes": "ACL è uno degli infortuni più gravi nel basket. Timeline minima 6 mesi, ma spesso 9-12 mesi per ritorno sicuro a competizione. Psychological readiness è critico quanto la forza fisica. RTP prematuro aumenta significativamente il rischio di re-infortunio."
+  },
+  {
+    "id": "rtp-muscle-strain-003",
+    "name": "Protocollo RTP Stiramento Muscolare (Gradi 1-3)",
+    "injuryType": "Stiramento muscolare",
+    "severity": "Gradi 1-3 (Semplice stiramento fino a rottura completa)",
+    "description": "Protocollo Return-to-Play per stiramenti muscolari vari (hamstring, quadricipite, polpaccio, dorsali). Include progressione da riposo a sport-specifico in base al grado di severità.",
+    "totalDuration": "2-8 settimane a seconda del grado",
+    "phases": [
+      {
+        "phase": "PHASE_1",
+        "name": "Protezione e Controllo Infiammazione",
+        "duration": "3-7 giorni (grado 1-2) fino a 2 settimane (grado 3)",
+        "description": "Fase iniziale post-infortunio, focus su infiammazione e protezione muscolare.",
+        "criteria": [
+          "Gonfiore stabile o decrescente",
+          "Dolore a riposo < 3/10",
+          "Assenza di versamento ematico significativo"
+        ],
+        "activities": [
+          "RICE protocol (Rest, Ice, Compression, Elevation)",
+          "Immobilizzazione relativa o completa (a seconda del grado)",
+          "Range di movimento passivo dolor-free",
+          "Mobilizzazione fasciale leggera (no massaggio diretto lesione)"
+        ],
+        "restrictions": [
+          "Assolutamente NO attività che causa dolore",
+          "Riposo da sport per almeno 3-7 giorni (grado 1-2) fino a 2+ settimane (grado 3)",
+          "No stretching aggressivo della muscolatura colpita",
+          "No movimento che causa elongazione eccessiva del muscolo"
+        ],
+        "progressionCriteria": "Gonfiore decrescente, dolore a riposo < 2/10, assenza di versamento nuovo"
+      },
+      {
+        "phase": "PHASE_2",
+        "name": "Mobilità e Rigenerazione (Settimane 1-2, fino a 3-4 per grado 3)",
+        "duration": "1-3 settimane",
+        "description": "Ripresa progressiva della mobilità, inizio contrazione muscolare indolore.",
+        "criteria": [
+          "Dolore con movimento passivo < 3/10",
+          "Gonfiore minimo",
+          "Contrazione muscolare indolore possibile",
+          "Range di movimento passivo quasi completo"
+        ],
+        "activities": [
+          "Range di movimento attivo progressivo (lento, controllato)",
+          "Contrazione isometrica indolore della muscolatura colpita",
+          "Stretching statico leggero (30+ secondi, 2-3 reps)",
+          "Attivazione muscoli stabilizzatori circostanti",
+          "Se hamstring: supini, piegamenti ginocchio indolore; se quad: isometrica q-set"
+        ],
+        "restrictions": [
+          "No carico dinamico sull'arto",
+          "No stretching aggressivo",
+          "No esercizi che causano pain > 2/10",
+          "No attività sport-specifica",
+          "No corsa"
+        ],
+        "progressionCriteria": "Range completo passivo, contrazione isometrica indolore, dolore < 2/10 con movimento leggero"
+      },
+      {
+        "phase": "PHASE_3",
+        "name": "Forza Progressiva e Funzione (Settimane 2-4, fino a 6 per grado 3)",
+        "duration": "2-4 settimane",
+        "description": "Sviluppo di forza muscolare progressiva, inizio esercizi dinamici controllati.",
+        "criteria": [
+          "Forza muscolare 4/5 (manual testing)",
+          "Nessun dolore con contrazione muscolare",
+          "Range completo di movimento attivo",
+          "Nessun gonfiore post-esercizio"
+        ],
+        "activities": [
+          "Esercizi di forza muscolare specifici (es. hamstring: single leg deadlift leggero, lying leg curl con resistenza leggera; quad: leg extension, squat parziale)",
+          "Progressione di carichi leggeri (0.5-2 kg)",
+          "Cammino su superfici piane senza zoppia",
+          "Salita e discesa scale con supporto",
+          "Nuoto o acquagym (gravità ridotta)",
+          "Corsa leggera iniziale (se tollerata)",
+          "Propriocezione: balance su due piedi"
+        ],
+        "restrictions": [
+          "No carichi pesanti",
+          "No sprint o corsa ad alta velocità",
+          "No salti",
+          "No stretching aggressivo",
+          "No attività full-intensity sport-specifica"
+        ],
+        "progressionCriteria": "Forza > 4/5, dolore assente con esercizi moderati, nessun gonfiore post-allenamento, deambulazione senza zoppia"
+      },
+      {
+        "phase": "PHASE_4",
+        "name": "Ritorno all'Attività Sportiva (Settimane 4-6, fino a 8 per grado 3)",
+        "duration": "2-4 settimane",
+        "description": "Progressione a movimenti sport-specifici con intensità controllata.",
+        "criteria": [
+          "Forza muscolare 5/5 (pari al controlaterale)",
+          "Assenza gonfiore post-esercizio",
+          "Corsa indolore a velocità moderata",
+          "Nessun dolore con movimenti basket bassa intensità"
+        ],
+        "activities": [
+          "Corsa progressiva (da moderata a velocità aumentata)",
+          "Cambio direzione controllato (curve ampie, movimenti a T)",
+          "Salti su due piedi con controllo",
+          "Esercizi basketball-specifici bassa intensità (shuffle, footwork, dribbling stazionario)",
+          "Allenamento tecnico senza contatto",
+          "Possesso a bassa velocità",
+          "Stretching dinamico della muscolatura"
+        ],
+        "restrictions": [
+          "No sprint massimale",
+          "No cambio direzione rapido",
+          "No salti esplosivi",
+          "No contatto fisico",
+          "No gioco competitivo ancora"
+        ],
+        "progressionCriteria": "Forza 5/5, corsa moderata indolore, movimenti basket bassa intensità senza sintomi, fiducia progressiva ripristinata"
+      },
+      {
+        "phase": "PHASE_5",
+        "name": "Clearance Competitiva e Return to Play",
+        "duration": "3-7 giorni",
+        "description": "Ultima fase con allenamento a intensità full e clearance per ritorno al gioco competitivo.",
+        "criteria": [
+          "Forza muscolare 5/5 documentata",
+          "Nessun gonfiore con attività max",
+          "Sprint e cambio direzione rapido indolore",
+          "Full basketball specific training completato senza sintomi",
+          "Confidence test >90%"
+        ],
+        "activities": [
+          "Allenamento full intensity con squadra",
+          "Sprint completo e accelerazioni massimali",
+          "Cambio direzione rapido esplosivo",
+          "Salti esplosivi (vertical, single leg)",
+          "1v1 defensivo ad alta intensità",
+          "Possesso e scrimmage 5v5 full intensity",
+          "Gioco amichevole a intensità competitiva"
+        ],
+        "restrictions": [
+          "Nessuna restrizione post-clearance"
+        ],
+        "progressionCriteria": "Clearance medica, nessun sintomo con full intensity x 3-5 giorni, forza mantenuta, ritorno al gioco autorizzato"
+      }
+    ],
+    "clearanceCriteria": [
+      "Forza muscolare 5/5 pari al controlaterale",
+      "Nessun gonfiore post-attività",
+      "Mobility completa",
+      "Sport-specific movements indolore a max intensity",
+      "Confidence test >90%",
+      "Medico clearance (team physician + fisioterapista)",
+      "Completamento PHASE_5"
+    ],
+    "basketballSpecific": {
+      "movements": ["Sprinting", "Cutting", "Jumping", "Acceleration", "Deceleration"],
+      "commonMuscleGroups": ["Hamstring", "Quadriceps", "Calf", "Hip flexors", "Adductors"]
+    },
+    "notes": "La tempistica di guarigione varia significativamente in base al grado di severità. Un ritorno prematuro aumenta il rischio di re-infortunio. La forza deve essere pari al controlaterale prima di clearance."
+  },
+  {
+    "id": "rtp-patellar-tendinopathy-004",
+    "name": "Protocollo RTP Tendinopatia Rotulea",
+    "injuryType": "Tendinopatia rotulea (Jumper's Knee)",
+    "severity": "Cronica, infiammazione tendine rotuleo",
+    "description": "Protocollo Return-to-Play per tendinopatia rotulea (Jumper's Knee), condizione frequente nel basket dovuta a carico ripetitivo dei salti. Enfasi su eccentric loading e progressione graduale.",
+    "totalDuration": "4-12 settimane a seconda della severità",
+    "phases": [
+      {
+        "phase": "PHASE_1",
+        "name": "Controllo Infiammazione e Riposo Relativo",
+        "duration": "1-2 settimane",
+        "description": "Fase iniziale per ridurre infiammazione e proteggere il tendine da ulteriore stress.",
+        "criteria": [
+          "Dolore a riposo < 3/10",
+          "Infiammazione stabile",
+          "Nessun gonfiore significativo"
+        ],
+        "activities": [
+          "Riposo dalla plyometrica e salti",
+          "Icing regolare (15 min, 3-4 volte/giorno)",
+          "Range di movimento passivo e attivo leggero",
+          "Isometrica quadricipite (q-set, co-contrazione)",
+          "Stretching leggero del tendine (hold passivo)"
+        ],
+        "restrictions": [
+          "No salti",
+          "No corsa ad alta intensità",
+          "No attività che causa dolore >3/10",
+          "No esercizi pliometrici",
+          "No sport-specifico"
+        ],
+        "progressionCriteria": "Infiammazione decrescente, dolore < 2/10 a riposo, range passivo completo"
+      },
+      {
+        "phase": "PHASE_2",
+        "name": "Eccentric Loading e Forza Progressiva",
+        "duration": "3-4 settimane",
+        "description": "Fase critica con eccentric loading del tendine rotuleo, scientificamente provato per tendinopatia.",
+        "criteria": [
+          "Dolore a riposo < 2/10",
+          "Movimento attivo senza limitazioni significative",
+          "Tolleranza a leggero esercizio di forza"
+        ],
+        "activities": [
+          "Eccentric squat (scendi lentamente, sali con due gambe): 3 set x 12-15 reps, 3x/settimana",
+          "Eccentric leg extension: 3 set x 10-12 reps, lentamente",
+          "Calf raise eccentrico se dolore dorsale",
+          "Stretching dinamico e statico del quadricipite",
+          "Mobilizzazione miofasciale leggera (non sul tendine)",
+          "Isometrica progressiva (squat isometrica 60°)"
+        ],
+        "restrictions": [
+          "No plyometrica o salti ancora",
+          "No sprinting",
+          "No attività che causa dolore > 3/10",
+          "No carico concentrico pesante (solo eccentrico)"
+        ],
+        "progressionCriteria": "Tolleranza a eccentric loading, dolore < 2/10 durante esercizio, forza quad progressivamente aumentata"
+      },
+      {
+        "phase": "PHASE_3",
+        "name": "Forza Concentrica e Funzione Dinamica",
+        "duration": "2-3 settimane",
+        "description": "Progressione dalla fase eccentrica a esercizi concentrico-eccentrici più dinamici, inizio leggera plyometrica.",
+        "criteria": [
+          "Tolleranza a esercizi eccentrici senza dolore significativo",
+          "Forza quad > 4/5",
+          "Assenza gonfiore post-esercizio"
+        ],
+        "activities": [
+          "Squat completo concentrico-eccentrico (incremento progressivo di reps e velocità)",
+          "Leg press concentrico",
+          "Step-up su panca bassa (concentrico-eccentrico)",
+          "Leg extension concentrico leggero",
+          "Inizio salti leggeri su due piedi (mini jump, jump rope leggero)",
+          "Cammino con cambio direzione lento",
+          "Stretching e mobilizzazione continuata",
+          "Propriocezione: balance su una gamba, superfici stabili"
+        ],
+        "restrictions": [
+          "No salti esplosivi ancora",
+          "No corsa ad alta velocità",
+          "No attività ad impatto alto",
+          "No sprint"
+        ],
+        "progressionCriteria": "Forza quad 5/5, tolleranza a leggera plyometrica, dolore < 1/10 con movimenti dinamici moderati"
+      },
+      {
+        "phase": "PHASE_4",
+        "name": "Ritorno all'Attività Sportiva (Basketball-Specific)",
+        "duration": "2-3 settimane",
+        "description": "Progressione a movimenti basketball-specifici con intensità controllata.",
+        "criteria": [
+          "Forza quad 5/5",
+          "Tolleranza a plyometrica moderata",
+          "Nessun gonfiore post-allenamento",
+          "Dolore < 1/10 con movimento dinamico"
+        ],
+        "activities": [
+          "Corsa progressiva (bassa/media velocità)",
+          "Salti su due piedi con controllo (box jumps leggeri, vertical jump moderato)",
+          "Cambio direzione controllato (cone drills, T-test)",
+          "Esercizi di footwork basketball (defensive shuffle, triple threat)",
+          "Dribbling con movimento bassa intensità",
+          "Tiro da posizioni multiple",
+          "Allenamento tecnico senza contatto, bassa intensità",
+          "Possesso a velocità moderata"
+        ],
+        "restrictions": [
+          "No sprint massimale",
+          "No salti esplosivi massimali",
+          "No attività full contact ancora",
+          "No gioco competitivo"
+        ],
+        "progressionCriteria": "Tolleranza a basketball-specific movements moderati, dolore < 1/10, fiducia progressiva ripristinata, nessun gonfiore"
+      },
+      {
+        "phase": "PHASE_5",
+        "name": "Clearance Competitiva e Return to Play",
+        "duration": "3-7 giorni (fino a clearance)",
+        "description": "Fase finale con full intensity training e clearance medica per ritorno al gioco competitivo.",
+        "criteria": [
+          "Forza quad e tendine rotuleo robusta",
+          "Tolleranza a full plyometrica senza sintomi",
+          "Sprint, salti, cambio direzione esplosivo indolore",
+          "Full basketball training completato senza incremento sintomi",
+          "Confidence test >90%"
+        ],
+        "activities": [
+          "Allenamento full intensity con squadra",
+          "Sprint e accelerazioni massimali",
+          "Salti esplosivi (vertical jump, multiple hop)",
+          "Cambio direzione rapido e cut aggressivi",
+          "1v1 defensivo ad alta intensità",
+          "Scrimmage 5v5 e possesso full intensity",
+          "Gioco amichevole a intensità competitiva",
+          "Test funzionali: vertical jump, hop test, lane agility"
+        ],
+        "restrictions": [
+          "Nessuna restrizione post-clearance"
+        ],
+        "progressionCriteria": "Clearance medica completata, nessun sintomo con full intensity x 3+ giorni, forza e plyometrica mantenute, ritorno autorizzato"
+      }
+    ],
+    "clearanceCriteria": [
+      "Forza quadricipite 5/5",
+      "Tolleranza completa a plyometrica e salti",
+      "Nessun gonfiore post-attività",
+      "Movimento sport-specifico massimale indolore",
+      "Confidence test >90%",
+      "Clearance medica (team physician)",
+      "Completamento full intensity training x 3+ giorni"
+    ],
+    "basketballSpecific": {
+      "movements": ["Jumping", "Explosive movements", "Plyometrics", "Sprinting", "Cutting"],
+      "notes": "Tendinopatia rotulea è frequente nei basket, specialmente in giocatori che saltano molto (lunghe, tiratori). Eccentric loading è scientificamente provato efficace."
+    },
+    "notes": "Jumper's Knee è una lesione cronica che richiede pazienza e progressione graduale. Eccentric loading è il pilastro del trattamento. RTP prematuro aumenta rischio di cronicizzazione."
+  },
+  {
+    "id": "rtp-acute-lbp-005",
+    "name": "Protocollo RTP Lombalgia Acuta",
+    "injuryType": "Lombalgia acuta (non radiculare)",
+    "severity": "Dolore acuto lombare, senza deficit neurologico",
+    "description": "Protocollo Return-to-Play per lombalgia acuta non-radiculare, condizione frequente nel basket dovuta a torsione, carico, movimento ripetitivo. Focus su core stability e movimento funzionale progressivo.",
+    "totalDuration": "2-4 settimane per caso tipico",
+    "phases": [
+      {
+        "phase": "PHASE_1",
+        "name": "Riposo Relativo e Mobilità Preservazione",
+        "duration": "3-5 giorni",
+        "description": "Fase iniziale per controllo del dolore acuto, preservazione della funzione motoria.",
+        "criteria": [
+          "Dolore a riposo < 4/10",
+          "Assenza segni radiculari (irradiazione, parestesie)",
+          "Assenza deficit neurologico"
+        ],
+        "activities": [
+          "Riposo da attività che causa dolore >5/10",
+          "Movimento gentile (cammino leggero, stretching passivo leggero)",
+          "Posizionamento comodo (non immobilità totale)",
+          "Calore locale (15-20 min, 2-3 volte/giorno)",
+          "Range di movimento attivo-passivo leggero",
+          "Respirazione profonda e rilassamento muscolare"
+        ],
+        "restrictions": [
+          "No attività che causa dolore > 5/10",
+          "No torsione della colonna",
+          "No sollevamento",
+          "No sport",
+          "No allenamento intenso"
+        ],
+        "progressionCriteria": "Dolore < 3/10, assenza peggioramento, tolleranza a movimento leggero"
+      },
+      {
+        "phase": "PHASE_2",
+        "name": "Attivazione Core e Movimento Controllato",
+        "duration": "1-2 settimane",
+        "description": "Fase di ripresa funzionale con attivazione core progressiva e movimento controllatobasale.",
+        "criteria": [
+          "Dolore a riposo < 2/10",
+          "Movimento attivo senza limitazione significativa",
+          "Assenza segni radiculari persistenti"
+        ],
+        "activities": [
+          "Attivazione core: dead bug, bird dog, isometrica glute",
+          "Mobilizzazione leggera: cat-cow, pelvic tilts",
+          "Stretching attivo: quadricipite, ischiocrurali, hip flexor",
+          "Cammino progressivo su superfici piane",
+          "Posture education e body awareness",
+          "Respirazione diaframmatica durante movimento",
+          "Inizio di esercizi funzionali base (sit-to-stand dal seggiolone, quadrupedia)"
+        ],
+        "restrictions": [
+          "No esercizi che causano dolore acuto",
+          "No torsione della colonna",
+          "No movimento rapido",
+          "No sport ancora",
+          "No carico pesante"
+        ],
+        "progressionCriteria": "Dolore < 2/10 a riposo, movimento funzionale base indolore, core activation tollerata, mobility migliorata"
+      },
+      {
+        "phase": "PHASE_3",
+        "name": "Forza Core e Movimento Funzionale",
+        "duration": "1-2 settimane",
+        "description": "Progressione a esercizi di forza core più impegnativi e movimento funzionale avanzato.",
+        "criteria": [
+          "Dolore < 2/10 con movimento attivo",
+          "Tolleranza a esercizi core di intensità moderata",
+          "Nessun gonfiore o infiammazione progressiva"
+        ],
+        "activities": [
+          "Plank hold progressivo (inizio 15-20 sec, progressivo)",
+          "Pallof press (anti-rotazione core)",
+          "Bird dog progressivo",
+          "Single leg glute bridge",
+          "Squat assistito progressivo (supporto mano se necessario)",
+          "Step-up su step basso",
+          "Stretching dinamico della colonna",
+          "Deambulazione funzionale (su/giù da scale con supporto se necessario)",
+          "Inizio movimento basket-specifico base (posizione difensiva statica, movimento lento senza contatto)"
+        ],
+        "restrictions": [
+          "No plank > 30-45 sec ancora",
+          "No carico progressivo aggressivo",
+          "No movimento rapido o esplosivo",
+          "No contatto fisico",
+          "No sport competitivo"
+        ],
+        "progressionCriteria": "Core strength adeguata (plank 30+ sec), movimento funzionale base robusto, dolore < 1/10 con movimento moderato"
+      },
+      {
+        "phase": "PHASE_4",
+        "name": "Ritorno all'Attività Sportiva (Basketball-Specific)",
+        "duration": "1-2 settimane",
+        "description": "Progressione a attività basketball-specifiche con intensità controllata.",
+        "criteria": [
+          "Core strength robusta",
+          "Nessun dolore con movimento funzionale",
+          "Deambulazione e postura normale",
+          "Tolleranza a movimento dinamico moderato"
+        ],
+        "activities": [
+          "Movimento basketball base: defensive stance, lateral shuffle lento",
+          "Cambio direzione lento (curve ampie)",
+          "Cammino laterale (shuffle) controllato",
+          "Cammino indietro (backpedal) controllato",
+          "Squat funzionale completo",
+          "Deadlift leggero (forma corretta)",
+          "Stretching e mobilizzazione continuata",
+          "Allenamento tecnico basket senza contatto, bassa intensità",
+          "Possesso a velocità bassa-moderata"
+        ],
+        "restrictions": [
+          "No movimento rapido o esplosivo ancora",
+          "No contatto fisico",
+          "No gioco competitivo",
+          "No carico massimale"
+        ],
+        "progressionCriteria": "Movimento basketball-specific moderato indolore, core stabile, postura corretta mantenuta durante movimento"
+      },
+      {
+        "phase": "PHASE_5",
+        "name": "Clearance Competitiva e Return to Play",
+        "duration": "3-5 giorni (fino a clearance)",
+        "description": "Fase finale con full intensity training e clearance medica per ritorno al gioco competitivo.",
+        "criteria": [
+          "Core strength robusta e funzionale",
+          "Assenza dolore con full movement basketball",
+          "Sprint, cambio direzione esplosivo, movimento defensivo aggressivo indolore",
+          "Full training completato senza sintomi",
+          "Confidence test >90%"
+        ],
+        "activities": [
+          "Allenamento full intensity con squadra",
+          "Sprint e accelerazioni",
+          "Cambio direzione rapido e cut aggressivi",
+          "Movimento defensivo aggressivo",
+          "1v1 e possesso a full intensity",
+          "Scrimmage 5v5 full intensity",
+          "Gioco amichevole competitivo",
+          "Strength training basket-specific con carico progressivo"
+        ],
+        "restrictions": [
+          "Nessuna restrizione post-clearance"
+        ],
+        "progressionCriteria": "Clearance medica completata, nessun sintomo con full intensity x 2-3 giorni, core strength mantenuta, ritorno autorizzato"
+      }
+    ],
+    "clearanceCriteria": [
+      "Dolore assente o minimale (<1/10) a riposo e con movimento",
+      "Core strength adeguata (dinamometria o test funzionali)",
+      "Movimento sport-specifico massimale indolore",
+      "Postura corretta e body mechanics mantenuti durante attività",
+      "Confidence test >90%",
+      "Clearance medica (team physician + fisioterapista)",
+      "Completamento full intensity training x 2-3 giorni"
+    ],
+    "basketballSpecific": {
+      "movements": ["Explosive movements", "Change of direction", "Cutting", "Defensive movement", "Twisting"],
+      "notes": "Core stability è fondamentale nel basket per movimento multi-direzionale e stabilità durante contatti"
+    },
+    "notes": "Lombalgia acuta di solito guarisce bene se gestita correttamente. Il movimento progressivo è più efficace del riposo totale. RTP prematuro aumenta rischio di ricorrenza. Education sulla postura e movement pattern è critico."
+  }
+]

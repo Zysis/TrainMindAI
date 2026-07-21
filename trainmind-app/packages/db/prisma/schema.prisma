@@ -1,0 +1,962 @@
+// ============================================
+// TrainMind AI — Database Schema (Prisma)
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  TRAINER
+  MEDICAL
+  VIEWER
+  ATHLETE
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum SessionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum InjuryStatus {
+  ACTIVE
+  RECOVERING
+  RESOLVED
+}
+
+enum RTPPhase {
+  PHASE_1
+  PHASE_2
+  PHASE_3
+  PHASE_4
+  PHASE_5
+  CLEARED
+}
+
+enum OrganizationTier {
+  STARTER
+  PROFESSIONAL
+  ULTRA
+}
+
+enum ReportAudience {
+  STAFF
+  MEDICAL
+  TRAINER
+}
+
+enum ReportFormat {
+  JSON
+  PDF
+  DOCX
+}
+
+enum ReportScheduleStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+// ─── Models ─────────────────────────────────────────────
+
+model Organization {
+  id        String           @id @default(cuid())
+  name      String
+  slug      String           @unique
+  sport     String           @default("basketball")
+  tier      OrganizationTier @default(STARTER)
+  logoUrl   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Stripe billing
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?
+  subscriptionTier     String?  @default("starter")
+  subscriptionStatus   String?  @default("inactive")
+  subscriptionEndsAt   DateTime?
+
+  users           User[]
+  athletes        Athlete[]
+  exercises       Exercise[]
+  trainingPlans   TrainingPlan[]
+  alertRules      AlertRule[]
+  planAdaptations PlanAdaptation[]
+  reportSchedules    ReportSchedule[]
+  periodizationPlans PeriodizationPlan[]
+  teams              Team[]
+  trainingSessions       TrainingSession[]
+  fieldTrainingSessions  FieldTrainingSession[]
+  gameSessions           GameSession[]
+  athleteInvites         AthleteInvite[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  role           UserRole @default(TRAINER)
+  avatarUrl      String?
+  isActive       Boolean  @default(true)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  refreshToken String?
+  lastLoginAt  DateTime?
+
+  // Link to Athlete profile (only for ATHLETE role)
+  athleteId String? @unique
+  athlete   Athlete? @relation("AthleteUser", fields: [athleteId], references: [id])
+
+  // Push notification subscription
+  pushSubscription Json? // Web Push subscription object
+
+  // GDPR consent fields
+  consentAnalytics   Boolean?  @default(false)
+  consentMarketing   Boolean?  @default(false)
+  consentThirdParty  Boolean?  @default(false)
+  consentUpdatedAt   DateTime?
+
+  organization        Organization       @relation(fields: [organizationId], references: [id])
+  trainingPlans       TrainingPlan[]
+  chatConversations   ChatConversation[]
+  reports             Report[]
+  calendarEvents      CalendarEvent[]
+  notifications       Notification[]
+  alertRules          AlertRule[]
+  proposedAdaptations PlanAdaptation[]   @relation("AdaptationProposer")
+  reviewedAdaptations PlanAdaptation[]   @relation("AdaptationReviewer")
+  reportSchedules     ReportSchedule[]
+  periodizationPlans  PeriodizationPlan[]
+  rtpPhaseLogs        RTPPhaseLog[]
+  clearanceVerified   ClearanceCriteria[]
+  sentInvites         AthleteInvite[]    @relation("InviteSender")
+  consentRecords      ConsentRecord[]
+  auditLogs           AuditLog[]
+
+  // Soft-delete: quando l'utente richiede la cancellazione GDPR, i dati
+  // personali vengono anonimizzati e deletedAt viene valorizzato.
+  deletedAt DateTime?
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("users")
+}
+
+// Registro accessi agli endpoint che toccano dati personali/sanitari
+// Serve per la tracciabilità GDPR ("chi ha visto cosa e quando").
+model AuditLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  organizationId String?
+  action         String   // e.g. "athlete.read", "wellness.list", "gdpr.erase"
+  resourceType   String   // e.g. "athlete", "wellness_log"
+  resourceId     String?  // id della risorsa quando presente
+  method         String   // GET, POST, PATCH, DELETE
+  path           String   // URL richiesta
+  statusCode     Int
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
+// Registro versionato delle accettazioni di documenti legali (prova di conformità GDPR)
+model ConsentRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  docType    String // TERMS | PRIVACY_ACK | PRIVACY_ATHLETE_ACK | HEALTH_DATA | AGE_DECLARATION
+  docVersion String // es. "2026-07-18"
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, docType])
+  @@map("consent_records")
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  name           String   // es. "Under 16", "Prima Squadra"
+  description    String?
+  color          String?  // hex color for UI
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization       Organization        @relation(fields: [organizationId], references: [id])
+  athleteTeams       AthleteTeam[]
+  trainingPlans      TrainingPlan[]
+  periodizationPlans PeriodizationPlan[]
+  calendarEvents        CalendarEvent[]
+  fieldTrainingSessions FieldTrainingSession[]
+  gameSessions          GameSession[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("teams")
+}
+
+model AthleteTeam {
+  id        String   @id @default(cuid())
+  athleteId String
+  teamId    String
+  createdAt DateTime @default(now())
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([athleteId, teamId])
+  @@index([teamId])
+  @@map("athlete_teams")
+}
+
+model Athlete {
+  id             String   @id @default(cuid())
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  position       String
+  jerseyNumber   Int?
+  height         Float? // cm
+  weight         Float? // kg
+  team           String? // legacy — nome squadra testo libero
+  email          String?
+  photoUrl       String?
+  isActive       Boolean  @default(true)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  userAccount      User?             @relation("AthleteUser") // linked user account (ATHLETE role)
+  athleteTeams     AthleteTeam[]
+  trainingPlans    TrainingPlan[]
+  trainingSessions TrainingSession[]
+  wellnessLogs     WellnessLog[]
+  injuries         Injury[]
+  rtpProtocols     RTPProtocol[]
+  metrics          Metric[]
+  sessionLogs      SessionLog[]
+  alertRules            AlertRule[]
+  planAdaptations       PlanAdaptation[]
+  fieldTrainingEntries  FieldTrainingEntry[]
+  gamePlayerEntries     GamePlayerEntry[]
+  athleteInvites        AthleteInvite[]
+
+  @@index([organizationId])
+  @@map("athletes")
+}
+
+model TrainingPlan {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  startDate           DateTime
+  endDate             DateTime
+  athleteId           String?
+  teamId              String?
+  organizationId      String
+  createdById         String
+  periodizationPlanId String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  athlete            Athlete?           @relation(fields: [athleteId], references: [id])
+  team               Team?              @relation(fields: [teamId], references: [id])
+  organization       Organization       @relation(fields: [organizationId], references: [id])
+  createdBy          User               @relation(fields: [createdById], references: [id])
+  periodizationPlan  PeriodizationPlan? @relation(fields: [periodizationPlanId], references: [id])
+  weeks              Week[]
+
+  @@index([organizationId])
+  @@index([athleteId])
+  @@index([teamId])
+  @@index([periodizationPlanId])
+  @@map("training_plans")
+}
+
+model Week {
+  id             String   @id @default(cuid())
+  weekNumber     Int
+  trainingPlanId String
+  microcycleId   String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  trainingPlan     TrainingPlan      @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
+  microcycle       Microcycle?       @relation(fields: [microcycleId], references: [id])
+  trainingSessions TrainingSession[]
+
+  @@unique([trainingPlanId, weekNumber])
+  @@index([microcycleId])
+  @@map("weeks")
+}
+
+model TrainingSession {
+  id             String        @id @default(cuid())
+  title          String
+  date           DateTime?
+  duration       Int // minutes
+  status         SessionStatus @default(PLANNED)
+  notes          String?
+  rpe            Int? // 1-10
+  isTemplate     Boolean       @default(false)
+  aiModified     Boolean       @default(false) // true when AI adaptation has been applied
+  weekId         String?
+  athleteId      String?
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  week             Week?             @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  athlete          Athlete?          @relation(fields: [athleteId], references: [id])
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  sessionExercises SessionExercise[]
+  sessionLogs      SessionLog[]
+
+  @@index([weekId])
+  @@index([athleteId])
+  @@index([date])
+  @@index([organizationId, isTemplate])
+  @@map("training_sessions")
+}
+
+model Exercise {
+  id             String   @id @default(cuid())
+  name           String
+  category       String
+  description    String?
+  muscleGroups   String[]
+  equipment      String[]
+  videoUrl       String?
+  isDefault      Boolean  @default(false)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  sessionExercises SessionExercise[]
+
+  @@index([organizationId])
+  @@index([category])
+  @@map("exercises")
+}
+
+model SessionExercise {
+  id                String   @id @default(cuid())
+  trainingSessionId String
+  exerciseId        String
+  orderIndex        Int
+  sets              Int?
+  reps              String? // can be "8-12" range
+  weight            Float? // kg
+  duration          Int? // seconds
+  restTime          Int? // seconds
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  trainingSession TrainingSession @relation(fields: [trainingSessionId], references: [id], onDelete: Cascade)
+  exercise        Exercise        @relation(fields: [exerciseId], references: [id])
+
+  @@index([trainingSessionId])
+  @@map("session_exercises")
+}
+
+model SessionLog {
+  id                String    @id @default(cuid())
+  trainingSessionId String
+  athleteId         String
+  actualRpe         Int?
+  actualDuration    Int? // minutes
+  completedSets     Json? // { exerciseId: { sets: number, reps: number[], weights: number[] } }
+  exerciseChecks    Json? // { exerciseId: boolean } — athlete checkbox per exercise
+  notes             String?
+  viewedAt          DateTime? // when athlete first opened the session
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  trainingSession TrainingSession @relation(fields: [trainingSessionId], references: [id], onDelete: Cascade)
+  athlete         Athlete         @relation(fields: [athleteId], references: [id])
+
+  @@unique([trainingSessionId, athleteId])
+  @@map("session_logs")
+}
+
+model Metric {
+  id        String   @id @default(cuid())
+  athleteId String
+  date      DateTime
+  type      String // e.g., "vertical_jump", "sprint_10m", "body_fat"
+  value     Float
+  unit      String // e.g., "cm", "s", "%"
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  athlete Athlete @relation(fields: [athleteId], references: [id])
+
+  @@index([athleteId, type])
+  @@index([date])
+  @@map("metrics")
+}
+
+model WellnessLog {
+  id           String   @id @default(cuid())
+  athleteId    String
+  date         DateTime
+  sleepHours   Float
+  sleepQuality Int // 1-5
+  fatigue      Int // 1-5
+  soreness     Int // 1-5
+  stress       Int // 1-5
+  mood         Int // 1-5
+  notes        String?
+  mediaUrls    String[] // photo/video attachments (e.g. swelling, injury photos)
+  submittedBy  String?  // 'athlete' | 'trainer' — who submitted this entry
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  athlete Athlete @relation(fields: [athleteId], references: [id])
+
+  @@unique([athleteId, date])
+  @@index([athleteId])
+  @@map("wellness_logs")
+}
+
+model Injury {
+  id           String       @id @default(cuid())
+  athleteId    String
+  type         String
+  location     String // body part
+  severity     Int // 1-5
+  status       InjuryStatus @default(ACTIVE)
+  dateOccurred DateTime
+  dateResolved DateTime?
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  athlete      Athlete       @relation(fields: [athleteId], references: [id])
+  rtpProtocols RTPProtocol[]
+
+  @@index([athleteId])
+  @@map("injuries")
+}
+
+model RTPProtocol {
+  id           String    @id @default(cuid())
+  injuryId     String
+  athleteId    String
+  currentPhase RTPPhase  @default(PHASE_1)
+  startDate    DateTime
+  targetDate   DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  injury    Injury  @relation(fields: [injuryId], references: [id])
+  athlete   Athlete @relation(fields: [athleteId], references: [id])
+  phaseLogs RTPPhaseLog[]
+  criteria  ClearanceCriteria[]
+
+  @@index([athleteId])
+  @@map("rtp_protocols")
+}
+
+model RTPPhaseLog {
+  id            String   @id @default(cuid())
+  rtpProtocolId String
+  fromPhase     RTPPhase
+  toPhase       RTPPhase
+  changedById   String   // user who advanced/reverted
+  reason        String?  // clinical note
+  createdAt     DateTime @default(now())
+
+  rtpProtocol RTPProtocol @relation(fields: [rtpProtocolId], references: [id], onDelete: Cascade)
+  changedBy   User        @relation(fields: [changedById], references: [id])
+
+  @@index([rtpProtocolId])
+  @@map("rtp_phase_logs")
+}
+
+model ClearanceCriteria {
+  id            String   @id @default(cuid())
+  rtpProtocolId String
+  phase         RTPPhase // which phase this criterion belongs to
+  description   String   // e.g. "Pain-free ROM > 90%"
+  isMet         Boolean  @default(false)
+  metAt         DateTime?
+  metById       String?  // user who verified
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rtpProtocol RTPProtocol @relation(fields: [rtpProtocolId], references: [id], onDelete: Cascade)
+  metBy       User?       @relation(fields: [metById], references: [id])
+
+  @@index([rtpProtocolId, phase])
+  @@map("clearance_criteria")
+}
+
+model ChatConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id])
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String // 'user' | 'assistant' | 'system'
+  content        String
+  sources        Json? // RAG source references
+  createdAt      DateTime @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("chat_messages")
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  type      String // 'weekly', 'monthly', 'athlete', 'custom'
+  content   Json // structured report data
+  filters   Json? // filters used to generate
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("reports")
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  allDay      Boolean  @default(false)
+  type        String // 'training', 'match', 'medical', 'meeting', 'other'
+  color       String?
+  userId      String
+  athleteId   String?
+  sessionId   String?
+  teamId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user                 User                  @relation(fields: [userId], references: [id])
+  team                 Team?                 @relation(fields: [teamId], references: [id])
+  fieldTrainingSession FieldTrainingSession?
+  gameSession          GameSession?
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([startTime, endTime])
+  @@map("calendar_events")
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALERT & NOTIFICATION SYSTEM — Sprint 3.3
+// ═══════════════════════════════════════════════════════════
+
+model AlertRule {
+  id              String    @id @default(cuid())
+  organizationId  String
+  userId          String
+  name            String
+  description     String?
+  type            String // 'acwr_high', 'acwr_danger', 'wellness_low', 'missed_session', 'missed_wellness', 'streak', 'custom'
+  condition       Json // { metric: 'acwr', operator: '>', threshold: 1.5 } or { metric: 'wellness_score', operator: '<', threshold: 40 }
+  severity        String    @default("warning") // 'info', 'warning', 'danger'
+  isActive        Boolean   @default(true)
+  athleteId       String? // null = applies to all athletes
+  cooldownMinutes Int       @default(1440) // 24h default, don't re-fire within this window
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id])
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  athlete       Athlete?       @relation(fields: [athleteId], references: [id])
+  notifications Notification[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("alert_rules")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  alertRuleId String?
+  type        String // 'alert', 'system', 'reminder', 'ai_insight'
+  severity    String    @default("info") // 'info', 'warning', 'danger', 'success'
+  title       String
+  message     String
+  data        Json? // { athleteId, sessionId, metricValue, etc. }
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user      User       @relation(fields: [userId], references: [id])
+  alertRule AlertRule? @relation(fields: [alertRuleId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model PlanAdaptation {
+  id                String    @id @default(cuid())
+  trainingSessionId String? // Session that triggered the adaptation (optional)
+  athleteId         String
+  organizationId    String
+  proposedById      String // User who triggered/generated (usually AI, stored as the trainer)
+  status            String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED', 'MODIFIED'
+  reason            String // Short reason (e.g., "ACWR elevato", "Wellness basso")
+  aiReasoning       String? // Full AI explanation
+  metrics           Json // Snapshot: { acwr, wellnessScore, rpeAvg, targetRpe, completionRate }
+  originalPlan      Json // Original session exercises snapshot
+  proposedPlan      Json // Proposed adapted exercises
+  changes           Json // Diff summary: [{ type: 'volume'|'exercise'|'intensity', description, delta }]
+  volumeDelta       Float? // Percentage volume change (e.g., -0.15 = -15%)
+  intensityDelta    Float? // Percentage intensity change
+  appliedAt         DateTime?
+  reviewedAt        DateTime?
+  reviewedById      String?
+  reviewNotes       String?
+  createdAt         DateTime  @default(now())
+
+  athlete      Athlete      @relation(fields: [athleteId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  proposedBy   User         @relation("AdaptationProposer", fields: [proposedById], references: [id])
+  reviewedBy   User?        @relation("AdaptationReviewer", fields: [reviewedById], references: [id])
+
+  @@index([athleteId, status])
+  @@index([organizationId, status])
+  @@index([createdAt])
+  @@map("plan_adaptations")
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPORT SCHEDULING — Sprint 4.2
+// ═══════════════════════════════════════════════════════════
+
+model ReportSchedule {
+  id               String                @id @default(cuid())
+  organizationId   String
+  createdById      String // User who created the schedule
+  name             String // Human-readable label, e.g. "Report settimanale staff"
+  audience         ReportAudience
+  format           ReportFormat          @default(PDF)
+  cronExpression   String // Standard 5-field cron, e.g. "0 8 * * 1" (every Monday 8:00)
+  timezone         String                @default("Europe/Rome")
+  periodDays       Int                   @default(7) // How many days back from execution to use as report period
+  recipients       String[] // Array of email addresses
+  includeAISummary Boolean               @default(true)
+  isActive         Boolean               @default(true)
+  lastRunAt        DateTime?
+  lastRunStatus    ReportScheduleStatus?
+  nextRunAt        DateTime? // Computed at create/update from cronExpression
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  createdBy    User                @relation(fields: [createdById], references: [id])
+  runs         ReportScheduleRun[]
+
+  @@index([organizationId])
+  @@index([isActive, nextRunAt])
+  @@map("report_schedules")
+}
+
+model ReportScheduleRun {
+  id             String               @id @default(cuid())
+  scheduleId     String
+  status         ReportScheduleStatus
+  startedAt      DateTime             @default(now())
+  finishedAt     DateTime?
+  durationMs     Int?
+  fileSizeBytes  Int?
+  errorMessage   String?
+  recipientsSent Int                  @default(0) // How many emails were actually sent
+
+  schedule ReportSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId, startedAt])
+  @@map("report_schedule_runs")
+}
+
+// ─── Sprint 4.3 — Periodization Simulation ─────────────
+
+enum PeriodizationType {
+  LINEAR
+  UNDULATING
+  BLOCK
+  REVERSE_LINEAR
+  CONJUGATE
+}
+
+enum MesocyclePhase {
+  PREPARATION       // Preparazione generale
+  SPECIFIC          // Preparazione specifica
+  COMPETITION       // Competizione / in-season
+  TRANSITION        // Transizione / off-season
+  TAPER             // Scarico pre-gara
+  RECOVERY          // Recupero attivo
+}
+
+enum IntensityLevel {
+  VERY_LOW    // RPE 1-3, recovery
+  LOW         // RPE 4-5, aerobic base
+  MODERATE    // RPE 6-7, tempo work
+  HIGH        // RPE 8-9, threshold
+  VERY_HIGH   // RPE 10, max effort
+}
+
+model PeriodizationPlan {
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  type             PeriodizationType @default(BLOCK)
+  startDate        DateTime
+  endDate          DateTime
+  totalWeeks       Int
+  organizationId   String
+  createdById      String
+  teamId           String?
+  isTemplate       Boolean           @default(false)
+  templateCategory String?           // e.g. "pre-season", "in-season", "off-season"
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  createdBy      User          @relation(fields: [createdById], references: [id])
+  team           Team?         @relation(fields: [teamId], references: [id])
+  mesocycles     Mesocycle[]
+  simulations    Simulation[]
+  trainingPlans  TrainingPlan[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([isTemplate])
+  @@map("periodization_plans")
+}
+
+model Mesocycle {
+  id                  String         @id @default(cuid())
+  periodizationPlanId String
+  orderIndex          Int
+  name                String
+  phase               MesocyclePhase
+  durationWeeks       Int
+  targetLoadPercent   Float          // % of max weekly load (0-100)
+  intensityDistribution Json?        // e.g. {"VERY_LOW": 20, "LOW": 30, "MODERATE": 30, "HIGH": 15, "VERY_HIGH": 5}
+  notes               String?
+  color               String?        // UI color for drag-and-drop editor
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  periodizationPlan PeriodizationPlan @relation(fields: [periodizationPlanId], references: [id], onDelete: Cascade)
+  microcycles       Microcycle[]
+
+  @@unique([periodizationPlanId, orderIndex])
+  @@map("mesocycles")
+}
+
+model Microcycle {
+  id             String         @id @default(cuid())
+  mesocycleId    String
+  weekNumber     Int            // relative week within mesocycle (1-based)
+  loadPercent    Float          // % of mesocycle target load (enables wave loading)
+  intensity      IntensityLevel @default(MODERATE)
+  volume         Float?         // total planned minutes
+  sessionsCount  Int            @default(5)
+  focusAreas     String[]       // e.g. ["strength", "agility", "shooting"]
+  isDeload       Boolean        @default(false)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  mesocycle Mesocycle @relation(fields: [mesocycleId], references: [id], onDelete: Cascade)
+  weeks    Week[]
+
+  @@unique([mesocycleId, weekNumber])
+  @@map("microcycles")
+}
+
+model Simulation {
+  id                  String   @id @default(cuid())
+  periodizationPlanId String
+  name                String
+  description         String?
+  parameters          Json     // input params: athlete baseline, injury history, etc.
+  results             Json?    // computed load/fatigue curves, ACWR predictions, risk windows
+  aiInsights          String?  // AI-generated analysis of the simulation
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  periodizationPlan PeriodizationPlan @relation(fields: [periodizationPlanId], references: [id], onDelete: Cascade)
+
+  @@index([periodizationPlanId])
+  @@map("simulations")
+}
+
+// ─── Field Training (Cronometri allenamento in campo) ─────────
+
+model FieldTrainingSession {
+  id              String    @id @default(cuid())
+  calendarEventId String    @unique
+  teamId          String?
+  organizationId  String
+  status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  calendarEvent CalendarEvent        @relation(fields: [calendarEventId], references: [id], onDelete: Cascade)
+  team          Team?                @relation(fields: [teamId], references: [id])
+  organization  Organization         @relation(fields: [organizationId], references: [id])
+  entries       FieldTrainingEntry[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@map("field_training_sessions")
+}
+
+model FieldTrainingEntry {
+  id                     String @id @default(cuid())
+  fieldTrainingSessionId String
+  athleteId              String
+  totalActiveMs          Int    @default(0)
+  laps                   Json   @default("[]") // Array of { startMs, endMs, durationMs }
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  fieldTrainingSession FieldTrainingSession @relation(fields: [fieldTrainingSessionId], references: [id], onDelete: Cascade)
+  athlete              Athlete              @relation(fields: [athleteId], references: [id])
+
+  @@unique([fieldTrainingSessionId, athleteId])
+  @@index([athleteId])
+  @@map("field_training_entries")
+}
+
+// ─── Game Tracking (Minuti partita) ───────────────────────────
+
+model GameSession {
+  id              String    @id @default(cuid())
+  calendarEventId String    @unique
+  teamId          String?
+  organizationId  String
+  status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  quarters        Int       @default(4)
+  quarterDurationMs Int     @default(600000) // 10 min default
+  overtimes       Int       @default(0)
+  currentQuarter  Int       @default(1) // 1-based
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  calendarEvent CalendarEvent    @relation(fields: [calendarEventId], references: [id], onDelete: Cascade)
+  team          Team?            @relation(fields: [teamId], references: [id])
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  entries       GamePlayerEntry[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@map("game_sessions")
+}
+
+model GamePlayerEntry {
+  id            String @id @default(cuid())
+  gameSessionId String
+  athleteId     String
+  totalPlayingMs Int   @default(0)
+  stints        Json   @default("[]") // Array of { quarter, inMs, outMs, durationMs }
+  onCourt       Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  athlete     Athlete     @relation(fields: [athleteId], references: [id])
+
+  @@unique([gameSessionId, athleteId])
+  @@index([athleteId])
+  @@map("game_player_entries")
+}
+
+// ═══════════════════════════════════════════════════════════
+// ATHLETE APP — Invite & Onboarding
+// ═══════════════════════════════════════════════════════════
+
+model AthleteInvite {
+  id             String       @id @default(cuid())
+  athleteId      String
+  email          String
+  token          String       @unique @default(cuid())
+  status         InviteStatus @default(PENDING)
+  invitedById    String // trainer/admin who sent the invite
+  organizationId String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  athlete      Athlete      @relation(fields: [athleteId], references: [id])
+  invitedBy    User         @relation("InviteSender", fields: [invitedById], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([token])
+  @@index([email])
+  @@index([organizationId, status])
+  @@map("athlete_invites")
+}

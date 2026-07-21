@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 72px;
+    --topbar-height: 64px;
+    --bottom-nav-height: 56px;
+    /* Safe-area aliases for use in components */
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+    --safe-left: env(safe-area-inset-left);
+    --safe-right: env(safe-area-inset-right);
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+  }
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS Safari: prevent automatic zoom when focusing inputs (requires font-size >= 16px) */
+  @media (max-width: 767px) {
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='number'],
+    input[type='search'],
+    input[type='tel'],
+    input[type='url'],
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'],
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+
+  /* Touch target minimum 44x44 (Apple HIG / WCAG) */
+  @media (pointer: coarse) {
+    button,
+    [role='button'],
+    a.btn,
+    .input-field {
+      min-height: 44px;
+    }
+  }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800;
+  }
+
+  .card-hover {
+    @apply card transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-teal {
+    @apply badge bg-teal-100 text-teal-800;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-50 text-warning-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-700;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-500;
+  }
+
+  .label {
+    @apply text-sm font-medium text-slate-700 dark:text-slate-300;
+  }
+
+  /* Responsive table helper: wrap any <table> in <div class="table-scroll"> to allow
+     horizontal swipe on mobile without breaking layout. */
+  .table-scroll {
+    @apply -mx-3 sm:-mx-4 md:mx-0 overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-scroll > table {
+    @apply min-w-full;
+  }
+
+  /* Stack rows as cards on mobile when table has data-mobile="cards" attribute */
+  @media (max-width: 767px) {
+    table[data-mobile='cards'] thead {
+      @apply sr-only;
+    }
+    table[data-mobile='cards'] tr {
+      @apply block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 mb-2 shadow-card;
+    }
+    table[data-mobile='cards'] td {
+      @apply block w-full px-0 py-1 text-sm;
+    }
+    table[data-mobile='cards'] td::before {
+      content: attr(data-label);
+      @apply mr-2 inline-block min-w-[110px] text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+  }
+
+  /* Modal dialog full-screen on mobile (apply class .modal-mobile-full) */
+  @media (max-width: 767px) {
+    .modal-mobile-full {
+      @apply !inset-0 !m-0 !h-[100dvh] !w-full !max-w-full !rounded-none;
+    }
+  }
+}
+
+/* Utility shortcuts (outside @layer for specificity) */
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-pt {
+  padding-top: env(safe-area-inset-top);
+}

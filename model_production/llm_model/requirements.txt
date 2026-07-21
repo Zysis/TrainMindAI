@@ -1,0 +1,56 @@
+# ============================================================
+# TrainMindAI - LLM Model Pipeline - Dipendenze Python
+# Installa con: pip install -r requirements.txt
+# ============================================================
+
+# --- Core ---
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.2.0  # Per BaseSettings in config/settings.py
+pyyaml>=6.0.1
+rich>=13.7.0          # Output formattato nel terminale
+tqdm>=4.66.0          # Progress bars
+
+# --- Chunking e text processing ---
+tiktoken>=0.7.0       # Tokenizer per conteggio token
+langchain-text-splitters>=0.2.0  # Splitting intelligente
+markdown-it-py>=3.0.0 # Parsing markdown
+
+# --- Embeddings ---
+sentence-transformers>=3.0.0  # Modelli embedding (multilingual-e5-large)
+torch>=2.2.0          # Backend PyTorch
+transformers>=4.40.0  # Hugging Face transformers
+
+# --- Vector Database ---
+qdrant-client>=1.9.0  # Client Qdrant
+# pinecone-client>=3.0.0  # Decommentare se si usa Pinecone
+
+# --- Reranker ---
+# (usa sentence-transformers, già incluso sopra)
+
+# --- LLM Client ---
+openai>=1.30.0        # Client OpenAI-compatible (funziona anche con vLLM)
+httpx>=0.27.0         # HTTP async client
+
+# --- Training LoRA/QLoRA ---
+peft>=0.11.0          # Parameter-Efficient Fine-Tuning
+trl>=0.9.0            # Transformer Reinforcement Learning (SFT trainer)
+bitsandbytes>=0.43.0  # Quantizzazione 4-bit per QLoRA
+datasets>=2.19.0      # Hugging Face datasets
+accelerate>=0.30.0    # Distributed training utilities
+
+# --- Evaluation ---
+rouge-score>=0.1.2    # ROUGE metrics per report
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+
+# --- Serving (opzionale, per test locale) ---
+# vllm>=0.5.0         # Decommentare per serving locale (richiede GPU + CUDA)
+
+# --- Testing ---
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# --- Observability (opzionale) ---
+# langfuse>=2.30.0    # Decommentare per tracing

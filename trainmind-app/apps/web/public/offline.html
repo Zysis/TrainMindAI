@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrainMind AI - Offline</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      body {
+        background: linear-gradient(135deg, #0D3B3B 0%, #14B8A6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        background: #F8FAFC;
+        border-radius: 12px;
+        padding: 40px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 30px;
+        background: #0D3B3B;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: bold;
+        color: #FFFFFF;
+      }
+
+      h1 {
+        font-size: 28px;
+        color: #0D3B3B;
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .subtitle {
+        font-size: 16px;
+        color: #64748B;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .icon-offline {
+        font-size: 64px;
+        margin: 20px 0;
+        opacity: 0.7;
+      }
+
+      .message {
+        font-size: 18px;
+        color: #0D3B3B;
+        font-weight: 500;
+        margin-bottom: 20px;
+      }
+
+      .description {
+        font-size: 14px;
+        color: #64748B;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        flex: 1;
+        min-width: 140px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: #0D3B3B;
+        color: #FFFFFF;
+      }
+
+      .btn-primary:hover {
+        background: #0a2f2f;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(13, 59, 59, 0.3);
+      }
+
+      .btn-secondary {
+        background: #E2E8F0;
+        color: #0D3B3B;
+      }
+
+      .btn-secondary:hover {
+        background: #CBD5E1;
+        transform: translateY(-2px);
+      }
+
+      .tips {
+        background: #F1F5F9;
+        border-left: 4px solid #14B8A6;
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 30px;
+        text-align: left;
+      }
+
+      .tips h3 {
+        font-size: 14px;
+        color: #0D3B3B;
+        margin-bottom: 10px;
+      }
+
+      .tips ul {
+        list-style: none;
+        font-size: 13px;
+        color: #64748B;
+        line-height: 1.8;
+      }
+
+      .tips li {
+        margin-bottom: 6px;
+      }
+
+      .tips li:before {
+        content: '✓ ';
+        color: #14B8A6;
+        font-weight: bold;
+        margin-right: 6px;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 30px 20px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .message {
+          font-size: 16px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+
+      /* Animation */
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .icon-offline {
+        animation: pulse 2s ease-in-out infinite;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="logo">TM</div>
+
+      <h1>TrainMind AI</h1>
+      <p class="subtitle">Piattaforma AI per preparatori fisici nel basket</p>
+
+      <div class="icon-offline">📡</div>
+
+      <div class="message">Sei offline</div>
+      <div class="description">
+        Sembra che non sia disponibile una connessione Internet stabile al momento.
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="checkConnection()">
+          Verifica connessione
+        </button>
+        <button class="btn-secondary" onclick="goHome()">Torna alla home</button>
+      </div>
+
+      <div class="tips">
+        <h3>Suggerimenti:</h3>
+        <ul>
+          <li>Controlla il tuo WiFi o i dati mobili</li>
+          <li>Verifica che il router sia acceso</li>
+          <li>Prova a riavviare il dispositivo</li>
+          <li>Alcune sezioni potrebbero essere disponibili offline</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      function checkConnection() {
+        // Try to fetch a small resource to check connectivity
+        fetch('/manifest.json', { method: 'HEAD' })
+          .then(() => {
+            // Connection is back, reload the page
+            window.location.reload();
+          })
+          .catch(() => {
+            // Still offline
+            alert('Ancora offline. Controlla la tua connessione e riprova.');
+          });
+      }
+
+      function goHome() {
+        // Try to go to dashboard or home
+        window.location.href = '/dashboard';
+      }
+
+      // Check connection periodically
+      setInterval(() => {
+        fetch('/manifest.json', { method: 'HEAD' })
+          .then(() => {
+            window.location.reload();
+          })
+          .catch(() => {
+            // Still offline, do nothing
+          });
+      }, 5000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,138 @@
+# ============================================
+# TrainMind AI — CD Pipeline (Deploy to Production)
+# Runs on push to main after CI passes
+# ============================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  # ─── Build & Push Docker Images ─────────────────────
+  docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - name: web
+            dockerfile: apps/web/Dockerfile
+          - name: api
+            dockerfile: apps/api/Dockerfile
+          - name: ai-service
+            dockerfile: apps/ai-service/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Database Migrations ────────────────────────────
+  migrate:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    needs: docker
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # ─── Deploy ─────────────────────────────────────────
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker, migrate]
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/trainmind
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker system prune -f
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f ${{ secrets.PRODUCTION_URL }}/api/v1/health || exit 1
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "Deployment ${{ job.status }} for commit ${{ github.sha }}"

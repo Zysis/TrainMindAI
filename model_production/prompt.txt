@@ -1,0 +1,202 @@
+Agisci come un AI Systems Architect senior specializzato in:
+- LLM open-weight
+- RAG
+- fine-tuning PEFT/LoRA/QLoRA
+- deployment self-hosted per applicazioni web
+- applicazioni verticali nel settore sport performance e preparazione fisica nel basket
+
+Devi aiutarmi a progettare la soluzione migliore per la mia applicazione.
+
+CONTESTO
+Ho una web app rivolta ai preparatori fisici nel basket.
+L’app usa attualmente API di un LLM.
+Vorrei ridurre o eliminare il costo per chiamata API, passando se possibile a una soluzione con modello open-weight da usare nella mia applicazione.
+Non voglio una risposta generica: voglio una proposta tecnica concreta, orientata a produzione.
+
+OBIETTIVO
+Dimmi:
+1. se nel mio caso conviene davvero allenare/fine-tunare un modello oppure usare RAG oppure una soluzione ibrida;
+2. quale modello usare;
+3. quale tipo di addestramento fare;
+4. come ottenere il modello finale da integrare nella web app;
+5. quale architettura usare per avere il miglior equilibrio tra costo, qualità, velocità, manutenzione e scalabilità.
+
+DATI DI PARTENZA
+Assumi che la mia app debba:
+- rispondere a domande tecniche su preparazione fisica nel basket;
+- supportare il coach nella lettura di dati atleta/sessione;
+- generare suggerimenti operativi coerenti con il ruolo di preparatore fisico;
+- produrre report testuali strutturati e scaricabili;
+- lavorare via web app, anche da tablet/mobile;
+- usare principalmente testo, con eventuale input da dati strutturati (JSON, metriche, test, carichi, presenze, workload, RPE, note atleta).
+
+Se mancano dati, fammi domande prima di fare assunzioni ragionevoli, poi dichiarale esplicitamente prima di procedi.
+
+VINCOLI
+- privilegia soluzioni open-weight o self-hosted se sensate;
+- evita di proporre training da zero, a meno che tu non dimostri in modo chiaro perché sarebbe necessario;
+- considera che la conoscenza specialistica dell’app può provenire da documenti, protocolli, linee guida, metodologie di allenamento, template di report, FAQ e casi d’uso reali;
+- considera anche il problema della manutenzione: se aggiorno contenuti o protocolli, la soluzione deve restare semplice da aggiornare;
+- considera scenari con budget basso, medio e alto;
+- considera deployment in cloud e on-premise;
+- considera un target realistico per una SaaS verticale.
+
+MODELLI DA CONFRONTARE
+Valuta in modo comparativo almeno queste opzioni, se ancora attuali e sensate:
+- Mistral Small 3.1
+- Mistral Small 4
+- Llama 3.1 8B
+- Llama 3.2 3B
+- Llama 3.3 70B
+e aggiungi eventuali alternative migliori se oggi esistono opzioni più adatte.
+
+METODO RICHIESTO
+Voglio che tu ragioni come un architetto di prodotto e ML engineer.
+Non limitarti a elencare modelli.
+Devi decidere quale approccio è migliore tra:
+- solo RAG
+- solo fine-tuning
+- RAG + fine-tuning leggero
+- modello completamente custom
+
+SPIEGA CON CHIAREZZA:
+- quando RAG è obbligatorio;
+- quando il fine-tuning è utile;
+- quando il fine-tuning NON serve;
+- quando ha senso LoRA/QLoRA;
+- quando serve SFT pieno;
+- quando non conviene allenare nulla e basta cambiare architettura.
+
+OUTPUT RICHIESTO
+Dammi la risposta in queste sezioni precise:
+
+SEZIONE 1 — RACCOMANDAZIONE FINALE
+Dammi subito la scelta migliore in una frase chiara:
+“Per il tuo caso, la soluzione migliore è X perché Y.”
+
+SEZIONE 2 — ARCHITETTURA CONSIGLIATA
+Descrivi l’architettura ideale dell’app:
+- LLM principale
+- embeddings
+- vector database
+- reranker
+- backend orchestration
+- formato dei dati in input/output
+- serving del modello
+- sistema reportistica
+- monitoring e logging
+
+SEZIONE 3 — SCELTA DEL MODELLO
+Per ogni modello candidato, crea una tabella con:
+- pro
+- contro
+- livello qualità
+- costo infrastrutturale
+- facilità di fine-tuning
+- facilità di deployment
+- caso d’uso ideale
+- verdetto finale
+
+SEZIONE 4 — TIPO DI TRAINING DA FARE
+Spiega esattamente quale training usare:
+- nessun training
+- prompt engineering
+- supervised fine-tuning
+- PEFT/LoRA
+- QLoRA
+- DPO / preference tuning
+- full fine-tuning
+Per ciascuno, spiega se nel mio caso serve oppure no.
+
+SEZIONE 5 — DATASET NECESSARIO
+Dimmi quali dati servono davvero per specializzare il sistema:
+- knowledge base documentale
+- esempi domanda-risposta
+- report già scritti bene
+- casi reali
+- template strutturati
+- regole di sicurezza / limiti operativi
+- glossario tecnico
+- mapping dei ruoli
+- workflow tipici del preparatore fisico
+Poi definisci:
+- formato del dataset
+- esempio JSONL per fine-tuning
+- esempio struttura documenti per RAG
+- esempio chunking strategy
+- esempio metadati
+
+SEZIONE 6 — PIPELINE OPERATIVA STEP-BY-STEP
+Fornisci una pipeline concreta in ordine:
+1. raccolta dati
+2. pulizia
+3. deduplicazione
+4. normalizzazione terminologica
+5. chunking
+6. embeddings
+7. indicizzazione
+8. creazione dataset SFT
+9. training LoRA/QLoRA
+10. valutazione
+11. serving
+12. integrazione nella web app
+13. monitoraggio in produzione
+14. retraining / refresh
+
+SEZIONE 7 — HARDWARE E INFRASTRUTTURA
+Indica il minimo hardware consigliato per:
+- test locale
+- MVP
+- produzione con traffico basso
+- produzione con traffico medio
+- produzione con traffico alto
+Distingui tra:
+- CPU only
+- singola GPU consumer
+- singola GPU server
+- multi-GPU
+Specifica anche quando il self-hosting NON conviene economicamente.
+
+SEZIONE 8 — DEPLOYMENT STACK CONSIGLIATO
+Suggerisci stack concreto, ad esempio:
+- vLLM o alternativa
+- Qdrant o alternativa
+- Sentence Transformers o alternativa
+- FastAPI / Node backend
+- storage documenti
+- coda task
+- report generation
+- observability
+Spiega perché scegli ogni componente.
+
+SEZIONE 9 — VALUTAZIONE
+Definisci come valutare il sistema prima del rilascio:
+- factuality
+- groundedness
+- qualità report
+- coerenza tecnica
+- latenza
+- costo per richiesta
+- stabilità output
+- allucinazioni
+- aderenza al ruolo del preparatore fisico
+Proponi anche una suite minima di benchmark pratici.
+
+SEZIONE 10 — ROADMAP 30 GIORNI
+Crea una roadmap operativa di 30 giorni per arrivare al primo prototipo funzionante.
+
+SEZIONE 11 — RISPOSTA FINALE NETTA
+Chiudi con:
+- modello consigliato
+- training consigliato
+- stack consigliato
+- cosa fare subito
+- cosa evitare assolutamente
+
+STILE DELLA RISPOSTA
+- tecnico ma chiaro
+- niente teoria inutile
+- niente risposte vaghe
+- niente “dipende” senza decisione
+- se fai assunzioni, dichiarale
+- dai una raccomandazione finale netta

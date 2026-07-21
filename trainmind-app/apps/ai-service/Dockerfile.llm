@@ -1,0 +1,44 @@
+# Dockerfile.llm - Local LLM server (llama-cpp-python) + wrapper /health
+# Image alpine (musl) per match con il wheel CPU di abetlen.
+
+FROM python:3.11-alpine
+
+WORKDIR /app
+
+# Runtime libs:
+#  - curl       : healthcheck
+#  - libstdc++  : C++ std runtime per llama-cpp shared libs
+#  - libgcc     : libgcc_s, dipendenza tipica wheel manylinux/musl
+#  - libgomp    : OpenMP runtime, richiesto da libggml-cpu.so
+RUN apk add --no-cache curl libstdc++ libgcc libgomp
+
+# Layer 1 (cacheable): llama-cpp-python wheel CPU (musl-compatible)
+RUN pip install --no-cache-dir \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu \
+    'llama-cpp-python[server]==0.3.2'
+
+# Layer 2: wrapper deps
+RUN pip install --no-cache-dir \
+    'fastapi>=0.110' \
+    'uvicorn[standard]>=0.27' \
+    'httpx>=0.27'
+
+# Wrapper script
+COPY llm-wrapper.py /app/llm-wrapper.py
+
+VOLUME /models
+
+ENV MODEL_PATH=/models/trainmind-mistral-7b-Q4_K_M.gguf
+ENV LORA_PATH=/models/trainmind-lora.gguf
+ENV N_CTX=8192
+ENV N_THREADS=4
+ENV HOST=0.0.0.0
+ENV PORT=8000
+ENV INTERNAL_PORT=8100
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=240s --retries=5 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+CMD ["python", "/app/llm-wrapper.py"]

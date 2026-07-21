@@ -1,0 +1,17 @@
+# TrainMind AI — Reverse proxy con HTTPS automatico (Let's Encrypt)
+# I domini arrivano dalle variabili APP_DOMAIN e API_DOMAIN nel .env.deploy
+
+{$APP_DOMAIN} {
+	reverse_proxy web:3000
+	encode gzip
+}
+
+{$API_DOMAIN} {
+	reverse_proxy api:3001
+	encode gzip
+}
+
+{$ATHLETE_DOMAIN} {
+	reverse_proxy athlete:3003
+	encode gzip
+}

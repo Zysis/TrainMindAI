@@ -1,0 +1,57 @@
+Voglio progettare il sistema AI di una web app per preparatori fisici nel basket.
+
+L’app gestisce:
+- presenze
+- workload
+- RPE e sRPE
+- acute/chronic load
+- monotonia e strain
+- note atleta e note staff
+- sintesi atleta e squadra
+- alert operativi
+- report giornalieri e settimanali
+
+Attualmente uso API LLM, ma voglio capire se conviene passare a un modello open-weight/self-hosted per ridurre i costi.
+
+Dammi una proposta tecnica netta e orientata a produzione.
+
+Decidi:
+1. quale modello usare;
+2. se usare RAG, fine-tuning o entrambi;
+3. quale training fare davvero;
+4. quale stack usare;
+5. come integrare il tutto nella web app.
+
+Voglio che tu distingua chiaramente:
+- conoscenza da mettere in RAG
+- comportamento da apprendere con fine-tuning
+- regole da gestire fuori dal modello
+- output da generare con template rigidi
+
+Considera come output principali:
+- alert workload
+- riepilogo atleta
+- riepilogo squadra
+- report tecnico giornaliero
+- report tecnico settimanale
+- output JSON strutturato per il frontend
+
+Rispondi con:
+- raccomandazione finale
+- modello consigliato
+- architettura consigliata
+- tipo di training
+- dataset necessario
+- stack consigliato
+- roadmap di implementazione di 30 giorni
+- errori da evitare
+
+
+Assunzioni aggiuntive:
+- target iniziale: SaaS verticale con traffico basso/medio
+- budget iniziale: contenuto
+- priorità: ridurre costo per chiamata senza peggiorare troppo la qualità
+- preferenza: soluzione facilmente aggiornabile
+- preferenza secondaria: report coerenti e affidabili
+- input principali: testo + JSON strutturato
+- output desiderato: JSON + testo tecnico

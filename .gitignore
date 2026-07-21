@@ -1,0 +1,46 @@
+﻿# Node
+node_modules/
+.pnpm-store/
+
+# Build/cache Next.js e altri
+.next/
+.turbo/
+dist/
+build/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Modelli AI (mai in git — troppo grandi)
+apps/ai-service/models/*.gguf
+apps/ai-service/models/*.bin
+apps/ai-service/chroma_data/
+trainmind-app/apps/ai-service/models/*.gguf
+trainmind-app/apps/ai-service/chroma_data/
+
+# Test/report generati
+playwright-report/
+test-results/
+report-tests/
+
+# Dump database
+*.dump
+
+# File temporanei Office
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Credenziali e appunti — MAI committare
+.env
+.env.*
+!.env.example
+!.env.deploy.example
+documentation/deploy.txt
+documentation/login*
+
+model_production/llm_model/deploy_package.zip

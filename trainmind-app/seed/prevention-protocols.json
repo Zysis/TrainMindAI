@@ -1,0 +1,807 @@
+[
+  {
+    "id": "prevention-knee-acl-001",
+    "name": "Protocollo ACL (Prevenzione Ginocchio)",
+    "bodyArea": "Ginocchio",
+    "description": "Protocollo di prevenzione degli infortuni al legamento crociato anteriore (ACL) adattato da FIFA 11+ per il basket. Focalizzato su forza, equilibrio propriocettivo e stabilità dinamica.",
+    "frequency": "3x/settimana",
+    "duration": "15-20 minuti",
+    "exercises": [
+      {
+        "id": "acl-001-01",
+        "name": "Attivazione Glutei - Quadrupedia",
+        "sets": 2,
+        "reps": "12 per lato",
+        "tempo": "2-0-1",
+        "notes": "Mantenere neutrale la colonna, attivare gluteo max, focus su controllo del bacino"
+      },
+      {
+        "id": "acl-001-02",
+        "name": "Monster Walk (Banda Elastica)",
+        "sets": 3,
+        "reps": "15 avanti + 15 indietro",
+        "tempo": "1-0-1",
+        "notes": "Banda elastica sopra le ginocchia, mantenere ginocchia flesse 30-45°, movimento orizzontale"
+      },
+      {
+        "id": "acl-001-03",
+        "name": "Squat Unilaterale su Step",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "2-0-2",
+        "notes": "Una gamba su step, discesa in squat controllata, non oltrepassare le dita del piede con il ginocchio"
+      },
+      {
+        "id": "acl-001-04",
+        "name": "Balance su Bosu (Single Leg)",
+        "sets": 3,
+        "reps": "20-30 secondi per lato",
+        "tempo": "Continuo",
+        "notes": "Lato instabile verso il basso, progressione: aggiungere eye closure, lancio di palla"
+      },
+      {
+        "id": "acl-001-05",
+        "name": "Lateral Hop (Una gamba)",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "Esplosivo 1-1",
+        "notes": "Saltelli laterali controllati, focus su stabilità in atterraggio, allineamento gamba-bacino-colonna"
+      },
+      {
+        "id": "acl-001-06",
+        "name": "Cambio Direzione - Shuttle Run 90°",
+        "sets": 2,
+        "reps": "5-6 ripetizioni",
+        "tempo": "Massima velocità controllata",
+        "notes": "Decelerazione eccentric, pivot controllato, stabilità sull'arto di appoggio"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Attivazione - esercizi con supporto, range of motion completo",
+      "Fase 2 (Settimane 3-4): Stabilità - introduzione instabilità (Bosu, un piede), velocità moderata",
+      "Fase 3 (Settimane 5+): Forza e Potenza - aggiungi resistenza, aumenta velocità, movimenti basketball-specifici"
+    ],
+    "contraindications": [
+      "Infiammazione acuta del ginocchio (gonfiore importante)",
+      "Dolore acuto durante movimento",
+      "Lesione meniscale sospetta",
+      "Post-intervento ACL < 3 mesi"
+    ],
+    "basketballSpecific": "Focus sul movimento laterale, arresto improvviso, cambio direzione rapido. Integra i movimenti defensivi basket.",
+    "notes": "Eseguire almeno 2-3 volte a settimana. Riscaldamento 5 min prima. Studi mostrano 35-51% riduzione di infortuni ACL con protocolli simili."
+  },
+  {
+    "id": "prevention-ankle-stability-002",
+    "name": "Protocollo Stabilità Caviglia",
+    "bodyArea": "Caviglia",
+    "description": "Programma completo per stabilizzazione della caviglia, prevenzione distorsioni e miglioramento della propriocezione. Essenziale nel basket per prevenire le frequentissime distorsioni.",
+    "frequency": "3-4x/settimana",
+    "duration": "10-15 minuti",
+    "exercises": [
+      {
+        "id": "ankle-002-01",
+        "name": "Sollevamento Tallone (Calf Raise)",
+        "sets": 3,
+        "reps": "15-20",
+        "tempo": "1-0-2",
+        "notes": "Bilaterale inizialmente, poi unilaterale. Su sedia per equilibrio se necessario."
+      },
+      {
+        "id": "ankle-002-02",
+        "name": "Inversione/Eversione con Banda Elastica",
+        "sets": 3,
+        "reps": "15 per movimento",
+        "tempo": "1-0-1",
+        "notes": "Seduti, banda elastica attorno all'avampiede. Controllare movimento completo."
+      },
+      {
+        "id": "ankle-002-03",
+        "name": "Stacco su Tavola Instabile (Wobble Board)",
+        "sets": 3,
+        "reps": "20-30 secondi",
+        "tempo": "Continuo",
+        "notes": "Mantieni equilibrio, piccoli aggiustamenti. Progressione: occhi chiusi"
+      },
+      {
+        "id": "ankle-002-04",
+        "name": "Single Leg Stance con Perturbazione",
+        "sets": 3,
+        "reps": "30 secondi + perturbazione",
+        "tempo": "Statico",
+        "notes": "Partner spinge leggermente il bacino, resisti senza muovere il piede d'appoggio"
+      },
+      {
+        "id": "ankle-002-05",
+        "name": "Talus Rocking (Mobilizzazione Astragalo)",
+        "sets": 2,
+        "reps": "10-12 per direzione",
+        "tempo": "1-1-1",
+        "notes": "Su 4 zampe, rock il corpo sopra l'astragalo in tutte le direzioni"
+      },
+      {
+        "id": "ankle-002-06",
+        "name": "Star Excursion Test",
+        "sets": 2,
+        "reps": "8 punti stella",
+        "tempo": "Controllato",
+        "notes": "In piedi su una gamba, raggiungi il più lontano possibile mantenendo equilibrio"
+      },
+      {
+        "id": "ankle-002-07",
+        "name": "Hop-Stabilize (Una gamba)",
+        "sets": 3,
+        "reps": "5-8 per lato",
+        "tempo": "Esplosivo con stabilizzazione",
+        "notes": "Saltella e stabilizza in atterraggio, hold 2-3 secondi prima del prossimo salto"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Propriocezione di base - esercizi statici, occhi aperti, due piedi",
+      "Fase 2 (Settimane 3-4): Instabilità - una gamba, superfici instabili, occhi chiusi",
+      "Fase 3 (Settimane 5+): Dinamica - movimenti esplosivi, cambio direzione, sport-specifico"
+    ],
+    "contraindications": [
+      "Distorsione acuta (< 48 ore)",
+      "Gonfiore importante",
+      "Dolore >5/10",
+      "Frattura sospetta"
+    ],
+    "basketballSpecific": "Integra movimenti di cambio direzione, arresto e partenza, con enfasi su stabilità dell'arto inferiore.",
+    "notes": "La caviglia è l'infortunio più comune nel basket. Questo protocollo è essenziale per tutti gli atleti, anche di livello ricreativo."
+  },
+  {
+    "id": "prevention-shoulder-stability-003",
+    "name": "Protocollo Stabilità Spalla",
+    "bodyArea": "Spalla",
+    "description": "Programma di stabilizzazione della spalla per prevenire infortuni da overuse (impingement, tendinite) frequenti nel basket per tiri e passaggi ripetuti.",
+    "frequency": "3x/settimana",
+    "duration": "15-20 minuti",
+    "exercises": [
+      {
+        "id": "shoulder-003-01",
+        "name": "Scapular Y-T-W (Attivazione Scapolare)",
+        "sets": 2,
+        "reps": "8-10 per posizione",
+        "tempo": "1-1-1",
+        "notes": "Sdraiato prono, braccia a formare Y-T-W, attiva muscolatura scapolare profonda"
+      },
+      {
+        "id": "shoulder-003-02",
+        "name": "Rematore Unilaterale con Manubrio",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "2-0-1",
+        "notes": "Enfasi sulla retrazione scapolare, gomito verso il bacino, controllo della rotazione"
+      },
+      {
+        "id": "shoulder-003-03",
+        "name": "Face Pull (Corda ai Cavi)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Tirare verso il viso, esternal rotation della spalla, retrarre scapola"
+      },
+      {
+        "id": "shoulder-003-04",
+        "name": "Lateral Raise (Abduzione della Spalla)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "2-0-1",
+        "notes": "Leggero movimento del gomito, enfasi sulla stabilità, non oltrepassare i 90°"
+      },
+      {
+        "id": "shoulder-003-05",
+        "name": "Prone Incline Press (Panca Inclinata Prona)",
+        "sets": 3,
+        "reps": "8-10",
+        "tempo": "2-0-2",
+        "notes": "Panca inclinata, spalle retratte, stabilità scapolare, movimento controllato"
+      },
+      {
+        "id": "shoulder-003-06",
+        "name": "External Rotation 90/90 (Con Manubrio)",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "1-1-1",
+        "notes": "Spalla abdotta 90°, gomito flesso 90°, external rotation controllata"
+      },
+      {
+        "id": "shoulder-003-07",
+        "name": "Plank-to-Down Dog (Mobilità Spalla)",
+        "sets": 2,
+        "reps": "8-10",
+        "tempo": "2-0-2",
+        "notes": "Fluidità di movimento, mobilità completa, attivazione scapolare"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-3): Attivazione e mobilità - esercizi attivi, carichi leggeri, focus su movimento corretto",
+      "Fase 2 (Settimane 4-6): Stabilità dinamica - aggiungere instabilità, aumentare carichi, single arm",
+      "Fase 3 (Settimane 7+): Forza e potenza - carichi più elevati, movimenti esplosivi, sport-specifico"
+    ],
+    "contraindications": [
+      "Infiammazione acuta della spalla",
+      "Dolore alla spalla >4/10",
+      "Sindrome da conflitto subacromial acuta",
+      "Sospetta lesione della cuffia dei rotatori"
+    ],
+    "basketballSpecific": "Integra movimenti di tiro, passaggio in sospensione, difesa con braccia alzate. Fondamentale per prevenire tendinite rotatoria da tiri ripetuti.",
+    "notes": "Nel basket, il carico ripetitivo sulla spalla è molto alto. Questo protocollo deve essere eseguito regolarmente durante tutta la stagione."
+  },
+  {
+    "id": "prevention-lower-back-004",
+    "name": "Protocollo Schiena / Lombare",
+    "bodyArea": "Schiena / Lombare",
+    "description": "Programma per prevenzione e gestione del dolore lombare, frequente nel basket per il carico ripetitivo e i movimenti di torsione. Enfasi su core stability e mobilità.",
+    "frequency": "4-5x/settimana (meglio se giornaliero)",
+    "duration": "10-15 minuti",
+    "exercises": [
+      {
+        "id": "lowback-004-01",
+        "name": "Attivazione Trasverso Addominale (Dead Bug)",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "1-2-1",
+        "notes": "Supino, estendi gamba e braccio opposto mantenendo contatto lombare con pavimento"
+      },
+      {
+        "id": "lowback-004-02",
+        "name": "Plank Progressivo",
+        "sets": 3,
+        "reps": "30-60 secondi",
+        "tempo": "Statico",
+        "notes": "Mantieni colonna neutrale, spalle sopra polsi, bacino stabile"
+      },
+      {
+        "id": "lowback-004-03",
+        "name": "Bird Dog (Quadrupedia)",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "1-2-1",
+        "notes": "Estendi braccio e gamba opposti, mantieni colonna neutra, no iperestensione"
+      },
+      {
+        "id": "lowback-004-04",
+        "name": "Pallof Press (Cavi)",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "1-1-1",
+        "notes": "Resist alla torsione, core attivo, movimento controllato"
+      },
+      {
+        "id": "lowback-004-05",
+        "name": "Mobilizzazione Gatto-Cane",
+        "sets": 2,
+        "reps": "10-12",
+        "tempo": "2-0-2",
+        "notes": "Articolazione della colonna, coordinamento respiro con movimento, fluidità"
+      },
+      {
+        "id": "lowback-004-06",
+        "name": "Squat Goblet",
+        "sets": 3,
+        "reps": "10-12",
+        "tempo": "2-0-2",
+        "notes": "Manubrio sul petto, enfasi su profondità e neutrale della colonna"
+      },
+      {
+        "id": "lowback-004-07",
+        "name": "Glute Bridge (Attivazione Glutei)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-2-1",
+        "notes": "Attiva glutei, evita iperestensione lombare, squeeze al top"
+      },
+      {
+        "id": "lowback-004-08",
+        "name": "Hip Flexor Stretch (Affondo Basso)",
+        "sets": 2,
+        "reps": "30 secondi per lato",
+        "tempo": "Statico",
+        "notes": "Affondo basso, contrai glutei della gamba posteriore per mobilità"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Attivazione e controllo motorio - esercizi isometrici, focus su contrazione conscia",
+      "Fase 2 (Settimane 3-4): Stabilità dinamica - aggiungi movimento, aumenta durata hold",
+      "Fase 3 (Settimane 5+): Forza funzionale - aggiungere carichi, movimenti rotazionali, basketball-specific"
+    ],
+    "contraindications": [
+      "Dolore lombare acuto (radiculopatia)",
+      "Sospetta ernia discale",
+      "Dolore che irradia alla gamba",
+      "Perdita di controllo sfinterico"
+    ],
+    "basketballSpecific": "Integra torsioni controllate, cambio direzione, movimenti defensivi. Fondamentale per stabilità durante contatti e movimenti multi-planari.",
+    "notes": "Core strength è essenziale nel basket. Integrare nel riscaldamento quotidiano, non solo come seduta dedicata."
+  },
+  {
+    "id": "prevention-groin-copenhagen-005",
+    "name": "Protocollo Inguine / Adduttori (Copenhagen)",
+    "bodyArea": "Inguine / Adduttori",
+    "description": "Protocollo Copenhagen adattato per la prevenzione di stiramenti inguinali e adduttori, frequentissimi nel basket per i movimenti laterali e gli allunghi. Eccellente efficacia preventiva.",
+    "frequency": "3-5x/settimana",
+    "duration": "10-12 minuti",
+    "exercises": [
+      {
+        "id": "groin-005-01",
+        "name": "Copenhagen Exercise (Adductor Squeeze)",
+        "sets": 3,
+        "reps": "10-12",
+        "tempo": "1-2-1",
+        "notes": "Sdraiato su fianco, squeeze palla o foam roller tra le ginocchia, contrazione massimale"
+      },
+      {
+        "id": "groin-005-02",
+        "name": "Adductor Pull e Hold",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "1-3-1",
+        "notes": "Seduto con schiena al muro, tira una gamba verso il petto, estendi l'altra"
+      },
+      {
+        "id": "groin-005-03",
+        "name": "Affondo Laterale (Lateral Lunge)",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "2-0-2",
+        "notes": "Lavoro sugli adduttori, gomito verso l'interno della gamba, stretching dinamico"
+      },
+      {
+        "id": "groin-005-04",
+        "name": "Copenhagen con Adduzione Isometrica",
+        "sets": 3,
+        "reps": "20-30 secondi",
+        "tempo": "Statico",
+        "notes": "Mantieni contrazione adduttori, respira normalmente, isometrica massimale"
+      },
+      {
+        "id": "groin-005-05",
+        "name": "Standing Adduction (Cable Machine)",
+        "sets": 3,
+        "reps": "12-15 per lato",
+        "tempo": "1-1-1",
+        "notes": "In piedi, adduzione della gamba, carichi progressivi"
+      },
+      {
+        "id": "groin-005-06",
+        "name": "Butterfly Stretch (Passivo)",
+        "sets": 2,
+        "reps": "30-45 secondi",
+        "tempo": "Statico",
+        "notes": "Stretching profondo degli adduttori, no rimbalzi, respira profondamente"
+      },
+      {
+        "id": "groin-005-07",
+        "name": "Spagata Laterale (Laterale)",
+        "sets": 2,
+        "reps": "20-30 secondi per lato",
+        "tempo": "Statico",
+        "notes": "Spagata laterale, stretching massimale adduttori"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Attivazione e mobilità - Copenhagen leggero, stretching passivo",
+      "Fase 2 (Settimane 3-4): Forza isometrica - Copenhagen ad alta intensità, hold prolungati",
+      "Fase 3 (Settimane 5+): Forza dinamica - aggiungi carico, movimento rapido, sport-specifico"
+    ],
+    "contraindications": [
+      "Strappo adduttore acuto",
+      "Dolore inguinale >5/10",
+      "Ernia inguinale sospetta",
+      "Patologia articolazione dell'anca"
+    ],
+    "basketballSpecific": "Focus su rapidi movimenti laterali, allunghi frontali e laterali. Studi dimostrano 41% riduzione di infortuni inguinali con protocollo Copenhagen.",
+    "notes": "Protocollo Copenhagen ha strongest evidence-based support per infortuni inguinali. Implementare almeno 3x/settimana per massima efficacia. Può essere eseguito anche tutti i giorni."
+  },
+  {
+    "id": "prevention-hamstring-nordic-006",
+    "name": "Protocollo Hamstring (Nordic)",
+    "bodyArea": "Hamstring",
+    "description": "Protocollo Nordic curl per la prevenzione di stiramenti all'hamstring, uno dei più frequenti infortuni nel basket. Focus su controllo eccentrico e forza in elongazione.",
+    "frequency": "2-3x/settimana (non consecutivi)",
+    "duration": "10-15 minuti",
+    "exercises": [
+      {
+        "id": "hamstring-006-01",
+        "name": "Nordic Curl (Forma Classica)",
+        "sets": 3,
+        "reps": "5-8",
+        "tempo": "3-0-1 eccentrico",
+        "notes": "In ginocchio, partner sorregge i piedi, scendi in avanti controllando con hamstring, mani sul pavimento per break"
+      },
+      {
+        "id": "hamstring-006-02",
+        "name": "Nordic Curl con Supporto (TRX)",
+        "sets": 3,
+        "reps": "6-10",
+        "tempo": "2-0-1 eccentrico",
+        "notes": "Mani in TRX per assistenza, progressione verso full Nordic, controllo eccentrico massimale"
+      },
+      {
+        "id": "hamstring-006-03",
+        "name": "Romanian Deadlift (Stacco Rumeno)",
+        "sets": 3,
+        "reps": "8-10",
+        "tempo": "2-0-2",
+        "notes": "Enfasi su stretch dell'hamstring, spalle retratte, colonna neutra, movimento controllato"
+      },
+      {
+        "id": "hamstring-006-04",
+        "name": "Good Morning (Esercizio)",
+        "sets": 3,
+        "reps": "8-10",
+        "tempo": "2-0-2",
+        "notes": "Bilanciere su spalle, piegamento a livello dell'anca, hamstring stretch significativo"
+      },
+      {
+        "id": "hamstring-006-05",
+        "name": "Single Leg RDL (Stacco Rumeno Una Gamba)",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "2-0-2",
+        "notes": "Difficoltà aumentata, equilibrio e forza hamstring, controllo unilaterale"
+      },
+      {
+        "id": "hamstring-006-06",
+        "name": "Lying Leg Curl (Macchina Curl)",
+        "sets": 3,
+        "reps": "10-12",
+        "tempo": "1-1-2 eccentrico enfatizzato",
+        "notes": "Enfasi sulla fase eccentrica, controllo del movimento, forza in elongazione"
+      },
+      {
+        "id": "hamstring-006-07",
+        "name": "Hamstring Stretch Attivo",
+        "sets": 2,
+        "reps": "30 secondi per lato",
+        "tempo": "Statico dinamico",
+        "notes": "Seduto, afferra il piede, estensione della gamba, stretching profondo"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-3): Controllo eccentrico - Nordic con supporto, RDL bilaterale, focus su contrazione conscia",
+      "Fase 2 (Settimane 4-6): Forza in elongazione - aumenta reps e intensità, aggiungi single leg, carichi progressivi",
+      "Fase 3 (Settimane 7+): Forza massimale - full Nordic, heavy RDL, movimenti sport-specifici esplosivi"
+    ],
+    "contraindications": [
+      "Strappo hamstring acuto (<2 settimane)",
+      "Dolore acuto hamstring >5/10",
+      "Distacco prossimale hamstring",
+      "Dolore radicolare (sciatica)"
+    ],
+    "basketballSpecific": "Concentrati su controllo durante la decelerazione, movimenti di allungo, backpedaling defensivo. Nordic curl è scientificamente provato a prevenire infortuni hamstring.",
+    "notes": "Nordic curl ha evidence scientifica più forte per prevenzione hamstring nel calcio e sport simili. Nel basket, questo è critico per la prevenzione di infortuni. Eseguire 2-3x/settimana, non consecutivo."
+  },
+  {
+    "id": "prevention-achilles-007",
+    "name": "Protocollo Tendine d'Achille",
+    "bodyArea": "Tendine d'Achille",
+    "description": "Programma eccentric-focused per la prevenzione di tendinopatia achillea e distacchi. Nel basket, il carico ripetitivo sul tendine è molto alto dai salti e accelerazioni.",
+    "frequency": "3-4x/settimana",
+    "duration": "12-15 minuti",
+    "exercises": [
+      {
+        "id": "achilles-007-01",
+        "name": "Calf Raise Eccentrico (Gradino)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "0-0-3 eccentrico",
+        "notes": "Su un gradino, solleva con due piedi, scendi con una sola gamba lentamente, controllo massimale"
+      },
+      {
+        "id": "achilles-007-02",
+        "name": "Calf Raise Bilanciato (Su Due Piedi)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Alzamento e abbassamento controllato, forza isometrica nel range di movimento"
+      },
+      {
+        "id": "achilles-007-03",
+        "name": "Sollevamento Tallone Su Palla Medica",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Sulla palla medica leggermente instabile, solleva e abbassa il tallone con controllo"
+      },
+      {
+        "id": "achilles-007-04",
+        "name": "Saltelli su una Gamba (Hop)",
+        "sets": 3,
+        "reps": "8-10 per lato",
+        "tempo": "Esplosivo con controllo",
+        "notes": "Saltelli controllati, ammortizzazione dell'atterraggio, focus su tendinite achillea"
+      },
+      {
+        "id": "achilles-007-05",
+        "name": "Slittamento del Tallone (Wall Slide)",
+        "sets": 2,
+        "reps": "10-12",
+        "tempo": "2-0-2",
+        "notes": "Con schiena al muro, piedi leggermente lontani dal muro, scivola il tallone sul pavimento"
+      },
+      {
+        "id": "achilles-007-06",
+        "name": "Stretching Tendine d'Achille (Affondo)",
+        "sets": 2,
+        "reps": "45 secondi per lato",
+        "tempo": "Statico",
+        "notes": "Affondo basso, back knee leggermente flesso, stretching profondo achilleo"
+      },
+      {
+        "id": "achilles-007-07",
+        "name": "Stretching Tendine d'Achille (In Piedi)",
+        "sets": 2,
+        "reps": "30 secondi per lato",
+        "tempo": "Statico dinamico",
+        "notes": "Di fronte al muro, gamba posteriore tesa, tallone giù, stretching profondo"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-3): Eccentrico controllato - calf raise due piedi, enfasi fase eccentrica",
+      "Fase 2 (Settimane 4-6): Forza unilaterale - calf raise una sola gamba, carico aumentato",
+      "Fase 3 (Settimane 7+): Esplosività - saltelli, burpees, jumping rope, sport-specifico"
+    ],
+    "contraindications": [
+      "Tendinopatia achillea acuta",
+      "Infiammazione significativa",
+      "Dolore acuto >5/10",
+      "Sospetta rottura parziale"
+    ],
+    "basketballSpecific": "Focus su controllo dei salti, ammortizzazione, accelerazione rapida. Essenziale per giocatori che saltano frequentemente (lunghe, pivot).",
+    "notes": "Protocollo eccentrico è gold-standard per tendinopatia achillea. Implementare anche come prevenzione nel basket, non solo reattivo dopo infortunio."
+  },
+  {
+    "id": "prevention-hip-stability-008",
+    "name": "Protocollo Anca / Hip",
+    "bodyArea": "Anca / Hip",
+    "description": "Programma completo per stabilizzazione dell'anca, fondamentale nel basket per movimenti laterali, rotazioni e cambio direzione rapido. Previene anche lesioni al labrum.",
+    "frequency": "3-4x/settimana",
+    "duration": "15-20 minuti",
+    "exercises": [
+      {
+        "id": "hip-008-01",
+        "name": "Clamshell (Conchiglia)",
+        "sets": 3,
+        "reps": "12-15 per lato",
+        "tempo": "1-1-1",
+        "notes": "Su fianco, ginocchia flessi, apri l'anca superiore come una conchiglia, attiva glutei"
+      },
+      {
+        "id": "hip-008-02",
+        "name": "Side Lying Hip Abduction",
+        "sets": 3,
+        "reps": "12-15 per lato",
+        "tempo": "1-1-1",
+        "notes": "Su fianco, alza la gamba superiore, abduzione controllata, forza abdutt"
+      },
+      {
+        "id": "hip-008-03",
+        "name": "Monster Walk (Avanti e Laterale)",
+        "sets": 3,
+        "reps": "15 passi avanti + 15 laterali per lato",
+        "tempo": "1-0-1",
+        "notes": "Banda elastica attorno alle ginocchia, movimento controllato, glutei attivi"
+      },
+      {
+        "id": "hip-008-04",
+        "name": "Single Leg Glute Bridge",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "1-2-1",
+        "notes": "Una gamba, spinta dell'anca verso l'alto, squeeze dei glutei, stabilità anca"
+      },
+      {
+        "id": "hip-008-05",
+        "name": "Crab Walk (Movimento Laterale)",
+        "sets": 3,
+        "reps": "10-12 passi per lato",
+        "tempo": "1-0-1",
+        "notes": "Su 4 zampe con bacino sollevato, movimento laterale controllato, glutei attivi"
+      },
+      {
+        "id": "hip-008-06",
+        "name": "Standing Hip External Rotation",
+        "sets": 3,
+        "reps": "12-15 per lato",
+        "tempo": "1-1-1",
+        "notes": "In piedi, ginocchio flesso 90°, ruota l'anca esternamente mantenendo bacino stabile"
+      },
+      {
+        "id": "hip-008-07",
+        "name": "Copenhagen con Apertura dell'Anca",
+        "sets": 3,
+        "reps": "10-12 per lato",
+        "tempo": "1-1-1",
+        "notes": "Variante Copenhagen, aggiungi rotazione interna/esterna dell'anca"
+      },
+      {
+        "id": "hip-008-08",
+        "name": "Figure 4 Stretch (Piriforme)",
+        "sets": 2,
+        "reps": "45 secondi per lato",
+        "tempo": "Statico",
+        "notes": "Stretching piriforme, mobilità esterna rotazione anca"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Mobilità e attivazione - esercizi isometrici, focus su contrazione glutei",
+      "Fase 2 (Settimane 3-4): Stabilità dinamica - aggiungi movimento, banda elastica",
+      "Fase 3 (Settimane 5+): Forza funzionale - single leg, carico aumentato, sport-specifico"
+    ],
+    "contraindications": [
+      "Lesione labrum d'anca sospetta",
+      "Dolore profondo all'anca >4/10",
+      "Impingement femoracetabolare",
+      "Frattura sospetta"
+    ],
+    "basketballSpecific": "Integra movimenti di cambio direzione, lateral shuffle, rotazioni rapide. Essenziale per difesa aggressiva e mobilità offensiva.",
+    "notes": "Anca forte e stabile è prerequisito per prevenire cascata di infortuni alle ginocchia e caviglie. Implementare per tutti i livelli."
+  },
+  {
+    "id": "prevention-wrist-hand-009",
+    "name": "Protocollo Polso/Mano (Basketball-Specific)",
+    "bodyArea": "Polso/Mano",
+    "description": "Programma di prevenzione per polso e mano nel basket, focalizzato su infortuni da presa, dita dislocate e polso instabile durante contatti e tiri.",
+    "frequency": "3-4x/settimana",
+    "duration": "8-10 minuti",
+    "exercises": [
+      {
+        "id": "wrist-009-01",
+        "name": "Wrist Flexion (Polso - Flessione)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Con avambraccio supportato, piega il polso verso il basso, banda elastica per resistenza"
+      },
+      {
+        "id": "wrist-009-02",
+        "name": "Wrist Extension (Polso - Estensione)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Con avambraccio supportato, estendi il polso verso l'alto, banda elastica"
+      },
+      {
+        "id": "wrist-009-03",
+        "name": "Wrist Radial/Ulnar Deviation",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Deviazione mediale/laterale del polso, controllo completo del movimento"
+      },
+      {
+        "id": "wrist-009-04",
+        "name": "Pronation/Supination (Rotazione Avambraccio)",
+        "sets": 3,
+        "reps": "12-15",
+        "tempo": "1-1-1",
+        "notes": "Rotazione dell'avambraccio, manubrio leggero come fulcro, controllo movimento"
+      },
+      {
+        "id": "wrist-009-05",
+        "name": "Finger Spread e Pinch Grip",
+        "sets": 2,
+        "reps": "10-12",
+        "tempo": "1-2-1",
+        "notes": "Aprire le dita contro resistenza, pinza grip forte, prevenzione dita dislocate"
+      },
+      {
+        "id": "wrist-009-06",
+        "name": "Basketball Catch e Ball Squeeze",
+        "sets": 3,
+        "reps": "10-12 o 20-30 secondi",
+        "tempo": "Dinamico/Statico",
+        "notes": "Con palla basket, presa di controllo, squeeze isometrico, rinforzamento funzionale"
+      },
+      {
+        "id": "wrist-009-07",
+        "name": "Polso Rotazione Circolare (Mobilità)",
+        "sets": 2,
+        "reps": "10 circoli per direzione",
+        "tempo": "Continuo",
+        "notes": "Mobilità articolare, range completo, articolazione fluida"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Settimane 1-2): Mobilità e controllo - banda leggera, movimento controllato",
+      "Fase 2 (Settimane 3-4): Forza dinamica - aumenta resistenza, velocità moderata",
+      "Fase 3 (Settimane 5+): Forza funzionale - carichi maggiori, movimenti rapidi, sport-specifico"
+    ],
+    "contraindications": [
+      "Frattura polso o dita sospetta",
+      "Infiammazione acuta articolazione polso",
+      "Dolore >5/10",
+      "Distorsione polso acuta"
+    ],
+    "basketballSpecific": "Presa di controllo palla, prevenzione di dita dislocate, stabilità durante il tiro e la difesa. Essenziale per all guardie e per tutti che gestiscono frequentemente il pallone.",
+    "notes": "Spesso trascurato, ma polso e mani sono critici nel basket. Implementare per guardie e pivot specialmente."
+  },
+  {
+    "id": "prevention-full-body-general-010",
+    "name": "Routine Generale Prehab Full Body",
+    "bodyArea": "Full Body",
+    "description": "Protocollo di prevenzione generale full body che può essere eseguito prima dell'allenamento basket o come seduta dedicata. Attiva tutti i principali stabilizzatori.",
+    "frequency": "5-6x/settimana (pre-allenamento)",
+    "duration": "12-15 minuti",
+    "exercises": [
+      {
+        "id": "fullbody-010-01",
+        "name": "Cat-Cow Stretch (Mobilità Colonna)",
+        "sets": 1,
+        "reps": "10-12",
+        "tempo": "2-0-2",
+        "notes": "Quadrupedia, articolazione della colonna vertebrale, coordinamento respiro"
+      },
+      {
+        "id": "fullbody-010-02",
+        "name": "World's Greatest Stretch",
+        "sets": 1,
+        "reps": "5 per lato",
+        "tempo": "Continuo",
+        "notes": "Affondo con rotazione, mobilità completa, hamstring stretch, torso twist"
+      },
+      {
+        "id": "fullbody-010-03",
+        "name": "Glute Activation Sequence",
+        "sets": 2,
+        "reps": "10 per esercizio",
+        "tempo": "1-1-1",
+        "notes": "Clamshell + Side-lying abduction + Single-leg glute bridge, attiva sequenza glutei"
+      },
+      {
+        "id": "fullbody-010-04",
+        "name": "Scapular Activation (Y-T-W)",
+        "sets": 1,
+        "reps": "8 per posizione",
+        "tempo": "1-1-1",
+        "notes": "Spalle estese, scapular retraction, stabilità alta"
+      },
+      {
+        "id": "fullbody-010-05",
+        "name": "Monster Walk (Laterale e Avanti)",
+        "sets": 2,
+        "reps": "10 passi",
+        "tempo": "1-0-1",
+        "notes": "Banda elastica, attiva glutei e adduttori, mobilità anca"
+      },
+      {
+        "id": "fullbody-010-06",
+        "name": "Plank Hold",
+        "sets": 2,
+        "reps": "20-30 secondi",
+        "tempo": "Statico",
+        "notes": "Core activation, colonna neutra, stabilità completa"
+      },
+      {
+        "id": "fullbody-010-07",
+        "name": "Spiderman Stretch (Affondo Rotazione)",
+        "sets": 1,
+        "reps": "5 per lato",
+        "tempo": "Continuo",
+        "notes": "Affondo basso con rotazione, hip flexor stretch, mobilità torso"
+      },
+      {
+        "id": "fullbody-010-08",
+        "name": "Quad Activation (Leg Raise)",
+        "sets": 2,
+        "reps": "10-12 per lato",
+        "tempo": "1-1-1",
+        "notes": "Supino, solleva gamba tesa, contrazione quad, VMO activation"
+      }
+    ],
+    "progression": [
+      "Fase 1 (Sempre): Base - mantieni routine standard, esecuzione corretta",
+      "Fase 2 (Optional): Aggiungere carico - banda elastica, resistenza aumentata",
+      "Fase 3 (Optional): Variazione - aggiungi esercizi sport-specifici, movimenti basket"
+    ],
+    "contraindications": [
+      "Dolore acuto in qualsiasi area",
+      "Infiammazione significativa",
+      "Febbre o malessere generale"
+    ],
+    "basketballSpecific": "Prepara il corpo per i movimenti basket multidirezionali, attiva i principali stabilizzatori.",
+    "notes": "Questa è la routine ideale da fare come warm-up prima di ogni allenamento basket. Migliora le performance e riduce infortuni significativamente."
+  }
+]

@@ -1,0 +1,1 @@
+"""TrainMind AI Service Package."""

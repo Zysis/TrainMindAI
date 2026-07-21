@@ -1,0 +1,22 @@
+{
+  "name": "trainmind-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrainMind AI — versione mobile/tablet PWA (responsive UI). Backend e database condivisi con trainmind-app.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --filter @trainmind/web-mobile dev",
+    "build": "pnpm --filter @trainmind/web-mobile build",
+    "start": "pnpm --filter @trainmind/web-mobile start",
+    "lint": "pnpm --filter @trainmind/web-mobile lint",
+    "type-check": "pnpm --filter @trainmind/web-mobile type-check"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

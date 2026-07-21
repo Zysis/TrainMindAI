@@ -1,0 +1,89 @@
+src/routes/adaptations.ts(272,29): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/adaptations.ts(551,29): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/ai.ts(370,32): error TS6133: 'request' is declared but its value is never read.
+src/routes/auth.ts(8,7): error TS6133: 'REFRESH_TOKEN_EXPIRY_DAYS' is declared but its value is never read.
+src/routes/notifications.ts(53,13): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(89,37): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(98,41): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(107,37): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(148,30): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(184,16): error TS18004: No value exists in scope for the shorthand property 'id'. Either declare one or provide an initializer.
+src/routes/notifications.ts(193,29): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(358,30): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(425,30): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(455,41): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/notifications.ts(465,16): error TS18004: No value exists in scope for the shorthand property 'id'. Either declare one or provide an initializer.
+src/routes/notifications.ts(465,41): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/reports.ts(143,7): error TS2353: Object literal may only specify known properties, and 'date' does not exist in type 'SessionLogWhereInput'.
+src/routes/reports.ts(145,32): error TS2353: Object literal may only specify known properties, and 'rpe' does not exist in type 'SessionLogSelect<DefaultArgs>'.
+src/routes/reports.ts(152,30): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }[]' is not assignable to parameter of type '{ rpe: number; duration: number; date: Date; }[]'.
+  Type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }' is missing the following properties from type '{ rpe: number; duration: number; date: Date; }': rpe, duration, date
+src/routes/reports.ts(173,7): error TS2353: Object literal may only specify known properties, and 'organizationId' does not exist in type 'NotificationWhereInput'.
+src/routes/reports.ts(181,7): error TS2353: Object literal may only specify known properties, and 'athleteId' does not exist in type 'NotificationSelect<DefaultArgs>'.
+src/routes/reports.ts(195,9): error TS2339: Property 'athleteId' does not exist on type '{ message: string; type: string; data: JsonValue; id: string; createdAt: Date; userId: string; title: string; severity: string; alertRuleId: string | null; isRead: boolean; readAt: Date | null; }'.
+src/routes/reports.ts(195,49): error TS2339: Property 'athleteId' does not exist on type '{ message: string; type: string; data: JsonValue; id: string; createdAt: Date; userId: string; title: string; severity: string; alertRuleId: string | null; isRead: boolean; readAt: Date | null; }'.
+src/routes/reports.ts(236,11): error TS2339: Property 'date' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(236,28): error TS2339: Property 'date' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(237,17): error TS2339: Property 'date' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(238,50): error TS2339: Property 'rpe' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(238,58): error TS2339: Property 'duration' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(301,11): error TS2353: Object literal may only specify known properties, and 'resolvedAt' does not exist in type 'InjuryWhereInput'.
+src/routes/reports.ts(302,11): error TS2353: Object literal may only specify known properties, and 'resolvedAt' does not exist in type 'InjuryWhereInput'.
+src/routes/reports.ts(308,16): error TS2353: Object literal may only specify known properties, and 'occurredAt' does not exist in type 'InjuryOrderByWithRelationInput | InjuryOrderByWithRelationInput[]'.
+src/routes/reports.ts(317,37): error TS2339: Property 'occurredAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(320,14): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(320,37): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(324,11): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(352,44): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(368,34): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(370,22): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(370,45): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(377,14): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(377,37): error TS2551: Property 'athlete' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'. Did you mean 'athleteId'?
+src/routes/reports.ts(418,44): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(419,44): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(419,60): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(421,47): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(424,32): error TS2339: Property 'resolvedAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(424,68): error TS2339: Property 'occurredAt' does not exist on type '{ location: string; type: string; status: InjuryStatus; id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; severity: number; dateOccurred: Date; dateResolved: Date | null; }'.
+src/routes/reports.ts(501,7): error TS2353: Object literal may only specify known properties, and 'date' does not exist in type 'SessionLogWhereInput'.
+src/routes/reports.ts(503,16): error TS2353: Object literal may only specify known properties, and 'date' does not exist in type 'SessionLogOrderByWithRelationInput | SessionLogOrderByWithRelationInput[]'.
+src/routes/reports.ts(508,31): error TS2339: Property 'date' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(513,16): error TS2339: Property 'rpe' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/reports.ts(513,24): error TS2339: Property 'duration' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; athleteId: string; notes: string | null; actualRpe: number | null; actualDuration: number | null; completedSets: JsonValue; trainingSessionId: string; }'.
+src/routes/training.ts(312,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/routes/training.ts(560,57): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/training.ts(570,9): error TS2322: Type 'Record<string, unknown> | undefined' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'Record<string, unknown>' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+    Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 20 more.
+src/routes/training.ts(576,9): error TS2322: Type 'Record<string, unknown> | undefined' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'Record<string, unknown>' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+    Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 20 more.
+src/routes/training.ts(617,57): error TS2339: Property 'id' does not exist on type '{ userId: string; email: string; role: string; organizationId: string; }'.
+src/routes/training.ts(629,9): error TS2322: Type 'Record<string, unknown> | undefined' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'Record<string, unknown>' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+    Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 20 more.
+src/routes/training.ts(635,9): error TS2322: Type 'Record<string, unknown> | undefined' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'Record<string, unknown>' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+    Type 'Record<string, unknown>' is missing the following properties from type 'readonly (InputJsonValue | null)[]': length, concat, join, slice, and 20 more.
+src/services/report-renderer-docx.ts(70,5): error TS6133: 'AlignmentType' is declared but its value is never read.
+src/services/report-renderer-docx.ts(174,5): error TS6133: 'AlignmentType' is declared but its value is never read.
+src/services/report-renderer-pdf.ts(42,5): error TS2322: Type 'Promise<Browser>' is not assignable to type 'Promise<PuppeteerBrowser>'.
+  Type 'Browser' is not assignable to type 'PuppeteerBrowser'.
+    The types returned by 'newPage()' are incompatible between these types.
+      Type 'Promise<Page>' is not assignable to type 'Promise<PuppeteerPage>'.
+        Type 'Page' is not assignable to type 'PuppeteerPage'.
+          Types of property 'setContent' are incompatible.
+            Type '(html: string, options?: WaitForOptions | undefined) => Promise<void>' is not assignable to type '(html: string, opts?: { waitUntil?: string | undefined; } | undefined) => Promise<void>'.
+              Types of parameters 'options' and 'opts' are incompatible.
+                Type '{ waitUntil?: string | undefined; } | undefined' is not assignable to type 'WaitForOptions | undefined'.
+                  Type '{ waitUntil?: string | undefined; }' is not assignable to type 'WaitForOptions'.
+                    Types of property 'waitUntil' are incompatible.
+                      Type 'string | undefined' is not assignable to type 'PuppeteerLifeCycleEvent | PuppeteerLifeCycleEvent[] | undefined'.
+                        Type 'string' is not assignable to type 'PuppeteerLifeCycleEvent | PuppeteerLifeCycleEvent[] | undefined'.
+src/services/report-renderer-pdf.ts(49,7): error TS2578: Unused '@ts-expect-error' directive.
+src/services/report-renderer-pdf.ts(51,9): error TS2322: Type '"new"' is not assignable to type 'boolean | "shell" | undefined'.
+src/services/report-renderer-pdf.ts(56,3): error TS2322: Type 'PuppeteerBrowser | null' is not assignable to type 'PuppeteerBrowser'.
+  Type 'null' is not assignable to type 'PuppeteerBrowser'.
+src/services/report-renderer-pdf.ts(375,19): error TS6133: 'label' is declared but its value is never read.

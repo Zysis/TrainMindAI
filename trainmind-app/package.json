@@ -1,0 +1,51 @@
+{
+  "name": "trainmind-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrainMind AI — Piattaforma SaaS per preparatori fisici nel basket",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:all": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ci": "CI=true playwright test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "clean": "turbo clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @trainmind/db generate",
+    "db:push": "pnpm --filter @trainmind/db push",
+    "db:migrate": "pnpm --filter @trainmind/db migrate",
+    "db:seed": "pnpm --filter @trainmind/db seed",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.14.0",
+    "eslint": "^8.57.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.3.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.5.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}

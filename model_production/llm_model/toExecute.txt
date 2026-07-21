@@ -1,0 +1,38 @@
+Come procedere — I tuoi prossimi passi
+
+Fase 1: Oggi (senza GPU, senza servizi esterni)
+Questi step li puoi già eseguire:
+bash
+cd model_production/llm_model
+python scripts/01_chunk_kb.py          # ✅ Già fatto — 112 chunk
+python scripts/04_generate_sft_dataset.py  # ✅ Già fatto — 200 esempi
+
+Fase 2: Con Docker (per il vector DB)
+bash
+# Avvia Qdrant in locale
+docker run -d -p 6333:6333 --name qdrant qdrant/qdrant
+# Installa dipendenze pesanti
+pip install sentence-transformers qdrant-client
+ 
+# Genera embeddings e indicizza
+python scripts/02_embed_kb.py
+python scripts/03_index_vectordb.py
+
+Fase 3: Con API OpenAI (per test baseline)
+bash
+# Configura .env con la tua API key OpenAI
+copy .env.example .env
+# Modifica LLM_PROVIDER=openai, OPENAI_API_KEY=sk-...
+ 
+# Test end-to-end
+python scripts/08_test_integration.py --provider openai
+python scripts/06_eval_model.py --provider openai
+
+Fase 4: Con GPU (per training LoRA e serving vLLM)
+bash
+# Su RunPod/Vast.ai con A10 24GB:
+pip install peft trl bitsandbytes accelerate
+python scripts/05_train_lora.py
+ 
+# Serving
+python scripts/07_serve_model.py

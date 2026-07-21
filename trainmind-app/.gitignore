@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Turbo
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+*.lcov
+
+# Prisma
+packages/db/prisma/*.db
+packages/db/prisma/migrations/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Misc
+*.tsbuildinfo
+
+# Playwright auth state
+.auth/
+
+
+# Credenziali e appunti — mai committare
+documentation/deploy.txt
+documentation/login*
+.env
+.env.*
+!.env.example
+!.env.deploy.example

@@ -1,0 +1,15 @@
+C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+
+git pull origin main          # scarica aggiornamenti
+# ... fai le tue modifiche ...
+git status                    # controlla cosa è cambiato
+git add .                     # aggiungi tutto
+git commit -m "il tuo messaggio"   # salva localmente
+git push origin main          # carica su GitHub
+
+----------------------------------------------------------------
+C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+
+git add .
+git commit -m "il tuo messaggio"
+git push -u origin main

@@ -1,0 +1,387 @@
+Agisci come un AI Architect senior, ML Engineer e Product Designer specializzato in:
+- applicazioni SaaS verticali per lo sport
+- preparazione fisica nel basket
+- monitoraggio del carico di lavoro degli atleti
+- workload management
+- RPE e sRPE
+- readiness, recovery, fatica, disponibilità atleta
+- reportistica tecnica per staff sportivo
+- LLM open-weight
+- RAG
+- fine-tuning PEFT/LoRA/QLoRA
+- deployment self-hosted di modelli AI per web app
+
+Il tuo compito è progettare la migliore soluzione AI per la mia applicazione web.
+
+## CONTESTO REALE DELL'APP
+Sto sviluppando una web app per preparatori fisici nel basket.
+L’app serve a monitorare gli atleti e a supportare il preparatore fisico nella gestione quotidiana del lavoro.
+
+L’app deve consentire di:
+- registrare presenze agli allenamenti
+- registrare dati atleta e dati sessione
+- salvare workload interni ed esterni
+- usare metriche come RPE, sRPE, durata, frequenza, carico settimanale, monotonia, strain
+- inserire note soggettive e osservazioni staff
+- monitorare stato atleta, disponibilità, rischio sovraccarico e segnali di affaticamento
+- generare report tecnici automatici
+- fornire suggerimenti operativi utili al preparatore fisico
+- funzionare via web app anche su tablet/mobile
+
+Attualmente l’app usa API di un LLM.
+Vorrei ridurre o eliminare il costo per chiamata API, arrivando a una soluzione con modello open-weight o self-hosted, se davvero conveniente.
+
+## OBIETTIVO
+Devi dirmi con precisione:
+1. quale architettura AI usare per questa app;
+2. se conviene usare RAG, fine-tuning, o una combinazione dei due;
+3. quale modello scegliere;
+4. quale tipo di addestramento fare;
+5. come creare il modello o sistema finale da integrare nell’app;
+6. come ottimizzare costo, velocità, qualità, aggiornabilità e scalabilità.
+
+## REGOLE IMPORTANTI
+- NON darmi una risposta generica.
+- NON limitarti a elencare modelli.
+- NON propormi training da zero, a meno che non sia veramente necessario e tu lo dimostri.
+- Se mancano dati, fai assunzioni ragionevoli, dichiarale e procedi.
+- Devi prendere decisioni nette.
+- Devi ragionare in modo orientato a produzione.
+- Devi distinguere chiaramente tra conoscenza da mantenere in RAG e comportamento da apprendere con fine-tuning.
+- Devi considerare che la base di conoscenza dell’app può essere aggiornata nel tempo.
+- Devi considerare che i dati dell’app sono sia testuali sia strutturati.
+
+## DATI CHE L’APP PUÒ RICEVERE
+Assumi che l’app lavori con questi input:
+
+### 1. DATI ATLETA
+- nome atleta o ID
+- età
+- ruolo
+- squadra/categoria
+- altezza/peso
+- storico infortuni
+- eventuali limitazioni
+- stato di disponibilità
+
+### 2. DATI PRESENZE
+- presente / assente
+- motivazione assenza
+- ritardo / uscita anticipata
+- percentuale partecipazione sessione
+
+### 3. DATI SESSIONE
+- data
+- tipo sessione
+- obiettivo sessione
+- durata totale
+- durata effettiva
+- intensità percepita
+- contenuti svolti
+- fase della stagione
+- microciclo / mesociclo
+
+### 4. DATI DI CARICO
+- RPE
+- sRPE
+- workload giornaliero
+- workload settimanale
+- acute load
+- chronic load
+- ACWR
+- monotonia
+- strain
+- volume
+- intensità
+- densità
+- eventuali dati GPS o equivalenti, se disponibili
+
+### 5. DATI SOGGETTIVI
+- qualità del sonno
+- percezione fatica
+- dolore muscolare
+- stress
+- motivazione
+- readiness
+- note atleta
+- note staff
+
+### 6. OUTPUT ATTESI
+- sintesi atleta
+- sintesi squadra
+- alert operativi
+- commenti tecnici
+- report giornalieri
+- report settimanali
+- report individuali
+- report scaricabili in formato strutturato
+- suggerimenti operativi per il preparatore fisico
+
+## PROBLEMA DA RISOLVERE
+Devo capire se ha senso:
+- continuare con API esterne
+- usare un modello open-weight locale/cloud privato
+- fare solo RAG
+- fare solo fine-tuning
+- fare RAG + fine-tuning leggero
+- creare una pipeline ibrida con regole + LLM + retrieval
+
+## COSA DEVI DECIDERE
+Prendi una decisione chiara su:
+- il modello migliore per questo caso d’uso
+- il metodo di training migliore
+- il ruolo del RAG
+- il ruolo del fine-tuning
+- la pipeline dati ideale
+- il serving ideale
+- quando il self-hosting conviene e quando no
+
+## MODELLI DA CONFRONTARE
+Valuta almeno questi modelli, se ancora attuali:
+- Mistral Small 3.1
+- Mistral Small 4
+- Llama 3.1 8B
+- Llama 3.2 3B
+- Llama 3.3 70B
+
+Puoi aggiungere modelli migliori se esistono alternative più adatte.
+
+## COSA VOGLIO CHE TU CAPISCA BENE
+Nel mio caso, il sistema non deve solo “rispondere a domande”.
+Deve anche:
+- leggere dati strutturati dell’atleta
+- interpretare workload e RPE
+- generare testi tecnici coerenti
+- mantenere uno stile utile a uno staff sportivo
+- evitare allucinazioni su prescrizioni tecniche
+- produrre output ripetibili e controllabili
+- restare aggiornabile senza dover riaddestrare tutto ogni volta
+
+Quindi devi distinguere bene:
+- conoscenza specialistica fissa o aggiornabile
+- logica di business
+- stile di output
+- formati strutturati
+- regole decisionali
+- raccomandazioni tecniche
+- limiti di sicurezza del sistema
+
+## OUTPUT RICHIESTO
+Rispondi obbligatoriamente con queste sezioni:
+
+### SEZIONE 1 — RACCOMANDAZIONE FINALE
+Apri con una frase netta:
+“Per la tua app, la soluzione migliore è X perché Y.”
+
+### SEZIONE 2 — DECISIONE ARCHITETTURALE
+Spiega se la scelta migliore è:
+- solo API
+- solo modello self-hosted
+- soluzione ibrida
+- RAG
+- RAG + LoRA
+- RAG + regole + modello fine-tunato
+e motivala in modo pratico.
+
+### SEZIONE 3 — COSA TENERE IN RAG E COSA NO
+Dividi chiaramente in due blocchi:
+
+#### Da gestire con RAG
+Esempi:
+- linee guida
+- protocolli
+- metodologia
+- documentazione tecnica
+- template di report
+- glossario
+- manuali operativi
+- FAQ
+- casi studio
+
+#### Da gestire con fine-tuning o istruzioni
+Esempi:
+- stile dei report
+- struttura delle risposte
+- formato JSON
+- comportamento del modello
+- tono tecnico
+- ruolo “preparatore fisico basket assistant”
+- classificazione output
+- standardizzazione suggerimenti
+
+### SEZIONE 4 — SCELTA DEL MODELLO
+Fai una tabella per ogni modello con:
+- qualità generale
+- capacità su testo tecnico
+- capacità su dati strutturati
+- costo infrastrutturale
+- latenza
+- facilità di serving
+- facilità di fine-tuning
+- adatto o non adatto al mio caso
+- verdetto finale
+
+### SEZIONE 5 — TIPO DI TRAINING CONSIGLIATO
+Spiega, per il mio caso, se conviene usare:
+- prompt engineering
+- system prompting
+- RAG
+- supervised fine-tuning
+- PEFT / LoRA
+- QLoRA
+- DPO / preference tuning
+- full fine-tuning
+
+Per ogni metodo spiega:
+- a cosa serve
+- se nel mio caso è consigliato
+- quando usarlo
+- quando evitarlo
+
+### SEZIONE 6 — DATASET NECESSARIO
+Dimmi che dati mi servono davvero per ottenere un sistema utile.
+
+Dividi il dataset in:
+1. knowledge base per RAG
+2. esempi input-output per fine-tuning
+3. template di report
+4. esempi di alert
+5. esempi di sintesi atleta
+6. esempi di sintesi squadra
+7. dati storici anonimizzati
+8. regole decisionali e limiti operativi
+
+Poi dammi:
+- esempio struttura documenti per RAG
+- esempio schema metadati
+- esempio chunking strategy
+- esempio file JSONL per fine-tuning
+- esempio di coppie input/output
+- esempio di output JSON ideale per la web app
+
+### SEZIONE 7 — PIPELINE OPERATIVA REALE
+Descrivi in ordine la pipeline completa:
+
+1. raccolta fonti
+2. pulizia dataset
+3. anonimizzazione dati atleta
+4. standardizzazione terminologica
+5. definizione ontologia campi
+6. chunking documentale
+7. embeddings
+8. indicizzazione vector DB
+9. creazione dataset SFT
+10. training LoRA/QLoRA
+11. valutazione tecnica
+12. serving del modello
+13. orchestrazione backend
+14. generazione report
+15. logging e monitoraggio
+16. refresh della knowledge base
+17. manutenzione del sistema in produzione
+
+### SEZIONE 8 — ARCHITETTURA DELL’APP
+Proponi un’architettura concreta con:
+- frontend
+- backend
+- orchestratore AI
+- motore RAG
+- vector DB
+- modello principale
+- eventuale reranker
+- storage dei documenti
+- DB applicativo
+- generatore report PDF
+- sistema di audit/logging
+- cache
+- queue per task asincroni
+
+Spiega perché scegli ogni componente.
+
+### SEZIONE 9 — STRATEGIA DI OUTPUT
+Spiega come fare in modo che il sistema generi output robusti per:
+- alert workload
+- sintesi atleta
+- sintesi squadra
+- report giornaliero
+- report settimanale
+- nota tecnica per staff
+
+Specifica:
+- quali output vanno in JSON
+- quali output vanno in testo naturale
+- quali output vanno generati con template rigidi
+- quali output vanno sottoposti a validazione regole
+
+### SEZIONE 10 — SICUREZZA E LIMITI
+Definisci i limiti del sistema.
+Per esempio:
+- non deve sostituire giudizio medico
+- non deve fare diagnosi
+- non deve dare prescrizioni cliniche
+- deve segnalare incertezza
+- deve distinguere tra suggerimento operativo e decisione professionale
+- deve evitare raccomandazioni non giustificate dai dati
+
+### SEZIONE 11 — HARDWARE E COSTI
+Fornisci una stima realistica di:
+- test locale
+- MVP
+- produzione small
+- produzione medium
+- produzione high
+Distingui tra:
+- CPU only
+- GPU consumer
+- GPU server
+- multi-GPU
+Indica anche quando, economicamente, restare su API esterne è ancora più conveniente.
+
+### SEZIONE 12 — STACK TECNOLOGICO CONSIGLIATO
+Suggerisci stack reale, ad esempio:
+- serving LLM
+- embeddings
+- reranker
+- vector DB
+- backend API
+- database
+- object storage
+- report engine
+- monitoring
+- observability
+- auth
+- deployment
+Motiva ogni scelta.
+
+### SEZIONE 13 — VALUTAZIONE DEL SISTEMA
+Definisci una suite minima di test prima del rilascio:
+- factuality
+- groundedness
+- aderenza ai dati atleta
+- qualità report
+- stabilità formato JSON
+- latenza
+- costo per richiesta
+- tasso di allucinazione
+- qualità dei suggerimenti
+- coerenza col ruolo del preparatore fisico
+
+### SEZIONE 14 — ROADMAP DI IMPLEMENTAZIONE
+Crea una roadmap pratica di 30 giorni per arrivare a un primo sistema funzionante.
+
+### SEZIONE 15 — RISPOSTA FINALE SECCA
+Chiudi con:
+- modello consigliato
+- training consigliato
+- uso del RAG
+- stack consigliato
+- prima azione da fare subito
+- errore principale da evitare
+
+## VINCOLI DI QUALITÀ DELLA RISPOSTA
+- Devi essere concreto.
+- Devi prendere posizione.
+- Devi evitare teoria inutile.
+- Devi evitare frasi vaghe.
+- Devi motivare le scelte.
+- Devi ragionare come chi deve davvero mettere il sistema in produzione.

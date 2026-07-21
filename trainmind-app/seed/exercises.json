@@ -1,0 +1,3277 @@
+[
+  {
+    "name": "Back Squat",
+    "nameEN": "Back Squat",
+    "category": "Forza",
+    "description": "Il back squat è un esercizio fondamentale che sviluppa forza massimale negli arti inferiori, cruciale per la potenza esplosiva nei cambi di direzione e nei salti verticali. Eseguito con il bilanciere sulle spalle, questo movimento compound coinvolge quadricipiti, glutei e catena posteriore, fondamentale per un atleta di basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Squat Rack"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee injuries",
+      "Lower back pain"
+    ],
+    "variants": [
+      "Front Squat",
+      "Pause Squat",
+      "Pin Squat"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "3-6",
+      "rest": "120-180s",
+      "intensity": "80-90% 1RM"
+    }
+  },
+  {
+    "name": "Front Squat",
+    "nameEN": "Front Squat",
+    "category": "Forza",
+    "description": "Variazione dello squat con il bilanciere poggiato sulla parte anteriore delle spalle. Questo movimento enfatizza il core, i quadricipiti e la postura verticale, essenziale per mantenere equilibrio in difesa e negli schermi di basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Core",
+      "Glutes",
+      "Upper Back"
+    ],
+    "equipment": [
+      "Barbell",
+      "Squat Rack"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Wrist flexibility issues",
+      "Shoulder mobility limitations"
+    ],
+    "variants": [
+      "Goblet Squat",
+      "Dumbbell Front Squat",
+      "Machine Front Squat"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-8",
+      "rest": "120-150s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Deadlift",
+    "nameEN": "Deadlift",
+    "category": "Forza",
+    "description": "Il deadlift è il movimento di forza massimale per eccellenza, sollecitando la catena posteriore completa. Essenziale per cestisti poiché sviluppa la capacità di estensione dell'anca, fondamentale nella spinta verticale e nei rimbalzi.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Back",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Plates"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Lower back issues",
+      "Herniated disc"
+    ],
+    "variants": [
+      "Sumo Deadlift",
+      "Trap Bar Deadlift",
+      "Deficit Deadlift"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "2-5",
+      "rest": "150-180s",
+      "intensity": "85-95% 1RM"
+    }
+  },
+  {
+    "name": "Romanian Deadlift",
+    "nameEN": "Romanian Deadlift",
+    "category": "Forza",
+    "description": "Il RDL è un esercizio di forza unilaterale che isola la catena posteriore, particolarmente i glutei e gli ischiocrurali. Fondamentale per il controllo dell'anca e la prevenzione di infortuni, comuni nei cambi di direzione e negli scatti di basket.",
+    "muscleGroups": [
+      "Hamstrings",
+      "Glutes",
+      "Back"
+    ],
+    "equipment": [
+      "Barbell",
+      "Dumbbells"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring tightness",
+      "Lower back pain"
+    ],
+    "variants": [
+      "Single Leg RDL",
+      "Dumbbell RDL",
+      "Trap Bar RDL"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10",
+      "rest": "90-120s",
+      "intensity": "65-80% 1RM"
+    }
+  },
+  {
+    "name": "Bench Press",
+    "nameEN": "Bench Press",
+    "category": "Forza",
+    "description": "Il petto in palestra, il bench press sviluppa forza esplosiva nel pressing orizzontale. Nel basket, contribuisce alla capacità di mantenere la palla in offensive, proteggere da contatti e generare forza nei passaggi e nei tiri.",
+    "muscleGroups": [
+      "Chest",
+      "Triceps",
+      "Front Shoulders"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bench",
+      "Squat Rack"
+    ],
+    "movementPattern": "push",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder impingement",
+      "Pectoral injuries"
+    ],
+    "variants": [
+      "Incline Bench Press",
+      "Dumbbell Bench Press",
+      "Close Grip Bench"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "5-8",
+      "rest": "120-150s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Overhead Press",
+    "nameEN": "Overhead Press",
+    "category": "Forza",
+    "description": "Il pressing verticale con bilanciere sviluppa forza stabilità dei pressori superiori e della spalla. Essenziale per cestisti che devono mantenere il controllo sugli overhead e sviluppare stabilità scapolare nella difesa e nell'offesa.",
+    "muscleGroups": [
+      "Shoulders",
+      "Triceps",
+      "Chest",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Dumbbells"
+    ],
+    "movementPattern": "push",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder injuries",
+      "Rotator cuff issues"
+    ],
+    "variants": [
+      "Push Press",
+      "Seated Overhead Press",
+      "Dumbbell Overhead Press"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-8",
+      "rest": "90-120s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Pull-Up",
+    "nameEN": "Pull-Up",
+    "category": "Forza",
+    "description": "Il pull-up è un esercizio fondamentale di tirata verticale che coinvolge latissimi, schiena e bicipiti. Nel basket, sviluppa la capacità di controllare il corpo in aria e la forza di tirata necessaria per il controllo della palla sopra la testa.",
+    "muscleGroups": [
+      "Latissimus Dorsi",
+      "Biceps",
+      "Back",
+      "Core"
+    ],
+    "equipment": [
+      "Pull-Up Bar"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder pain",
+      "Elbow injuries"
+    ],
+    "variants": [
+      "Chin-Up",
+      "Weighted Pull-Up",
+      "Assisted Pull-Up"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "5-12",
+      "rest": "90-120s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Chin-Up",
+    "nameEN": "Chin-Up",
+    "category": "Forza",
+    "description": "Variazione del pull-up con presa supina che enfatizza i bicipiti. Sviluppa forza nel tiraggio verticale con una ridotta tensione sulla spalla, ideale per costruire braccia forti nel basket.",
+    "muscleGroups": [
+      "Biceps",
+      "Latissimus Dorsi",
+      "Back"
+    ],
+    "equipment": [
+      "Pull-Up Bar"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Elbow pain",
+      "Shoulder instability"
+    ],
+    "variants": [
+      "Weighted Chin-Up",
+      "Assisted Chin-Up",
+      "Resistance Band Chin-Up"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "6-12",
+      "rest": "90-120s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Barbell Row",
+    "nameEN": "Barbell Row",
+    "category": "Forza",
+    "description": "Il rematore con bilanciere sviluppa forza nella catena posteriore e nella schiena media. Essenziale per equilibrare il pressing orizzontale e creare una schiena forte che aiuta nella postura difensiva e nel controllo di palla in basket.",
+    "muscleGroups": [
+      "Back",
+      "Latissimus Dorsi",
+      "Biceps",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Plates"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Lower back pain",
+      "Spine issues"
+    ],
+    "variants": [
+      "Seal Row",
+      "Meadows Row",
+      "Incline Bench Row"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "5-8",
+      "rest": "120-150s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Dumbbell Row",
+    "nameEN": "Dumbbell Row",
+    "category": "Forza",
+    "description": "Il rematore unilaterale con manubrio sviluppa forza asimmetrica e stabilità del core. Nel basket, aiuta a bilanciare gli squilibri muscolari e migliora il controllo corpo-palla negli spazi ristretti.",
+    "muscleGroups": [
+      "Back",
+      "Latissimus Dorsi",
+      "Biceps",
+      "Core"
+    ],
+    "equipment": [
+      "Dumbbells",
+      "Bench"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Back imbalances",
+      "Shoulder instability"
+    ],
+    "variants": [
+      "Single Arm Row",
+      "Seal Row Dumbbell",
+      "Underhand Dumbbell Row"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Bulgarian Split Squat",
+    "nameEN": "Bulgarian Split Squat",
+    "category": "Forza",
+    "description": "Lo split squat bulgaro è un esercizio unilaterale che sviluppa forza, equilibrio e stabilità nel piano sagittale. Ideale per cestisti poiché allena la capacità di gamba singola e il controllo dell'anca, cruciali negli scatti laterali e nelle difese uno contro uno.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Dumbbells",
+      "Bench"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Balance issues"
+    ],
+    "variants": [
+      "Pistol Squat",
+      "Shrimp Squat",
+      "Skater Squat"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "65-75% 1RM"
+    }
+  },
+  {
+    "name": "Leg Press",
+    "nameEN": "Leg Press",
+    "category": "Forza",
+    "description": "La leg press è un esercizio controllato che sviluppa forza negli arti inferiori con ridotto stress sulla colonna vertebrale. Utile per accumulo di volume muscolare e preparazione per il salto verticale nel basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Leg Press Machine"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Knee injuries",
+      "Hip mobility issues"
+    ],
+    "variants": [
+      "Belt Squat",
+      "Hack Squat",
+      "Smith Machine Squat"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-12",
+      "rest": "90-120s",
+      "intensity": "70-85% 1RM"
+    }
+  },
+  {
+    "name": "Hip Thrust",
+    "nameEN": "Hip Thrust",
+    "category": "Forza",
+    "description": "L'hip thrust è un esercizio specializzato per sviluppare potenza glute massimale. Nel basket, i glutei forti sono essenziali per la propulsione verticale, la spinta orizzontale e il controllo dell'anca nelle situazioni di contatto.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bench"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hip flexor tightness",
+      "Lower back pain"
+    ],
+    "variants": [
+      "Single Leg Hip Thrust",
+      "Dumbbell Hip Thrust",
+      "Machine Hip Thrust"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-12",
+      "rest": "60-90s",
+      "intensity": "70-85% 1RM"
+    }
+  },
+  {
+    "name": "Lat Pulldown",
+    "nameEN": "Lat Pulldown",
+    "category": "Forza",
+    "description": "Il lat pulldown è un esercizio di tirata verticale controllato che sviluppa la larghezza della schiena. Per i cestisti, migliora la capacità di controllo verticale e la stabilità della spalla nel gioco aereo.",
+    "muscleGroups": [
+      "Latissimus Dorsi",
+      "Back",
+      "Biceps"
+    ],
+    "equipment": [
+      "Lat Pulldown Machine"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Shoulder impingement",
+      "Rotator cuff issues"
+    ],
+    "variants": [
+      "Close Grip Lat Pulldown",
+      "Behind Neck Pulldown",
+      "Single Arm Lat Pulldown"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Dumbbell Lunges",
+    "nameEN": "Dumbbell Lunges",
+    "category": "Forza",
+    "description": "L'affondo con manubri è un esercizio unilaterale che sviluppa forza nelle gambe, equilibrio e coordinazione. Essenziale per il basket poiché simula i movimenti di cambio direzione e migliora la stabilità dinamica.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Dumbbells"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Balance impairment"
+    ],
+    "variants": [
+      "Reverse Lunge",
+      "Walking Lunge",
+      "Lateral Lunge"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "65-75% 1RM"
+    }
+  },
+  {
+    "name": "Power Clean",
+    "nameEN": "Power Clean",
+    "category": "Potenza",
+    "description": "Il power clean è un esercizio olimpico che sviluppa potenza esplosiva della catena posteriore. Fondamentale per i cestisti poiché trasferisce forza verticale in espressione esplosiva, migliorando il salto verticale e l'accelerazione.",
+    "muscleGroups": [
+      "Glutes",
+      "Back",
+      "Shoulders",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bumper Plates"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Lower back issues",
+      "Wrist flexibility limitations"
+    ],
+    "variants": [
+      "Hang Power Clean",
+      "Power Clean from Blocks",
+      "Dumbbell Power Clean"
+    ],
+    "loadParameters": {
+      "sets": "4-6",
+      "reps": "1-5",
+      "rest": "120-180s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Hang Clean",
+    "nameEN": "Hang Clean",
+    "category": "Potenza",
+    "description": "L'hang clean è una variazione del power clean che inizia da posizione di sospensione. Meno tecnica dello strappo completo ma altamente efficace per sviluppare potenza esplosiva nel piano saggittale, cruciale per i salti verticali in basket.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Back",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bumper Plates"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Lower back pain",
+      "Coordination issues"
+    ],
+    "variants": [
+      "Hang Power Clean",
+      "Hang Clean from Blocks",
+      "Hang Squat Clean"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "2-5",
+      "rest": "120-150s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Clean & Jerk",
+    "nameEN": "Clean and Jerk",
+    "category": "Potenza",
+    "description": "Il movimento compound del clean & jerk sviluppa potenza esplosiva totale e coordinazione. Nel basket, allena la capacità di generare forza dal basso verso l'alto, fondamentale per i tiri da tre punti e i passaggi lunghi.",
+    "muscleGroups": [
+      "Glutes",
+      "Shoulders",
+      "Back",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bumper Plates"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Shoulder instability",
+      "Lower back issues"
+    ],
+    "variants": [
+      "Push Jerk",
+      "Split Jerk",
+      "Power Clean and Push Press"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "1-3",
+      "rest": "150-180s",
+      "intensity": "75-90% 1RM"
+    }
+  },
+  {
+    "name": "Snatch High Pull",
+    "nameEN": "Snatch High Pull",
+    "category": "Potenza",
+    "description": "Lo snatch high pull sviluppa potenza esplosiva della catena posteriore con un focus sulla posizione della spalla. Nel basket, migliora l'esplosività verticale e il controllo della spalla nei movimenti di tirata.",
+    "muscleGroups": [
+      "Glutes",
+      "Back",
+      "Shoulders",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Barbell",
+      "Bumper Plates"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Shoulder pain",
+      "Back issues"
+    ],
+    "variants": [
+      "Hang Snatch High Pull",
+      "Dumbbell Snatch High Pull",
+      "Kettlebell Snatch High Pull"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "3-6",
+      "rest": "90-120s",
+      "intensity": "70-80% 1RM"
+    }
+  },
+  {
+    "name": "Kettlebell Swing",
+    "nameEN": "Kettlebell Swing",
+    "category": "Potenza",
+    "description": "Lo swing con kettlebell è un esercizio dinamico che sviluppa potenza della catena posteriore con movimenti ritmici. Ideale per cestisti per migliorare l'esplosività dell'anca e la capacità di accelerazione ripetuta.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Back",
+      "Core"
+    ],
+    "equipment": [
+      "Kettlebell"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Lower back pain",
+      "Hip mobility issues"
+    ],
+    "variants": [
+      "Single Arm Kettlebell Swing",
+      "Double Kettlebell Swing",
+      "Bottoms Up Kettlebell Swing"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "15-20",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Medicine Ball Slam",
+    "nameEN": "Medicine Ball Slam",
+    "category": "Potenza",
+    "description": "La medicine ball slam è un esercizio esplosivo che sviluppa potenza totale del corpo con enfasi sulla catena posteriore. Nel basket, migliora l'espressione di potenza verticale e orizzontale fondamentale negli attacchi.",
+    "muscleGroups": [
+      "Glutes",
+      "Back",
+      "Core",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Medicine Ball"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Lower back pain",
+      "Shoulder issues"
+    ],
+    "variants": [
+      "Rotational Medicine Ball Slam",
+      "Single Arm Medicine Ball Slam"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Medicine Ball Chest Pass",
+    "nameEN": "Medicine Ball Chest Pass",
+    "category": "Potenza",
+    "description": "Il medicine ball chest pass sviluppa potenza esplosiva nel pressing orizzontale. Per i cestisti, simula la potenza necessaria nei passaggi aggressivi e nei tiri, migliorando la trasmissione di forza dal core al braccio.",
+    "muscleGroups": [
+      "Chest",
+      "Shoulders",
+      "Triceps",
+      "Core"
+    ],
+    "equipment": [
+      "Medicine Ball"
+    ],
+    "movementPattern": "push",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder pain",
+      "Elbow issues"
+    ],
+    "variants": [
+      "Seated Medicine Ball Chest Pass",
+      "Partner Medicine Ball Chest Pass"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Medicine Ball Rotational Throw",
+    "nameEN": "Medicine Ball Rotational Throw",
+    "category": "Potenza",
+    "description": "Il medicina ball rotational throw sviluppa potenza rotazionale del core. Nel basket, è fondamentale per i passaggi laterali esplosivi e per il controllo di palla negli schermi offensivi.",
+    "muscleGroups": [
+      "Core",
+      "Obliques",
+      "Shoulders",
+      "Back"
+    ],
+    "equipment": [
+      "Medicine Ball"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Back pain",
+      "Core instability"
+    ],
+    "variants": [
+      "Standing Rotational Throw",
+      "Half-Kneeling Rotational Throw"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-10",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Push Press",
+    "nameEN": "Push Press",
+    "category": "Potenza",
+    "description": "Il push press è una variazione del overhead press che utilizza la spinta delle gambe per generare potenza esplosiva. Nel basket, sviluppa la capacità di generare forza dai piedi verso l'alto, essenziale per i tiri da tre.",
+    "muscleGroups": [
+      "Shoulders",
+      "Triceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Barbell",
+      "Dumbbells"
+    ],
+    "movementPattern": "push",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder instability",
+      "Knee pain"
+    ],
+    "variants": [
+      "Split Jerk",
+      "Power Jerk",
+      "Dumbbell Push Press"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "3-6",
+      "rest": "90-120s",
+      "intensity": "75-85% 1RM"
+    }
+  },
+  {
+    "name": "Jump Squat",
+    "nameEN": "Jump Squat",
+    "category": "Potenza",
+    "description": "Il jump squat è un esercizio pliometrico che combina lo squat con una propulsione esplosiva verticale. Ideale per cestisti poiché sviluppa potenza esplosiva della gamba e velocità di contrazione muscolare.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Dumbbells"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Joint issues"
+    ],
+    "variants": [
+      "Weighted Jump Squat",
+      "Split Jump Squat",
+      "Resistance Band Jump Squat"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Trap Bar Jump",
+    "nameEN": "Trap Bar Jump",
+    "category": "Potenza",
+    "description": "Il trap bar jump è un esercizio di potenza che combina la posizione biomeccanica superiore della trap bar con un movimento esplosivo. Sviluppa potenza verticale con ridotto stress sulla schiena.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Back"
+    ],
+    "equipment": [
+      "Trap Bar"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Lower back issues",
+      "Knee pain"
+    ],
+    "variants": [
+      "Trap Bar Deadlift Jump",
+      "Loaded Jump"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "3-6",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Loaded Jump",
+    "nameEN": "Loaded Jump",
+    "category": "Potenza",
+    "description": "Il loaded jump è un esercizio che aggiunge resistenza esterna al movimento di salto. Nel basket, allena la capacità di generare potenza esplosiva anche in situazioni di contatto o pressione.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Dumbbells",
+      "Weighted Vest"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Joint issues",
+      "Low back pain"
+    ],
+    "variants": [
+      "Dumbbell Loaded Jump",
+      "Barbell Loaded Jump",
+      "Vest Loaded Jump"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "5-8",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Depth Jump",
+    "nameEN": "Depth Jump",
+    "category": "Pliometria",
+    "description": "Il depth jump è un esercizio pliometrico reattivo dove l'atleta cade da un'altezza e immediatamente salta verticalmente. Sviluppa la capacità reattiva del corpo e la forza elastica muscolare, cruciale per le alzate esplosive in basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Box"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee injuries",
+      "Joint pain"
+    ],
+    "variants": [
+      "Depth Jump with Hold",
+      "Single Leg Depth Jump"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Box Jump",
+    "nameEN": "Box Jump",
+    "category": "Pliometria",
+    "description": "Il box jump è un esercizio pliometrico classico dove l'atleta salta verticalmente su una piattaforma rialzata. Nel basket, migliora significativamente l'altezza e la velocità del salto, elementi fondamentali nel gioco aereo.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Box"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Joint issues"
+    ],
+    "variants": [
+      "Single Leg Box Jump",
+      "Lateral Box Jump",
+      "Depth Jump to Box Jump"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "5-8",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Lateral Bound",
+    "nameEN": "Lateral Bound",
+    "category": "Pliometria",
+    "description": "Il lateral bound è un esercizio pliometrico laterale che sviluppa potenza nel piano frontale. Nel basket, migliora la capacità di cambiare direzione rapidamente e sviluppa stabilità laterale essenziale in difesa.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hip Abductors",
+      "Calves"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Cones"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Hip instability"
+    ],
+    "variants": [
+      "Single Leg Lateral Bound",
+      "Bounding Series"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Tuck Jump",
+    "nameEN": "Tuck Jump",
+    "category": "Pliometria",
+    "description": "Il tuck jump è un esercizio pliometrico dove l'atleta porta le ginocchia al petto durante il salto. Sviluppa potenza esplosiva della gamba e la velocità di contrazione muscolare, essenziale per i salti ripetuti in basket.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Hip flexor tightness"
+    ],
+    "variants": [
+      "Double Tuck Jump",
+      "Single Leg Tuck Jump"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Single Leg Hop",
+    "nameEN": "Single Leg Hop",
+    "category": "Pliometria",
+    "description": "L'hop su una gamba è un esercizio pliometrico unilaterale che sviluppa potenza, equilibrio e stabilità su una sola gamba. Nel basket, migliora la capacità di stabilità dinamica e la spinta verticale in situazioni di contatto asimmetrico.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee instability",
+      "Ankle issues"
+    ],
+    "variants": [
+      "Single Leg Bounding",
+      "Single Leg Lateral Hop"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "5-10",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Hurdle Jump",
+    "nameEN": "Hurdle Jump",
+    "category": "Pliometria",
+    "description": "Il hurdle jump è un esercizio dove l'atleta salta sopra una serie di ostacoli consecutivi. Sviluppa potenza ripetuta e la capacità di mantenere la frequenza di salto, cruciale durante i movimenti di gioco continuo in basket.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Hurdles",
+      "Cones"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee pain",
+      "Coordination issues"
+    ],
+    "variants": [
+      "Double Leg Hurdle Jump",
+      "Single Leg Hurdle Jump"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-12",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Drop Jump",
+    "nameEN": "Drop Jump",
+    "category": "Pliometria",
+    "description": "Il drop jump è simile al depth jump ma con focus sul tempo di contatto. Allena la capacità reattiva e la velocità di risposta muscolare, fondamentale per le spinte verticali esplosive in basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Box"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee injuries",
+      "Joint pain"
+    ],
+    "variants": [
+      "Drop Jump to Box Jump",
+      "Single Leg Drop Jump"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Broad Jump",
+    "nameEN": "Broad Jump",
+    "category": "Pliometria",
+    "description": "Il broad jump è un esercizio pliometrico che enfatizza la distanza orizzontale piuttosto che verticale. Nel basket, migliora la potenza orizzontale e la capacità di copertura del terreno velocemente.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Landing Area"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Hip mobility issues"
+    ],
+    "variants": [
+      "Standing Broad Jump",
+      "Running Broad Jump",
+      "Single Leg Broad Jump"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "5-8",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Reactive Drop Jump",
+    "nameEN": "Reactive Drop Jump",
+    "category": "Pliometria",
+    "description": "Il reactive drop jump combina lo stimolo reattivo del drop con la spinta verticale del salto. Allena la capacità di risposta istantanea del corpo, essenziale per i cambi di direzione improvvisi in basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Box"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Joint issues",
+      "Knee pain"
+    ],
+    "variants": [
+      "Reactive Drop Jump to Run",
+      "Reactive Drop Jump Forward"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "5-8",
+      "rest": "90-120s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Altitude Landing",
+    "nameEN": "Altitude Landing",
+    "category": "Pliometria",
+    "description": "L'altitude landing è un esercizio di controllo dove l'atleta salta da un'altezza e atterra in posizione controllata. Nel basket, migliora il controllo durante i salti in aria e riduce il rischio di infortuni.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core",
+      "Ankles"
+    ],
+    "equipment": [
+      "Box"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee instability",
+      "Ankle weakness"
+    ],
+    "variants": [
+      "Single Leg Altitude Landing",
+      "Reactive Altitude Landing"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10",
+      "rest": "60-90s",
+      "intensity": "controlled"
+    }
+  },
+  {
+    "name": "Pogo Jump",
+    "nameEN": "Pogo Jump",
+    "category": "Pliometria",
+    "description": "Il pogo jump è un esercizio a rimbalzo continuo su due gambe. Sviluppa la frequenza di salto e il stretch reflex muscolare, cruciali per mantenere elevazione durante i movimenti ripetuti in basket.",
+    "muscleGroups": [
+      "Calves",
+      "Quadriceps",
+      "Glutes"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Ankle instability",
+      "Calf tightness"
+    ],
+    "variants": [
+      "Single Leg Pogo Jump",
+      "Weighted Pogo Jump"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "10-20",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Skater Jump",
+    "nameEN": "Skater Jump",
+    "category": "Pliometria",
+    "description": "Lo skater jump è un esercizio pliometrico laterale dove l'atleta salta da un lato all'altro su una sola gamba. Nel basket, sviluppa potenza laterale e equilibrio dinamico, essenziali per i cambi di direzione difensivi.",
+    "muscleGroups": [
+      "Glutes",
+      "Hip Abductors",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Hip instability"
+    ],
+    "variants": [
+      "Weighted Skater Jump",
+      "Continuous Skater Jump"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Agility Ladder Drill",
+    "nameEN": "Agility Ladder Drill",
+    "category": "Agilita",
+    "description": "Il ladder drill è un esercizio di footwork dove l'atleta attraversa una scala laterale con movimenti specifici di piedi. Nel basket, migliora la coordinazione, la frequenza di passo e la capacità di muovere i piedi rapidamente.",
+    "muscleGroups": [
+      "Calves",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Agility Ladder"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Coordination issues"
+    ],
+    "variants": [
+      "Lateral Shuffle",
+      "Forward Backwards",
+      "Carioca"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "6-8",
+      "rest": "45-60s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Cone Shuttle Run",
+    "nameEN": "Cone Shuttle Run",
+    "category": "Agilita",
+    "description": "Lo shuttle run con coni è un esercizio che sviluppa agilità e cambio di direzione. Nel basket, simula i movimenti offensivi e difensivi dove è necessario accelerare, decelerare e cambiare direzione rapidamente.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "T-Test",
+      "Pro Agility",
+      "5-10-5 Shuttle"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "90-120s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "T-Test Drill",
+    "nameEN": "T-Test Drill",
+    "category": "Agilita",
+    "description": "Il T-test è un test e esercizio di agilità dove l'atleta forma una T con i movimenti. Sviluppa cambio di direzione in quattro direzioni, cruciale per la difesa uno contro uno in basket.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Hip Abductors",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain",
+      "Hip mobility issues"
+    ],
+    "variants": [
+      "Illinois Agility Test",
+      "L-Drill"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "120-180s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Pro Agility 5-10-5",
+    "nameEN": "Pro Agility 5-10-5",
+    "category": "Agilita",
+    "description": "Il pro agility test è uno standard nel valutare agilità e cambio di direzione. Nel basket, valuta la capacità di scatto laterale e cambio di direzione essenziale nella difesa laterale.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee injuries"
+    ],
+    "variants": [
+      "T-Test",
+      "Illinois Agility Test"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "120-180s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Lane Slides",
+    "nameEN": "Lane Slides",
+    "category": "Agilita",
+    "description": "Le lane slides sono un movimento laterale rapido dove l'atleta scivola lateralmente mantenendo una postura difensiva. Nel basket, allena la capacità di spostarsi lateralmente rapidamente mantenendo controllo della palla e posizione.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Defensive Slides",
+      "Carioca",
+      "Backpedaling"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "30-60s",
+      "rest": "45-60s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Defensive Slides",
+    "nameEN": "Defensive Slides",
+    "category": "Agilita",
+    "description": "Le defensive slides sono il movimento fondamentale della difesa uno contro uno nel basket. Mantengono postura difensiva mentre ci si muove lateralmente, avanti e indietro.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Lateral Slides",
+      "Drop Step",
+      "Crossover Step"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "30-60s",
+      "rest": "45-60s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Crossover Step",
+    "nameEN": "Crossover Step",
+    "category": "Agilita",
+    "description": "Il crossover step è un movimento difensivo dove un piede incrocia l'altro per cambiare direzione rapidamente. Nel basket, è essenziale per recuperare posizione sulla difesa e rispondere ai cambi di direzione dell'avversario.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Quadriceps",
+      "Glutes"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee instability"
+    ],
+    "variants": [
+      "Drop Step",
+      "Lateral Crossover",
+      "Defensive Crossover"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "20-30",
+      "rest": "45-60s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Drop Step Drill",
+    "nameEN": "Drop Step Drill",
+    "category": "Agilita",
+    "description": "Il drop step drill è un esercizio dove l'atleta manda indietro un piede per creare spazio e cambiare direzione. Nel basket, è cruciale per la difesa in situazioni di picco e roll.",
+    "muscleGroups": [
+      "Glutes",
+      "Hip Abductors",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Lateral Drop Step",
+      "Reverse Drop Step"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "20-30",
+      "rest": "45-60s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Zigzag Run",
+    "nameEN": "Zigzag Run",
+    "category": "Agilita",
+    "description": "Lo zigzag run è un esercizio dove l'atleta corre a zig-zag attraverso una serie di coni. Allena la capacità di accelerazione e cambio di direzione in modelli dinamici.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Random Direction Run",
+      "Cone Weaving"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "4-6",
+      "rest": "90-120s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Reactive Agility Drill",
+    "nameEN": "Reactive Agility Drill",
+    "category": "Agilita",
+    "description": "Il reactive agility drill allena l'agilità in risposta a stimoli esterni. Nel basket, migliora la capacità di rispondere ai movimenti dell'avversario e ai passaggi inaspettati.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Cones",
+      "Visual Stimulus"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Coordination issues"
+    ],
+    "variants": [
+      "Light Reactive Drill",
+      "Random Direction Drill"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "30-45s",
+      "rest": "90-120s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Sprint 20m",
+    "nameEN": "20m Sprint",
+    "category": "Velocita",
+    "description": "Lo sprint su 20 metri allena l'accelerazione iniziale. Nel basket, è fondamentale per i primi passi rapidi verso la palla o per allontanarsi dalla difesa.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Calves"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring tightness"
+    ],
+    "variants": [
+      "Weighted Sprint",
+      "Resisted Sprint"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Sprint 40m",
+    "nameEN": "40m Sprint",
+    "category": "Velocita",
+    "description": "Lo sprint su 40 metri allena la velocità e la resistenza di velocità. Nel basket, simula i movimenti di full court e la capacità di mantenere velocità su distanze lunghe.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring injuries"
+    ],
+    "variants": [
+      "Flying 40m",
+      "Weighted 40m Sprint"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "3-5",
+      "rest": "150-180s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Resisted Sprint",
+    "nameEN": "Resisted Sprint",
+    "category": "Velocita",
+    "description": "Lo sprint con resistenza (sled, band, partner) allena la capacità di accelerazione contro resistenza. Nel basket, migliora la forza nei primi passi e la potenza di spinta.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Sled",
+      "Resistance Band"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring tightness"
+    ],
+    "variants": [
+      "Band Resisted Sprint",
+      "Sled Resisted Sprint"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Flying Sprint 10m",
+    "nameEN": "Flying Sprint 10m",
+    "category": "Velocita",
+    "description": "Il flying sprint è uno sprint dove l'atleta accelera prima di entrare nella zona di misurazione. Allena la velocità massima anziché l'accelerazione iniziale.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Quadriceps",
+      "Calves"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring injuries"
+    ],
+    "variants": [
+      "Flying 20m",
+      "Flying 40m"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "maximum effort"
+    }
+  },
+  {
+    "name": "Hill Sprint",
+    "nameEN": "Hill Sprint",
+    "category": "Velocita",
+    "description": "Lo hill sprint è uno sprint in salita che aumenta la resistenza e sviluppa la forza muscolare. Nel basket, migliora la potenza e la resistenza all'accelerazione.",
+    "muscleGroups": [
+      "Glutes",
+      "Hamstrings",
+      "Quadriceps",
+      "Calves"
+    ],
+    "equipment": [
+      "Hill"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Hill Bounds",
+      "Hill Accelerations"
+    ],
+    "loadParameters": {
+      "sets": "4-6",
+      "reps": "4-6",
+      "rest": "150-180s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Acceleration Drill",
+    "nameEN": "Acceleration Drill",
+    "category": "Velocita",
+    "description": "Il drill di accelerazione allena la capacità di aumentare la velocità rapidamente. Nel basket, è cruciale per scattare dalla posizione difensiva o per allontanarsi dal difensore.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring tightness"
+    ],
+    "variants": [
+      "Multiple Acceleration Drill",
+      "Reaction Acceleration"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "4-6",
+      "rest": "90-120s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Tempo Run",
+    "nameEN": "Tempo Run",
+    "category": "Velocita",
+    "description": "Il tempo run è una corsa a intensità moderata-alta mantenuta per una durata. Nel basket, sviluppa la resistenza cardiovascolare e la capacità di mantenere velocità in giochi lunghi.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Hamstrings",
+      "Glutes",
+      "Calves"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Fartlek",
+      "Interval Run"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "5-10 min",
+      "rest": "60-90s",
+      "intensity": "75-85% max HR"
+    }
+  },
+  {
+    "name": "Shuttle Sprint",
+    "nameEN": "Shuttle Sprint",
+    "category": "Velocita",
+    "description": "Lo shuttle sprint è uno sprint avanti e indietro tra due punti. Nel basket, allena la capacità di accelerare, decelerare e cambiare direzione velocemente.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Multiple Shuttle",
+      "Weighted Shuttle"
+    ],
+    "loadParameters": {
+      "sets": "5-6",
+      "reps": "4-6",
+      "rest": "120-150s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Pallof Press",
+    "nameEN": "Pallof Press",
+    "category": "Core",
+    "description": "Il pallof press è un esercizio anti-rotazione che sviluppa stabilità del core laterale. Nel basket, migliora la resistenza a forze rotazionali durante i contatti e i cambi di direzione.",
+    "muscleGroups": [
+      "Core",
+      "Obliques",
+      "Chest"
+    ],
+    "equipment": [
+      "Cable Machine"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Back pain",
+      "Core instability"
+    ],
+    "variants": [
+      "Single Leg Pallof Press",
+      "Tall Kneeling Pallof Press"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Plank",
+    "nameEN": "Plank",
+    "category": "Core",
+    "description": "Il plank è un esercizio isometrico fondamentale che sviluppa resistenza del core. Nel basket, mantiene la stabilità del tronco durante i movimenti di difesa e offesa.",
+    "muscleGroups": [
+      "Core",
+      "Chest",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Lower back pain"
+    ],
+    "variants": [
+      "Side Plank",
+      "Plank with Movement",
+      "Weighted Plank"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60s",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Side Plank",
+    "nameEN": "Side Plank",
+    "category": "Core",
+    "description": "Il side plank è un esercizio isometrico che sviluppa stabilità laterale del core. Nel basket, rafforza i muscoli laterali del tronco essenziali per resistere ai contatti laterali.",
+    "muscleGroups": [
+      "Obliques",
+      "Core",
+      "Hip Abductors"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Shoulder pain"
+    ],
+    "variants": [
+      "Side Plank with Leg Raise",
+      "Weighted Side Plank"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "20-45s per side",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Dead Bug",
+    "nameEN": "Dead Bug",
+    "category": "Core",
+    "description": "Il dead bug è un esercizio di coordinazione core che sviluppa il controllo del tronco mentre gli arti si muovono indipendentemente. Nel basket, migliora la stabilità durante i movimenti complessi.",
+    "muscleGroups": [
+      "Core",
+      "Rectus Abdominis"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Lower back pain"
+    ],
+    "variants": [
+      "Weighted Dead Bug",
+      "Resistance Band Dead Bug"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Bird Dog",
+    "nameEN": "Bird Dog",
+    "category": "Core",
+    "description": "Il bird dog è un esercizio che sviluppa stabilità del core e coordinazione. Nel basket, allena la capacità di mantenere equilibrio mentre si estendono gli arti, simulando i movimenti di gioco.",
+    "muscleGroups": [
+      "Core",
+      "Back",
+      "Glutes"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Lower back pain"
+    ],
+    "variants": [
+      "Weighted Bird Dog",
+      "Dynamic Bird Dog"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Ab Wheel Rollout",
+    "nameEN": "Ab Wheel Rollout",
+    "category": "Core",
+    "description": "L'ab wheel rollout è un esercizio dinamico che sviluppa forza totale del core in flessione. Nel basket, migliora la resistenza del core durante i movimenti offensivi e la spinta verticale.",
+    "muscleGroups": [
+      "Rectus Abdominis",
+      "Core",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Ab Wheel"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Lower back pain",
+      "Shoulder issues"
+    ],
+    "variants": [
+      "Kneeling Ab Wheel Rollout",
+      "Single Arm Ab Wheel"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Cable Woodchop",
+    "nameEN": "Cable Woodchop",
+    "category": "Core",
+    "description": "Il cable woodchop è un esercizio di rotazione che sviluppa potenza rotatoria del core. Nel basket, migliora la capacità di generare forza nei passaggi laterali e nei tiri da angolazioni diverse.",
+    "muscleGroups": [
+      "Obliques",
+      "Core",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Cable Machine"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Back pain",
+      "Shoulder issues"
+    ],
+    "variants": [
+      "Low to High Woodchop",
+      "High to Low Woodchop"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Russian Twist",
+    "nameEN": "Russian Twist",
+    "category": "Core",
+    "description": "Il Russian twist è un esercizio dinamico di rotazione che sviluppa potenza obliqua. Nel basket, allena la capacità di rotare il tronco rapidamente durante i passaggi e i tiri.",
+    "muscleGroups": [
+      "Obliques",
+      "Core"
+    ],
+    "equipment": [
+      "Medicine Ball",
+      "Bodyweight"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Back pain"
+    ],
+    "variants": [
+      "Weighted Russian Twist",
+      "Resistance Band Russian Twist"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Hanging Leg Raise",
+    "nameEN": "Hanging Leg Raise",
+    "category": "Core",
+    "description": "L'hanging leg raise è un esercizio di tiratura che sviluppa forza degli addominali inferiori e del core. Nel basket, migliora la stabilità della posizione e la capacità di controllo corporeo in aria.",
+    "muscleGroups": [
+      "Rectus Abdominis",
+      "Core",
+      "Hip Flexors"
+    ],
+    "equipment": [
+      "Pull-Up Bar"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Lower back pain",
+      "Shoulder issues"
+    ],
+    "variants": [
+      "Weighted Hanging Leg Raise",
+      "Straight Leg Hanging Raise"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Farmer's Walk",
+    "nameEN": "Farmer's Walk",
+    "category": "Core",
+    "description": "Il farmer's walk è un esercizio di trasporto che sviluppa forza grip e stabilità del core. Nel basket, migliora il controllo di palla e la resistenza generale al faticamento.",
+    "muscleGroups": [
+      "Core",
+      "Grip",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Dumbbells",
+      "Kettlebells"
+    ],
+    "movementPattern": "carry",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Grip weakness"
+    ],
+    "variants": [
+      "Single Arm Farmer's Walk",
+      "Suitcase Carry"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60m",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Suitcase Carry",
+    "nameEN": "Suitcase Carry",
+    "category": "Core",
+    "description": "Il suitcase carry è una variazione asimmetrica del farmer's walk che sviluppa stabilità laterale del core. Nel basket, allena la capacità di mantenere equilibrio durante i contatti unilaterali.",
+    "muscleGroups": [
+      "Obliques",
+      "Core",
+      "Hip Abductors"
+    ],
+    "equipment": [
+      "Dumbbell",
+      "Kettlebell"
+    ],
+    "movementPattern": "carry",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Back pain"
+    ],
+    "variants": [
+      "Weighted Suitcase Carry",
+      "Cross Body Suitcase Carry"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60m per side",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Turkish Get-Up",
+    "nameEN": "Turkish Get-Up",
+    "category": "Core",
+    "description": "Il Turkish get-up è un esercizio complesso che sviluppa mobilità, stabilità e forza del core. Nel basket, migliora il controllo corporeo e la capacità di transitare rapidamente tra diverse posizioni.",
+    "muscleGroups": [
+      "Core",
+      "Shoulders",
+      "Glutes"
+    ],
+    "equipment": [
+      "Kettlebell",
+      "Dumbbell"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Shoulder instability",
+      "Lower back pain"
+    ],
+    "variants": [
+      "Light Kettlebell Get-Up",
+      "Single Arm Get-Up"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "3-5",
+      "rest": "90-120s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Single Leg Balance",
+    "nameEN": "Single Leg Balance",
+    "category": "Propriocezione",
+    "description": "L'equilibrio su una sola gamba è un esercizio propriocettivo fondamentale. Nel basket, migliora la consapevolezza spaziale e la stabilità durante i movimenti unilaterali.",
+    "muscleGroups": [
+      "Ankles",
+      "Core",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Ankle instability"
+    ],
+    "variants": [
+      "Eyes Closed Balance",
+      "Balance on Unstable Surface"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60s per leg",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Star Excursion Balance",
+    "nameEN": "Star Excursion Balance",
+    "category": "Propriocezione",
+    "description": "L'excursion balance a stella è un esercizio dinamico dove l'atleta raggiunge in otto direzioni mantenendo l'equilibrio su una gamba. Nel basket, migliora la mobilità dinamica e l'equilibrio multidirezionale.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Hip Adductors",
+      "Core",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hip mobility issues",
+      "Balance impairment"
+    ],
+    "variants": [
+      "Single Direction Reach",
+      "Weighted Star Reach"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-10 per direction",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "BOSU Ball Squat",
+    "nameEN": "BOSU Ball Squat",
+    "category": "Propriocezione",
+    "description": "Lo squat su BOSU ball è uno squat eseguito su una superficie instabile. Nel basket, allena l'equilibrio dinamico e la stabilità durante lo squat, fondamentale per i movimenti di gioco.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core",
+      "Ankles"
+    ],
+    "equipment": [
+      "BOSU Ball"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Ankle instability",
+      "Knee pain"
+    ],
+    "variants": [
+      "Single Leg BOSU Squat",
+      "BOSU Ball Lunge"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Single Leg Deadlift",
+    "nameEN": "Single Leg Deadlift",
+    "category": "Propriocezione",
+    "description": "Il single leg deadlift è un esercizio unilaterale di forza-equilibrio che sviluppa stabilità e potenza su una gamba. Nel basket, migliora l'equilibrio durante i movimenti di salto e cambio direzione unilaterali.",
+    "muscleGroups": [
+      "Hamstrings",
+      "Glutes",
+      "Core",
+      "Ankles"
+    ],
+    "equipment": [
+      "Dumbbells",
+      "Bodyweight"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Hip mobility issues",
+      "Balance impairment"
+    ],
+    "variants": [
+      "Weighted Single Leg RDL",
+      "Barbell Single Leg Deadlift"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "6-10 per leg",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Airex Pad Balance",
+    "nameEN": "Airex Pad Balance",
+    "category": "Propriocezione",
+    "description": "L'equilibrio su pad Airex è un esercizio su superficie morbida che sfida la propriocezione. Nel basket, migliora la consapevolezza spaziale e la stabilità articolare.",
+    "muscleGroups": [
+      "Ankles",
+      "Core",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Airex Pad"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Ankle instability"
+    ],
+    "variants": [
+      "Single Leg Airex Balance",
+      "BOSU Ball Balance"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60s per leg",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Eyes Closed Balance",
+    "nameEN": "Eyes Closed Balance",
+    "category": "Propriocezione",
+    "description": "L'equilibrio ad occhi chiusi è un esercizio propriocettivo avanzato senza feedback visivo. Nel basket, migliora la consapevolezza propriocettiva pura senza dipendenza dalla vista.",
+    "muscleGroups": [
+      "Ankles",
+      "Core",
+      "Inner Ear"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Dizziness",
+      "Balance disorders"
+    ],
+    "variants": [
+      "Single Leg Eyes Closed",
+      "Perturbation Balance"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-45s",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Perturbation Training",
+    "nameEN": "Perturbation Training",
+    "category": "Propriocezione",
+    "description": "Il perturbation training è un allenamento dove stimoli esterni disturbano l'equilibrio. Nel basket, allena la capacità di recuperare equilibrio velocemente durante i contatti.",
+    "muscleGroups": [
+      "Ankles",
+      "Core",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Partner",
+      "Medicine Ball"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Balance disorders"
+    ],
+    "variants": [
+      "Partner Perturbation",
+      "Band Perturbation"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60s",
+      "rest": "60-90s",
+      "intensity": "high intensity"
+    }
+  },
+  {
+    "name": "Stability Ball Pike",
+    "nameEN": "Stability Ball Pike",
+    "category": "Propriocezione",
+    "description": "Lo stability ball pike è un esercizio core su superficie instabile che migliora la coordinazione e il controllo. Nel basket, allena la stabilità dinamica del tronco.",
+    "muscleGroups": [
+      "Core",
+      "Shoulders",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Stability Ball"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Shoulder pain",
+      "Core weakness"
+    ],
+    "variants": [
+      "Stability Ball Pass",
+      "Stability Ball Rollout"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-12",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Nordic Hamstring Curl",
+    "nameEN": "Nordic Hamstring Curl",
+    "category": "Prevenzione",
+    "description": "Il Nordic hamstring curl è un esercizio eccentrico che sviluppa forza massimale degli ischiocrurali. Nel basket, è fondamentale per prevenire strappi agli ischiocrurali, comuni negli scatti e nei salti.",
+    "muscleGroups": [
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Hamstring injury",
+      "Knee pain"
+    ],
+    "variants": [
+      "Partner Nordic Curl",
+      "Assisted Nordic Curl"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "4-8",
+      "rest": "90-120s",
+      "intensity": "eccentric focus"
+    }
+  },
+  {
+    "name": "Copenhagen Adductor",
+    "nameEN": "Copenhagen Adductor",
+    "category": "Prevenzione",
+    "description": "Il Copenhagen adductor è un esercizio isometrico che rafforza gli adduttori dell'anca. Nel basket, previene gli strappi adduttori comuni negli scatti laterali.",
+    "muscleGroups": [
+      "Hip Adductors"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Pillow"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hip pain"
+    ],
+    "variants": [
+      "Top Side Plank",
+      "Weighted Adductor Hold"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "20-30s per side",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Ankle Stability Complex",
+    "nameEN": "Ankle Stability Complex",
+    "category": "Prevenzione",
+    "description": "Il complesso di stabilità della caviglia include esercizi multidirezionali per stabilizzare la caviglia. Nel basket, previene le distorsioni di caviglia, infortuni molto comuni.",
+    "muscleGroups": [
+      "Ankle Stabilizers",
+      "Calves"
+    ],
+    "equipment": [
+      "BOSU Ball",
+      "Resistance Band"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Acute ankle injury"
+    ],
+    "variants": [
+      "Single Leg Stance",
+      "Band Walk Series"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Hip 90/90 Mobility",
+    "nameEN": "Hip 90/90 Mobility",
+    "category": "Prevenzione",
+    "description": "L'esercizio hip 90/90 è un movimento di mobilità che migliora la rotazione interna e esterna dell'anca. Nel basket, migliora la libertà di movimento all'anca e riduce il rischio di lesioni.",
+    "muscleGroups": [
+      "Hip Rotators",
+      "Hip Flexors"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hip pain",
+      "Reduced mobility"
+    ],
+    "variants": [
+      "90/90 Stretch",
+      "Weighted 90/90"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "2-3 per position",
+      "rest": "60-90s",
+      "intensity": "mobility focus"
+    }
+  },
+  {
+    "name": "Shoulder Band Protocol",
+    "nameEN": "Shoulder Band Protocol",
+    "category": "Prevenzione",
+    "description": "Il protocollo a banda per la spalla è una serie di esercizi che stabilizzano la rotazione della spalla. Nel basket, previene gli infortuni alla spalla causati dai movimenti ripetuti di tiro.",
+    "muscleGroups": [
+      "Rotator Cuff",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Resistance Band"
+    ],
+    "movementPattern": "push",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Shoulder pain"
+    ],
+    "variants": [
+      "Reverse Fly Series",
+      "Banded Shoulder Circles"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "45-60s",
+      "intensity": "light resistance"
+    }
+  },
+  {
+    "name": "VMO Activation",
+    "nameEN": "VMO Activation",
+    "category": "Prevenzione",
+    "description": "L'attivazione del VMO (vasto mediale obliquo) è un esercizio che enfatizza il muscolo mediale del quadricipite. Nel basket, stabilizza il ginocchio e previene problemi patellofemurali.",
+    "muscleGroups": [
+      "Vastus Medialis",
+      "Quadriceps"
+    ],
+    "equipment": [
+      "Resistance Band"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Short Arc Quad",
+      "Terminal Knee Extension"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "45-60s",
+      "intensity": "light resistance"
+    }
+  },
+  {
+    "name": "Calf Raise Protocol",
+    "nameEN": "Calf Raise Protocol",
+    "category": "Prevenzione",
+    "description": "Il protocollo di calf raise è una progressione che rafforza i muscoli del polpaccio. Nel basket, previene i problemi di Achille e migliora la spinta verticale.",
+    "muscleGroups": [
+      "Calves",
+      "Achilles"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Dumbbells"
+    ],
+    "movementPattern": "squat",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Achilles tendinopathy"
+    ],
+    "variants": [
+      "Single Leg Calf Raise",
+      "Eccentric Calf Raise"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-20",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "IT Band Foam Roll",
+    "nameEN": "IT Band Foam Roll",
+    "category": "Prevenzione",
+    "description": "Il foam rolling della fascia IT è un esercizio di automassaggio per ridurre tensione e trigger points. Nel basket, allevia il dolore laterale del ginocchio causato dalla tight IT band.",
+    "muscleGroups": [
+      "IT Band",
+      "Lateral Thigh"
+    ],
+    "equipment": [
+      "Foam Roller"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Acute inflammation"
+    ],
+    "variants": [
+      "Cross-Leg IT Band Roll",
+      "Standing IT Band Stretch"
+    ],
+    "loadParameters": {
+      "sets": "1-2",
+      "reps": "2-3 min per leg",
+      "rest": "minimal",
+      "intensity": "self-myofascial release"
+    }
+  },
+  {
+    "name": "Glute Bridge Series",
+    "nameEN": "Glute Bridge Series",
+    "category": "Prevenzione",
+    "description": "La serie di glute bridge è una progressione di esercizi che attiva e rinforza i glutei. Nel basket, compensa l'inattività dovuta all'anca flessa e previene il mal di schiena.",
+    "muscleGroups": [
+      "Glutes",
+      "Back",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Bench"
+    ],
+    "movementPattern": "hinge",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Lower back pain"
+    ],
+    "variants": [
+      "Single Leg Glute Bridge",
+      "Resistance Band Glute Bridge"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "45-60s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Band Walk Series",
+    "nameEN": "Band Walk Series",
+    "category": "Prevenzione",
+    "description": "La serie band walk è una progressione che attiva gli abduttori e stabilizza l'anca. Nel basket, previene i valgismi del ginocchio e migliora la stabilità laterale.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Glutes"
+    ],
+    "equipment": [
+      "Resistance Band"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Hip pain"
+    ],
+    "variants": [
+      "Lateral Band Walk",
+      "Monster Walk",
+      "Reverse Band Walk"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "45-60s",
+      "intensity": "light resistance"
+    }
+  },
+  {
+    "name": "TRX Y-T-W",
+    "nameEN": "TRX Y-T-W",
+    "category": "Prevenzione",
+    "description": "Il TRX Y-T-W è un esercizio che stabilizza la spalla in tre posizioni diverse. Nel basket, previene gli infortuni alla spalla e migliora la postura.",
+    "muscleGroups": [
+      "Rotator Cuff",
+      "Shoulders",
+      "Back"
+    ],
+    "equipment": [
+      "TRX Straps"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Shoulder pain"
+    ],
+    "variants": [
+      "Banded Y-T-W",
+      "Dumbbell Y-T-W"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "8-10",
+      "rest": "60-90s",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Face Pulls",
+    "nameEN": "Face Pulls",
+    "category": "Prevenzione",
+    "description": "I face pull sono un esercizio di tirata che enfatizza la schiena posteriore e i rotatori esterni della spalla. Nel basket, prevengono infortuni alla spalla e migliorano la postura.",
+    "muscleGroups": [
+      "Rotator Cuff",
+      "Rear Shoulders",
+      "Back"
+    ],
+    "equipment": [
+      "Cable Machine"
+    ],
+    "movementPattern": "pull",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Shoulder pain"
+    ],
+    "variants": [
+      "Resistance Band Face Pull",
+      "Single Arm Face Pull"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "12-15",
+      "rest": "60-90s",
+      "intensity": "light to moderate"
+    }
+  },
+  {
+    "name": "Foam Rolling Routine",
+    "nameEN": "Foam Rolling Routine",
+    "category": "Flessibilita",
+    "description": "La routine di foam rolling è una sequenza di automassaggio che riduce la tensione muscolare e migliora la mobilità. Nel basket, è essenziale per il recupero e la prevenzione di infortuni.",
+    "muscleGroups": [
+      "Full Body"
+    ],
+    "equipment": [
+      "Foam Roller"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Acute inflammation"
+    ],
+    "variants": [
+      "Lacrosse Ball Massage",
+      "Massage Gun Routine"
+    ],
+    "loadParameters": {
+      "sets": "1-2",
+      "reps": "10-15 min",
+      "rest": "minimal",
+      "intensity": "self-myofascial release"
+    }
+  },
+  {
+    "name": "Dynamic Warm-Up",
+    "nameEN": "Dynamic Warm-Up",
+    "category": "Flessibilita",
+    "description": "Il warm-up dinamico è una sequenza di movimenti attivi che prepara il corpo all'allenamento. Nel basket, migliora la mobilità, aumenta la temperatura muscolare e prepara il sistema nervoso.",
+    "muscleGroups": [
+      "Full Body"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "beginner",
+    "contraindications": [
+      "None"
+    ],
+    "variants": [
+      "Sport Specific Warm-Up",
+      "Mobility Routine"
+    ],
+    "loadParameters": {
+      "sets": "1",
+      "reps": "8-10 min",
+      "rest": "minimal",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "name": "Hip Flexor Stretch",
+    "nameEN": "Hip Flexor Stretch",
+    "category": "Flessibilita",
+    "description": "Lo stretching dei flessori dell'anca è un esercizio passivo che migliora la mobilità anteriore dell'anca. Nel basket, contrasta l'accorciamento causato da posture sedute e salti.",
+    "muscleGroups": [
+      "Hip Flexors",
+      "Quads"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "None"
+    ],
+    "variants": [
+      "Half Kneeling Hip Flexor Stretch",
+      "Couch Stretch"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "30-45s per side",
+      "rest": "minimal",
+      "intensity": "flexibility focus"
+    }
+  },
+  {
+    "name": "World's Greatest Stretch",
+    "nameEN": "World's Greatest Stretch",
+    "category": "Flessibilita",
+    "description": "Il world's greatest stretch è una sequenza che combina mobilità dell'anca, torso e spalla. Nel basket, prepara il corpo con movimento multidirezionale.",
+    "muscleGroups": [
+      "Hip Flexors",
+      "Thoracic Spine",
+      "Shoulders"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "lunge",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "None"
+    ],
+    "variants": [
+      "Inchworm to T-Spine Rotation",
+      "World's Tightest Stretch"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "5-8 per side",
+      "rest": "minimal",
+      "intensity": "mobility focus"
+    }
+  },
+  {
+    "name": "90/90 Hip Stretch",
+    "nameEN": "90/90 Hip Stretch",
+    "category": "Flessibilita",
+    "description": "Lo 90/90 hip stretch è un movimento che migliora la rotazione interna e esterna dell'anca. Nel basket, migliora la mobilità dell'anca e riduce il dolore.",
+    "muscleGroups": [
+      "Hip Rotators",
+      "Hip Flexors"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Hip pain"
+    ],
+    "variants": [
+      "90/90 Stretch with Rotation",
+      "Pigeon Pose"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "30-60s per side",
+      "rest": "minimal",
+      "intensity": "flexibility focus"
+    }
+  },
+  {
+    "name": "Thoracic Spine Rotation",
+    "nameEN": "Thoracic Spine Rotation",
+    "category": "Flessibilita",
+    "description": "La rotazione della colonna toracica è un esercizio di mobilità che migliora la rotazione del tronco superiore. Nel basket, è essenziale per i tiri e i passaggi.",
+    "muscleGroups": [
+      "Thoracic Spine",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "rotation",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Back pain"
+    ],
+    "variants": [
+      "Thoracic Rotation on Roller",
+      "Open Book Stretch"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "8-10 per side",
+      "rest": "minimal",
+      "intensity": "mobility focus"
+    }
+  },
+  {
+    "name": "Ankle Dorsiflexion Mobilization",
+    "nameEN": "Ankle Dorsiflexion Mobilization",
+    "category": "Flessibilita",
+    "description": "La mobilizzazione della dorsiflexione della caviglia migliora la mobilità anteriore della caviglia. Nel basket, è importante per il passo naturale e il controllo del piede.",
+    "muscleGroups": [
+      "Ankle",
+      "Calves"
+    ],
+    "equipment": [
+      "Bodyweight",
+      "Wall"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Ankle pain"
+    ],
+    "variants": [
+      "90/90 Ankle Dorsiflexion",
+      "Resistance Band Ankle Mobilization"
+    ],
+    "loadParameters": {
+      "sets": "2-3",
+      "reps": "10-15 per ankle",
+      "rest": "minimal",
+      "intensity": "mobility focus"
+    }
+  },
+  {
+    "name": "Cool Down Stretch Routine",
+    "nameEN": "Cool Down Stretch Routine",
+    "category": "Flessibilita",
+    "description": "La routine di stretching al termine dell'allenamento è una sequenza di stretching statico. Nel basket, favorisce il recupero muscolare e riduce l'indolenzimento.",
+    "muscleGroups": [
+      "Full Body"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "None"
+    ],
+    "variants": [
+      "Sport Specific Cool Down",
+      "Yin Yoga Routine"
+    ],
+    "loadParameters": {
+      "sets": "1",
+      "reps": "8-10 min",
+      "rest": "minimal",
+      "intensity": "flexibility focus"
+    }
+  },
+  {
+    "name": "Court Sprints",
+    "nameEN": "Court Sprints",
+    "category": "Condizionamento",
+    "description": "I court sprints sono sprint su un campo da basket a piena intensità. Nel basket, ricreano le esigenze fisiologiche del gioco con cambio di direzione e accelerazioni rapide.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee pain",
+      "Hamstring issues"
+    ],
+    "variants": [
+      "Half Court Sprints",
+      "Baseline to Baseline Sprints"
+    ],
+    "loadParameters": {
+      "sets": "5-8",
+      "reps": "3-5",
+      "rest": "120-180s",
+      "intensity": "95-100% max effort"
+    }
+  },
+  {
+    "name": "Suicide Runs",
+    "nameEN": "Suicide Runs",
+    "category": "Condizionamento",
+    "description": "I suicide runs sono serie di sprint con cambi di direzione a distanze progressive. Nel basket, ricreano i pattern di corsa del gioco con accelerazione e decelerazione ripetute.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court",
+      "Cones"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee pain",
+      "Cardiovascular limitations"
+    ],
+    "variants": [
+      "Half Court Suicides",
+      "Multiple Suicide Runs"
+    ],
+    "loadParameters": {
+      "sets": "4-6",
+      "reps": "4-6",
+      "rest": "180-240s",
+      "intensity": "95-100% max effort"
+    }
+  },
+  {
+    "name": "Full Court Transition",
+    "nameEN": "Full Court Transition",
+    "category": "Condizionamento",
+    "description": "Le full court transition simulano i movimenti di transizione offesa-difesa nel basket. Nel basket, ricreano gli sprint da un capo all'altro del campo con cambi di ritmo.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Cardiovascular limitations"
+    ],
+    "variants": [
+      "2v2 Transition",
+      "3v3 Transition"
+    ],
+    "loadParameters": {
+      "sets": "6-8",
+      "reps": "3-5",
+      "rest": "120-150s",
+      "intensity": "90-100% max effort"
+    }
+  },
+  {
+    "name": "Half Court Slides",
+    "nameEN": "Half Court Slides",
+    "category": "Condizionamento",
+    "description": "Le half court slides sono movimenti laterali rapidissimi su metà campo. Nel basket, allena la capacità di movimento laterale sostenuto tipico della difesa.",
+    "muscleGroups": [
+      "Hip Abductors",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Full Court Slides",
+      "Timed Half Court Slides"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "45-60s",
+      "rest": "90-120s",
+      "intensity": "85-95% max effort"
+    }
+  },
+  {
+    "name": "17s (Baseline to Baseline)",
+    "nameEN": "17s Baseline to Baseline",
+    "category": "Condizionamento",
+    "description": "Il drill 17s è uno sprint da baseline a baseline ripetuto. Nel basket, allena la capacità di accelerazione ripetuta, specifico alle transizioni di gioco.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Hamstrings"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Hamstring tightness"
+    ],
+    "variants": [
+      "Multiple 17s",
+      "Timed 17s Challenge"
+    ],
+    "loadParameters": {
+      "sets": "5-8",
+      "reps": "6-10",
+      "rest": "30-45s",
+      "intensity": "85-95% max effort"
+    }
+  },
+  {
+    "name": "300-Yard Shuttle",
+    "nameEN": "300-Yard Shuttle",
+    "category": "Condizionamento",
+    "description": "Il 300-yard shuttle è un test di resistenza anaerobica. Nel basket, valuta la capacità di mantenere intensità durante i 4 quarti di gioco.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Cardiovascular limitations"
+    ],
+    "variants": [
+      "Timed 300-Yard",
+      "Modified Shuttle"
+    ],
+    "loadParameters": {
+      "sets": "1-2",
+      "reps": "1",
+      "rest": "300s+",
+      "intensity": "95-100% max effort"
+    }
+  },
+  {
+    "name": "Tabata Court Drill",
+    "nameEN": "Tabata Court Drill",
+    "category": "Condizionamento",
+    "description": "Il tabata court drill è un HIIT protocol su campo da basket. Nel basket, sviluppa capacità cardiovascolare con intervalli di alta intensità.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Cardiovascular limitations"
+    ],
+    "variants": [
+      "20s On/10s Off Sprints",
+      "Different Movement Patterns"
+    ],
+    "loadParameters": {
+      "sets": "4-8",
+      "reps": "20s work",
+      "rest": "10s",
+      "intensity": "100% max effort"
+    }
+  },
+  {
+    "name": "Pick and Roll Conditioning",
+    "nameEN": "Pick and Roll Conditioning",
+    "category": "Condizionamento",
+    "description": "Il pick and roll conditioning è un drill che simula il movimento pick and roll con alta intensità. Nel basket, allena i pattern specifici di gioco ad alta intensità.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Dribble Handoff Drill",
+      "Screen and Roll Conditioning"
+    ],
+    "loadParameters": {
+      "sets": "6-8",
+      "reps": "45-60s",
+      "rest": "90-120s",
+      "intensity": "90-100% max effort"
+    }
+  },
+  {
+    "name": "Fast Break Drill",
+    "nameEN": "Fast Break Drill",
+    "category": "Condizionamento",
+    "description": "Il fast break drill allena il movimento rapido da difesa a offesa. Nel basket, sviluppa la capacità di transizione e il ritmo di gioco.",
+    "muscleGroups": [
+      "Glutes",
+      "Quadriceps",
+      "Core"
+    ],
+    "equipment": [
+      "Court"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "advanced",
+    "contraindications": [
+      "Cardiovascular limitations"
+    ],
+    "variants": [
+      "2v1 Fast Break",
+      "3v2 Fast Break"
+    ],
+    "loadParameters": {
+      "sets": "6-8",
+      "reps": "30-45s",
+      "rest": "90-120s",
+      "intensity": "90-100% max effort"
+    }
+  },
+  {
+    "name": "Continuous Layup Drill",
+    "nameEN": "Continuous Layup Drill",
+    "category": "Condizionamento",
+    "description": "Il continuous layup drill è una sequenza di layup consecutivi. Nel basket, allena la capacità di eseguire movimenti tecnici ad alta intensità e il condizionamento aerobico.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Court",
+      "Basketball"
+    ],
+    "movementPattern": "locomotion",
+    "difficulty": "intermediate",
+    "contraindications": [
+      "Knee pain"
+    ],
+    "variants": [
+      "Two Ball Continuous Layup",
+      "Timed Continuous Layup"
+    ],
+    "loadParameters": {
+      "sets": "4-5",
+      "reps": "60-90s",
+      "rest": "60-90s",
+      "intensity": "85-95% max effort"
+    }
+  },
+  {
+    "name": "Defensive Stance Hold",
+    "nameEN": "Defensive Stance Hold",
+    "category": "Basket-Specifico",
+    "description": "La defensive stance hold è un esercizio isometrico dove l'atleta mantiene postura difensiva. Nel basket, sviluppa la resistenza muscolare nella postura difensiva.",
+    "muscleGroups": [
+      "Quadriceps",
+      "Glutes",
+      "Core"
+    ],
+    "equipment": [
+      "Bodyweight"
+    ],
+    "movementPattern": "isometric",
+    "difficulty": "beginner",
+    "contraindications": [
+      "Knee injuries"
+    ],
+    "variants": [
+      "Lateral Slide Stance",
+      "Weighted Stance Hold"
+    ],
+    "loadParameters": {
+      "sets": "3-4",
+      "reps": "30-60s hold",
+      "rest": "60-90s",
+      "intensity": "Bodyweight"
+    }
+  }
+]

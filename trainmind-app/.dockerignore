@@ -1,0 +1,70 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+
+# Turbo
+.turbo
+.turbo/
+
+# OS files
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Misc
+.cache
+.eslintcache
+.prettierignore
+
+# Documentation
+docs
+README.md
+CHANGELOG.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Lock files (use pnpm install --frozen-lockfile)
+yarn.lock
+package-lock.json
+
+# Optional files
+.turborc
+renovate.json

@@ -1,0 +1,128 @@
+# ============================================
+# TrainMind AI — Docker Compose (Development)
+# ============================================
+
+services:
+  # ─── PostgreSQL ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: trainmind-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: trainmind
+      POSTGRES_PASSWORD: trainmind_dev
+      POSTGRES_DB: trainmind_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U trainmind -d trainmind_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - trainmind-network
+
+  # ─── Redis ───────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: trainmind-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trainmind-network
+
+  # ─── Local LLM Server (llama-cpp-python) ─────────────
+  # Serves the fine-tuned Mistral-7B GGUF model on CPU
+  # Exposes OpenAI-compatible API on port 8000
+  llm-server:
+    build:
+      context: ./apps/ai-service
+      dockerfile: Dockerfile.llm
+    container_name: trainmind-llm-server
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./apps/ai-service/models:/models:ro
+    environment:
+      MODEL_PATH: /models/trainmind-mistral-7b-Q4_K_M.gguf
+      N_CTX: 8192
+      N_THREADS: 4
+      HOST: 0.0.0.0
+      PORT: 8000
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 120s  # model loading takes time on CPU
+    networks:
+      - trainmind-network
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Mistral-7B Q4_K_M needs ~4-5GB RAM
+
+  # ─── AI Service ──────────────────────────────────────
+  ai-service:
+    build:
+      context: ./apps/ai-service
+      dockerfile: Dockerfile
+    container_name: trainmind-ai-service
+    restart: unless-stopped
+    ports:
+      - '3004:3004'
+    environment:
+      # Local LLM (primary — no API cost)
+      LOCAL_LLM_ENABLED: 'true'
+      LOCAL_LLM_BASE_URL: http://llm-server:8000/v1
+      LOCAL_LLM_MODEL: trainmind
+      LOCAL_LLM_TIMEOUT: 120
+      # OpenAI (fallback LLM + embeddings)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: gpt-4o
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+      # Other
+      CHROMA_PERSIST_DIRECTORY: ./chroma_data
+      CHROMA_COLLECTION_PREFIX: trainmind
+      DATABASE_URL: postgresql://trainmind:trainmind_dev@postgres:5432/trainmind_db
+      AI_SERVICE_PORT: 3004
+      AI_SERVICE_HOST: 0.0.0.0
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      llm-server:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3004/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - trainmind-network
+    volumes:
+      - ./apps/ai-service:/app
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  trainmind-network:
+    driver: bridge

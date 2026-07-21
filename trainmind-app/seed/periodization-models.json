@@ -1,0 +1,222 @@
+[
+  {
+    "id": "lineare-001",
+    "name": "Periodizzazione Lineare",
+    "nameEN": "Linear Periodization",
+    "description": "Modello di periodizzazione progressiva che riduce il volume mentre aumenta l'intensità nel corso dei mesocicli. Ideale per la preparazione specifica in prossimità della stagione agonistica nel basket.",
+    "phases": [
+      {
+        "name": "Fase di Accumulo (Ipertrofia)",
+        "duration": "4 settimane",
+        "focus": "Ipertrofia muscolare",
+        "volumeRange": "3-5 serie x 8-12 ripetizioni",
+        "intensityRange": "65-75% 1RM",
+        "rpeRange": "6-7",
+        "exerciseSelection": "Esercizi composti multi-articolari con variazioni",
+        "basketballSpecific": "Squat bilaterale, leg press, stacchi, panca piana"
+      },
+      {
+        "name": "Fase di Intensificazione",
+        "duration": "3 settimane",
+        "focus": "Forza massima",
+        "volumeRange": "3-4 serie x 5-6 ripetizioni",
+        "intensityRange": "80-87% 1RM",
+        "rpeRange": "7-8",
+        "exerciseSelection": "Esercizi primari con peso massimale",
+        "basketballSpecific": "Squat profondo, stacchi da terra, panca piana"
+      },
+      {
+        "name": "Fase di Realizzazione (Potenza)",
+        "duration": "2-3 settimane",
+        "focus": "Espressione di potenza",
+        "volumeRange": "3 serie x 3-5 ripetizioni",
+        "intensityRange": "75-85% 1RM + esercizi balistici",
+        "rpeRange": "7-9",
+        "exerciseSelection": "Movimenti esplosivi e balistici",
+        "basketballSpecific": "Box jump, scatti esplosivi, burpees, salti laterali"
+      }
+    ],
+    "suitableFor": ["Pre-stagione", "Preparazione specifica"],
+    "sport": "basketball",
+    "totalDuration": "9-10 settimane",
+    "notes": "Efficace per giocatori con esperienza di allenamento. Permette adattamenti neuromuscolari progressivi. Attenzione ai microtraumi da accumulo nella fase iniziale."
+  },
+  {
+    "id": "ondulata-daily-002",
+    "name": "Ondulazione Giornaliera (DUP)",
+    "nameEN": "Daily Undulating Periodization",
+    "description": "Periodizzazione ondulante giornaliera che alterna focus di ipertrofia, forza e potenza all'interno della stessa settimana. Massimizza l'adattamento neuromusculare e la prevenzione degli infortuni nel basket.",
+    "phases": [
+      {
+        "name": "Allenamento Giorno 1 - Ipertrofia",
+        "duration": "1 seduta a settimana",
+        "focus": "Ipertrofia muscolare",
+        "volumeRange": "3-4 serie x 8-12 ripetizioni",
+        "intensityRange": "70-80% 1RM",
+        "rpeRange": "6-7",
+        "exerciseSelection": "Esercizi composti e complementari con tempo sotto tensione",
+        "basketballSpecific": "Squat, leg press, distensioni panca, rematori"
+      },
+      {
+        "name": "Allenamento Giorno 2 - Forza",
+        "duration": "1 seduta a settimana",
+        "focus": "Forza massima",
+        "volumeRange": "4-5 serie x 3-5 ripetizioni",
+        "intensityRange": "85-93% 1RM",
+        "rpeRange": "8-9",
+        "exerciseSelection": "Movimenti primari pesanti",
+        "basketballSpecific": "Squat profondo, stacchi da terra, panca piana, trazioni"
+      },
+      {
+        "name": "Allenamento Giorno 3 - Potenza",
+        "duration": "1 seduta a settimana",
+        "focus": "Potenza e velocità",
+        "volumeRange": "3-4 serie x 3-6 ripetizioni + balistico",
+        "intensityRange": "75-85% 1RM o balistico",
+        "rpeRange": "7-9",
+        "exerciseSelection": "Esercizi esplosivi e pliometrici",
+        "basketballSpecific": "Box jump, power clean, med ball throws, scatti laterali esplosivi"
+      }
+    ],
+    "suitableFor": ["Durante stagione", "Tutto l'anno", "Atleti avanzati"],
+    "sport": "basketball",
+    "totalDuration": "Continuo durante stagione",
+    "notes": "Ottimale per conciliare preparazione con allenamenti tecnici basket. Riduce overtraining grazie alla varietà. Richiede buona gestione del recupero tra sedute."
+  },
+  {
+    "id": "ondulata-weekly-003",
+    "name": "Ondulazione Settimanale (WUP)",
+    "nameEN": "Weekly Undulating Periodization",
+    "description": "Periodizzazione ondulante settimanale dove ogni settimana ha un focus diverso: una settimana ipertrofia, una forza, una potenza. Consente adattamento variato mantenendo struttura e progressione.",
+    "phases": [
+      {
+        "name": "Settimana Tipo 1 - Ipertrofia",
+        "duration": "1 settimana (ripetuta ogni 3 settimane)",
+        "focus": "Ipertrofia muscolare",
+        "volumeRange": "3-4 serie x 8-12 ripetizioni",
+        "intensityRange": "70-80% 1RM",
+        "rpeRange": "6-7",
+        "exerciseSelection": "4-5 esercizi con focus su Time Under Tension",
+        "basketballSpecific": "Squat, leg press, panca inclinata, rematori, curl"
+      },
+      {
+        "name": "Settimana Tipo 2 - Forza",
+        "duration": "1 settimana (ripetuta ogni 3 settimane)",
+        "focus": "Forza massima e potenza muscolare",
+        "volumeRange": "4-5 serie x 3-5 ripetizioni",
+        "intensityRange": "85-93% 1RM",
+        "rpeRange": "8-9",
+        "exerciseSelection": "3-4 esercizi primari pesanti",
+        "basketballSpecific": "Squat, stacchi, panca piana, military press"
+      },
+      {
+        "name": "Settimana Tipo 3 - Potenza",
+        "duration": "1 settimana (ripetuta ogni 3 settimane)",
+        "focus": "Potenza e velocità di movimento",
+        "volumeRange": "3-4 serie x 3-6 rip + plyometrico",
+        "intensityRange": "75-85% 1RM",
+        "rpeRange": "7-9",
+        "exerciseSelection": "Esercizi esplosivi e pliometrici",
+        "basketballSpecific": "Jump squat, box jump, power clean, med ball chest pass"
+      }
+    ],
+    "suitableFor": ["Mesocicli di 3-4 settimane", "Stagione competitiva"],
+    "sport": "basketball",
+    "totalDuration": "3-4 settimane (ciclo completo)",
+    "notes": "Mantiene varietà allenante senza eccessive variazioni giornaliere. Ideale per squadre che si allenano 3-4 volte a settimana. Permette recupero specifico per ogni qualità fisica."
+  },
+  {
+    "id": "blocchi-004",
+    "name": "Periodizzazione a Blocchi",
+    "nameEN": "Block Periodization",
+    "description": "Modello a blocchi che utilizza tre blocchi consecutivi: accumulo (volume), trasmutazione (intensità) e realizzazione (potenza). Sviluppato originariamente da Yuri Verkhoshansky per la periodizzazione della forza.",
+    "phases": [
+      {
+        "name": "Blocco di Accumulo",
+        "duration": "3-4 settimane",
+        "focus": "Accumulo di volume e base muscolare",
+        "volumeRange": "3-5 serie x 8-12 ripetizioni",
+        "intensityRange": "65-75% 1RM",
+        "rpeRange": "6-7",
+        "exerciseSelection": "Esercizi variati, composti e complementari",
+        "basketballSpecific": "Squat, leg press, stacchi, panca, rematori, accessori"
+      },
+      {
+        "name": "Blocco di Trasmutazione",
+        "duration": "2-3 settimane",
+        "focus": "Trasmutazione del volume in forza",
+        "volumeRange": "3-4 serie x 5-7 ripetizioni",
+        "intensityRange": "80-87% 1RM",
+        "rpeRange": "7-8",
+        "exerciseSelection": "Esercizi primari con aumento di carico",
+        "basketballSpecific": "Squat profondo, stacchi, panca piana, trazioni pesanti"
+      },
+      {
+        "name": "Blocco di Realizzazione",
+        "duration": "2 settimane",
+        "focus": "Realizzazione della potenza",
+        "volumeRange": "2-3 serie x 3-5 rip + plyometrico",
+        "intensityRange": "75-90% 1RM + esplosivo",
+        "rpeRange": "8-9",
+        "exerciseSelection": "Movimenti ad alta velocità e pliometrici",
+        "basketballSpecific": "Box jump, power clean, explosive burpees, med ball throws"
+      }
+    ],
+    "suitableFor": ["Cicli lunghi pre-stagione", "Atleti di alto livello"],
+    "sport": "basketball",
+    "totalDuration": "7-9 settimane per ciclo completo",
+    "notes": "Ottimale per sviluppare qualità muscolari sequenziali. Riduce il carico neurovergetativo rispetto a DUP. Richiede periodizzazione dell'allenamento tecnico per non sovrapporre carichi."
+  },
+  {
+    "id": "atr-005",
+    "name": "Modello ATR (Accumulo-Trasmutazione-Realizzazione)",
+    "nameEN": "ATR Model",
+    "description": "Variante avanzata della periodizzazione a blocchi con enfasi sul trasferimento di adattamenti tra fasi. Particolarmente efficace per atleti che necessitano di mantenere contemporaneamente multiple qualità fisiche.",
+    "phases": [
+      {
+        "name": "Fase di Accumulo Mirato",
+        "duration": "3-4 settimane",
+        "focus": "Accumulo di capacità condizionali specifiche",
+        "volumeRange": "3-5 serie x 8-12 ripetizioni",
+        "intensityRange": "65-77% 1RM",
+        "rpeRange": "6-7",
+        "exerciseSelection": "Esercizi multi-articolari con varietà di direzioni",
+        "basketballSpecific": "Squat, affondo, stacco, panca, rematore pendente, step-up"
+      },
+      {
+        "name": "Fase di Trasmutazione Progressiva",
+        "duration": "3 settimane",
+        "focus": "Trasformazione del volume in espressione di forza",
+        "volumeRange": "3-4 serie x 5-8 ripetizioni",
+        "intensityRange": "77-87% 1RM",
+        "rpeRange": "7-8",
+        "exerciseSelection": "Esercizi primari con aumento progressivo di carico",
+        "basketballSpecific": "Squat full ROM, stacchi a deficit, panca piana, military press"
+      },
+      {
+        "name": "Fase di Realizzazione Atletica",
+        "duration": "2 settimane",
+        "focus": "Espressione massima di potenza e velocità",
+        "volumeRange": "3 serie x 3-5 rip + plyometrico ad alto volume",
+        "intensityRange": "75-90% 1RM + massimale balistico",
+        "rpeRange": "8-10",
+        "exerciseSelection": "Esercizi esplosivi specifici per basket",
+        "basketballSpecific": "Box jump doppio gamba, salti laterali esplosivi, med ball chest pass, slam ball"
+      },
+      {
+        "name": "Fase di Mantenimento Competitivo",
+        "duration": "Continua durante stagione",
+        "focus": "Mantenimento di tutte le qualità durante competizioni",
+        "volumeRange": "2 serie x 5-6 rip composti + 1 plyometrico",
+        "intensityRange": "80-87% 1RM + balistico",
+        "rpeRange": "6-7",
+        "exerciseSelection": "Mantenimento esercizi primari, riduzione volume totale",
+        "basketballSpecific": "Squat, stacchi leggeri, box jump, single leg balance work"
+      }
+    ],
+    "suitableFor": ["Stagione completa", "Atleti d'élite", "Cicli di 8-10 settimane"],
+    "sport": "basketball",
+    "totalDuration": "8-10 settimane poi mantenimento",
+    "notes": "Permette il trasferimento di adattamenti tra fasi, riducendo il calo di performance tra blocchi. Ideale per mantener múltiples qualità durante la stagione. Richiede programmazione accurata della tecnica basket parallela."
+  }
+]
