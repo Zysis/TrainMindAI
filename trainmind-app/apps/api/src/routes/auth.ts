@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { Prisma } from '@trainmind/db';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { registerSchema, loginSchema, refreshSchema } from '../schemas/auth.js';
@@ -34,7 +35,19 @@ export async function authRoutes(app: FastifyInstance) {
       });
     }
 
-    const { email, password, firstName, lastName, organizationName } = parsed.data;
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      organizationName,
+      dateOfBirth,
+      consentHealthData,
+      acceptMarketing,
+      uiLanguage,
+    } = parsed.data;
+
+    const userAgent = request.headers['user-agent'] ?? null;
 
     // Check if user already exists
     const existingUser = await app.prisma.user.findUnique({ where: { email } });
@@ -78,13 +91,65 @@ export async function authRoutes(app: FastifyInstance) {
         },
       });
 
-      // Registra le accettazioni versionate (ToS accettati, informativa presa visione)
-      await tx.consentRecord.createMany({
-        data: [
-          { userId: user.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ipAddress: request.ip },
-          { userId: user.id, docType: 'PRIVACY_ACK', docVersion: LEGAL_VERSIONS.PRIVACY, ipAddress: request.ip },
-        ],
+      // ─── Proof-of-consent versionato ───────────────────────
+      // Salviamo ogni consenso con: versione documento, IP, User-Agent, lingua UI
+      // e (per HEALTH_DATA/MARKETING) valore esplicito. Metadata utile per audit.
+      const baseAudit = {
+        ipAddress: request.ip,
+        userAgent,
+        language: uiLanguage,
+      };
+
+      const consents: Array<{
+        userId: string;
+        docType: string;
+        docVersion: string;
+        ipAddress: string | null;
+        userAgent: string | null;
+        language: string | null;
+        metadata?: Prisma.InputJsonValue;
+      }> = [
+        {
+          userId: user.id,
+          docType: 'TERMS',
+          docVersion: LEGAL_VERSIONS.TERMS,
+          ...baseAudit,
+        },
+        {
+          userId: user.id,
+          docType: 'PRIVACY_ACK',
+          docVersion: LEGAL_VERSIONS.PRIVACY,
+          ...baseAudit,
+        },
+        {
+          userId: user.id,
+          docType: 'AGE_DECLARATION',
+          docVersion: LEGAL_VERSIONS.PRIVACY,
+          ...baseAudit,
+          metadata: { dateOfBirth } as Prisma.InputJsonValue,
+        },
+      ];
+
+      // HEALTH_DATA: opt-in esplicito (art. 9 GDPR). Registriamo sempre l'esito
+      // della scelta dell'utente per tracciarne l'origine.
+      consents.push({
+        userId: user.id,
+        docType: 'HEALTH_DATA',
+        docVersion: LEGAL_VERSIONS.HEALTH_DATA,
+        ...baseAudit,
+        metadata: { granted: consentHealthData } as Prisma.InputJsonValue,
       });
+
+      if (acceptMarketing) {
+        consents.push({
+          userId: user.id,
+          docType: 'MARKETING',
+          docVersion: LEGAL_VERSIONS.MARKETING,
+          ...baseAudit,
+        });
+      }
+
+      await tx.consentRecord.createMany({ data: consents });
 
       return { user, organization };
     });

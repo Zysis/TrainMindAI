@@ -446,6 +446,10 @@ const PLANS: Plan[] = [
 /* ─────────────────────────────────────────────────────────
  * Main page
  * ───────────────────────────────────────────────────────── */
+// Flag per mostrare/nascondere la sezione prezzi in landing e i link "Prezzi" nel menu.
+// Cambiare a true quando i piani commerciali saranno pubblici.
+const SHOW_PRICING = false;
+
 export default function LandingPage() {
   const [locale, setLocale] = useState<Locale>('it');
   const [billing, setBilling] = useState<BillingCycle>('monthly');
@@ -476,12 +480,14 @@ export default function LandingPage() {
             >
               {t('nav.features')}
             </a>
-            <a
-              href="#pricing"
-              className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline"
-            >
-              {t('nav.pricing')}
-            </a>
+            {SHOW_PRICING && (
+              <a
+                href="#pricing"
+                className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline"
+              >
+                {t('nav.pricing')}
+              </a>
+            )}
             <LangSwitcher locale={locale} onChange={setLocale} />
             <Link
               href="/login"
@@ -770,6 +776,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Pricing ────────────────────────────────────── */}
+      {SHOW_PRICING && (
       <section
         id="pricing"
         className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-24"
@@ -900,6 +907,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ─── CTA ────────────────────────────────────────── */}
       <section className="py-20">
@@ -926,9 +934,11 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-slate-700">
               {t('nav.features')}
             </a>
-            <a href="#pricing" className="hover:text-slate-700">
-              {t('nav.pricing')}
-            </a>
+            {SHOW_PRICING && (
+              <a href="#pricing" className="hover:text-slate-700">
+                {t('nav.pricing')}
+              </a>
+            )}
             <a href="mailto:info@trainmind.ai" className="hover:text-slate-700">
               {t('footer.contact')}
             </a>

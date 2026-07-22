@@ -113,7 +113,12 @@ export async function register(input: {
   firstName: string;
   lastName: string;
   organizationName: string;
+  dateOfBirth: string; // YYYY-MM-DD — gate 14+
   acceptTerms: boolean;
+  acceptPrivacy: boolean;
+  consentHealthData?: boolean; // opt-in art. 9 GDPR
+  acceptMarketing?: boolean; // opt-in facoltativo
+  uiLanguage?: 'it' | 'en' | 'es'; // proof-of-consent locale
 }): Promise<LoginResponse> {
   const res = await fetch(`${AUTH_URL}/register`, {
     method: 'POST',

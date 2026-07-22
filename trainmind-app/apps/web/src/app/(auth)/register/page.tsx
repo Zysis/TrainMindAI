@@ -4,18 +4,26 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { useLocaleStore } from '@/lib/i18n/store';
 import { BrandLogo } from '@/components/brand/brand-logo';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isAuthenticated } = useAuth();
+  const locale = useLocaleStore((s) => s.locale);
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  // Nessun consenso pre-flaggato (conforme al principio del consenso libero).
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [consentHealthData, setConsentHealthData] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,15 +47,27 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!acceptTerms) {
-      setError('Per registrarti devi accettare i Termini di Servizio');
+    if (!acceptTerms || !acceptPrivacy) {
+      setError('Devi accettare i Termini di Servizio e dichiarare la presa visione dell\'Informativa Privacy');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await register({ email, password, firstName, lastName, organizationName, acceptTerms });
+      await register({
+        email,
+        password,
+        firstName,
+        lastName,
+        organizationName,
+        dateOfBirth,
+        acceptTerms,
+        acceptPrivacy,
+        consentHealthData,
+        acceptMarketing,
+        uiLanguage: locale,
+      });
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante la registrazione');
@@ -74,7 +94,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right panel — registration form */}
-      <div className="flex w-full items-center justify-center px-8 lg:w-1/2">
+      <div className="flex w-full items-center justify-center px-8 py-8 lg:w-1/2">
         <div className="w-full max-w-sm">
           <h2 className="mb-2 text-2xl font-bold text-slate-900">Crea Account</h2>
           <p className="mb-8 text-sm text-slate-500">Inserisci i tuoi dati per registrarti</p>
@@ -87,146 +107,112 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="firstName" className="label mb-1.5 block">
-                Nome
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Il tuo nome"
-                className="input-field"
-                required
-                disabled={isSubmitting}
-              />
+              <label htmlFor="firstName" className="label mb-1.5 block">Nome</label>
+              <input id="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Il tuo nome" className="input-field" required disabled={isSubmitting} />
             </div>
 
             <div>
-              <label htmlFor="lastName" className="label mb-1.5 block">
-                Cognome
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Il tuo cognome"
-                className="input-field"
-                required
-                disabled={isSubmitting}
-              />
+              <label htmlFor="lastName" className="label mb-1.5 block">Cognome</label>
+              <input id="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
+                placeholder="Il tuo cognome" className="input-field" required disabled={isSubmitting} />
             </div>
 
             <div>
-              <label htmlFor="email" className="label mb-1.5 block">
-                Email
+              <label htmlFor="dateOfBirth" className="label mb-1.5 block">
+                Data di nascita
               </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nome@squadra.com"
-                className="input-field"
-                required
-                disabled={isSubmitting}
-              />
+              <input id="dateOfBirth" type="date" value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                className="input-field" required disabled={isSubmitting} />
+              <p className="mt-1 text-xs text-slate-500">
+                Devi avere almeno 14 anni. Se sei minorenne un genitore deve creare l&apos;account per te.
+              </p>
             </div>
 
             <div>
-              <label htmlFor="password" className="label mb-1.5 block">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimo 8 caratteri"
-                className="input-field"
-                required
-                minLength={8}
-                disabled={isSubmitting}
-              />
+              <label htmlFor="email" className="label mb-1.5 block">Email</label>
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome@squadra.com" className="input-field" required disabled={isSubmitting} />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="label mb-1.5 block">
-                Conferma Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Ripeti la password"
-                className="input-field"
-                required
-                minLength={8}
-                disabled={isSubmitting}
-              />
+              <label htmlFor="password" className="label mb-1.5 block">Password</label>
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimo 8 caratteri" className="input-field" required minLength={8} disabled={isSubmitting} />
             </div>
 
             <div>
-              <label htmlFor="organizationName" className="label mb-1.5 block">
-                Nome Organizzazione
-              </label>
-              <input
-                id="organizationName"
-                type="text"
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
-                placeholder="La tua squadra o organizzazione"
-                className="input-field"
-                required
-                disabled={isSubmitting}
-              />
+              <label htmlFor="confirmPassword" className="label mb-1.5 block">Conferma Password</label>
+              <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Ripeti la password" className="input-field" required minLength={8} disabled={isSubmitting} />
             </div>
 
-            <div className="flex items-start gap-2 pt-1">
-              <input
-                id="acceptTerms"
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                disabled={isSubmitting}
-              />
-              <label htmlFor="acceptTerms" className="text-xs leading-relaxed text-slate-600">
-                Ho letto e accetto i{' '}
-                <Link href="/terms" target="_blank" className="font-medium text-teal-700 underline hover:text-teal-600">
-                  Termini di Servizio
-                </Link>{' '}
-                (incluso l&apos;accordo sul trattamento dei dati degli atleti)
+            <div>
+              <label htmlFor="organizationName" className="label mb-1.5 block">Nome Organizzazione</label>
+              <input id="organizationName" type="text" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder="La tua squadra o organizzazione" className="input-field" required disabled={isSubmitting} />
+            </div>
+
+            {/* ─── CONSENSI: nessuna checkbox pre-flaggata ─── */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Consensi</p>
+
+              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+                  disabled={isSubmitting} required />
+                <span>
+                  Ho letto e accetto i{' '}
+                  <Link href="/terms" target="_blank" className="font-medium text-teal-700 underline">Termini di Servizio</Link>{' '}
+                  <span className="text-danger-600">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                <input type="checkbox" checked={acceptPrivacy} onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+                  disabled={isSubmitting} required />
+                <span>
+                  Dichiaro di aver preso visione dell&apos;{' '}
+                  <Link href="/privacy" target="_blank" className="font-medium text-teal-700 underline">Informativa Privacy</Link>{' '}
+                  <span className="text-danger-600">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                <input type="checkbox" checked={consentHealthData} onChange={(e) => setConsentHealthData(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+                  disabled={isSubmitting} />
+                <span>
+                  <strong>Consenso al trattamento dei dati sanitari/fitness</strong> (art. 9 GDPR) per l&apos;uso
+                  delle funzionalità di IA su piani di allenamento, analisi prestazioni e wellness.
+                  Puoi revocarlo in qualsiasi momento dalle impostazioni.
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                <input type="checkbox" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+                  disabled={isSubmitting} />
+                <span>
+                  Acconsento a ricevere comunicazioni di marketing (newsletter, aggiornamenti prodotto,
+                  offerte). Facoltativo, revocabile.
+                </span>
               </label>
             </div>
 
-            <p className="text-xs leading-relaxed text-slate-500">
-              Proseguendo dichiari di aver preso visione dell&apos;{' '}
-              <Link href="/privacy" target="_blank" className="font-medium text-teal-700 underline hover:text-teal-600">
-                Informativa Privacy
-              </Link>
-              .
-            </p>
+            <p className="text-xs text-slate-500"><span className="text-danger-600">*</span> Campi obbligatori</p>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || !acceptTerms}
-              className="w-full rounded-lg bg-teal-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <button type="submit" disabled={isSubmitting || !acceptTerms || !acceptPrivacy}
+              className="w-full rounded-lg bg-teal-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
               {isSubmitting ? 'Creazione in corso...' : 'Crea Account'}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
             Hai già un account?{' '}
-            <Link
-              href="/login"
-              className="font-medium text-teal-700 hover:text-teal-600"
-            >
-              Accedi
-            </Link>
+            <Link href="/login" className="font-medium text-teal-700 hover:text-teal-600">Accedi</Link>
           </p>
         </div>
       </div>

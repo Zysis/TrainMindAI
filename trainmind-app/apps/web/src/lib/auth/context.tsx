@@ -28,7 +28,12 @@ export interface AuthContextType {
     firstName: string;
     lastName: string;
     organizationName: string;
+    dateOfBirth: string;
     acceptTerms: boolean;
+    acceptPrivacy: boolean;
+    consentHealthData?: boolean;
+    acceptMarketing?: boolean;
+    uiLanguage?: 'it' | 'en' | 'es';
   }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -74,7 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       firstName: string;
       lastName: string;
       organizationName: string;
+      dateOfBirth: string;
       acceptTerms: boolean;
+      acceptPrivacy: boolean;
+      consentHealthData?: boolean;
+      acceptMarketing?: boolean;
+      uiLanguage?: 'it' | 'en' | 'es';
     }) => {
       const response = await apiRegister(input);
       setUser(response.data.user);

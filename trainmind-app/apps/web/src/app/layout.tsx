@@ -4,6 +4,7 @@ import { ToastProvider } from '@/components/ui/toast';
 import { PWARegister } from '@/components/pwa-register';
 import { ThemeProvider } from '@/components/theme-provider';
 import { I18nProvider } from '@/lib/i18n/provider';
+import { CookieBanner } from '@/components/cookie-banner';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <I18nProvider>
             <AuthProvider>
               <ToastProvider>{children}</ToastProvider>
+              <CookieBanner />
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

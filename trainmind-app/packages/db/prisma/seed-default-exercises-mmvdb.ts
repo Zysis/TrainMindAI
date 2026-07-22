@@ -12,7 +12,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 const prisma = new PrismaClient();
-const TARGET_ORGS = ['MM', 'VDB'];
+const TARGET_ORGS = ['MM', 'VDB', 'AG', 'RP'];
 
 interface ExerciseSeed {
   name: string;

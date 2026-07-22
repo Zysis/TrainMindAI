@@ -16,7 +16,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const TARGET_ORGS = ['MM', 'VDB'];
+const TARGET_ORGS = ['MM', 'VDB', 'AG', 'RP'];
 
 const SEASON_START = new Date('2025-08-15');
 const SEASON_END = new Date('2026-08-14');
@@ -77,6 +77,38 @@ const ROSTERS: Record<string, PlayerDef[]> = {
     { first: 'Roberto', last: 'Milani', pos: 'C', dob: '1994-04-09', h: 209, w: 114, jersey: 34 },
     { first: 'Fabio', last: 'Nardini', pos: 'C', dob: '1999-12-24', h: 207, w: 110, jersey: 35 },
     { first: 'Edoardo', last: 'Vaccaro', pos: 'C', dob: '2002-02-11', h: 205, w: 106, jersey: 55 },
+  ],
+  AG: [
+    { first: 'Vincenzo', last: 'Rizzo', pos: 'PG', dob: '1999-01-20', h: 182, w: 79, jersey: 3 },
+    { first: 'Alessio', last: 'Fiorentini', pos: 'PG', dob: '2002-06-11', h: 179, w: 75, jersey: 8 },
+    { first: 'Marco', last: 'Cortesi', pos: 'SG', dob: '1997-04-03', h: 192, w: 88, jersey: 14 },
+    { first: 'Nicolò', last: 'Bertani', pos: 'SG', dob: '2000-08-25', h: 190, w: 85, jersey: 16 },
+    { first: 'Federico', last: 'Rossetti', pos: 'SG', dob: '2003-02-07', h: 188, w: 84, jersey: 22 },
+    { first: 'Luca', last: 'Mazzoni', pos: 'SF', dob: '1996-10-29', h: 198, w: 96, jersey: 27 },
+    { first: 'Giacomo', last: 'Innocenti', pos: 'SF', dob: '1999-05-14', h: 196, w: 92, jersey: 29 },
+    { first: 'Manuel', last: 'De Santis', pos: 'SF', dob: '2002-11-08', h: 194, w: 90, jersey: 31 },
+    { first: 'Davide', last: 'Perri', pos: 'PF', dob: '1995-03-17', h: 203, w: 105, jersey: 33 },
+    { first: 'Simone', last: 'Rocca', pos: 'PF', dob: '1998-08-21', h: 201, w: 100, jersey: 36 },
+    { first: 'Andrea', last: 'Marconi', pos: 'PF', dob: '2001-12-02', h: 200, w: 98, jersey: 41 },
+    { first: 'Paolo', last: 'Longo', pos: 'C', dob: '1995-07-04', h: 210, w: 115, jersey: 45 },
+    { first: 'Cristiano', last: 'Ferretti', pos: 'C', dob: '2000-01-29', h: 208, w: 111, jersey: 50 },
+    { first: 'Gianluca', last: 'Baldassarre', pos: 'C', dob: '2003-09-18', h: 206, w: 107, jersey: 54 },
+  ],
+  RP: [
+    { first: 'Salvatore', last: 'Esposito', pos: 'PG', dob: '1998-07-13', h: 183, w: 80, jersey: 4 },
+    { first: 'Giuseppe', last: 'Aiello', pos: 'PG', dob: '2001-04-26', h: 180, w: 76, jersey: 9 },
+    { first: 'Vito', last: 'Palumbo', pos: 'SG', dob: '1997-08-19', h: 191, w: 87, jersey: 13 },
+    { first: 'Rosario', last: 'Grasso', pos: 'SG', dob: '2000-11-05', h: 189, w: 85, jersey: 15 },
+    { first: 'Antonio', last: 'De Rosa', pos: 'SG', dob: '2003-03-30', h: 187, w: 82, jersey: 19 },
+    { first: 'Gaetano', last: 'Coppola', pos: 'SF', dob: '1996-05-12', h: 197, w: 94, jersey: 26 },
+    { first: 'Ciro', last: 'Cirillo', pos: 'SF', dob: '1999-09-24', h: 195, w: 91, jersey: 28 },
+    { first: 'Emilio', last: 'Ruggiero', pos: 'SF', dob: '2002-06-17', h: 193, w: 89, jersey: 32 },
+    { first: 'Antonello', last: 'Iovine', pos: 'PF', dob: '1994-12-08', h: 205, w: 107, jersey: 37 },
+    { first: 'Franco', last: 'Migliore', pos: 'PF', dob: '1998-02-15', h: 203, w: 102, jersey: 40 },
+    { first: 'Aldo', last: 'Napolitano', pos: 'PF', dob: '2001-10-27', h: 200, w: 99, jersey: 42 },
+    { first: 'Massimiliano', last: 'D\'Amico', pos: 'C', dob: '1994-06-21', h: 211, w: 116, jersey: 48 },
+    { first: 'Renato', last: 'Barbato', pos: 'C', dob: '1999-11-11', h: 208, w: 112, jersey: 52 },
+    { first: 'Umberto', last: 'Santagata', pos: 'C', dob: '2002-04-04', h: 206, w: 108, jersey: 56 },
   ],
 };
 
@@ -229,6 +261,7 @@ async function seedOrg(orgName: string) {
   await prisma.rTPProtocol.deleteMany({ where: { athlete: { organizationId: orgId } } });
   await prisma.injury.deleteMany({ where: { athlete: { organizationId: orgId } } });
   await prisma.athleteTeam.deleteMany({ where: { team: { organizationId: orgId } } });
+  await prisma.athleteInvite.deleteMany({ where: { organizationId: orgId } });
   await prisma.athlete.deleteMany({ where: { organizationId: orgId } });
   await prisma.team.deleteMany({ where: { organizationId: orgId } });
 

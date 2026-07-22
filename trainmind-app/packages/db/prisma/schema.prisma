@@ -193,14 +193,22 @@ model AuditLog {
 model ConsentRecord {
   id         String   @id @default(cuid())
   userId     String
-  docType    String // TERMS | PRIVACY_ACK | PRIVACY_ATHLETE_ACK | HEALTH_DATA | AGE_DECLARATION
-  docVersion String // es. "2026-07-18"
+  docType    String // TERMS | PRIVACY_ACK | PRIVACY_ATHLETE_ACK | HEALTH_DATA | AGE_DECLARATION | MARKETING | COOKIES
+  docVersion String // es. "2026-07-21-v2.0"
   acceptedAt DateTime @default(now())
   ipAddress  String?
+  userAgent  String? // browser/dispositivo utilizzato al momento dell'accettazione
+  language   String? // lingua UI al momento dell'accettazione (it | en | es)
+  metadata   Json? // extra: url, referer, hash del documento accettato
+
+  // Consent lifecycle (per marketing e altri consensi revocabili)
+  revokedAt  DateTime? // se null: consenso attivo
+  revokeReason String? // motivo revoca (opzionale)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, docType])
+  @@index([userId, docType, revokedAt])
   @@map("consent_records")
 }
 
