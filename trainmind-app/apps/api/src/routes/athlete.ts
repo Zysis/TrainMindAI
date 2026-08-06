@@ -331,6 +331,9 @@ export async function athleteRoutes(app: FastifyInstance) {
       data: {
         id: user.id,
         email: user.email,
+        // Lingua UI preferita: permette all'app atleti di ripristinarla
+        // al riavvio anche su un dispositivo nuovo.
+        locale: user.locale ?? undefined,
         athlete: {
           id: user.athlete.id,
           firstName: user.athlete.firstName,

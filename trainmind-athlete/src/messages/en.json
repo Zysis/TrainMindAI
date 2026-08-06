@@ -1,0 +1,37 @@
+{
+  "auth": {
+    "appName": "TrainMind",
+    "areaLabel": "Athlete Area",
+    "email": "Email",
+    "emailPlaceholder": "name@email.com",
+    "password": "Password",
+    "login": "Log in",
+    "loggingIn": "Logging in...",
+    "loginError": "Login error",
+    "noAccountHint": "Don't have an account? Ask your coach to invite you."
+  },
+  "nav": {
+    "home": "Home",
+    "sessions": "Sessions",
+    "wellness": "Wellness",
+    "history": "History",
+    "profile": "Profile"
+  },
+  "header": {
+    "toggleTheme": "Toggle theme",
+    "notifications": "Notifications",
+    "language": "Language"
+  },
+  "register": {
+    "title": "Complete your registration",
+    "invalidInvite": "Invalid or expired invite",
+    "checking": "Checking the invite..."
+  },
+  "common": {
+    "loading": "Loading...",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "logout": "Log out"
+  }
+}

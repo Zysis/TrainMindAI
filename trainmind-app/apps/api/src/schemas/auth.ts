@@ -1,6 +1,17 @@
 import { z } from 'zod';
 
 /**
+ * Regole password condivise da TUTTI i flussi (registrazione, cambio password,
+ * reset via email). Definite una volta sola così restano coerenti: se domani
+ * inasprisci la policy, cambi solo qui.
+ */
+export const passwordField = z
+  .string()
+  .min(8, 'La password deve avere almeno 8 caratteri')
+  .regex(/[A-Z]/, 'La password deve contenere almeno una maiuscola')
+  .regex(/[0-9]/, 'La password deve contenere almeno un numero');
+
+/**
  * Signup form:
  *  - `acceptTerms` e `acceptPrivacy` sono OBBLIGATORI (proof-of-consent).
  *  - `consentHealthData` è OBBLIGATORIO per l'attivazione delle feature di IA sui dati
@@ -13,11 +24,7 @@ import { z } from 'zod';
 export const registerSchema = z
   .object({
     email: z.string().email('Email non valida'),
-    password: z
-      .string()
-      .min(8, 'La password deve avere almeno 8 caratteri')
-      .regex(/[A-Z]/, 'La password deve contenere almeno una maiuscola')
-      .regex(/[0-9]/, 'La password deve contenere almeno un numero'),
+    password: passwordField,
     firstName: z.string().min(2, 'Nome troppo corto').max(50),
     lastName: z.string().min(2, 'Cognome troppo corto').max(50),
     organizationName: z.string().min(2, 'Nome organizzazione troppo corto').max(100),
@@ -61,6 +68,35 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token richiesto'),
 });
 
+/**
+ * Cambio password da utente autenticato.
+ * Richiediamo la password attuale: senza, chi ruba una sessione potrebbe
+ * bloccare fuori il legittimo proprietario dell'account.
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Password attuale richiesta'),
+    newPassword: passwordField,
+  })
+  .refine((d) => d.currentPassword !== d.newPassword, {
+    path: ['newPassword'],
+    message: 'La nuova password deve essere diversa da quella attuale',
+  });
+
+/** Richiesta link di reset. Accetta solo l'email. */
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Email non valida'),
+});
+
+/** Conferma reset con il token ricevuto via email. */
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token richiesto'),
+  password: passwordField,
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

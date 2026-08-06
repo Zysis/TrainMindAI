@@ -413,6 +413,9 @@ export default function TrainingPage() {
               body: JSON.stringify({
                 ...plan,
                 athleteId: selectedAthleteId || undefined,
+                // Senza squadra il piano non compare nell'elenco appena
+                // l'utente ne ha una selezionata: la lista filtra per teamId.
+                teamId: selectedTeamId || undefined,
               }),
             });
 

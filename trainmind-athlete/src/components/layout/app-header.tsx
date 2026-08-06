@@ -3,10 +3,13 @@
 import { Bell, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { LangSwitcher } from '@/components/i18n/lang-switcher';
 
 export function AppHeader({ title }: { title?: string }) {
   const { theme, setTheme } = useTheme();
+  const t = useTranslations('header');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -24,11 +27,13 @@ export function AppHeader({ title }: { title?: string }) {
         </div>
 
         <div className="flex items-center gap-2">
+          <LangSwitcher />
+
           {mounted && (
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-              aria-label="Cambia tema"
+              aria-label={t('toggleTheme')}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -37,7 +42,7 @@ export function AppHeader({ title }: { title?: string }) {
           <Link
             href="/notifications"
             className="relative rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-            aria-label="Notifiche"
+            aria-label={t('notifications')}
           >
             <Bell size={18} />
             {/* TODO: unread count badge */}

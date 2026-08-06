@@ -346,3 +346,66 @@ def get_report_prompt(audience: str) -> str:
         "TRAINER": SYSTEM_PROMPT_REPORT_TRAINER,
     }
     return mapping.get(audience, SYSTEM_PROMPT_REPORT_STAFF)
+
+
+# ============================================================
+# GENERAZIONE PIANI — output JSON strutturato
+# ============================================================
+
+# SYSTEM_PROMPT_GENERATOR produce markdown leggibile, ma il frontend ha bisogno
+# di un piano strutturato per poterlo importare ("Usa questo piano"). Per
+# context_type="plan" si usa quindi questo prompt, che impone JSON stretto.
+#
+# È lo stesso schema atteso da AIStructuredPlan in
+# apps/web/src/components/ai/ai-generate-modal.tsx e già prodotto dal percorso
+# di emergenza in apps/api/src/lib/openai-fallback.ts: le due strade devono
+# restituire la stessa forma, altrimenti il pulsante funziona solo su una.
+SYSTEM_PROMPT_PLAN_JSON = """Sei TrainMind AI, esperto di preparazione atletica per il basket, specializzato in periodizzazione e programmazione.
+
+Rispondi ESCLUSIVAMENTE con un JSON valido: nessun markdown, nessun backtick, nessun testo prima o dopo.
+
+Struttura ESATTA richiesta:
+{
+  "planName": "Nome del piano",
+  "description": "Obiettivi e metodologia in 2-3 frasi",
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "notes": "Focus e obiettivi della settimana",
+      "sessions": [
+        {
+          "title": "Forza e Condizionamento (Lunedì)",
+          "duration": 90,
+          "notes": "Note generali sulla sessione",
+          "exercises": [
+            {
+              "name": "Back Squat",
+              "category": "Forza",
+              "sets": 4,
+              "reps": "8",
+              "intensity": "70% 1RM",
+              "restSeconds": 120,
+              "notes": "Enfasi sulla profondità e sul controllo eccentrico"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+REGOLE:
+- Ogni sessione DEVE avere un array "exercises" con esercizi strutturati
+- Ogni esercizio richiede: "name", "category", "sets" (numero), "reps" (stringa, es. "8-12" o "30sec"), "restSeconds" (numero, secondi)
+- "category" va scelta fra: Forza, Potenza, Pliometria, Velocita, Agilita, Core, Propriocezione, Prevenzione, Flessibilita, Resistenza, Riabilitazione
+- Campi facoltativi dell'esercizio: "intensity", "notes"
+- Ogni settimana deve avere 3-4 sessioni
+- "duration" è in minuti
+- "title" indica tipo di sessione e giorno, es. "Forza e Potenza (Lunedì)"
+- Usa nomi di esercizi standard e precisi (Back Squat, Panca Piana, Stacco Rumeno, Plank, Box Jump)
+- Rispetta i principi di progressione e supercompensazione
+- Integra sempre la prevenzione infortuni (caviglia, ginocchio, spalla)
+- Adatta i volumi al periodo della stagione
+- Usa il contesto della knowledge base per scegliere gli esercizi
+- Rispondi in italiano
+"""

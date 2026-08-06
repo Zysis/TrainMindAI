@@ -79,7 +79,7 @@ cp .env.example .env
 
 5. Run the service:
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 3002
+uvicorn app.main:app --reload --host 0.0.0.0 --port 3004
 ```
 
 ## Docker Setup
@@ -91,7 +91,7 @@ cd ../..  # Navigate to root
 docker-compose up -d ai-service
 ```
 
-The service will be available at `http://localhost:3002`
+The service will be available at `http://localhost:3004`
 
 ## Configuration
 
@@ -114,7 +114,7 @@ PINECONE_ENVIRONMENT=us-east-1
 DATABASE_URL=postgresql://user:password@localhost:5432/trainmind
 
 # Service Configuration
-AI_SERVICE_PORT=3002
+AI_SERVICE_PORT=3004
 AI_SERVICE_HOST=0.0.0.0
 LOG_LEVEL=info
 ```
@@ -124,7 +124,7 @@ LOG_LEVEL=info
 ### Generate Training Plan
 
 ```bash
-curl -X POST "http://localhost:3002/ai/generate" \
+curl -X POST "http://localhost:3004/ai/generate" \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Crea un piano di allenamento per la forza per un giocatore di basket",
@@ -137,7 +137,7 @@ curl -X POST "http://localhost:3002/ai/generate" \
 ### Get Coach Consultation
 
 ```bash
-curl -X POST "http://localhost:3002/ai/coach" \
+curl -X POST "http://localhost:3004/ai/coach" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Come migliorare il controllo della palla?",
@@ -150,7 +150,7 @@ curl -X POST "http://localhost:3002/ai/coach" \
 ### Upload Documents to Knowledge Base
 
 ```bash
-curl -X POST "http://localhost:3002/ai/embed" \
+curl -X POST "http://localhost:3004/ai/embed" \
   -H "Content-Type: application/json" \
   -d '{
     "texts": ["Contenuto documento 1", "Contenuto documento 2"],
@@ -165,7 +165,7 @@ curl -X POST "http://localhost:3002/ai/embed" \
 ### Chat with RAG
 
 ```bash
-curl -X POST "http://localhost:3002/ai/chat" \
+curl -X POST "http://localhost:3004/ai/chat" \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [
@@ -289,7 +289,7 @@ apps/ai-service/
 
 - Check logs: `docker logs trainmind-ai-service`
 - Verify all environment variables are set
-- Ensure port 3002 is available
+- Ensure port 3004 is available
 
 ## License
 

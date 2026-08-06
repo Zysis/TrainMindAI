@@ -9,6 +9,7 @@ import { useLocaleStore, localeLabels, localeFlags, type Locale } from '@/lib/i1
 import { useEffect, useState } from 'react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { PLAN_FULL_NAME, tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
+import { ChangePasswordCard } from '@/components/settings/change-password-card';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -123,6 +124,9 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Password */}
+          <ChangePasswordCard />
 
           {/* Appearance — Theme */}
           <div className="card dark:bg-slate-800 dark:border-slate-700">

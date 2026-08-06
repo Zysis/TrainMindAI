@@ -4,13 +4,41 @@ import { z } from 'zod';
 // Chat
 // ============================================================
 
+/**
+ * Numero massimo di messaggi dello storico inviati al modello.
+ *
+ * Ogni chiamata rimanda tutta la conversazione a OpenAI: senza un limite il
+ * costo di input cresce a ogni turno e quello di una singola sessione cresce
+ * quadraticamente. Dieci messaggi (cinque scambi) bastano a mantenere il filo
+ * del discorso su una domanda tecnica.
+ *
+ * Sovrascrivibile con AI_CHAT_HISTORY_LIMIT senza ricompilare.
+ *
+ * La lettura è volutamente dentro la funzione e non a livello di modulo:
+ * `lib/load-env.ts` popola process.env solo quando viene importato da
+ * server.ts, e leggere qui al caricamento renderebbe il valore dipendente
+ * dall'ordine degli import.
+ */
+function chatHistoryLimit(): number {
+  const raw = parseInt(process.env.AI_CHAT_HISTORY_LIMIT ?? '', 10);
+  return Number.isFinite(raw) && raw >= 2 ? raw : 10;
+}
+
 export const aiChatSchema = z.object({
   messages: z.array(
     z.object({
       role: z.enum(['user', 'assistant', 'system']),
       content: z.string().min(1),
     })
-  ).min(1),
+  )
+    .min(1)
+    // Si tronca invece di rifiutare: il frontend manda tutta la conversazione
+    // e un errore di validazione romperebbe la chat a metà sessione.
+    // Si tengono gli ultimi N messaggi, cioè quelli più rilevanti.
+    .transform((messages) => {
+      const limit = chatHistoryLimit();
+      return messages.length > limit ? messages.slice(-limit) : messages;
+    }),
   athlete_id: z.string().optional(),
   stream: z.boolean().optional().default(false),
   temperature: z.number().min(0).max(2).optional().default(0.7),

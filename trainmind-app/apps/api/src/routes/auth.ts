@@ -2,12 +2,54 @@ import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@trainmind/db';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { registerSchema, loginSchema, refreshSchema } from '../schemas/auth.js';
-import type { RegisterInput, LoginInput, RefreshInput } from '../schemas/auth.js';
+import {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../schemas/auth.js';
+import type {
+  RegisterInput,
+  LoginInput,
+  RefreshInput,
+  ChangePasswordInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from '../schemas/auth.js';
 import { seedDefaultExercises } from '../lib/seed-default-exercises.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
+import { sendEmail, buildPasswordResetEmailHtml, getAuthFrom } from '../services/email-service.js';
 
 const SALT_ROUNDS = 12;
+
+/** Validita' del link di reset. Breve per limitare la finestra di attacco. */
+const RESET_TOKEN_TTL_MINUTES = 60;
+
+/**
+ * Nel DB salviamo solo l'hash SHA-256 del token di reset.
+ * Il token in chiaro esiste unicamente nel link inviato per email.
+ */
+function hashResetToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Impronta breve e non reversibile di un indirizzo email, da usare nei log.
+ *
+ * Perche' non loggare l'email in chiaro: i log finiscono spesso in aggregatori
+ * esterni, con accessi piu' larghi di quelli al database. Su un servizio che
+ * tratta dati sanitari, l'elenco di chi ha tentato un reset e' di per se' un
+ * dato personale che non serve conservare in forma leggibile.
+ *
+ * Perche' un'impronta e non la semplice rimozione: a parita' di indirizzo il
+ * valore e' sempre lo stesso, quindi resta possibile riconoscere tentativi
+ * ripetuti sullo stesso account — che e' l'unica cosa per cui quel log serve.
+ */
+function emailFingerprint(email: string): string {
+  return crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 12);
+}
 
 export async function authRoutes(app: FastifyInstance) {
   // ─── POST /auth/register ────────────────────────────
@@ -88,6 +130,9 @@ export async function authRoutes(app: FastifyInstance) {
           lastName,
           role: 'ADMIN',
           organizationId: organization.id,
+          // La lingua scelta sulla landing/registrazione diventa la lingua
+          // di default dell'account su qualsiasi dispositivo.
+          locale: uiLanguage ?? 'it',
         },
       });
 
@@ -186,6 +231,7 @@ export async function authRoutes(app: FastifyInstance) {
           firstName: result.user.firstName,
           lastName: result.user.lastName,
           role: result.user.role,
+          locale: result.user.locale ?? undefined,
           organizationId: result.user.organizationId,
           organization: {
             id: result.organization.id,
@@ -287,6 +333,7 @@ export async function authRoutes(app: FastifyInstance) {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          locale: user.locale ?? undefined,
           organizationId: user.organizationId,
           athleteId: user.athleteId || undefined,
           organization: user.organization
@@ -380,6 +427,7 @@ export async function authRoutes(app: FastifyInstance) {
         lastName: true,
         role: true,
         avatarUrl: true,
+        locale: true,
         organizationId: true,
         isActive: true,
         createdAt: true,
@@ -425,4 +473,280 @@ export async function authRoutes(app: FastifyInstance) {
       data: { message: 'Logout effettuato con successo' },
     });
   });
+
+  // ─── PATCH /auth/locale ────────────────────────────
+  // Salva la lingua UI preferita sul profilo, cosi segue l'utente su ogni
+  // dispositivo. Chiamata al login e a ogni cambio lingua in Impostazioni.
+  app.patch<{ Body: { locale?: string } }>(
+    '/auth/locale',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { userId } = request.user;
+      const locale = request.body?.locale;
+
+      if (locale !== 'it' && locale !== 'en' && locale !== 'es') {
+        return reply.status(400).send({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Lingua non supportata (valori ammessi: it, en, es)',
+          },
+        });
+      }
+
+      await app.prisma.user.update({
+        where: { id: userId },
+        data: { locale },
+      });
+
+      return reply.send({ success: true, data: { locale } });
+    },
+  );
+
+  // ─── POST /auth/change-password ────────────────────
+  // Utente autenticato che conosce la password attuale.
+  app.post<{ Body: ChangePasswordInput }>(
+    '/auth/change-password',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = changePasswordSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Dati non validi',
+            details: parsed.error.flatten().fieldErrors,
+          },
+        });
+      }
+
+      const { userId } = request.user;
+      const { currentPassword, newPassword } = parsed.data;
+
+      const user = await app.prisma.user.findUnique({ where: { id: userId } });
+      if (!user || !user.isActive) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'USER_NOT_FOUND', message: 'Utente non trovato' },
+        });
+      }
+
+      const validPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!validPassword) {
+        return reply.status(401).send({
+          success: false,
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'La password attuale non e corretta',
+          },
+        });
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+      // Invalidiamo il refresh token: le altre sessioni devono rifare login.
+      await app.prisma.user.update({
+        where: { id: userId },
+        data: {
+          passwordHash,
+          passwordChangedAt: new Date(),
+          refreshToken: null,
+          resetTokenHash: null,
+          resetTokenExpiry: null,
+        },
+      });
+
+      request.log.info({ userId }, 'Password cambiata dall utente');
+
+      return reply.send({
+        success: true,
+        data: {
+          message:
+            'Password aggiornata. Per sicurezza le altre sessioni sono state disconnesse.',
+        },
+      });
+    },
+  );
+
+  // ─── POST /auth/forgot-password ────────────────────
+  // Genera un token monouso e invia il link via email.
+  app.post<{ Body: ForgotPasswordInput }>(
+    '/auth/forgot-password',
+    {
+      // Limite stretto: senza, questo endpoint diventa un mezzo per
+      // bombardare di email un indirizzo altrui.
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+    const parsed = forgotPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Email non valida',
+          details: parsed.error.flatten().fieldErrors,
+        },
+      });
+    }
+
+    const { email } = parsed.data;
+
+    // Risposta SEMPRE identica, esista o no l'account: altrimenti questo
+    // endpoint diventa un oracolo per scoprire quali email sono registrate.
+    const genericResponse = {
+      success: true,
+      data: {
+        message:
+          'Se esiste un account associato a questa email, riceverai a breve un link per reimpostare la password.',
+      },
+    };
+
+    const user = await app.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.isActive) {
+      request.log.info(
+        { emailFp: emailFingerprint(email) },
+        'Reset password richiesto per email inesistente/inattiva',
+      );
+      return reply.send(genericResponse);
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+    await app.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetTokenHash: hashResetToken(rawToken),
+        resetTokenExpiry: expiry,
+      },
+    });
+
+    const appUrl = process.env.APP_PUBLIC_URL || 'http://localhost:3000';
+    const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
+
+    // Il link contiene il token in chiaro: chi legge i log puo' reimpostare
+    // la password di chiunque. In sviluppo e' comodo (serve a recuperare il
+    // link in modalita log-only), in produzione sarebbe una falla: i log
+    // finiscono spesso in aggregatori esterni con accessi piu' larghi del DB.
+    if (process.env.NODE_ENV === 'production') {
+      request.log.info({ userId: user.id }, '[RESET PASSWORD] Link generato e inviato');
+    } else {
+      request.log.info({ userId: user.id, resetUrl }, '[RESET PASSWORD] Link generato');
+    }
+
+    await sendEmail(
+      {
+        to: [user.email],
+        subject: 'Reimposta la tua password — TrainMind AI',
+        html: buildPasswordResetEmailHtml({
+          firstName: user.firstName,
+          resetUrl,
+          expiryMinutes: RESET_TOKEN_TTL_MINUTES,
+        }),
+        text: `Reimposta la tua password: ${resetUrl} (link valido ${RESET_TOKEN_TTL_MINUTES} minuti)`,
+        from: getAuthFrom(),
+      },
+      request.log,
+    );
+
+    return reply.send(genericResponse);
+    },
+  );
+
+  // ─── POST /auth/reset-password ─────────────────────
+  // Consuma il token e imposta la nuova password.
+  app.post<{ Body: ResetPasswordInput }>(
+    '/auth/reset-password',
+    {
+      // Limite stretto: rende impraticabile il brute-force del token.
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+    const parsed = resetPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Dati non validi',
+          details: parsed.error.flatten().fieldErrors,
+        },
+      });
+    }
+
+    const { token, password } = parsed.data;
+
+    const user = await app.prisma.user.findUnique({
+      where: { resetTokenHash: hashResetToken(token) },
+    });
+
+    if (!user || !user.isActive || !user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
+      return reply.status(410).send({
+        success: false,
+        error: {
+          code: 'INVALID_RESET_TOKEN',
+          message: 'Link non valido o scaduto. Richiedine uno nuovo.',
+        },
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Il token viene azzerato nella stessa update: e' monouso.
+    await app.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordChangedAt: new Date(),
+        resetTokenHash: null,
+        resetTokenExpiry: null,
+        refreshToken: null,
+      },
+    });
+
+    request.log.info({ userId: user.id }, 'Password reimpostata via token');
+
+    return reply.send({
+      success: true,
+      data: { message: 'Password reimpostata con successo. Ora puoi accedere.' },
+    });
+    },
+  );
+
+  // ─── GET /auth/reset-password/:token — verifica preliminare ───
+  // Permette alla pagina di mostrare subito "link scaduto" senza far
+  // compilare il form all'utente per poi rifiutarlo.
+  app.get<{ Params: { token: string } }>(
+    '/auth/reset-password/:token',
+    async (request, reply) => {
+      const { token } = request.params;
+
+      const user = await app.prisma.user.findUnique({
+        where: { resetTokenHash: hashResetToken(token) },
+        select: { email: true, isActive: true, resetTokenExpiry: true },
+      });
+
+      if (!user || !user.isActive || !user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
+        return reply.status(410).send({
+          success: false,
+          error: {
+            code: 'INVALID_RESET_TOKEN',
+            message: 'Link non valido o scaduto. Richiedine uno nuovo.',
+          },
+        });
+      }
+
+      // Email mascherata: conferma all'utente di quale account si tratta
+      // senza esporre l'indirizzo completo a chi intercettasse il link.
+      const [local, domain] = user.email.split('@');
+      const maskedEmail = `${local.slice(0, 2)}${'*'.repeat(Math.max(local.length - 2, 1))}@${domain}`;
+
+      return reply.send({
+        success: true,
+        data: { email: maskedEmail, expiresAt: user.resetTokenExpiry },
+      });
+    },
+  );
 }

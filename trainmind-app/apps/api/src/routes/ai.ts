@@ -2,11 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import { aiChatSchema, aiCoachSchema, aiGenerateSchema, aiWellnessInsightSchema, aiRtpSuggestSchema } from '../schemas/ai.js';
 import { requireMinRole } from '../middleware/rbac.js';
 import { openAIGenerate, openAIChat, isOpenAIFallbackAvailable } from '../lib/openai-fallback.js';
+import { getModelForOperation, getModelRouting } from '../lib/ai-models.js';
+import { recordAiUsage, extractUsage, parseUsageFromSseChunk } from '../services/ai-usage.js';
 
 /**
  * AI Service URL (Python FastAPI on port 3002)
  */
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3002';
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3004';
 
 /** Timeout for AI service requests (60s default, longer for generate) */
 const AI_TIMEOUT_MS = 60_000;
@@ -155,12 +157,26 @@ export async function aiRoutes(app: FastifyInstance) {
       });
     }
 
+    const { organizationId, userId } = request.user;
+    const chatModel = getModelForOperation('CHAT');
+    const startedAt = Date.now();
+
     try {
-      const response = await proxyToAI('/ai/chat', parsed.data);
+      const response = await proxyToAI('/ai/chat', { ...parsed.data, model: chatModel });
 
       if (!response.ok) {
         const errBody = await response.text();
         app.log.error({ status: response.status, body: errBody }, 'AI chat error');
+        void recordAiUsage(app, {
+          organizationId,
+          userId,
+          operation: 'CHAT',
+          endpoint: '/ai/chat',
+          requestedModel: chatModel,
+          success: false,
+          errorCode: `HTTP_${response.status}`,
+          durationMs: Date.now() - startedAt,
+        });
         return reply.status(response.status).send({
           success: false,
           error: { code: 'AI_SERVICE_ERROR', message: 'Errore dal servizio AI' },
@@ -182,22 +198,50 @@ export async function aiRoutes(app: FastifyInstance) {
             : {}),
         });
 
+        // Mentre lo stream viene inoltrato al browser si intercetta l'evento
+        // SSE `usage` emesso dall'ai-service: in streaming è l'unico modo
+        // per conoscere i token consumati.
         const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let streamUsage: ReturnType<typeof parseUsageFromSseChunk> = null;
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            if (!streamUsage && value) {
+              streamUsage = parseUsageFromSseChunk(
+                decoder.decode(value, { stream: true }),
+              );
+            }
             reply.raw.write(value);
           }
         } finally {
           reader.releaseLock();
           reply.raw.end();
+          void recordAiUsage(app, {
+            organizationId,
+            userId,
+            operation: 'CHAT',
+            endpoint: '/ai/chat',
+            requestedModel: chatModel,
+            usage: streamUsage,
+            durationMs: Date.now() - startedAt,
+          });
         }
         return;
       }
 
       // Non-streaming: return JSON
       const data = await response.json();
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'CHAT',
+        endpoint: '/ai/chat',
+        requestedModel: chatModel,
+        usage: extractUsage(data),
+        durationMs: Date.now() - startedAt,
+      });
       return reply.send({ success: true, data });
     } catch (error) {
       // Fallback: call OpenAI directly if AI service is down (non-streaming only)
@@ -208,6 +252,16 @@ export async function aiRoutes(app: FastifyInstance) {
           const fallbackData = await openAIChat(parsed.data.messages, {
             temperature: parsed.data.temperature,
             max_tokens: parsed.data.max_tokens,
+            model: chatModel,
+          });
+          void recordAiUsage(app, {
+            organizationId,
+            userId,
+            operation: 'CHAT',
+            endpoint: '/ai/chat[fallback]',
+            requestedModel: chatModel,
+            usage: extractUsage(fallbackData),
+            durationMs: Date.now() - startedAt,
           });
           return reply.send({ success: true, data: fallbackData });
         } catch (fbErr) {
@@ -216,6 +270,16 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       app.log.error(error, 'AI chat proxy error');
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'CHAT',
+        endpoint: '/ai/chat',
+        requestedModel: chatModel,
+        success: false,
+        errorCode: msg.slice(0, 60),
+        durationMs: Date.now() - startedAt,
+      });
       const errResp = aiErrorResponse(error);
       return reply.status(errResp.status).send(errResp.body);
     }
@@ -260,15 +324,30 @@ export async function aiRoutes(app: FastifyInstance) {
       // Non-critical
     }
 
+    const { userId } = request.user;
+    const coachModel = getModelForOperation('COACH');
+    const startedAt = Date.now();
+
     try {
       const response = await proxyToAI('/ai/coach', {
         ...parsed.data,
         question: parsed.data.question + exerciseContext,
+        model: coachModel,
       });
 
       if (!response.ok) {
         const errBody = await response.text();
         app.log.error({ status: response.status, body: errBody }, 'AI coach error');
+        void recordAiUsage(app, {
+          organizationId,
+          userId,
+          operation: 'COACH',
+          endpoint: '/ai/coach',
+          requestedModel: coachModel,
+          success: false,
+          errorCode: `HTTP_${response.status}`,
+          durationMs: Date.now() - startedAt,
+        });
         return reply.status(response.status).send({
           success: false,
           error: { code: 'AI_SERVICE_ERROR', message: 'Errore dal servizio AI' },
@@ -276,6 +355,15 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       const data = await response.json();
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'COACH',
+        endpoint: '/ai/coach',
+        requestedModel: coachModel,
+        usage: extractUsage(data),
+        durationMs: Date.now() - startedAt,
+      });
       return reply.send({ success: true, data });
     } catch (error) {
       // Fallback: call OpenAI directly if AI service is down
@@ -285,7 +373,17 @@ export async function aiRoutes(app: FastifyInstance) {
         try {
           const fallbackData = await openAIChat(
             [{ role: 'user', content: parsed.data.question + exerciseContext }],
+            { model: coachModel },
           );
+          void recordAiUsage(app, {
+            organizationId,
+            userId,
+            operation: 'COACH',
+            endpoint: '/ai/coach[fallback]',
+            requestedModel: coachModel,
+            usage: extractUsage(fallbackData),
+            durationMs: Date.now() - startedAt,
+          });
           return reply.send({ success: true, data: fallbackData });
         } catch (fbErr) {
           app.log.error(fbErr, 'OpenAI coach fallback error');
@@ -293,6 +391,16 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       app.log.error(error, 'AI coach proxy error');
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'COACH',
+        endpoint: '/ai/coach',
+        requestedModel: coachModel,
+        success: false,
+        errorCode: msg.slice(0, 60),
+        durationMs: Date.now() - startedAt,
+      });
       const errResp = aiErrorResponse(error);
       return reply.status(errResp.status).send(errResp.body);
     }
@@ -314,12 +422,30 @@ export async function aiRoutes(app: FastifyInstance) {
       });
     }
 
+    const { organizationId, userId } = request.user;
+    const generateModel = getModelForOperation('GENERATE');
+    const startedAt = Date.now();
+
     try {
-      const response = await proxyToAI('/ai/generate', parsed.data, { timeoutMs: AI_GENERATE_TIMEOUT_MS });
+      const response = await proxyToAI(
+        '/ai/generate',
+        { ...parsed.data, model: generateModel },
+        { timeoutMs: AI_GENERATE_TIMEOUT_MS },
+      );
 
       if (!response.ok) {
         const errBody = await response.text();
         app.log.error({ status: response.status, body: errBody }, 'AI generate error');
+        void recordAiUsage(app, {
+          organizationId,
+          userId,
+          operation: 'GENERATE',
+          endpoint: '/ai/generate',
+          requestedModel: generateModel,
+          success: false,
+          errorCode: `HTTP_${response.status}`,
+          durationMs: Date.now() - startedAt,
+        });
         return reply.status(response.status).send({
           success: false,
           error: { code: 'AI_SERVICE_ERROR', message: 'Errore dal servizio AI' },
@@ -327,6 +453,15 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       const data = await response.json();
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'GENERATE',
+        endpoint: '/ai/generate',
+        requestedModel: generateModel,
+        usage: extractUsage(data),
+        durationMs: Date.now() - startedAt,
+      });
       return reply.send({ success: true, data });
     } catch (error) {
       // Fallback: call OpenAI directly if AI service is down
@@ -334,7 +469,18 @@ export async function aiRoutes(app: FastifyInstance) {
       if ((msg === 'AI_SERVICE_DOWN' || msg === 'AI_SERVICE_TIMEOUT') && isOpenAIFallbackAvailable()) {
         app.log.info('AI service down — using OpenAI direct fallback for /ai/generate');
         try {
-          const fallbackData = await openAIGenerate(parsed.data.prompt);
+          const fallbackData = await openAIGenerate(parsed.data.prompt, {
+            model: generateModel,
+          });
+          void recordAiUsage(app, {
+            organizationId,
+            userId,
+            operation: 'GENERATE',
+            endpoint: '/ai/generate[fallback]',
+            requestedModel: generateModel,
+            usage: extractUsage(fallbackData),
+            durationMs: Date.now() - startedAt,
+          });
           return reply.send({ success: true, data: fallbackData });
         } catch (fbErr) {
           app.log.error(fbErr, 'OpenAI fallback error');
@@ -350,6 +496,16 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       app.log.error(error, 'AI generate proxy error');
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'GENERATE',
+        endpoint: '/ai/generate',
+        requestedModel: generateModel,
+        success: false,
+        errorCode: msg.slice(0, 60),
+        durationMs: Date.now() - startedAt,
+      });
       const errResp = aiErrorResponse(error);
       return reply.status(errResp.status).send(errResp.body);
     }
@@ -427,14 +583,29 @@ export async function aiRoutes(app: FastifyInstance) {
         ? `Analizza i dati wellness di questo atleta degli ultimi ${days} giorni e fornisci raccomandazioni:\n\n${summary}`
         : `Analizza i dati wellness del team degli ultimi ${days} giorni. Identifica atleti a rischio e fornisci raccomandazioni:\n\n${summary}`;
 
-      // Call AI coach with wellness data
+      // Call AI coach with wellness data.
+      // NB: riusa l'endpoint /ai/coach dell'ai-service, ma è un'operazione
+      // distinta — il modello va quindi passato esplicitamente.
+      const wellnessModel = getModelForOperation('WELLNESS');
+      const startedAt = Date.now();
       const response = await proxyToAI('/ai/coach', {
         question,
         namespaces: ['protocols', 'references'],
         top_k: 3,
+        model: wellnessModel,
       });
 
       if (!response.ok) {
+        void recordAiUsage(app, {
+          organizationId,
+          userId: request.user.userId,
+          operation: 'WELLNESS',
+          endpoint: '/ai/wellness-insights',
+          requestedModel: wellnessModel,
+          success: false,
+          errorCode: `HTTP_${response.status}`,
+          durationMs: Date.now() - startedAt,
+        });
         return reply.status(503).send({
           success: false,
           error: { code: 'AI_SERVICE_ERROR', message: 'Errore dal servizio AI' },
@@ -442,9 +613,27 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       const data = await response.json();
+      void recordAiUsage(app, {
+        organizationId,
+        userId: request.user.userId,
+        operation: 'WELLNESS',
+        endpoint: '/ai/wellness-insights',
+        requestedModel: wellnessModel,
+        usage: extractUsage(data),
+        durationMs: Date.now() - startedAt,
+      });
       return reply.send({ success: true, data });
     } catch (error) {
       app.log.error(error, 'AI wellness insights error');
+      void recordAiUsage(app, {
+        organizationId,
+        userId: request.user.userId,
+        operation: 'WELLNESS',
+        endpoint: '/ai/wellness-insights',
+        requestedModel: getModelForOperation('WELLNESS'),
+        success: false,
+        errorCode: (error instanceof Error ? error.message : String(error)).slice(0, 60),
+      });
       const errResp = aiErrorResponse(error);
       return reply.status(errResp.status).send(errResp.body);
     }
@@ -538,16 +727,32 @@ ${protocol.phaseLogs.slice(0, 5).map((l: { fromPhase: string; toPhase: string; r
 
 Rispondi in italiano, in modo strutturato e professionale.`;
 
+    // Anche l'RTP passa per /ai/coach sull'ai-service, ma resta sul modello
+    // completo: è ambito clinico e non si fanno compromessi sulla qualità.
+    const rtpModel = getModelForOperation('RTP');
+    const rtpStartedAt = Date.now();
+
     try {
       const response = await proxyToAI('/ai/coach', {
         question,
         namespaces: ['protocols', 'exercises', 'references'],
         top_k: 8,
+        model: rtpModel,
       });
 
       if (!response.ok) {
         const errBody = await response.text();
         app.log.error({ status: response.status, body: errBody }, 'AI RTP suggest error');
+        void recordAiUsage(app, {
+          organizationId,
+          userId: request.user.userId,
+          operation: 'RTP',
+          endpoint: '/ai/rtp-suggest',
+          requestedModel: rtpModel,
+          success: false,
+          errorCode: `HTTP_${response.status}`,
+          durationMs: Date.now() - rtpStartedAt,
+        });
         return reply.status(response.status).send({
           success: false,
           error: { code: 'AI_SERVICE_ERROR', message: 'Errore dal servizio AI' },
@@ -555,6 +760,15 @@ Rispondi in italiano, in modo strutturato e professionale.`;
       }
 
       const data = await response.json();
+      void recordAiUsage(app, {
+        organizationId,
+        userId: request.user.userId,
+        operation: 'RTP',
+        endpoint: '/ai/rtp-suggest',
+        requestedModel: rtpModel,
+        usage: extractUsage(data),
+        durationMs: Date.now() - rtpStartedAt,
+      });
       return reply.send({
         success: true,
         data: {
@@ -566,6 +780,18 @@ Rispondi in italiano, in modo strutturato e professionale.`;
       // If AI service is down, generate a rule-based fallback suggestion
       const msg = error instanceof Error ? error.message : String(error);
       app.log.warn({ msg }, 'AI RTP suggest — service unavailable, using fallback');
+
+      // Il ripiego è basato su regole, non chiama alcun modello: costo zero.
+      void recordAiUsage(app, {
+        organizationId,
+        userId: request.user.userId,
+        operation: 'RTP',
+        endpoint: '/ai/rtp-suggest[rule-based]',
+        requestedModel: rtpModel,
+        success: false,
+        errorCode: msg.slice(0, 60),
+        durationMs: Date.now() - rtpStartedAt,
+      });
 
       const allMet = metInPhase === currentPhaseCriteria.length && currentPhaseCriteria.length > 0;
       const unmetCriteria = currentPhaseCriteria
@@ -586,6 +812,77 @@ Rispondi in italiano, in modo strutturato e professionale.`;
           sources: [],
           protocol_summary: protocolSummary,
         },
+      });
+    }
+  });
+
+  // ─── GET /ai/usage — Consumo AI dell'organizzazione ───────
+  // Serve a rispondere alla domanda "quanto mi costa questo cliente?".
+  // I costi sono in USD, come li fattura OpenAI: così il totale è
+  // confrontabile con la dashboard di fatturazione senza conversioni.
+  app.get('/ai/usage', async (request, reply) => {
+    const { organizationId } = request.user;
+    const query = request.query as { days?: string };
+    const days = Math.min(Math.max(parseInt(query.days ?? '30', 10) || 30, 1), 365);
+
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    try {
+      const [byOperation, totals] = await Promise.all([
+        app.prisma.aiUsageLog.groupBy({
+          by: ['operation', 'model'],
+          where: { organizationId, createdAt: { gte: since } },
+          _sum: {
+            promptTokens: true,
+            completionTokens: true,
+            totalTokens: true,
+            costUsd: true,
+            creditsCharged: true,
+          },
+          _count: { _all: true },
+        }),
+        app.prisma.aiUsageLog.aggregate({
+          where: { organizationId, createdAt: { gte: since } },
+          _sum: { totalTokens: true, costUsd: true, creditsCharged: true },
+          _count: { _all: true },
+        }),
+      ]);
+
+      const errorCount = await app.prisma.aiUsageLog.count({
+        where: { organizationId, createdAt: { gte: since }, success: false },
+      });
+
+      return reply.send({
+        success: true,
+        data: {
+          periodDays: days,
+          since: since.toISOString(),
+          totals: {
+            calls: totals._count._all,
+            errors: errorCount,
+            totalTokens: totals._sum.totalTokens ?? 0,
+            costUsd: Number(totals._sum.costUsd ?? 0),
+            credits: totals._sum.creditsCharged ?? 0,
+          },
+          byOperation: byOperation.map((row) => ({
+            operation: row.operation,
+            model: row.model,
+            calls: row._count._all,
+            promptTokens: row._sum.promptTokens ?? 0,
+            completionTokens: row._sum.completionTokens ?? 0,
+            totalTokens: row._sum.totalTokens ?? 0,
+            costUsd: Number(row._sum.costUsd ?? 0),
+            credits: row._sum.creditsCharged ?? 0,
+          })),
+          routing: getModelRouting(),
+        },
+      });
+    } catch (error) {
+      app.log.error(error, 'AI usage query error');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'USAGE_QUERY_ERROR', message: 'Errore nel calcolo del consumo AI' },
       });
     }
   });

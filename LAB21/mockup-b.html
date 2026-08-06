@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB21 — Human Performance Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --acc:#00C9A7;
+  --acc-d:#00987F;
+  --acc-l:#DFFAF3;
+  --ink:#08120F;
+  --ink-2:#101E1A;
+  --paper:#FBFCFC;
+  --paper-2:#F1F5F4;
+  --txt:#0A1512;
+  --txt-2:#5E706C;
+  --line:#E4EAE8;
+  --pad:clamp(20px,4.4vw,80px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--txt);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+h1,h2,h3,h4{font-weight:800;letter-spacing:-.04em;line-height:1.02}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.inner{max-width:1720px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+.rv{opacity:0;transform:translateY(30px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.09s}.d2{transition-delay:.18s}.d3{transition-delay:.27s}
+
+/* ── TICKER ── */
+.ticker{background:var(--ink);color:#fff;overflow:hidden;height:38px;display:flex;align-items:center;position:relative;z-index:5}
+.tk{display:flex;gap:52px;white-space:nowrap;animation:sl 26s linear infinite;color:rgba(255,255,255,.72);font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.tk b{color:var(--acc);font-weight:500}
+@keyframes sl{to{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:80;background:rgba(251,252,252,.93);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1720px;margin:0 auto;padding:0 var(--pad);height:78px;display:flex;align-items:center;gap:36px}
+.logo{height:25px}
+.nl{display:flex;gap:4px;margin-left:auto}
+.nl a{font-size:14.5px;font-weight:600;padding:10px 15px;border-radius:9px;transition:.2s;position:relative}
+.nl a::after{content:'';position:absolute;left:15px;right:15px;bottom:5px;height:2px;background:var(--acc);transform:scaleX(0);transition:.25s;transform-origin:left}
+.nl a:hover::after{transform:scaleX(1)}
+.nr{display:flex;align-items:center;gap:13px}
+.lang{display:flex;background:var(--paper-2);border-radius:999px;padding:3px}
+.lang button{background:none;border:0;cursor:pointer;font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.08em;padding:6px 11px;border-radius:999px;color:var(--txt-2);transition:.2s}
+.lang button.on{background:var(--ink);color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--ink);color:#fff;padding:13px 24px;border-radius:10px;font-weight:700;font-size:14.5px;transition:.28s;border:0;cursor:pointer;font-family:'Manrope'}
+.btn:hover{background:var(--acc);color:#03211B;transform:translateY(-2px)}
+.btn-lg{padding:17px 32px;font-size:15.5px}
+.btn-a{background:var(--acc);color:#03211B}
+.btn-a:hover{background:var(--ink);color:#fff}
+.btn-o{background:transparent;border:1.5px solid var(--line);color:var(--txt)}
+.btn-o:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-w{background:#fff;color:var(--ink)}
+.btn-w:hover{background:var(--acc);color:#03211B}
+
+/* ── HERO SPLIT ── */
+.hero{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 116px);align-items:stretch}
+.hero-l{padding:clamp(44px,5.4vw,96px) var(--pad);display:flex;flex-direction:column;justify-content:center;max-width:980px;margin-left:auto;width:100%}
+.tagline{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:var(--acc-l);color:var(--acc-d);padding:8px 15px;border-radius:8px;margin-bottom:28px}
+.tagline i{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,201,167,.55)}50%{box-shadow:0 0 0 8px rgba(0,201,167,0)}}
+.hero h1{font-size:clamp(40px,5.6vw,88px);max-width:14ch}
+.hero h1 mark{background:none;color:var(--acc-d)}
+.hero-l p{color:var(--txt-2);font-size:clamp(16px,1.25vw,18.5px);line-height:1.75;max-width:50ch;margin-top:26px;font-weight:500}
+.hcta{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+.mini{display:flex;gap:36px;margin-top:52px;padding-top:30px;border-top:1px solid var(--line);flex-wrap:wrap}
+.mini b{display:block;font-size:32px;font-weight:800;letter-spacing:-.04em}
+.mini span{display:block;color:var(--txt-2);font-size:13px;margin-top:4px;font-weight:600}
+/* right video panel */
+.hero-r{position:relative;overflow:hidden;background:var(--ink);min-height:460px}
+.hero-r img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1) brightness(.78);position:absolute;inset:0;transform:scale(1.05);animation:kb 20s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.14)}}
+.hero-r::after{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(0,201,167,.30),rgba(8,18,15,.72))}
+.play{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center}
+.play button{width:96px;height:96px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.95);color:var(--ink);font-size:24px;display:flex;align-items:center;justify-content:center;transition:.3s;position:relative}
+.play button:hover{transform:scale(1.1)}
+.play button::after{content:'';position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);animation:rip 2.4s infinite}
+@keyframes rip{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.75);opacity:0}}
+.vcap{position:absolute;z-index:4;left:0;right:0;bottom:0;padding:26px 30px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;color:#fff;background:linear-gradient(transparent,rgba(8,18,15,.85))}
+.vcap b{font-size:17px;display:block}
+.vcap small{color:rgba(255,255,255,.62);font-size:12.5px;font-weight:600}
+.hud{position:absolute;z-index:4;top:26px;left:26px;right:26px;display:flex;justify-content:space-between;color:rgba(255,255,255,.78)}
+.rec{display:inline-flex;align-items:center;gap:8px}
+.rec i{width:8px;height:8px;border-radius:50%;background:#FF5A5A;animation:pulse 1.4s infinite}
+
+/* ── GREEN CLAIM BAND ── */
+.claim{background:var(--acc);color:#03211B;padding:clamp(56px,6vw,96px) 0}
+.claim-in{display:grid;grid-template-columns:1.25fr .75fr;gap:60px;align-items:center}
+.claim h2{font-size:clamp(28px,3.5vw,50px);max-width:20ch}
+.claim p{font-size:16.5px;line-height:1.8;font-weight:600;opacity:.78}
+
+/* ── SECTION ── */
+.sec{padding:clamp(80px,8.5vw,140px) 0}
+.sec.alt{background:var(--paper-2)}
+.sec.dark{background:var(--ink);color:#fff}
+.sec.dark h2,.sec.dark h3,.sec.dark h4{color:#fff}
+.sh{max-width:70ch;margin-bottom:clamp(38px,4.6vw,66px)}
+.kick{color:var(--acc-d);display:inline-flex;align-items:center;gap:11px;margin-bottom:18px}
+.kick::before{content:'';width:28px;height:2px;background:var(--acc)}
+.sec.dark .kick{color:var(--acc)}
+.sh h2{font-size:clamp(32px,4.4vw,60px);margin-bottom:18px}
+.sh p{color:var(--txt-2);font-size:17px;line-height:1.8;font-weight:500}
+.sec.dark .sh p{color:rgba(255,255,255,.64)}
+
+/* ── PRODUCT ROWS (full-bleed alternate) ── */
+.row{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;background:var(--paper);border-top:1px solid var(--line)}
+.row.flip .row-media{order:2}
+.row-media{position:relative;overflow:hidden;min-height:min(64vh,620px);background:var(--ink-2)}
+.row-media img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;filter:grayscale(1) brightness(.8);transition:1s}
+.row:hover .row-media img{transform:scale(1.04)}
+.row-media::after{content:'';position:absolute;inset:0;background:linear-gradient(150deg,rgba(0,201,167,.34),rgba(8,18,15,.62))}
+.row-txt{padding:clamp(38px,4.6vw,84px);display:flex;flex-direction:column;justify-content:center}
+.row-txt .no{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.2em;color:var(--acc-d);margin-bottom:20px}
+.row-txt h3{font-size:clamp(28px,3.2vw,46px);margin-bottom:10px}
+.row-txt .cl{color:var(--acc-d);font-family:'IBM Plex Mono';font-size:13.5px;margin-bottom:22px}
+.row-txt p{color:var(--txt-2);font-size:16px;line-height:1.82;font-weight:500;max-width:52ch}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 34px}
+.tags span{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 13px;font-size:13px;color:var(--txt-2);font-weight:600}
+.pill-badge{align-self:flex-start;background:var(--ink);color:#fff;padding:7px 14px;border-radius:7px;margin-bottom:22px;font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+.pill-badge.live{background:var(--acc);color:#03211B}
+/* floating cards on media */
+.float{position:absolute;z-index:3;background:rgba(255,255,255,.96);border-radius:16px;padding:18px 20px;box-shadow:0 26px 60px rgba(8,18,15,.32);color:var(--txt)}
+.f1{top:9%;left:8%;width:236px;animation:fl 6.5s ease-in-out infinite}
+.f2{bottom:10%;right:8%;width:272px;animation:fl 8s ease-in-out infinite reverse}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+.float .lb{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-2)}
+.float b{display:block;font-size:28px;font-weight:800;letter-spacing:-.04em;margin:6px 0 2px}
+.float .dt{font-size:12px;color:var(--acc-d);font-weight:700}
+.bars{display:flex;gap:4px;align-items:flex-end;height:46px;margin-top:12px}
+.bars i{flex:1;background:linear-gradient(180deg,var(--acc),rgba(0,201,167,.25));border-radius:2px 2px 0 0;display:block}
+
+/* ── METHOD ── */
+.mrow{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.mcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:.35s}
+.sec.dark .mcard{background:var(--ink-2);border-color:rgba(255,255,255,.1)}
+.mcard:hover{transform:translateY(-7px);box-shadow:0 26px 56px rgba(8,18,15,.14)}
+.mcard-img{aspect-ratio:16/9;position:relative;overflow:hidden;background:var(--ink-2)}
+.mcard-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.85)}
+.mcard-img::after{content:'';position:absolute;inset:0;background:linear-gradient(150deg,rgba(0,201,167,.42),rgba(8,18,15,.5))}
+.mcard-img b{position:absolute;z-index:2;left:22px;bottom:16px;font-family:'IBM Plex Mono';font-size:38px;color:#fff;font-weight:500;letter-spacing:-.02em}
+.mcard-b{padding:26px 26px 30px}
+.mcard-b h4{font-size:21px;margin-bottom:10px}
+.mcard-b p{color:var(--txt-2);font-size:14.5px;line-height:1.75;font-weight:500}
+.sec.dark .mcard-b p{color:rgba(255,255,255,.6)}
+
+/* ── TEAM RAIL ── */
+.rail{display:flex;gap:22px;overflow-x:auto;padding:6px var(--pad) 22px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.rail::-webkit-scrollbar{height:6px}
+.rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.tm{flex:0 0 clamp(250px,23vw,330px);scroll-snap-align:start;border-radius:20px;overflow:hidden;background:var(--paper);border:1px solid var(--line);transition:.35s}
+.tm:hover{transform:translateY(-7px);box-shadow:0 26px 56px rgba(8,18,15,.14)}
+.tm-img{aspect-ratio:3/3.5;position:relative;overflow:hidden;background:var(--paper-2)}
+.tm-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:.6s}
+.tm:hover .tm-img img{filter:grayscale(0);transform:scale(1.05)}
+.tm-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,201,167,.3));transition:.4s}
+.tm:hover .tm-img::after{opacity:.3}
+.tm-b{padding:22px 22px 26px}
+.tm-b h4{font-size:18px}
+.tm-b .role{color:var(--acc-d);font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.1em;margin-top:6px}
+.tm-b p{color:var(--txt-2);font-size:13.5px;line-height:1.7;margin-top:13px;font-weight:500}
+
+/* ── CONTACT SPLIT ── */
+.csplit{display:grid;grid-template-columns:1fr 1fr;align-items:stretch}
+.cl-side{background:var(--ink);color:#fff;padding:clamp(44px,5vw,92px) var(--pad);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+.cl-side::after{content:'';position:absolute;inset:0;background:radial-gradient(80% 70% at 15% 20%,rgba(0,201,167,.24),transparent 62%);pointer-events:none}
+.cl-in{position:relative;z-index:2;max-width:640px;margin-left:auto;width:100%}
+.cl-side h2{font-size:clamp(30px,3.6vw,52px);margin-bottom:20px;color:#fff}
+.cl-side>.cl-in>p{color:rgba(255,255,255,.66);font-size:16.5px;line-height:1.8;font-weight:500;margin-bottom:38px}
+.crow{border-top:1px solid rgba(255,255,255,.15)}
+.crow div{padding:19px 0;border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;gap:18px;align-items:center}
+.crow strong{font-size:15.5px;font-weight:700}
+.crow .mono{color:var(--acc)}
+.cr-side{background:var(--paper);padding:clamp(44px,5vw,92px) var(--pad);display:flex;align-items:center}
+.form{max-width:640px;width:100%;margin-right:auto}
+.form h3{font-size:26px;margin-bottom:26px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ff{margin-bottom:16px}
+.ff label{display:block;font-size:12.5px;font-weight:700;color:var(--txt-2);margin-bottom:7px}
+.ff input,.ff textarea,.ff select{width:100%;background:var(--paper-2);border:1.5px solid transparent;border-radius:11px;padding:14px 15px;font-family:'Manrope';font-size:15px;color:var(--txt);outline:none;transition:.2s;font-weight:500}
+.ff input:focus,.ff textarea:focus,.ff select:focus{border-color:var(--acc);background:#fff}
+.ff textarea{resize:vertical;min-height:104px}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);color:#fff;padding:70px 0 44px}
+.f-top{display:flex;justify-content:space-between;gap:56px;flex-wrap:wrap;padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.13)}
+.f-top p{color:rgba(255,255,255,.55);font-size:15px;max-width:34ch;line-height:1.75;margin-top:18px;font-weight:500}
+.f-cols{display:flex;gap:64px;flex-wrap:wrap}
+.f-cols h5{font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);margin-bottom:15px;font-weight:500}
+.f-cols a{display:block;font-size:14.5px;padding:5px 0;color:rgba(255,255,255,.78);font-weight:600}
+.f-cols a:hover{color:var(--acc)}
+.f-bot{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-top:26px;color:rgba(255,255,255,.45);font-size:13px;font-weight:500}
+.f-bot a:hover{color:var(--acc)}
+
+@media(max-width:1080px){
+  .hero,.row,.csplit,.claim-in{grid-template-columns:1fr}
+  .row.flip .row-media{order:0}
+  .hero-l,.cl-in,.form{max-width:none;margin:0}
+  .mrow{grid-template-columns:1fr}
+  .nl{display:none}
+  .hero-r{min-height:56vh}
+  .row-media{min-height:46vh}
+}
+@media(max-width:600px){.f2{grid-template-columns:1fr}.f1,.f2:not(.ff *){}.float.f1,.float.f2{display:none}}
+</style>
+</head>
+<body>
+
+<div class="ticker">
+  <div class="tk">
+    <span>SPORT SCIENCE <b>·</b> MACHINE LEARNING <b>·</b> LOAD MANAGEMENT <b>·</b> RETURN TO PLAY <b>·</b> PERFORMANCE ANALYTICS <b>·</b> STRENGTH &amp; CONDITIONING <b>·</b></span>
+    <span>SPORT SCIENCE <b>·</b> MACHINE LEARNING <b>·</b> LOAD MANAGEMENT <b>·</b> RETURN TO PLAY <b>·</b> PERFORMANCE ANALYTICS <b>·</b> STRENGTH &amp; CONDITIONING <b>·</b></span>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-in">
+    <a href="#top"><img class="logo" src="logo/lab21-wordmark.png" alt="LAB21"></a>
+    <div class="nl">
+      <a href="#products" data-it="Prodotti" data-en="Products">Prodotti</a>
+      <a href="#method" data-it="Metodo" data-en="Method">Metodo</a>
+      <a href="#team" data-it="Team" data-en="Team">Team</a>
+      <a href="#contact" data-it="Contatti" data-en="Contact">Contatti</a>
+    </div>
+    <div class="nr">
+      <div class="lang"><button class="on" onclick="setLang('it',this)">IT</button><button onclick="setLang('en',this)">EN</button></div>
+      <a href="#contact" class="btn" data-it="Lavora con noi" data-en="Work with us">Lavora con noi</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO SPLIT ══ -->
+<section class="hero" id="top">
+  <div class="hero-l">
+    <div class="tagline mono rv"><i></i><span data-it="Innovation lab · Scienze dello sport" data-en="Innovation lab · Sport science">Innovation lab · Scienze dello sport</span></div>
+    <h1 class="rv d1" data-it-html="Trasformiamo i dati in <mark>performance reale.</mark>" data-en-html="We turn data into <mark>real performance.</mark>">Trasformiamo i dati in <mark>performance reale.</mark></h1>
+    <p class="rv d2" data-it="LAB21 progetta strumenti digitali per chi allena, misura e migliora il corpo umano. Metodo scientifico, tecnologia proprietaria e un'ossessione per ciò che funziona davvero sul campo." data-en="LAB21 designs digital tools for those who train, measure and improve the human body. Scientific method, proprietary technology and an obsession with what actually works on the field.">LAB21 progetta strumenti digitali per chi allena, misura e migliora il corpo umano. Metodo scientifico, tecnologia proprietaria e un'ossessione per ciò che funziona davvero sul campo.</p>
+    <div class="hcta rv d3">
+      <a href="#products" class="btn btn-lg btn-a" data-it="I nostri prodotti" data-en="Our products">I nostri prodotti</a>
+      <a href="#method" class="btn btn-lg btn-o" data-it="Il nostro metodo" data-en="Our method">Il nostro metodo</a>
+    </div>
+    <div class="mini rv d3">
+      <div><b><span class="cnt" data-to="21">0</span></b><span data-it="anni nelle scienze motorie" data-en="years in sport science">anni nelle scienze motorie</span></div>
+      <div><b><span class="cnt" data-to="12">0</span>k+</b><span data-it="sessioni analizzate" data-en="sessions analysed">sessioni analizzate</span></div>
+      <div><b><span class="cnt" data-to="3">0</span></b><span data-it="prodotti attivi" data-en="active products">prodotti attivi</span></div>
+    </div>
+  </div>
+  <div class="hero-r">
+    <!-- Sostituire con <video autoplay muted loop playsinline poster="assets/poster.jpg"><source src="assets/lab-reel.mp4" type="video/mp4"></video> -->
+    <img data-ph="hero-reel-poster" src="https://picsum.photos/seed/lab21bhero/1400/1200" alt="">
+    <div class="hud"><span class="rec mono"><i></i>REC</span><span class="mono">LAB21 / REEL 2026</span></div>
+    <div class="play"><button aria-label="play">▶</button></div>
+    <div class="vcap">
+      <div><b data-it="Dentro il laboratorio" data-en="Inside the lab">Dentro il laboratorio</b><small data-it="Come nasce un prodotto LAB21 · 1:24" data-en="How a LAB21 product is born · 1:24">Come nasce un prodotto LAB21 · 1:24</small></div>
+      <span class="mono">01:24</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GREEN CLAIM ══ -->
+<div class="claim">
+  <div class="inner claim-in">
+    <h2 class="rv" data-it="Non vendiamo teoria. Costruiamo strumenti che vengono usati il lunedì mattina." data-en="We don't sell theory. We build tools that get used on Monday morning.">Non vendiamo teoria. Costruiamo strumenti che vengono usati il lunedì mattina.</h2>
+    <p class="rv d1" data-it="Ogni funzione che pubblichiamo è passata prima dalle mani di chi allena davvero. Se non regge sul campo, non esce dal laboratorio." data-en="Every feature we ship has first passed through the hands of people who actually coach. If it doesn't hold on the field, it doesn't leave the lab.">Ogni funzione che pubblichiamo è passata prima dalle mani di chi allena davvero. Se non regge sul campo, non esce dal laboratorio.</p>
+  </div>
+</div>
+
+<!-- ══ PRODUCTS ══ -->
+<section class="sec" id="products" style="padding-bottom:0">
+  <div class="inner">
+    <div class="sh rv">
+      <span class="kick mono" data-it="01 — Prodotti" data-en="01 — Products">01 — Prodotti</span>
+      <h2 data-it="Quello che esce dal laboratorio." data-en="What comes out of the lab.">Quello che esce dal laboratorio.</h2>
+      <p data-it="Ogni prodotto nasce da un problema osservato sul campo, viene modellato sulla letteratura scientifica e validato con professionisti prima di arrivare agli utenti." data-en="Every product starts from a problem observed on the field, is modelled on scientific literature and validated with professionals before reaching users.">Ogni prodotto nasce da un problema osservato sul campo, viene modellato sulla letteratura scientifica e validato con professionisti prima di arrivare agli utenti.</p>
+    </div>
+  </div>
+
+  <!-- TrainMind (flagship) -->
+  <div class="row rv">
+    <div class="row-media">
+      <img data-ph="coach-tablet" src="https://picsum.photos/seed/lab21btm/1400/1100" alt="">
+      <div class="float f1">
+        <div class="lb" data-it="Carico settimanale" data-en="Weekly load">Carico settimanale</div>
+        <b>612<small style="font-size:12px;font-weight:600;color:var(--txt-2)"> AU</small></b>
+        <div class="dt">▲ 8% <span data-it="vs media" data-en="vs average">vs media</span></div>
+        <div class="bars"><i style="height:40%"></i><i style="height:64%"></i><i style="height:50%"></i><i style="height:86%"></i><i style="height:70%"></i><i style="height:96%"></i><i style="height:58%"></i></div>
+      </div>
+      <div class="float f2">
+        <div class="lb" data-it="Suggerimento AI" data-en="AI suggestion">Suggerimento AI</div>
+        <div style="font-size:14px;line-height:1.6;margin-top:9px;font-weight:600" data-it="Riduci il volume del 12% domani: readiness in calo su 3 atleti." data-en="Cut volume by 12% tomorrow: readiness dropping on 3 athletes.">Riduci il volume del 12% domani: readiness in calo su 3 atleti.</div>
+        <div class="dt" style="margin-top:13px" data-it="Applica →" data-en="Apply →">Applica →</div>
+      </div>
+    </div>
+    <div class="row-txt">
+      <span class="pill-badge live" data-it="Flagship · Live" data-en="Flagship · Live">Flagship · Live</span>
+      <div class="no">01</div>
+      <h3>TrainMind AI</h3>
+      <div class="cl" data-it="Il coach che non dorme mai." data-en="The coach that never sleeps.">Il coach che non dorme mai.</div>
+      <p data-it="Piattaforma di programmazione e monitoraggio dell'allenamento assistita da intelligenza artificiale. Costruisce le schede, adatta i carichi alla risposta dell'atleta e restituisce al coach una lettura chiara di ciò che sta funzionando." data-en="AI-assisted training programming and monitoring platform. It builds the plans, adapts loads to the athlete's response and gives the coach a clear reading of what is working.">Piattaforma di programmazione e monitoraggio dell'allenamento assistita da intelligenza artificiale. Costruisce le schede, adatta i carichi alla risposta dell'atleta e restituisce al coach una lettura chiara di ciò che sta funzionando.</p>
+      <div class="tags">
+        <span data-it="Programmazione AI" data-en="AI programming">Programmazione AI</span>
+        <span data-it="Carico interno / esterno" data-en="Internal / external load">Carico interno / esterno</span>
+        <span data-it="App atleta" data-en="Athlete app">App atleta</span>
+        <span data-it="Dashboard coach" data-en="Coach dashboard">Dashboard coach</span>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="#" class="btn btn-lg btn-a" data-it="Vai a TrainMind AI" data-en="Go to TrainMind AI">Vai a TrainMind AI</a>
+        <a href="#" class="btn btn-lg btn-o" data-it="Guarda la demo ▸" data-en="Watch demo ▸">Guarda la demo ▸</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prodotto 02 -->
+  <div class="row flip rv">
+    <div class="row-media"><img data-ph="lab-testing" src="https://picsum.photos/seed/lab21bp2/1400/1100" alt=""></div>
+    <div class="row-txt">
+      <span class="pill-badge" data-it="In sviluppo" data-en="In development">In sviluppo</span>
+      <div class="no">02</div>
+      <h3 data-it="Prodotto 02" data-en="Product 02">Prodotto 02</h3>
+      <div class="cl" data-it="Claim da definire." data-en="Claim to be defined.">Claim da definire.</div>
+      <p data-it="Titolo, claim e descrizione del secondo prodotto del laboratorio. Contenuto da definire insieme: qui va il problema che risolve e per chi." data-en="Title, claim and description of the lab's second product. Content to be defined together: this is where the problem it solves and for whom goes.">Titolo, claim e descrizione del secondo prodotto del laboratorio. Contenuto da definire insieme: qui va il problema che risolve e per chi.</p>
+      <div class="tags"><span>Feature 01</span><span>Feature 02</span><span>Feature 03</span></div>
+      <a href="#" class="btn btn-lg btn-o" style="align-self:flex-start" data-it="Scopri →" data-en="Discover →">Scopri →</a>
+    </div>
+  </div>
+
+  <!-- Prodotto 03 -->
+  <div class="row rv">
+    <div class="row-media"><img data-ph="data-analysis" src="https://picsum.photos/seed/lab21bp3/1400/1100" alt=""></div>
+    <div class="row-txt">
+      <span class="pill-badge" data-it="Ricerca" data-en="Research">Ricerca</span>
+      <div class="no">03</div>
+      <h3 data-it="Prodotto 03" data-en="Product 03">Prodotto 03</h3>
+      <div class="cl" data-it="Claim da definire." data-en="Claim to be defined.">Claim da definire.</div>
+      <p data-it="Titolo, claim e descrizione del terzo prodotto del laboratorio. Contenuto da definire insieme." data-en="Title, claim and description of the lab's third product. Content to be defined together.">Titolo, claim e descrizione del terzo prodotto del laboratorio. Contenuto da definire insieme.</p>
+      <div class="tags"><span>Feature 01</span><span>Feature 02</span><span>Feature 03</span></div>
+      <a href="#" class="btn btn-lg btn-o" style="align-self:flex-start" data-it="Scopri →" data-en="Discover →">Scopri →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ METHOD (dark) ══ -->
+<section class="sec dark" id="method">
+  <div class="inner">
+    <div class="sh rv">
+      <span class="kick mono" data-it="02 — Metodo" data-en="02 — Method">02 — Metodo</span>
+      <h2 data-it="Rigore scientifico, ritmo da startup." data-en="Scientific rigour, startup pace.">Rigore scientifico, ritmo da startup.</h2>
+      <p data-it="Un gruppo ristretto di scienziati dello sport, ingegneri e designer che lavorano sullo stesso tavolo. Tre passaggi, sempre gli stessi." data-en="A small group of sport scientists, engineers and designers working at the same table. Three steps, always the same.">Un gruppo ristretto di scienziati dello sport, ingegneri e designer che lavorano sullo stesso tavolo. Tre passaggi, sempre gli stessi.</p>
+    </div>
+    <div class="mrow">
+      <div class="mcard rv"><div class="mcard-img"><img data-ph="field-observation" src="https://picsum.photos/seed/lab21m1/800/450" alt=""><b>01</b></div><div class="mcard-b"><h4 data-it="Osservare" data-en="Observe">Osservare</h4><p data-it="Partiamo dal campo: sedute reali, atleti reali, vincoli reali. Guardiamo prima di misurare." data-en="We start from the field: real sessions, real athletes, real constraints. We look before we measure.">Partiamo dal campo: sedute reali, atleti reali, vincoli reali. Guardiamo prima di misurare.</p></div></div>
+      <div class="mcard rv d1"><div class="mcard-img"><img data-ph="modelling" src="https://picsum.photos/seed/lab21m2/800/450" alt=""><b>02</b></div><div class="mcard-b"><h4 data-it="Modellare" data-en="Model">Modellare</h4><p data-it="Traduciamo la letteratura scientifica in modelli che reggono sui dati veri, non solo sul paper." data-en="We translate scientific literature into models that hold on real data, not just on paper.">Traduciamo la letteratura scientifica in modelli che reggono sui dati veri, non solo sul paper.</p></div></div>
+      <div class="mcard rv d2"><div class="mcard-img"><img data-ph="validation" src="https://picsum.photos/seed/lab21m3/800/450" alt=""><b>03</b></div><div class="mcard-b"><h4 data-it="Validare" data-en="Validate">Validare</h4><p data-it="Ogni funzione passa dai professionisti prima di arrivare agli utenti. Se non serve, non esce." data-en="Every feature goes through professionals before reaching users. If it isn't useful, it doesn't ship.">Ogni funzione passa dai professionisti prima di arrivare agli utenti. Se non serve, non esce.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TEAM ══ -->
+<section class="sec alt" id="team">
+  <div class="inner">
+    <div class="sh rv">
+      <span class="kick mono">03 — Team</span>
+      <h2 data-it="Poche persone, molto specializzate." data-en="Few people, highly specialised.">Poche persone, molto specializzate.</h2>
+      <p data-it="Profili, foto e biografie da completare. Ogni scheda ospiterà ruolo, specializzazione e link ai profili professionali." data-en="Profiles, photos and bios to be completed. Each card will host role, specialisation and links to professional profiles.">Profili, foto e biografie da completare. Ogni scheda ospiterà ruolo, specializzazione e link ai profili professionali.</p>
+    </div>
+  </div>
+  <div class="rail">
+    <div class="tm rv"><div class="tm-img"><img data-ph="portrait-1" src="https://picsum.photos/seed/lab21bt1/600/700" alt=""></div><div class="tm-b"><h4>Nome Cognome</h4><div class="role" data-it="DIRETTORE SCIENTIFICO" data-en="SCIENTIFIC DIRECTOR">DIRETTORE SCIENTIFICO</div><p data-it="Percorso accademico, pubblicazioni ed esperienza sul campo." data-en="Academic path, publications and field experience.">Percorso accademico, pubblicazioni ed esperienza sul campo.</p></div></div>
+    <div class="tm rv d1"><div class="tm-img"><img data-ph="portrait-2" src="https://picsum.photos/seed/lab21bt2/600/700" alt=""></div><div class="tm-b"><h4>Nome Cognome</h4><div class="role">HEAD OF ENGINEERING</div><p data-it="Percorso tecnico, stack e prodotti costruiti." data-en="Technical path, stack and products built.">Percorso tecnico, stack e prodotti costruiti.</p></div></div>
+    <div class="tm rv d2"><div class="tm-img"><img data-ph="portrait-3" src="https://picsum.photos/seed/lab21bt3/600/700" alt=""></div><div class="tm-b"><h4>Nome Cognome</h4><div class="role">SPORT SCIENTIST</div><p data-it="Specializzazione, sport seguiti e certificazioni." data-en="Specialisation, sports covered and certifications.">Specializzazione, sport seguiti e certificazioni.</p></div></div>
+    <div class="tm rv d3"><div class="tm-img"><img data-ph="portrait-4" src="https://picsum.photos/seed/lab21bt4/600/700" alt=""></div><div class="tm-b"><h4>Nome Cognome</h4><div class="role">PRODUCT DESIGN</div><p data-it="Approccio al design e prodotti curati." data-en="Design approach and products shipped.">Approccio al design e prodotti curati.</p></div></div>
+    <div class="tm rv d3"><div class="tm-img"><img data-ph="portrait-5" src="https://picsum.photos/seed/lab21bt5/600/700" alt=""></div><div class="tm-b"><h4>Nome Cognome</h4><div class="role">DATA SCIENCE</div><p data-it="Modelli, pipeline e validazione statistica." data-en="Models, pipelines and statistical validation.">Modelli, pipeline e validazione statistica.</p></div></div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section class="csplit" id="contact">
+  <div class="cl-side">
+    <div class="cl-in">
+      <span class="kick mono rv" style="color:var(--acc)" data-it="04 — Contatti" data-en="04 — Contact">04 — Contatti</span>
+      <h2 class="rv d1" data-it="Raccontaci il tuo problema di performance." data-en="Tell us about your performance problem.">Raccontaci il tuo problema di performance.</h2>
+      <p class="rv d2" data-it="Club, federazioni, centri di ricerca, professionisti indipendenti: se c'è un dato da leggere o un allenamento da migliorare, probabilmente possiamo aiutarti." data-en="Clubs, federations, research centres, independent professionals: if there is data to read or training to improve, we can probably help.">Club, federazioni, centri di ricerca, professionisti indipendenti: se c'è un dato da leggere o un allenamento da migliorare, probabilmente possiamo aiutarti.</p>
+      <div class="crow rv d3">
+        <div><span class="mono">Email</span><strong>info@lab21.it</strong></div>
+        <div><span class="mono" data-it="Sede" data-en="Office">Sede</span><strong data-it="Città, Italia" data-en="City, Italy">Città, Italia</strong></div>
+        <div><span class="mono">LinkedIn</span><strong>/company/lab21</strong></div>
+        <div><span class="mono" data-it="Risposta" data-en="Response">Risposta</span><strong data-it="entro 48 ore" data-en="within 48 hours">entro 48 ore</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="cr-side">
+    <div class="form rv d1">
+      <h3 data-it="Scrivici due righe" data-en="Drop us a line">Scrivici due righe</h3>
+      <div class="f2">
+        <div class="ff"><label data-it="Nome" data-en="First name">Nome</label><input type="text" placeholder="Mario"></div>
+        <div class="ff"><label data-it="Cognome" data-en="Last name">Cognome</label><input type="text" placeholder="Rossi"></div>
+      </div>
+      <div class="ff"><label>Email</label><input type="email" placeholder="mario@club.it"></div>
+      <div class="ff"><label data-it="Organizzazione" data-en="Organisation">Organizzazione</label><input type="text" placeholder="Club / Federazione / Studio"></div>
+      <div class="ff"><label data-it="Di cosa hai bisogno?" data-en="What do you need?">Di cosa hai bisogno?</label>
+        <select>
+          <option data-it="Informazioni su TrainMind AI" data-en="Information about TrainMind AI">Informazioni su TrainMind AI</option>
+          <option data-it="Un progetto su misura" data-en="A custom project">Un progetto su misura</option>
+          <option data-it="Collaborazione scientifica" data-en="Scientific collaboration">Collaborazione scientifica</option>
+          <option data-it="Altro" data-en="Other">Altro</option>
+        </select>
+      </div>
+      <div class="ff"><label data-it="Messaggio" data-en="Message">Messaggio</label><textarea placeholder="..."></textarea></div>
+      <button class="btn btn-lg btn-a" style="width:100%" data-it="Invia richiesta" data-en="Send request">Invia richiesta</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <div class="f-top">
+      <div>
+        <img class="logo" style="height:30px" src="logo/lab21-wordmark-light.png" alt="LAB21">
+        <p data-it="Laboratorio di innovazione applicata alle scienze dello sport e alla performance umana." data-en="Innovation lab applied to sport science and human performance.">Laboratorio di innovazione applicata alle scienze dello sport e alla performance umana.</p>
+      </div>
+      <div class="f-cols">
+        <div><h5 data-it="Prodotti" data-en="Products">Prodotti</h5><a href="#">TrainMind AI</a><a href="#" data-it="Prodotto 02" data-en="Product 02">Prodotto 02</a><a href="#" data-it="Prodotto 03" data-en="Product 03">Prodotto 03</a></div>
+        <div><h5 data-it="Società" data-en="Company">Società</h5><a href="#" data-it="Metodo" data-en="Method">Metodo</a><a href="#">Team</a><a href="#" data-it="Contatti" data-en="Contact">Contatti</a></div>
+        <div><h5>Social</h5><a href="#">LinkedIn</a><a href="#">Instagram</a><a href="#">YouTube</a></div>
+      </div>
+    </div>
+    <div class="f-bot">
+      <p>© 2026 LAB21 — P.IVA 00000000000</p>
+      <div style="display:flex;gap:22px"><a href="#">Privacy</a><a href="#">Cookie</a><a href="#" data-it="Note legali" data-en="Legal">Note legali</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function setLang(l,el){
+  document.documentElement.lang=l;
+  document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('[data-'+l+']').forEach(n=>n.textContent=n.getAttribute('data-'+l));
+  document.querySelectorAll('[data-'+l+'-html]').forEach(n=>n.innerHTML=n.getAttribute('data-'+l+'-html'));
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(n=>io.observe(n));
+const co=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return; co.unobserve(e.target);
+  const el=e.target,to=+el.dataset.to,t0=performance.now(),dur=1300;
+  const tick=t=>{const p=Math.min((t-t0)/dur,1);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick)};
+  requestAnimationFrame(tick);
+}),{threshold:.5});
+document.querySelectorAll('.cnt').forEach(n=>co.observe(n));
+document.querySelectorAll('img[data-ph]').forEach(img=>{
+  img.onerror=()=>{const p=img.parentElement;p.style.background='linear-gradient(150deg,#101E1A,#00C9A7)';img.remove()};
+});
+</script>
+</body>
+</html>

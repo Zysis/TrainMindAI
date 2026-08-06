@@ -14,7 +14,7 @@ import structlog
 from fastapi import APIRouter, HTTPException
 from openai import APIError
 
-from app.models.schemas import ReportSummaryRequest, ReportSummaryResponse
+from app.models.schemas import ReportSummaryRequest, ReportSummaryResponse, UsageInfo
 from app.services.prompts import get_report_prompt
 from app.clients.openai_client import get_openai_client
 from app.services.cache import cache_get, cache_set
@@ -96,7 +96,7 @@ def _build_cache_key(request: ReportSummaryRequest) -> str:
     """Costruisce una chiave cache deterministica per il report summary."""
     import hashlib
 
-    payload = f"{request.audience}|{request.organization_name}|{request.period_from}|{request.period_to}|{json.dumps(request.data, sort_keys=True, ensure_ascii=False)}"
+    payload = f"{request.audience}|{request.organization_name}|{request.period_from}|{request.period_to}|{request.model or ''}|{json.dumps(request.data, sort_keys=True, ensure_ascii=False)}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
 
 
@@ -139,12 +139,15 @@ async def generate_report_summary(
 
         openai_client = get_openai_client()
 
+        llm_result = None
         try:
-            raw_response = openai_client.chat_completion(
+            llm_result = openai_client.chat_completion_full(
                 messages=messages,
+                model=request.model,
                 temperature=0.4,
                 max_tokens=600,
             )
+            raw_response = llm_result.content
         except Exception as exc:
             logger.warning(
                 "LLM call failed, using fallback summary",
@@ -175,10 +178,12 @@ async def generate_report_summary(
         result = ReportSummaryResponse(
             summary=summary_text,
             highlights=highlights[:5],
-            model=getattr(openai_client, "model", "gpt-4o"),
+            model=llm_result.model if llm_result else "gpt-4o",
+            usage=UsageInfo(**llm_result.as_usage_dict()) if llm_result else None,
         )
 
-        cache_set("report_summary", cache_key, result.model_dump())
+        # Cache senza `usage`: dalla cache non si consumano token.
+        cache_set("report_summary", cache_key, result.model_dump(exclude={"usage"}))
 
         logger.info(
             "Report summary generated",

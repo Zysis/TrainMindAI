@@ -21,6 +21,25 @@ class Source(BaseModel):
     metadata: Optional[dict] = Field(None, description="Metadati aggiuntivi")
 
 
+class UsageInfo(BaseModel):
+    """
+    Consumo token di una singola chiamata al modello.
+
+    Viene restituito a `apps/api`, che lo persiste in `ai_usage_logs`.
+    L'ai-service resta stateless: si limita a riportare il dato.
+    """
+
+    prompt_tokens: int = Field(0, description="Token in input")
+    completion_tokens: int = Field(0, description="Token generati")
+    total_tokens: int = Field(0, description="Totale token")
+    model: str = Field("", description="Modello effettivamente usato")
+    provider: str = Field("openai", description="Provider: openai | local")
+    estimated: bool = Field(
+        False,
+        description="True se i token sono stimati e non riportati dal provider",
+    )
+
+
 class GenerateRequest(BaseModel):
     """Richiesta per generare contenuto (piano di allenamento, sessione, esercizio)."""
 
@@ -35,6 +54,10 @@ class GenerateRequest(BaseModel):
         description="Namespace ChromaDB da cui recuperare il contesto (fallback se context_type non mappato)",
     )
     top_k: int = Field(5, ge=1, le=50, description="Numero di documenti da recuperare")
+    model: Optional[str] = Field(
+        None,
+        description="Override del modello. Passato da apps/api in base all'operazione.",
+    )
 
 
 class GenerateResponse(BaseModel):
@@ -49,6 +72,16 @@ class GenerateResponse(BaseModel):
         None,
         description="Dati strutturati estratti dalla risposta (tabelle, JSON se disponibile)",
     )
+    structured_plan: Optional[dict] = Field(
+        None,
+        description=(
+            "Piano di allenamento strutturato {planName, description, weeks[]}, "
+            "valorizzato solo per context_type='plan'. È il campo che il frontend "
+            "usa per abilitare 'Usa questo piano': deve avere lo stesso nome e la "
+            "stessa forma prodotti dal percorso di emergenza in openai-fallback.ts."
+        ),
+    )
+    usage: Optional[UsageInfo] = Field(None, description="Consumo token della chiamata")
 
 
 class CoachRequest(BaseModel):
@@ -65,6 +98,10 @@ class CoachRequest(BaseModel):
         description="Namespace da cui recuperare il contesto",
     )
     top_k: int = Field(5, ge=1, le=50, description="Numero di documenti da recuperare")
+    model: Optional[str] = Field(
+        None,
+        description="Override del modello. Passato da apps/api in base all'operazione.",
+    )
 
 
 class CoachResponse(BaseModel):
@@ -79,6 +116,7 @@ class CoachResponse(BaseModel):
         default_factory=list,
         description="Riferimenti scientifici citati",
     )
+    usage: Optional[UsageInfo] = Field(None, description="Consumo token della chiamata")
 
 
 class EmbedRequest(BaseModel):
@@ -120,6 +158,10 @@ class ChatRequest(BaseModel):
         description="Namespace da cui recuperare il contesto",
     )
     top_k: int = Field(5, ge=1, le=50, description="Numero di documenti da recuperare")
+    model: Optional[str] = Field(
+        None,
+        description="Override del modello. Passato da apps/api in base all'operazione.",
+    )
 
 
 class ChatResponse(BaseModel):
@@ -134,6 +176,7 @@ class ChatResponse(BaseModel):
         "stop",
         description="Motivo della terminazione (stop, length, etc.)",
     )
+    usage: Optional[UsageInfo] = Field(None, description="Consumo token della chiamata")
 
 
 class HealthCheckResponse(BaseModel):
@@ -161,6 +204,10 @@ class ReportSummaryRequest(BaseModel):
         ..., description="Dati aggregati del report (KPI, tabelle, distribuzioni)"
     )
     language: Literal["it", "en"] = Field("it", description="Lingua del riassunto")
+    model: Optional[str] = Field(
+        None,
+        description="Override del modello. Passato da apps/api in base all'operazione.",
+    )
 
 
 class ReportSummaryResponse(BaseModel):
@@ -172,6 +219,7 @@ class ReportSummaryResponse(BaseModel):
         description="Lista di punti chiave (bullet points)",
     )
     model: str = Field("fallback", description="Modello utilizzato per la generazione")
+    usage: Optional[UsageInfo] = Field(None, description="Consumo token della chiamata")
 
 
 # ============================================================
@@ -195,6 +243,10 @@ class RTPAdvisorRequest(BaseModel):
     athlete_position: Optional[str] = Field(None, description="Ruolo (Point Guard, Center, etc.)")
     sport: str = Field("basketball", description="Sport")
     language: Literal["it", "en"] = Field("it", description="Lingua risposta")
+    model: Optional[str] = Field(
+        None,
+        description="Override del modello. Passato da apps/api in base all'operazione.",
+    )
 
 class RTPExerciseSuggestion(BaseModel):
     """Esercizio suggerito per fase RTP."""
@@ -214,3 +266,4 @@ class RTPAdvisorResponse(BaseModel):
     cautions: list[str] = Field(default_factory=list, description="Avvertenze e precauzioni")
     estimated_days_to_next_phase: Optional[int] = Field(None, description="Stima giorni per prossima fase")
     model: str = Field("fallback", description="Modello utilizzato")
+    usage: Optional[UsageInfo] = Field(None, description="Consumo token della chiamata")

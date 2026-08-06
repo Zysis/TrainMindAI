@@ -36,7 +36,9 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # Service Configuration
-    ai_service_port: int = 3002
+    # Convenzione porte del progetto:
+    # 3000 web · 3001 api · 3002 mobile · 3003 athlete · 3004 ai-service
+    ai_service_port: int = 3004
     ai_service_host: str = "0.0.0.0"
     log_level: str = "info"
 

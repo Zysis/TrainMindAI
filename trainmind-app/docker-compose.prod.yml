@@ -45,7 +45,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: '15m'
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.trainmind.ai}
-      AI_SERVICE_URL: http://ai-service:3002
+      AI_SERVICE_URL: http://ai-service:3004
       RESEND_API_KEY: ${RESEND_API_KEY}
       REPORT_FROM_EMAIL: ${REPORT_FROM_EMAIL:-noreply@trainmind.ai}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
@@ -75,14 +75,14 @@ services:
     container_name: trainmind-ai
     restart: always
     ports:
-      - '3002:3002'
+      - '3004:3004'
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: gpt-4o
       OPENAI_EMBEDDING_MODEL: text-embedding-3-small
       CHROMA_PERSIST_DIRECTORY: /data/chroma
       DATABASE_URL: ${DATABASE_URL}
-      AI_SERVICE_PORT: 3002
+      AI_SERVICE_PORT: 3004
       AI_SERVICE_HOST: 0.0.0.0
       LOG_LEVEL: info
     depends_on:
@@ -93,7 +93,7 @@ services:
     volumes:
       - ai_chroma_data:/data/chroma
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3004/health']
       interval: 30s
       timeout: 10s
       retries: 3

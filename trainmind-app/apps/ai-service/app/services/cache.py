@@ -225,10 +225,15 @@ def build_response_cache_key(
     prompt: str,
     namespaces: Optional[list[str]] = None,
     athlete_id: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> str:
     """
     Costruisce un identificatore univoco per caching di risposte AI.
     Normalizza il prompt per aumentare la cache hit rate.
+
+    `model` fa parte della chiave: cambiando modello le risposte in cache
+    non sono più rappresentative, e servirle sarebbe fuorviante durante
+    una valutazione di qualità fra modelli diversi.
     """
     normalized = prompt.strip().lower()
     parts = [normalized]
@@ -236,4 +241,6 @@ def build_response_cache_key(
         parts.append("|".join(sorted(namespaces)))
     if athlete_id:
         parts.append(athlete_id)
+    if model:
+        parts.append(model)
     return "::".join(parts)

@@ -45,8 +45,34 @@ function isLogOnlyMode(): boolean {
   return !key || key.startsWith(PLACEHOLDER_PREFIX) || key.length < 10;
 }
 
+/**
+ * Diagnostica leggibile della configurazione email, da stampare all'avvio.
+ * Serve a evitare il caso peggiore: credere di spedire davvero mentre si e'
+ * in log-only, senza alcun segnale visibile.
+ */
+export function describeEmailMode(): string {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return 'log-only (RESEND_API_KEY non definita — nessuna email verra inviata)';
+  if (key.startsWith(PLACEHOLDER_PREFIX))
+    return 'log-only (RESEND_API_KEY e ancora il placeholder re_xxx)';
+  if (key.length < 10) return 'log-only (RESEND_API_KEY troppo corta: sembra incompleta)';
+  return `INVIO REALE via Resend (chiave ${key.slice(0, 6)}..., mittente auth "${getAuthFrom()}", mittente report "${getDefaultFrom()}")`;
+}
+
 function getDefaultFrom(): string {
   return process.env.REPORT_FROM_EMAIL || 'TrainMind AI <onboarding@resend.dev>';
+}
+
+/**
+ * Mittente per le email transazionali di autenticazione (reset password).
+ *
+ * Tenuto separato da REPORT_FROM_EMAIL di proposito: i report programmati e
+ * le email di sicurezza hanno destinatari, tono e requisiti di recapito
+ * diversi, e conviene poter cambiare l'uno senza toccare l'altro. Se
+ * AUTH_FROM_EMAIL non e' definita si ricade sul mittente generico.
+ */
+export function getAuthFrom(): string {
+  return process.env.AUTH_FROM_EMAIL || getDefaultFrom();
 }
 
 export async function sendEmail(
@@ -115,6 +141,36 @@ export async function sendEmail(
     log?.error({ err }, 'Email send failed');
     return { success: false, mode: 'sent', error: message };
   }
+}
+
+/**
+ * Build the HTML body for a password reset email.
+ *
+ * `resetUrl` deve essere il link completo e gia' comprensivo del token,
+ * es. https://app.trainmind.it/reset-password?token=abc123
+ */
+export function buildPasswordResetEmailHtml(opts: {
+  firstName: string;
+  resetUrl: string;
+  expiryMinutes: number;
+}): string {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; margin: 0; padding: 24px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">Reimposta la tua password</h1>
+    <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 16px 0;">Ciao ${opts.firstName}, abbiamo ricevuto una richiesta di reimpostazione della password per il tuo account TrainMind AI.</p>
+    <p style="text-align: center; margin: 28px 0;">
+      <a href="${opts.resetUrl}" style="display: inline-block; background: #0f766e; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600;">Reimposta password</a>
+    </p>
+    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">Il link scade tra <strong>${opts.expiryMinutes} minuti</strong> e puo' essere usato una sola volta.</p>
+    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">Se il pulsante non funziona, copia e incolla questo indirizzo nel browser:<br><span style="color: #0f766e; word-break: break-all;">${opts.resetUrl}</span></p>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">Se non hai richiesto tu il reset, ignora questa email: la tua password resta invariata e nessuno puo' accedere al tuo account con questo link.</p>
+  </div>
+</body>
+</html>`;
 }
 
 /**

@@ -84,9 +84,31 @@ services:
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
       ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
       CORS_ORIGIN: https://${APP_DOMAIN}
-      AI_SERVICE_URL: http://ai-service:3002
+      AI_SERVICE_URL: http://ai-service:3004
+      # Routing dei modelli AI: decide quale modello usa ogni operazione.
+      # Vive qui e non nell'ai-service perché /ai/wellness-insights e
+      # /ai/rtp-suggest riusano entrambi l'endpoint /ai/coach: il modello
+      # non è deducibile dall'endpoint e va passato esplicitamente.
+      AI_MODEL_CHAT: ${AI_MODEL_CHAT:-gpt-4o-mini}
+      AI_MODEL_COACH: ${AI_MODEL_COACH:-gpt-4o-mini}
+      AI_MODEL_WELLNESS: ${AI_MODEL_WELLNESS:-gpt-4o-mini}
+      AI_MODEL_REPORT: ${AI_MODEL_REPORT:-gpt-4o-mini}
+      AI_MODEL_GENERATE: ${AI_MODEL_GENERATE:-gpt-4o}
+      AI_MODEL_RTP: ${AI_MODEL_RTP:-gpt-4o}
+      AI_CHAT_HISTORY_LIMIT: ${AI_CHAT_HISTORY_LIMIT:-10}
+      # Usato solo dal percorso di emergenza (chiamata diretta a OpenAI
+      # quando l'ai-service è irraggiungibile), come ripiego finale.
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      # Base del link di reset password inviato per email. Senza questa variabile
+      # il codice ripiega su http://localhost:3000 e gli utenti riceverebbero
+      # link inutilizzabili.
+      APP_PUBLIC_URL: https://${APP_DOMAIN}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       REPORT_FROM_EMAIL: ${REPORT_FROM_EMAIL:-}
+      # Mittente delle email di autenticazione. Il dominio deve essere verificato
+      # su Resend, altrimenti l'invio fallisce con 403.
+      AUTH_FROM_EMAIL: ${AUTH_FROM_EMAIL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     depends_on:
@@ -160,7 +182,9 @@ services:
     container_name: trainmind-ai
     restart: always
     expose:
-      - '3002'
+      # 3004 secondo la convenzione del progetto. Deve combaciare con il CMD
+      # del Dockerfile e con AI_SERVICE_URL del servizio api.
+      - '3004'
     environment:
       # In produzione niente LLM locale: si usa OpenAI
       LOCAL_LLM_ENABLED: 'false'
@@ -169,8 +193,11 @@ services:
       OPENAI_EMBEDDING_MODEL: text-embedding-3-small
       CHROMA_PERSIST_DIRECTORY: /data/chroma
       DATABASE_URL: postgresql://${POSTGRES_USER:-trainmind}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trainmind_db}
-      AI_SERVICE_PORT: 3002
+      AI_SERVICE_PORT: 3004
       AI_SERVICE_HOST: 0.0.0.0
+      # Senza questa variabile la cache delle risposte punta a localhost dentro
+      # il container: ogni risposta identica verrebbe ripagata a OpenAI.
+      REDIS_URL: redis://redis:6379/1
       LOG_LEVEL: info
     depends_on:
       postgres:
@@ -180,7 +207,7 @@ services:
     volumes:
       - ai_chroma_data:/data/chroma
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:3002/health")']
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:3004/health")']
       interval: 30s
       timeout: 10s
       retries: 3

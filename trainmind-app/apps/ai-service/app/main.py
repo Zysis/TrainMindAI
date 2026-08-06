@@ -181,9 +181,19 @@ async def health_check() -> dict[str, Any]:
         llm_client = get_openai_client()
         provider_status = llm_client.get_provider_status()
 
+        # "disabled" e "down" sono due cose diverse: il primo è una scelta di
+        # configurazione (LOCAL_LLM_ENABLED=false, il caso normale), il secondo
+        # è un guasto. Confonderli fa scattare falsi allarmi sul monitoraggio.
+        if not provider_status["local_llm"]["enabled"]:
+            local_llm_status = "disabled"
+        elif provider_status["local_llm"]["healthy"]:
+            local_llm_status = "operational"
+        else:
+            local_llm_status = "down"
+
         services_status = {
             "llm_provider": provider_status["active_llm_provider"],
-            "local_llm": "operational" if provider_status["local_llm"]["healthy"] else "down",
+            "local_llm": local_llm_status,
             "openai": "operational" if provider_status["openai"]["configured"] else "not_configured",
             "chroma": "operational",
         }

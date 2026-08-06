@@ -1,0 +1,136 @@
+{
+  "fatture": [
+    {
+      "hash": "85177240af1981ef",
+      "file": "ionos/IONOS fattura 2026-07-15 - FA_109994109545.pdf",
+      "fornitore": "ionos",
+      "fornitore_nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "numero": "109994109545",
+      "data": "2026-07-15",
+      "descrizione": "IONOS Pack Dominio",
+      "contratto": "112970496",
+      "periodo_da": "2026-07-14",
+      "periodo_a": "2027-07-13",
+      "sconto_a": "2027-07-13",
+      "valuta": "EUR",
+      "cambio": 1.0,
+      "cambio_fonte": "n/a",
+      "netto": 5.0,
+      "iva": 1.1,
+      "iva_percento": 22.0,
+      "totale": 6.1,
+      "netto_eur": 5.0,
+      "iva_eur": 1.1,
+      "totale_eur": 6.1,
+      "voci": [
+        {
+          "n": 1,
+          "descrizione": "Dominio .com",
+          "netto": 15.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 2,
+          "descrizione": "Sconto",
+          "netto": -10.0,
+          "iva_percento": 22.0
+        }
+      ],
+      "avvisi": [],
+      "origine": "pdf"
+    },
+    {
+      "hash": "a967b30c977fd7d9",
+      "file": "ionos/IONOS fattura 2026-07-16 - FA_109994113183.pdf",
+      "fornitore": "ionos",
+      "fornitore_nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "numero": "109994113183",
+      "data": "2026-07-16",
+      "descrizione": "IONOS VPS Linux L+",
+      "contratto": "112969652",
+      "periodo_da": "2026-07-14",
+      "periodo_a": "2026-08-13",
+      "sconto_a": "2026-10-13",
+      "valuta": "EUR",
+      "cambio": 1.0,
+      "cambio_fonte": "n/a",
+      "netto": 5.33,
+      "iva": 1.17,
+      "iva_percento": 22.0,
+      "totale": 6.5,
+      "netto_eur": 5.33,
+      "iva_eur": 1.17,
+      "totale_eur": 6.5,
+      "voci": [
+        {
+          "n": 1,
+          "descrizione": "Tariﬀa base",
+          "netto": 18.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 2,
+          "descrizione": "Sconto",
+          "netto": -13.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 3,
+          "descrizione": "Contributo di attivazione",
+          "netto": 0.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 4,
+          "descrizione": "IP addizionale",
+          "netto": 0.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 5,
+          "descrizione": "IONOS Cloud",
+          "netto": 0.33,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 6,
+          "descrizione": "IP addizionale",
+          "netto": 0.0,
+          "iva_percento": 22.0
+        }
+      ],
+      "avvisi": [],
+      "origine": "pdf"
+    },
+    {
+      "hash": "7d086931899cd565",
+      "file": "openai/Invoice-2B15F888-0001.pdf",
+      "fornitore": "openai",
+      "fornitore_nome": "OpenAI OpCo, LLC",
+      "categoria": "AI / API",
+      "numero": "2B15F888-0001",
+      "data": "2026-07-21",
+      "descrizione": "OpenAI API usage credit",
+      "contratto": null,
+      "periodo_da": null,
+      "periodo_a": null,
+      "sconto_a": null,
+      "valuta": "USD",
+      "cambio": 0.877273,
+      "cambio_fonte": "ricavato dall'IVA in EUR riportata in fattura",
+      "netto": 10.0,
+      "iva": 2.2,
+      "iva_percento": 22.0,
+      "totale": 12.2,
+      "netto_eur": 8.77,
+      "iva_eur": 1.93,
+      "totale_eur": 10.7,
+      "voci": [],
+      "avvisi": [],
+      "origine": "pdf"
+    }
+  ],
+  "ultimo_import": "2026-08-05T15:04:01"
+}

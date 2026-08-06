@@ -182,6 +182,7 @@ export async function trainingRoutes(app: FastifyInstance) {
       planName: string;
       description: string;
       athleteId?: string;
+      teamId?: string;
       weeks: Array<{
         weekNumber: number;
         notes?: string;
@@ -215,6 +216,24 @@ export async function trainingRoutes(app: FastifyInstance) {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + weekCount * 7);
 
+    // La squadra va assegnata come nella creazione manuale: la lista dei piani
+    // filtra per teamId, quindi un piano senza squadra risulta invisibile a
+    // chiunque abbia una squadra selezionata — sembra che non sia stato creato.
+    let teamId: string | null = null;
+    if (body.teamId) {
+      const team = await app.prisma.team.findFirst({
+        where: { id: body.teamId, organizationId },
+        select: { id: true },
+      });
+      if (!team) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Squadra non trovata nella tua organizzazione' },
+        });
+      }
+      teamId = team.id;
+    }
+
     try {
       const result = await app.prisma.$transaction(async (tx) => {
         // 1. Create the plan with weeks
@@ -225,6 +244,7 @@ export async function trainingRoutes(app: FastifyInstance) {
             startDate,
             endDate,
             athleteId: body.athleteId || null,
+            teamId,
             organizationId,
             createdById: userId,
             weeks: {

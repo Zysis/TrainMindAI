@@ -83,10 +83,17 @@ services:
     container_name: trainmind-ai-service
     restart: unless-stopped
     ports:
+      # 3004 dentro e fuori dal container, secondo la convenzione del progetto:
+      # 3000 web · 3001 api · 3002 mobile · 3003 athlete · 3004 ai-service.
+      # La porta è fissata nel CMD del Dockerfile: AI_SERVICE_PORT da sola non
+      # la cambia. Per spostarla servono Dockerfile + compose + AI_SERVICE_URL.
       - '3004:3004'
     environment:
-      # Local LLM (primary — no API cost)
-      LOCAL_LLM_ENABLED: 'true'
+      # Local LLM. Di default disattivato: il servizio llm-server richiede
+      # ~8 GB di RAM e il modello GGUF sul disco. Se non gira, tenerlo a
+      # 'true' fa solo perdere tempo in health check falliti prima di ogni
+      # chiamata a OpenAI. Per usarlo: LOCAL_LLM_ENABLED=true nel .env.
+      LOCAL_LLM_ENABLED: ${LOCAL_LLM_ENABLED:-false}
       LOCAL_LLM_BASE_URL: http://llm-server:8000/v1
       LOCAL_LLM_MODEL: trainmind
       LOCAL_LLM_TIMEOUT: 120
@@ -98,8 +105,13 @@ services:
       CHROMA_PERSIST_DIRECTORY: ./chroma_data
       CHROMA_COLLECTION_PREFIX: trainmind
       DATABASE_URL: postgresql://trainmind:trainmind_dev@postgres:5432/trainmind_db
+      # Deve combaciare con la porta nel CMD del Dockerfile.
       AI_SERVICE_PORT: 3004
       AI_SERVICE_HOST: 0.0.0.0
+      # Senza questa variabile la cache delle risposte punta a localhost
+      # dentro il container, quindi non funziona: ogni risposta identica
+      # viene ripagata a OpenAI.
+      REDIS_URL: redis://redis:6379/1
       LOG_LEVEL: info
     depends_on:
       postgres:

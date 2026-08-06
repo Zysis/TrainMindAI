@@ -1,0 +1,118 @@
+import { create } from 'zustand';
+
+export type Locale = 'it' | 'en' | 'es';
+
+export const LOCALES: Locale[] = ['it', 'en', 'es'];
+export const DEFAULT_LOCALE: Locale = 'it';
+const STORAGE_KEY = 'trainmind-locale';
+/** Marca una scelta esplicita dell'utente (click sullo switcher), distinta
+ *  dal semplice rilevamento automatico della lingua del browser. */
+const EXPLICIT_KEY = 'trainmind-locale-explicit';
+
+interface LocaleState {
+  locale: Locale;
+  /** Cambio lingua avviato dall'utente: persiste in locale e sul profilo. */
+  setLocale: (locale: Locale) => void;
+  /** Applica la lingua che arriva dal profilo utente, senza reinviarla. */
+  applyServerLocale: (locale: string | null | undefined) => void;
+}
+
+export function isLocale(value: unknown): value is Locale {
+  return value === 'it' || value === 'en' || value === 'es';
+}
+
+/**
+ * Prima apertura: proviamo a indovinare dalla lingua del dispositivo
+ * (`es-ES` -> `es`), con fallback italiano. Dalla seconda in poi vince
+ * sempre la scelta salvata in localStorage.
+ */
+function detectBrowserLocale(): Locale {
+  if (typeof navigator === 'undefined') return DEFAULT_LOCALE;
+  const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
+  for (const tag of candidates) {
+    const base = tag.toLowerCase().split('-')[0];
+    if (isLocale(base)) return base;
+  }
+  return DEFAULT_LOCALE;
+}
+
+function getInitialLocale(): Locale {
+  if (typeof window === 'undefined') return DEFAULT_LOCALE;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (isLocale(stored)) return stored;
+  return detectBrowserLocale();
+}
+
+/** true se l'utente ha scelto la lingua a mano: ha la precedenza sul profilo. */
+export function hasExplicitLocale(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(EXPLICIT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function persistLocale(locale: Locale, explicit = false): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, locale);
+    if (explicit) localStorage.setItem(EXPLICIT_KEY, '1');
+  } catch {
+    /* storage pieno o disabilitato: la lingua resta valida per la sessione */
+  }
+}
+
+/**
+ * Salva la lingua sul profilo utente. Silenzioso: se non c'e' un token
+ * valido o la rete fallisce, la preferenza resta comunque in localStorage.
+ */
+export async function pushLocaleToServer(locale: Locale): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const token = localStorage.getItem('athlete_token');
+    if (!token) return;
+    await fetch('/api/v1/auth/locale', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ locale }),
+    });
+  } catch {
+    /* non bloccante */
+  }
+}
+
+export const useLocaleStore = create<LocaleState>((set, get) => ({
+  locale: getInitialLocale(),
+  setLocale: (locale) => {
+    persistLocale(locale, true);
+    set({ locale });
+    void pushLocaleToServer(locale);
+  },
+  applyServerLocale: (locale) => {
+    if (!isLocale(locale)) return;
+    persistLocale(locale);
+    if (get().locale !== locale) set({ locale });
+  },
+}));
+
+export const localeLabels: Record<Locale, string> = {
+  it: 'Italiano',
+  en: 'English',
+  es: 'Español',
+};
+
+export const localeShortLabels: Record<Locale, string> = {
+  it: 'IT',
+  en: 'EN',
+  es: 'ES',
+};
+
+export const localeFlags: Record<Locale, string> = {
+  it: '🇮🇹',
+  en: '🇬🇧',
+  es: '🇪🇸',
+};

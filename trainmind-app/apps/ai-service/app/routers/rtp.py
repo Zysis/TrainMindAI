@@ -11,7 +11,12 @@ import structlog
 from fastapi import APIRouter, HTTPException
 from openai import APIError
 
-from app.models.schemas import RTPAdvisorRequest, RTPAdvisorResponse, RTPExerciseSuggestion
+from app.models.schemas import (
+    RTPAdvisorRequest,
+    RTPAdvisorResponse,
+    RTPExerciseSuggestion,
+    UsageInfo,
+)
 from app.services.rag import get_rag_service
 from app.services.context_builder import get_context_builder
 from app.services.prompts import SYSTEM_PROMPT_RTP_ADVISOR
@@ -157,6 +162,7 @@ async def rtp_advisor(request: RTPAdvisorRequest) -> RTPAdvisorResponse:
             f"rtp:{request.injury_type}:{request.current_phase}:{request.days_in_protocol}",
             namespaces=["protocols", "exercises"],
             athlete_id=request.athlete_name,
+            model=request.model,
         )
         cached = cache_get("response", cache_key)
         if cached:
@@ -190,23 +196,28 @@ async def rtp_advisor(request: RTPAdvisorRequest) -> RTPAdvisorResponse:
         )
 
         # Call LLM
-        response_content = openai_client.chat_completion(
+        llm_result = openai_client.chat_completion_full(
             messages=messages,
+            model=request.model,
             temperature=0.4,  # Lower temp for more consistent structured output
             max_tokens=2048,
         )
+        response_content = llm_result.content
 
-        result = _parse_rtp_response(response_content, openai_client.model_name if hasattr(openai_client, 'model_name') else "gpt-4")
+        result = _parse_rtp_response(response_content, llm_result.model or "gpt-4")
+        result.usage = UsageInfo(**llm_result.as_usage_dict())
 
         logger.info(
             "RTP advisor completed",
             readiness_score=result.readiness_score,
             label=result.readiness_label,
             exercises_count=len(result.suggested_exercises),
+            model=llm_result.model,
+            total_tokens=llm_result.total_tokens,
         )
 
-        # Cache result
-        cache_set("response", cache_key, result.model_dump())
+        # Cache senza `usage`: dalla cache non si consumano token.
+        cache_set("response", cache_key, result.model_dump(exclude={"usage"}))
 
         return result
 

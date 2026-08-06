@@ -18,6 +18,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
+import { getModelForOperation } from '../lib/ai-models.js';
+import { recordAiUsage, extractUsage } from '../services/ai-usage.js';
 import type {
   ReportData,
   ReportMetadata,
@@ -31,7 +33,7 @@ import type {
 import { renderReportPdf } from '../services/report-renderer-pdf.js';
 import { renderReportDocx } from '../services/report-renderer-docx.js';
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3002';
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3004';
 
 // ─── Request schema ─────────────────────────────────────
 
@@ -96,24 +98,67 @@ function acwrBucket(acwr: number): 'low' | 'optimal' | 'high' | 'danger' {
   return 'danger';
 }
 
-async function callAiSummary(payload: {
-  audience: string;
-  organization_name: string;
-  period_from: string;
-  period_to: string;
-  data: unknown;
-}): Promise<string | null> {
+async function callAiSummary(
+  app: FastifyInstance,
+  organizationId: string,
+  userId: string | null,
+  payload: {
+    audience: string;
+    organization_name: string;
+    period_from: string;
+    period_to: string;
+    data: unknown;
+  },
+): Promise<string | null> {
+  // Il riassunto di un report è testo breve e schematico: va sul modello
+  // economico. Il modello va passato esplicitamente all'ai-service.
+  const model = getModelForOperation('REPORT');
+  const startedAt = Date.now();
+
   try {
     const res = await fetch(`${AI_SERVICE_URL}/ai/generate-report-summary`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, language: 'it' }),
+      body: JSON.stringify({ ...payload, language: 'it', model }),
       signal: AbortSignal.timeout(30_000),
     });
-    if (!res.ok) return null;
+
+    if (!res.ok) {
+      void recordAiUsage(app, {
+        organizationId,
+        userId,
+        operation: 'REPORT',
+        endpoint: '/ai/generate-report-summary',
+        requestedModel: model,
+        success: false,
+        errorCode: `HTTP_${res.status}`,
+        durationMs: Date.now() - startedAt,
+      });
+      return null;
+    }
+
     const body = (await res.json()) as { summary?: string };
+    void recordAiUsage(app, {
+      organizationId,
+      userId,
+      operation: 'REPORT',
+      endpoint: '/ai/generate-report-summary',
+      requestedModel: model,
+      usage: extractUsage(body),
+      durationMs: Date.now() - startedAt,
+    });
     return body.summary ?? null;
-  } catch {
+  } catch (err) {
+    void recordAiUsage(app, {
+      organizationId,
+      userId,
+      operation: 'REPORT',
+      endpoint: '/ai/generate-report-summary',
+      requestedModel: model,
+      success: false,
+      errorCode: (err instanceof Error ? err.message : String(err)).slice(0, 60),
+      durationMs: Date.now() - startedAt,
+    });
     return null;
   }
 }
@@ -1042,7 +1087,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
   }
 
   if (includeAISummary) {
-    const aiSummary = await callAiSummary({
+    const aiSummary = await callAiSummary(app, organizationId, userId, {
       audience,
       organization_name: metadata.organizationName,
       period_from: metadata.periodFrom,

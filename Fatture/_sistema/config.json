@@ -1,0 +1,97 @@
+{
+  "_nota": "Configurazione del sistema spese TrainMind. Modifica qui fornitori, contratti e metriche: lo script importa.py legge sempre questo file.",
+
+  "valuta_base": "EUR",
+  "cambio_fallback_usd_eur": 0.877,
+
+  "vps": {
+    "_nota": "Usato per scaricare le metriche utenti dal DB di produzione. Ogni valore e' sovrascrivibile da variabile d'ambiente: VPS_HOST, VPS_DIR, DB_SERVICE, DB_USER, DB_NAME.",
+    "host": "root@31.70.77.212",
+    "cartella": "/opt/trainmind",
+    "servizio_db": "db",
+    "db_utente": "trainmind",
+    "db_nome": "trainmind"
+  },
+
+  "fornitori": {
+    "ionos": {
+      "nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "parser": "ionos",
+      "valuta": "EUR",
+      "note": "VPS Linux L+ e dominio .com. Addebito automatico su carta di credito."
+    },
+    "openai": {
+      "nome": "OpenAI OpCo, LLC",
+      "categoria": "AI / API",
+      "parser": "openai",
+      "valuta": "USD",
+      "note": "Ricariche crediti API a consumo. Reverse charge / OSS UE con IVA italiana 22%."
+    },
+    "resend": {
+      "nome": "Resend",
+      "categoria": "Email transazionali",
+      "parser": "generico",
+      "valuta": "USD",
+      "note": "Attualmente piano Free (100 email/giorno, ~3.000/mese, 1 dominio). Nessuna fattura finche' resta gratuito."
+    }
+  },
+
+  "contratti": [
+    {
+      "id": "ionos-vps",
+      "fornitore": "ionos",
+      "descrizione": "IONOS VPS Linux L+ (trainmind-vps)",
+      "contratto": "112969652",
+      "categoria": "Infrastruttura",
+      "ricorrenza": "mensile",
+      "giorno_rinnovo": 14,
+      "costo_netto_pieno": 18.00,
+      "costo_netto_attuale": 5.00,
+      "iva_percento": 22.0,
+      "sconto_fino_al": "2026-10-13",
+      "nota_sconto": "Sconto -13,00 EUR/mese valido dal 14/07/2026 al 13/10/2026. Dal 14/10/2026 il costo passa a 18,00 EUR netti (21,96 EUR IVA inclusa)."
+    },
+    {
+      "id": "ionos-dominio",
+      "fornitore": "ionos",
+      "descrizione": "Dominio trainmind-app.com (IONOS Pack Dominio)",
+      "contratto": "112970496",
+      "categoria": "Dominio",
+      "ricorrenza": "annuale",
+      "costo_netto_pieno": 15.00,
+      "costo_netto_attuale": 5.00,
+      "iva_percento": 22.0,
+      "scade_il": "2027-07-13",
+      "sconto_fino_al": "2027-07-13",
+      "nota_sconto": "Sconto -10,00 EUR valido dal 14/07/2026 al 13/07/2027. Rinnovo 14/07/2027 a 15,00 EUR netti (18,30 EUR IVA inclusa). Include 0,14 EUR di ICANN Fee."
+    },
+    {
+      "id": "openai-api",
+      "fornitore": "openai",
+      "descrizione": "Crediti API OpenAI (consumo variabile)",
+      "categoria": "AI / API",
+      "ricorrenza": "a consumo",
+      "costo_netto_pieno": null,
+      "costo_netto_attuale": null,
+      "iva_percento": 22.0,
+      "nota_sconto": "Ricarica manuale di crediti. Il costo reale per operazione e' tracciato nella tabella ai_usage_logs del DB TrainMind (campo costUsd)."
+    },
+    {
+      "id": "resend-free",
+      "fornitore": "resend",
+      "descrizione": "Resend - piano Free",
+      "categoria": "Email transazionali",
+      "ricorrenza": "mensile",
+      "costo_netto_pieno": 0.00,
+      "costo_netto_attuale": 0.00,
+      "iva_percento": 22.0,
+      "nota_sconto": "Gratuito fino a 100 email/giorno (~3.000/mese) e 1 dominio. Superata la soglia serve il piano Pro (20 USD/mese). Da monitorare quando crescono gli utenti."
+    }
+  ],
+
+  "fatture_attese": [
+    { "fornitore": "ionos", "cadenza": "mensile", "giorno_atteso": 16, "descrizione": "Fattura VPS" },
+    { "fornitore": "ionos", "cadenza": "annuale", "mese_atteso": 7, "descrizione": "Fattura dominio" }
+  ]
+}

@@ -19,6 +19,15 @@ const allMessages: Record<Locale, AbstractIntlMessages> = {
   es: esMessages as unknown as AbstractIntlMessages,
 };
 
+/**
+ * Fuso orario di default.
+ *
+ * Senza questo, `use-intl` emette ENVIRONMENT_FALLBACK durante il prerender:
+ * il server userebbe il fuso della macchina e il browser quello dell'utente,
+ * producendo markup diversi sulle date. Fissarlo elimina il disallineamento.
+ */
+const DEFAULT_TIME_ZONE = 'Europe/Rome';
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const locale = useLocaleStore((s) => s.locale);
   const [mounted, setMounted] = useState(false);
@@ -37,7 +46,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const messages = allMessages[activeLocale];
 
   return (
-    <NextIntlClientProvider locale={activeLocale} messages={messages}>
+    <NextIntlClientProvider
+      locale={activeLocale}
+      messages={messages}
+      timeZone={DEFAULT_TIME_ZONE}
+    >
       {children}
     </NextIntlClientProvider>
   );

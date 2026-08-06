@@ -14,6 +14,8 @@ export interface AuthUser {
   role: string;
   organizationId: string;
   avatarUrl?: string;
+  /** Lingua UI preferita salvata sul profilo (it | en | es). */
+  locale?: string | null;
   organization?: {
     id: string;
     name: string;
@@ -161,6 +163,69 @@ export async function fetchMe(): Promise<AuthUser | null> {
   if (!res.ok) return null;
   const data: MeResponse = await res.json();
   return data.data.user;
+}
+
+// ─── Password management ─────────────────────────────
+
+/** Cambio password da utente autenticato. */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<string> {
+  const body = JSON.stringify({ currentPassword, newPassword });
+
+  let res = await authFetch(`${AUTH_URL}/change-password`, { method: 'POST', body });
+  let data = await res.json();
+
+  // Se l'access token e' scaduto (UNAUTHORIZED) proviamo un refresh e riproviamo
+  // una sola volta. Attenzione a NON confondere questo caso con
+  // INVALID_CREDENTIALS, che significa "password attuale sbagliata": li'
+  // ritentare sarebbe inutile e mostrerebbe all'utente un errore fuorviante.
+  if (res.status === 401 && data.error?.code === 'UNAUTHORIZED') {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      res = await authFetch(`${AUTH_URL}/change-password`, { method: 'POST', body });
+      data = await res.json();
+    }
+  }
+
+  if (!res.ok) throw new Error(data.error?.message || 'Errore durante il cambio password');
+  // Il server invalida il refresh token: puliamo anche lato client per
+  // evitare che un refresh successivo fallisca in modo silenzioso.
+  clearTokens();
+  return data.data.message as string;
+}
+
+/** Richiede il link di reset. Non rivela se l'email esiste. */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await fetch(`${AUTH_URL}/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'Errore durante la richiesta');
+  return data.data.message as string;
+}
+
+/** Verifica che un token di reset sia ancora valido (per la pagina). */
+export async function verifyResetToken(token: string): Promise<{ email: string }> {
+  const res = await fetch(`${AUTH_URL}/reset-password/${encodeURIComponent(token)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'Link non valido o scaduto');
+  return data.data;
+}
+
+/** Imposta la nuova password consumando il token. */
+export async function resetPassword(token: string, password: string): Promise<string> {
+  const res = await fetch(`${AUTH_URL}/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'Errore durante il reset');
+  return data.data.message as string;
 }
 
 export async function logout(): Promise<void> {

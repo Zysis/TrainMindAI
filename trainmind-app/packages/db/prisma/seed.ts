@@ -247,6 +247,7 @@ async function main() {
         status: sd.dayOffset <= 1 ? 'COMPLETED' : 'PLANNED',
         rpe: sd.dayOffset <= 1 ? Math.floor(Math.random() * 3) + 6 : undefined,
         weekId: 'seed-week-1',
+        organizationId: org.id,
       },
     });
 

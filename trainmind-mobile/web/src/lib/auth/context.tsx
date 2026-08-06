@@ -16,6 +16,12 @@ import {
   getAccessToken,
   type AuthUser,
 } from './api';
+import {
+  hasExplicitLocale,
+  isLocale,
+  pushLocaleToServer,
+  useLocaleStore,
+} from '@/lib/i18n/store';
 
 export interface AuthContextType {
   user: AuthUser | null;
@@ -39,15 +45,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /**
+   * Allinea lingua UI e profilo utente subito dopo l'autenticazione.
+   *
+   * Regola: se l'utente ha scelto la lingua a mano (switcher su landing o
+   * login) quella scelta vince e diventa la lingua di default dell'account.
+   * Altrimenti adottiamo la lingua salvata a profilo, cosi l'account "porta
+   * con se" la sua lingua anche su un dispositivo nuovo.
+   */
+  const syncLocaleWithUser = useCallback((account: AuthUser | null) => {
+    if (!account) return;
+    const { locale: currentLocale, applyServerLocale } = useLocaleStore.getState();
+
+    if (hasExplicitLocale() || !isLocale(account.locale)) {
+      if (account.locale !== currentLocale) void pushLocaleToServer(currentLocale);
+      return;
+    }
+    applyServerLocale(account.locale);
+  }, []);
+
   const refreshUser = useCallback(async () => {
     try {
       const me = await fetchMe();
       setUser(me);
+      syncLocaleWithUser(me);
     } catch {
       setUser(null);
       clearTokens();
     }
-  }, []);
+  }, [syncLocaleWithUser]);
 
   // Check auth state on mount
   useEffect(() => {
@@ -61,10 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init();
   }, [refreshUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await apiLogin(email, password);
-    setUser(response.data.user);
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const response = await apiLogin(email, password);
+      setUser(response.data.user);
+      // La lingua con cui si e' fatto il login diventa quella dell'app.
+      syncLocaleWithUser(response.data.user);
+    },
+    [syncLocaleWithUser],
+  );
 
   const register = useCallback(
     async (input: {
@@ -76,8 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const response = await apiRegister(input);
       setUser(response.data.user);
+      syncLocaleWithUser(response.data.user);
     },
-    [],
+    [syncLocaleWithUser],
   );
 
   const logout = useCallback(async () => {

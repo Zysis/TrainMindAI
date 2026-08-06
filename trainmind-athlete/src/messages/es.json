@@ -1,0 +1,37 @@
+{
+  "auth": {
+    "appName": "TrainMind",
+    "areaLabel": "Área Atleta",
+    "email": "Email",
+    "emailPlaceholder": "nombre@email.com",
+    "password": "Contraseña",
+    "login": "Iniciar sesión",
+    "loggingIn": "Iniciando sesión...",
+    "loginError": "Error de inicio de sesión",
+    "noAccountHint": "¿No tienes cuenta? Pide a tu preparador que te invite."
+  },
+  "nav": {
+    "home": "Inicio",
+    "sessions": "Sesiones",
+    "wellness": "Bienestar",
+    "history": "Historial",
+    "profile": "Perfil"
+  },
+  "header": {
+    "toggleTheme": "Cambiar tema",
+    "notifications": "Notificaciones",
+    "language": "Idioma"
+  },
+  "register": {
+    "title": "Completa tu registro",
+    "invalidInvite": "Invitación no válida o caducada",
+    "checking": "Verificando la invitación..."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "logout": "Cerrar sesión"
+  }
+}

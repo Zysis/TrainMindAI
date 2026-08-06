@@ -1,6 +1,6 @@
 'use client';
 
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useLocaleStore, type Locale } from './store';
 
@@ -9,11 +9,24 @@ import itMessages from '@/messages/it.json';
 import enMessages from '@/messages/en.json';
 import esMessages from '@/messages/es.json';
 
-const allMessages: Record<Locale, Record<string, unknown>> = {
-  it: itMessages,
-  en: enMessages,
-  es: esMessages,
+// Cast via `unknown` necessario: i file di messaggi contengono array
+// (es. moodLabels, sleepLabels) che non rientrano nella signature
+// `AbstractIntlMessages = Record<string, string | AbstractIntlMessages>`
+// ma sono comunque gestiti correttamente da next-intl a runtime.
+const allMessages: Record<Locale, AbstractIntlMessages> = {
+  it: itMessages as unknown as AbstractIntlMessages,
+  en: enMessages as unknown as AbstractIntlMessages,
+  es: esMessages as unknown as AbstractIntlMessages,
 };
+
+/**
+ * Fuso orario di default.
+ *
+ * Senza questo, `use-intl` emette ENVIRONMENT_FALLBACK durante il prerender:
+ * il server userebbe il fuso della macchina e il browser quello dell'utente,
+ * producendo markup diversi sulle date. Fissarlo elimina il disallineamento.
+ */
+const DEFAULT_TIME_ZONE = 'Europe/Rome';
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const locale = useLocaleStore((s) => s.locale);
@@ -30,10 +43,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   // SSR: default to 'it' until mounted
   const activeLocale = mounted ? locale : 'it';
-  const messages = allMessages[activeLocale] as Record<string, unknown>;
+  const messages = allMessages[activeLocale];
 
   return (
-    <NextIntlClientProvider locale={activeLocale} messages={messages}>
+    <NextIntlClientProvider
+      locale={activeLocale}
+      messages={messages}
+      timeZone={DEFAULT_TIME_ZONE}
+    >
       {children}
     </NextIntlClientProvider>
   );

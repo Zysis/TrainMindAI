@@ -8,6 +8,17 @@ export const APP_DESCRIPTION = 'Piattaforma AI per preparatori fisici nel basket
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export const API_PREFIX = '/api/v1';
 
+/**
+ * URL dell'app dedicata agli atleti. Serve a reindirizzarli quando provano ad
+ * accedere alla dashboard dei preparatori (vedi AuthGuard).
+ * In produzione arriva dal build arg NEXT_PUBLIC_ATHLETE_APP_URL.
+ */
+export const ATHLETE_APP_URL =
+  process.env.NEXT_PUBLIC_ATHLETE_APP_URL || 'http://localhost:3003';
+
+/** Ruoli ammessi nella dashboard dei preparatori. ATHLETE è escluso di proposito. */
+export const STAFF_ROLES = ['ADMIN', 'TRAINER', 'MEDICAL', 'VIEWER'] as const;
+
 export const PAGINATION_DEFAULT_LIMIT = 20;
 export const PAGINATION_MAX_LIMIT = 100;
 

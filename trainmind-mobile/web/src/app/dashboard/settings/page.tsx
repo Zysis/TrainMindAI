@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { useLocaleStore, localeLabels, localeFlags, type Locale } from '@/lib/i18n/store';
 import { useEffect, useState } from 'react';
+import { ChangePasswordCard } from '@/components/settings/change-password-card';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -66,6 +67,9 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Password */}
+          <ChangePasswordCard />
 
           {/* Appearance — Theme */}
           <div className="card dark:bg-slate-800 dark:border-slate-700">

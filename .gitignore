@@ -44,3 +44,7 @@ documentation/deploy.txt
 documentation/login*
 
 model_production/llm_model/deploy_package.zip
+
+*.psd
+
+*.tgz

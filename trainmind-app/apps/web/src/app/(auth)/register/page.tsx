@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocaleStore } from '@/lib/i18n/store';
-import { BrandLogo } from '@/components/brand/brand-logo';
+import { AuthShell } from '@/components/auth/auth-shell';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations('auth');
   const { register, isAuthenticated } = useAuth();
   const locale = useLocaleStore((s) => s.locale);
 
@@ -38,17 +40,17 @@ export default function RegisterPage() {
     setError('');
 
     if (password.length < 8) {
-      setError('La password deve contenere almeno 8 caratteri');
+      setError(t('passwordMinLength'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Le password non corrispondono');
+      setError(t('passwordMismatch'));
       return;
     }
 
     if (!acceptTerms || !acceptPrivacy) {
-      setError('Devi accettare i Termini di Servizio e dichiarare la presa visione dell\'Informativa Privacy');
+      setError(t('consentRequired'));
       return;
     }
 
@@ -66,156 +68,241 @@ export default function RegisterPage() {
         acceptPrivacy,
         consentHealthData,
         acceptMarketing,
+        // La lingua scelta qui diventa la lingua di default dell'account.
         uiLanguage: locale,
       });
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore durante la registrazione');
+      setError(err instanceof Error ? err.message : t('registerError'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel — branding */}
-      <div className="hidden w-1/2 items-center justify-center bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900 lg:flex">
-        <div className="max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-500/20 backdrop-blur-sm">
-            <BrandLogo tone="dark" className="h-10 w-10" />
-          </div>
-          <h1 className="text-3xl font-bold text-white">
-            Train<span className="text-teal-400">Mind</span> AI
-          </h1>
-          <p className="mt-3 text-teal-200/70">
-            La piattaforma intelligente per preparatori fisici nel basket
-          </p>
+    <AuthShell>
+      <h2 className="mb-2 text-2xl font-bold text-slate-900">{t('createAccount')}</h2>
+      <p className="mb-8 text-sm text-slate-500">{t('registerSubtitle')}</p>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-danger-500/20 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+          {error}
         </div>
-      </div>
+      )}
 
-      {/* Right panel — registration form */}
-      <div className="flex w-full items-center justify-center px-8 py-8 lg:w-1/2">
-        <div className="w-full max-w-sm">
-          <h2 className="mb-2 text-2xl font-bold text-slate-900">Crea Account</h2>
-          <p className="mb-8 text-sm text-slate-500">Inserisci i tuoi dati per registrarti</p>
-
-          {error && (
-            <div className="mb-4 rounded-lg border border-danger-500/20 bg-danger-50 px-4 py-3 text-sm text-danger-700">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="firstName" className="label mb-1.5 block">Nome</label>
-              <input id="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Il tuo nome" className="input-field" required disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <label htmlFor="lastName" className="label mb-1.5 block">Cognome</label>
-              <input id="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
-                placeholder="Il tuo cognome" className="input-field" required disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <label htmlFor="dateOfBirth" className="label mb-1.5 block">
-                Data di nascita
-              </label>
-              <input id="dateOfBirth" type="date" value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="input-field" required disabled={isSubmitting} />
-              <p className="mt-1 text-xs text-slate-500">
-                Devi avere almeno 14 anni. Se sei minorenne un genitore deve creare l&apos;account per te.
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="label mb-1.5 block">Email</label>
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="nome@squadra.com" className="input-field" required disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="label mb-1.5 block">Password</label>
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimo 8 caratteri" className="input-field" required minLength={8} disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="label mb-1.5 block">Conferma Password</label>
-              <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Ripeti la password" className="input-field" required minLength={8} disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <label htmlFor="organizationName" className="label mb-1.5 block">Nome Organizzazione</label>
-              <input id="organizationName" type="text" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)}
-                placeholder="La tua squadra o organizzazione" className="input-field" required disabled={isSubmitting} />
-            </div>
-
-            {/* ─── CONSENSI: nessuna checkbox pre-flaggata ─── */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Consensi</p>
-
-              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
-                <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                  disabled={isSubmitting} required />
-                <span>
-                  Ho letto e accetto i{' '}
-                  <Link href="/terms" target="_blank" className="font-medium text-teal-700 underline">Termini di Servizio</Link>{' '}
-                  <span className="text-danger-600">*</span>
-                </span>
-              </label>
-
-              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
-                <input type="checkbox" checked={acceptPrivacy} onChange={(e) => setAcceptPrivacy(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                  disabled={isSubmitting} required />
-                <span>
-                  Dichiaro di aver preso visione dell&apos;{' '}
-                  <Link href="/privacy" target="_blank" className="font-medium text-teal-700 underline">Informativa Privacy</Link>{' '}
-                  <span className="text-danger-600">*</span>
-                </span>
-              </label>
-
-              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
-                <input type="checkbox" checked={consentHealthData} onChange={(e) => setConsentHealthData(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                  disabled={isSubmitting} />
-                <span>
-                  <strong>Consenso al trattamento dei dati sanitari/fitness</strong> (art. 9 GDPR) per l&apos;uso
-                  delle funzionalità di IA su piani di allenamento, analisi prestazioni e wellness.
-                  Puoi revocarlo in qualsiasi momento dalle impostazioni.
-                </span>
-              </label>
-
-              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
-                <input type="checkbox" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-                  disabled={isSubmitting} />
-                <span>
-                  Acconsento a ricevere comunicazioni di marketing (newsletter, aggiornamenti prodotto,
-                  offerte). Facoltativo, revocabile.
-                </span>
-              </label>
-            </div>
-
-            <p className="text-xs text-slate-500"><span className="text-danger-600">*</span> Campi obbligatori</p>
-
-            <button type="submit" disabled={isSubmitting || !acceptTerms || !acceptPrivacy}
-              className="w-full rounded-lg bg-teal-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-              {isSubmitting ? 'Creazione in corso...' : 'Crea Account'}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Hai già un account?{' '}
-            <Link href="/login" className="font-medium text-teal-700 hover:text-teal-600">Accedi</Link>
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="firstName" className="label mb-1.5 block">
+            {t('firstName')}
+          </label>
+          <input
+            id="firstName"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder={t('firstNamePlaceholder')}
+            className="input-field"
+            required
+            disabled={isSubmitting}
+          />
         </div>
-      </div>
-    </div>
+
+        <div>
+          <label htmlFor="lastName" className="label mb-1.5 block">
+            {t('lastName')}
+          </label>
+          <input
+            id="lastName"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder={t('lastNamePlaceholder')}
+            className="input-field"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="dateOfBirth" className="label mb-1.5 block">
+            {t('dateOfBirth')}
+          </label>
+          <input
+            id="dateOfBirth"
+            type="date"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            className="input-field"
+            required
+            disabled={isSubmitting}
+          />
+          <p className="mt-1 text-xs text-slate-500">{t('dateOfBirthHint')}</p>
+        </div>
+
+        <div>
+          <label htmlFor="email" className="label mb-1.5 block">
+            {t('email')}
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t('emailPlaceholder')}
+            className="input-field"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="label mb-1.5 block">
+            {t('password')}
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t('passwordHint')}
+            className="input-field"
+            required
+            minLength={8}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className="label mb-1.5 block">
+            {t('confirmPassword')}
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder={t('confirmPasswordPlaceholder')}
+            className="input-field"
+            required
+            minLength={8}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="organizationName" className="label mb-1.5 block">
+            {t('organizationName')}
+          </label>
+          <input
+            id="organizationName"
+            type="text"
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
+            placeholder={t('orgPlaceholder')}
+            className="input-field"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+
+        {/* ─── CONSENSI: nessuna checkbox pre-flaggata ─── */}
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {t('consentsTitle')}
+          </p>
+
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              disabled={isSubmitting}
+              required
+            />
+            <span>
+              {t.rich('consentTerms', {
+                link: (chunks) => (
+                  <Link href="/terms" target="_blank" className="font-medium text-teal-700 underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}{' '}
+              <span className="text-danger-600">*</span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+            <input
+              type="checkbox"
+              checked={acceptPrivacy}
+              onChange={(e) => setAcceptPrivacy(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              disabled={isSubmitting}
+              required
+            />
+            <span>
+              {t.rich('consentPrivacy', {
+                link: (chunks) => (
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    className="font-medium text-teal-700 underline"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}{' '}
+              <span className="text-danger-600">*</span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+            <input
+              type="checkbox"
+              checked={consentHealthData}
+              onChange={(e) => setConsentHealthData(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              disabled={isSubmitting}
+            />
+            <span>
+              {t.rich('consentHealth', {
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+            <input
+              type="checkbox"
+              checked={acceptMarketing}
+              onChange={(e) => setAcceptMarketing(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              disabled={isSubmitting}
+            />
+            <span>{t('consentMarketing')}</span>
+          </label>
+        </div>
+
+        <p className="text-xs text-slate-500">
+          <span className="text-danger-600">*</span> {t('requiredFields')}
+        </p>
+
+        <button
+          type="submit"
+          disabled={isSubmitting || !acceptTerms || !acceptPrivacy}
+          className="w-full rounded-lg bg-teal-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? t('creating') : t('createAccount')}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-slate-500">
+        {t('hasAccount')}{' '}
+        <Link href="/login" className="font-medium text-teal-700 hover:text-teal-600">
+          {t('login')}
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

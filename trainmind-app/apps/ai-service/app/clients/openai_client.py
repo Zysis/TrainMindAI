@@ -8,6 +8,7 @@ Embeddings always use OpenAI (better quality for RAG, low cost).
 """
 
 import logging
+from dataclasses import dataclass
 from typing import Iterator, Optional
 
 import httpx
@@ -24,6 +25,38 @@ from app.config import settings
 from app.services.cache import cache_get, cache_set
 
 logger = structlog.get_logger(__name__)
+
+
+@dataclass
+class LLMResult:
+    """
+    Esito di una chat completion, con il consumo token annesso.
+
+    Serve a non perdere `response.usage`: prima veniva solo loggato e scartato,
+    quindi era impossibile sapere quanto costasse ogni organizzazione.
+    """
+
+    content: str
+    model: str = ""
+    provider: str = "openai"
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    estimated: bool = False
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+    def as_usage_dict(self) -> dict:
+        """Formato atteso da `UsageInfo` in models/schemas.py."""
+        return {
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "total_tokens": self.total_tokens,
+            "model": self.model,
+            "provider": self.provider,
+            "estimated": self.estimated,
+        }
 
 
 class LLMClient:
@@ -117,27 +150,36 @@ class LLMClient:
             self._local_healthy = False
             return False
 
-    def chat_completion(
+    def chat_completion_full(
         self,
         messages: list[dict],
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-    ) -> str:
+        json_mode: bool = False,
+    ) -> LLMResult:
         """
-        Chat completion — tries local model first, falls back to OpenAI.
+        Chat completion che restituisce anche il consumo token.
+
+        È il metodo da usare nei router: `apps/api` persiste `usage` in
+        `ai_usage_logs`. `chat_completion()` resta come wrapper per i
+        chiamanti che vogliono solo la stringa.
 
         Args:
             messages: OpenAI-format message list
             model: Model override (None = use configured default)
             temperature: Creativity (0-1)
             max_tokens: Max response tokens
+            json_mode: se True forza `response_format={"type":"json_object"}`,
+                che garantisce un JSON sintatticamente valido. Il modello locale
+                non lo supporta e viene quindi saltato: meglio una risposta
+                corretta da OpenAI che un JSON malformato dal modello locale.
 
         Returns:
-            Response content string
+            LLMResult con contenuto, modello, provider e token
         """
-        # Try local first
-        if self._check_local_health():
+        # Try local first (salvo json_mode: llama-cpp non garantisce JSON valido)
+        if not json_mode and self._check_local_health():
             try:
                 return self._local_chat(messages, temperature, max_tokens)
             except Exception as e:
@@ -146,7 +188,8 @@ class LLMClient:
 
         # Fallback to OpenAI
         if self.openai_client:
-            return self._openai_chat(messages, model, temperature, max_tokens)
+            return self._openai_chat(messages, model, temperature, max_tokens,
+                                     json_mode)
 
         raise RuntimeError(
             "No LLM provider available. "
@@ -154,15 +197,35 @@ class LLMClient:
             "or set OPENAI_API_KEY in .env"
         )
 
+    def chat_completion(
+        self,
+        messages: list[dict],
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        """Come `chat_completion_full`, ma restituisce solo il testo."""
+        return self.chat_completion_full(
+            messages, model, temperature, max_tokens
+        ).content
+
     def chat_completion_stream(
         self,
         messages: list[dict],
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        usage_sink: Optional[dict] = None,
     ) -> Iterator[str]:
         """
         Streaming chat completion — tries local first, falls back to OpenAI.
+
+        Args:
+            usage_sink: dict opzionale che, a stream concluso, viene popolato
+                con il consumo token (formato `LLMResult.as_usage_dict()`).
+                In streaming il consumo non è noto finché lo stream non finisce,
+                quindi non può essere restituito: il chiamante passa un dict e
+                lo legge dopo aver esaurito l'iteratore.
 
         Yields:
             Text chunks from response
@@ -170,7 +233,9 @@ class LLMClient:
         # Try local first
         if self._check_local_health():
             try:
-                yield from self._local_chat_stream(messages, temperature, max_tokens)
+                yield from self._local_chat_stream(
+                    messages, temperature, max_tokens, usage_sink
+                )
                 return
             except Exception as e:
                 logger.error("Local LLM stream failed, falling back to OpenAI",
@@ -178,15 +243,32 @@ class LLMClient:
 
         # Fallback to OpenAI
         if self.openai_client:
-            yield from self._openai_chat_stream(messages, model, temperature, max_tokens)
+            yield from self._openai_chat_stream(
+                messages, model, temperature, max_tokens, usage_sink
+            )
             return
 
         raise RuntimeError("No LLM provider available.")
 
+    def _estimate_tokens(self, text: str) -> int:
+        """
+        Stima i token di un testo. Usato solo quando il provider non riporta
+        `usage` (modello locale in streaming, o risposta senza usage).
+        """
+        if not text:
+            return 0
+        if self.encoding is not None:
+            try:
+                return len(self.encoding.encode(text))
+            except Exception:
+                pass
+        # Ripiego grossolano: ~4 caratteri per token sull'italiano
+        return max(1, len(text) // 4)
+
     # --- Local LLM methods ---
 
     def _local_chat(self, messages: list[dict], temperature: float,
-                    max_tokens: int) -> str:
+                    max_tokens: int) -> LLMResult:
         """Chat completion via local llama-cpp-python server."""
         logger.debug("Local LLM chat request", num_messages=len(messages))
 
@@ -197,16 +279,29 @@ class LLMClient:
             max_tokens=max_tokens,
         )
 
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content or ""
+        usage = getattr(response, "usage", None)
         logger.debug("Local LLM chat success",
-                     tokens=getattr(response.usage, 'total_tokens', 'N/A'))
-        return content or ""
+                     tokens=getattr(usage, 'total_tokens', 'N/A'))
+
+        # Il modello locale non ha costo per token: i valori servono solo
+        # a tenere lo storico completo.
+        return LLMResult(
+            content=content,
+            model=self.local_model,
+            provider="local",
+            prompt_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+            completion_tokens=getattr(usage, "completion_tokens", 0) or 0,
+            estimated=usage is None,
+        )
 
     def _local_chat_stream(self, messages: list[dict], temperature: float,
-                           max_tokens: int) -> Iterator[str]:
+                           max_tokens: int,
+                           usage_sink: Optional[dict] = None) -> Iterator[str]:
         """Streaming chat via local llama-cpp-python server."""
         logger.debug("Local LLM stream request", num_messages=len(messages))
 
+        buffer = ""
         with self.local_client.chat.completions.create(
             model=self.local_model,
             messages=messages,
@@ -215,10 +310,25 @@ class LLMClient:
             stream=True,
         ) as stream:
             for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                if chunk.choices and chunk.choices[0].delta.content:
+                    piece = chunk.choices[0].delta.content
+                    buffer += piece
+                    yield piece
 
         logger.debug("Local LLM stream finished")
+
+        if usage_sink is not None:
+            prompt_text = "\n".join(m.get("content", "") for m in messages)
+            usage_sink.update(
+                LLMResult(
+                    content="",
+                    model=self.local_model,
+                    provider="local",
+                    prompt_tokens=self._estimate_tokens(prompt_text),
+                    completion_tokens=self._estimate_tokens(buffer),
+                    estimated=True,
+                ).as_usage_dict()
+            )
 
     # --- OpenAI methods ---
 
@@ -228,24 +338,41 @@ class LLMClient:
         reraise=True,
     )
     def _openai_chat(self, messages: list[dict], model: Optional[str],
-                     temperature: float, max_tokens: int) -> str:
+                     temperature: float, max_tokens: int,
+                     json_mode: bool = False) -> LLMResult:
         """Chat completion via OpenAI API (fallback)."""
         use_model = model or self.openai_model
-        logger.debug("OpenAI fallback chat request", model=use_model,
-                     num_messages=len(messages))
+        logger.debug("OpenAI chat request", model=use_model,
+                     num_messages=len(messages), json_mode=json_mode)
+
+        extra = {"response_format": {"type": "json_object"}} if json_mode else {}
 
         response = self.openai_client.chat.completions.create(
             model=use_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            **extra,
         )
 
-        content = response.choices[0].message.content
-        logger.debug("OpenAI chat success",
-                     usage_prompt=response.usage.prompt_tokens,
-                     usage_completion=response.usage.completion_tokens)
-        return content or ""
+        content = response.choices[0].message.content or ""
+        usage = getattr(response, "usage", None)
+        prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
+        completion_tokens = getattr(usage, "completion_tokens", 0) or 0
+
+        logger.info("OpenAI chat success",
+                    model=use_model,
+                    usage_prompt=prompt_tokens,
+                    usage_completion=completion_tokens)
+
+        return LLMResult(
+            content=content,
+            model=use_model,
+            provider="openai",
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            estimated=usage is None,
+        )
 
     @retry(
         stop=stop_after_attempt(3),
@@ -253,10 +380,20 @@ class LLMClient:
         reraise=True,
     )
     def _openai_chat_stream(self, messages: list[dict], model: Optional[str],
-                            temperature: float, max_tokens: int) -> Iterator[str]:
-        """Streaming chat via OpenAI API (fallback)."""
+                            temperature: float, max_tokens: int,
+                            usage_sink: Optional[dict] = None) -> Iterator[str]:
+        """
+        Streaming chat via OpenAI API.
+
+        `stream_options={"include_usage": True}` fa arrivare un chunk finale
+        con l'oggetto `usage`. Senza questa opzione OpenAI non riporta i token
+        in streaming e il consumo della chat resterebbe invisibile.
+        """
         use_model = model or self.openai_model
-        logger.debug("OpenAI fallback stream request", model=use_model)
+        logger.debug("OpenAI stream request", model=use_model)
+
+        captured_usage = None
+        buffer = ""
 
         with self.openai_client.chat.completions.create(
             model=use_model,
@@ -264,12 +401,43 @@ class LLMClient:
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,
+            stream_options={"include_usage": True},
         ) as stream:
             for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                # Il chunk finale con usage arriva con choices vuoto
+                if getattr(chunk, "usage", None):
+                    captured_usage = chunk.usage
+                if chunk.choices and chunk.choices[0].delta.content:
+                    piece = chunk.choices[0].delta.content
+                    buffer += piece
+                    yield piece
 
         logger.debug("OpenAI stream finished")
+
+        if usage_sink is not None:
+            if captured_usage is not None:
+                result = LLMResult(
+                    content="",
+                    model=use_model,
+                    provider="openai",
+                    prompt_tokens=getattr(captured_usage, "prompt_tokens", 0) or 0,
+                    completion_tokens=getattr(captured_usage, "completion_tokens", 0) or 0,
+                    estimated=False,
+                )
+            else:
+                # Ripiego: alcuni proxy compatibili OpenAI ignorano stream_options
+                prompt_text = "\n".join(m.get("content", "") for m in messages)
+                result = LLMResult(
+                    content="",
+                    model=use_model,
+                    provider="openai",
+                    prompt_tokens=self._estimate_tokens(prompt_text),
+                    completion_tokens=self._estimate_tokens(buffer),
+                    estimated=True,
+                )
+                logger.warning("Streaming usage non riportato — token stimati",
+                               model=use_model)
+            usage_sink.update(result.as_usage_dict())
 
     # --- Embeddings (always OpenAI) ---
 

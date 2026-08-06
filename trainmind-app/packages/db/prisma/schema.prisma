@@ -74,6 +74,15 @@ enum ReportScheduleStatus {
   SKIPPED
 }
 
+enum AiOperation {
+  CHAT
+  COACH
+  GENERATE
+  WELLNESS
+  RTP
+  REPORT
+}
+
 // ─── Models ─────────────────────────────────────────────
 
 model Organization {
@@ -106,6 +115,7 @@ model Organization {
   fieldTrainingSessions  FieldTrainingSession[]
   gameSessions           GameSession[]
   athleteInvites         AthleteInvite[]
+  aiUsageLogs            AiUsageLog[]
 
   @@map("organizations")
 }
@@ -119,12 +129,23 @@ model User {
   role           UserRole @default(TRAINER)
   avatarUrl      String?
   isActive       Boolean  @default(true)
+  // Lingua UI preferita (it | en | es). Valorizzata alla registrazione con la
+  // lingua della landing e aggiornata a ogni login / cambio in Impostazioni,
+  // cosi la preferenza segue l'utente su qualsiasi dispositivo.
+  locale         String?
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   refreshToken String?
   lastLoginAt  DateTime?
+
+  // Password reset (flusso "password dimenticata")
+  // Salviamo l'HASH SHA-256 del token, mai il token in chiaro: se il DB viene
+  // compromesso i token pendenti restano inutilizzabili.
+  resetTokenHash   String?   @unique
+  resetTokenExpiry DateTime?
+  passwordChangedAt DateTime?
 
   // Link to Athlete profile (only for ATHLETE role)
   athleteId String? @unique
@@ -967,4 +988,49 @@ model AthleteInvite {
   @@index([email])
   @@index([organizationId, status])
   @@map("athlete_invites")
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI USAGE — Tracciamento consumo token e costi
+// ═══════════════════════════════════════════════════════════
+
+/// Registro del consumo AI reale, una riga per chiamata al modello.
+/// Serve a sapere quanto costa ogni organizzazione e a tarare le quote
+/// prima di introdurre un eventuale sistema di crediti.
+model AiUsageLog {
+  id             String      @id @default(cuid())
+  organizationId String
+  userId         String?
+  operation      AiOperation
+  endpoint       String // es. "/ai/chat"
+  model          String // es. "gpt-4o-mini"
+  provider       String      @default("openai") // openai | local | fallback
+
+  promptTokens     Int @default(0)
+  completionTokens Int @default(0)
+  totalTokens      Int @default(0)
+
+  /// Costo stimato in USD, calcolato al momento della chiamata.
+  /// Salvato qui perché i listini cambiano: ricalcolarlo a posteriori
+  /// falserebbe lo storico.
+  costUsd Decimal @default(0) @db.Decimal(12, 8)
+
+  /// Crediti che l'operazione avrebbe consumato. In questa fase è solo
+  /// informativo: nessuna quota viene applicata.
+  creditsCharged Int @default(0)
+
+  success    Boolean @default(true)
+  errorCode  String?
+  durationMs Int?
+  /// true se i token sono stimati (streaming senza usage, o modello locale)
+  estimated  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, operation])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
 }

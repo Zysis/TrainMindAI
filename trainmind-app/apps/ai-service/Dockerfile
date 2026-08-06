@@ -24,11 +24,16 @@ COPY app/ ./app/
 COPY .env.example .env
 
 # Espone la porta
-EXPOSE 3002
+# 3004 è la porta dell'ai-service nella convenzione del progetto:
+# 3000 web · 3001 api · 3002 mobile · 3003 athlete · 3004 ai-service
+EXPOSE 3004
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3002/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3004/health')" || exit 1
 
-# Avvia l'applicazione
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3002"]
+# Avvia l'applicazione.
+# ATTENZIONE: la porta qui è fissa e AI_SERVICE_PORT non la cambia. Se la
+# modifichi, aggiorna anche EXPOSE, l'healthcheck qui sopra, i tre
+# docker-compose e AI_SERVICE_URL.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3004"]

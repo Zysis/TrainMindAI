@@ -1,66 +1,68 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { LangSwitcher } from '@/components/i18n/lang-switcher';
 
+/** Chiavi delle feature: il testo vive nei file messages/{it,en,es}.json. */
 const FEATURES = [
-  {
-    icon: '🏀',
-    title: 'Gestione atleti',
-    desc: 'Profili completi, metriche antropometriche, storico infortuni e Return-to-Play integrato.',
-  },
-  {
-    icon: '📊',
-    title: 'Analytics avanzati',
-    desc: 'sRPE, ACWR, wellness score, load monitoring con grafici interattivi e alert automatici.',
-  },
-  {
-    icon: '🤖',
-    title: 'AI Coach',
-    desc: 'Assistente AI basato su RAG per suggerimenti su periodizzazione, esercizi e protocolli RTP.',
-  },
-  {
-    icon: '📅',
-    title: 'Periodizzazione',
-    desc: 'Piani a blocchi, ondulati o lineari con simulazione carico/fatica e drag-and-drop.',
-  },
-  {
-    icon: '📋',
-    title: 'Report automatici',
-    desc: 'Report PDF/DOCX schedulati via email per staff tecnico, medico e preparazione atletica.',
-  },
-  {
-    icon: '🔒',
-    title: 'Sicurezza e GDPR',
-    desc: 'Autenticazione JWT, RBAC, crittografia, export dati e gestione consensi GDPR compliant.',
-  },
-];
+  { icon: '🏀', titleKey: 'featAthletesTitle', descKey: 'featAthletesDesc' },
+  { icon: '📊', titleKey: 'featAnalyticsTitle', descKey: 'featAnalyticsDesc' },
+  { icon: '🤖', titleKey: 'featAiTitle', descKey: 'featAiDesc' },
+  { icon: '📅', titleKey: 'featPeriodTitle', descKey: 'featPeriodDesc' },
+  { icon: '📋', titleKey: 'featReportsTitle', descKey: 'featReportsDesc' },
+  { icon: '🔒', titleKey: 'featSecurityTitle', descKey: 'featSecurityDesc' },
+] as const;
 
+/** Piani: nome e prezzo restano invariati, feature e CTA sono tradotte. */
 const PRICING = [
   {
     name: 'Starter',
     price: '29',
-    period: '/mese',
-    features: ['5 atleti', '1 utente', 'Report base', 'Wellness tracking', 'Calendario'],
-    cta: 'Inizia gratis',
+    ctaKey: 'planStarterCta',
+    featureKeys: [
+      'planStarterF1',
+      'planStarterF2',
+      'planStarterF3',
+      'planStarterF4',
+      'planStarterF5',
+    ],
     popular: false,
   },
   {
     name: 'Professional',
     price: '79',
-    period: '/mese',
-    features: ['25 atleti', '5 utenti', 'Report avanzati', 'AI Coach', 'Periodizzazione', 'RTP', 'Analytics'],
-    cta: 'Prova 14 giorni gratis',
+    ctaKey: 'planProCta',
+    featureKeys: [
+      'planProF1',
+      'planProF2',
+      'planProF3',
+      'planProF4',
+      'planProF5',
+      'planProF6',
+      'planProF7',
+    ],
     popular: true,
   },
   {
     name: 'Team',
     price: '149',
-    period: '/mese',
-    features: ['Atleti illimitati', 'Utenti illimitati', 'Tutto Professional', 'API access', 'Supporto prioritario', 'Onboarding dedicato'],
-    cta: 'Contattaci',
+    ctaKey: 'planTeamCta',
+    featureKeys: [
+      'planTeamF1',
+      'planTeamF2',
+      'planTeamF3',
+      'planTeamF4',
+      'planTeamF5',
+      'planTeamF6',
+    ],
     popular: false,
   },
-];
+] as const;
 
 export default function LandingPage() {
+  const t = useTranslations('landing');
+
   return (
     <div className="min-h-screen bg-white">
       {/* ─── Navbar ─────────────────────────────────────── */}
@@ -74,41 +76,40 @@ export default function LandingPage() {
             </div>
             <span className="text-lg font-bold text-slate-900">TrainMind <span className="text-teal-600">AI</span></span>
           </div>
-          <div className="hidden items-center gap-6 md:flex">
-            <a href="#features" className="text-sm text-slate-600 hover:text-slate-900">Funzionalità</a>
-            <a href="#pricing" className="text-sm text-slate-600 hover:text-slate-900">Prezzi</a>
-            <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-slate-900">Accedi</Link>
-            <Link href="/login" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700">Prova gratis</Link>
+          <div className="flex items-center gap-3 md:gap-6">
+            <a href="#features" className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline">{t('navFeatures')}</a>
+            <a href="#pricing" className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline">{t('navPricing')}</a>
+            {/* Lo switcher scrive sullo store globale: la lingua resta
+                impostata anche dopo aver cliccato "Accedi". */}
+            <LangSwitcher />
+            <Link href="/login" className="hidden text-sm font-medium text-slate-700 hover:text-slate-900 md:inline">{t('navLogin')}</Link>
+            <Link href="/login" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700">{t('navTrial')}</Link>
           </div>
         </div>
       </nav>
 
       {/* ─── Hero ───────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-32 pb-20">
+      <section className="relative overflow-hidden pb-20 pt-32">
         <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-indigo-50" />
         <div className="relative mx-auto max-w-6xl px-6 text-center">
           <div className="mx-auto max-w-3xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-1.5 text-sm text-teal-700">
               <span className="h-2 w-2 rounded-full bg-teal-500" />
-              Piattaforma AI per il basket
+              {t('heroBadge')}
             </div>
             <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-slate-900 md:text-6xl">
-              Preparazione atletica <br />
+              {t('heroTitle1')} <br />
               <span className="bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent">
-                potenziata dall&apos;AI
+                {t('heroTitle2')}
               </span>
             </h1>
-            <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-600">
-              TrainMind AI aiuta preparatori fisici nel basket a pianificare allenamenti,
-              monitorare il carico, gestire infortuni e prendere decisioni basate sui dati.
-              Tutto in un&apos;unica piattaforma.
-            </p>
+            <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-600">{t('heroSubtitle')}</p>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link href="/login" className="rounded-xl bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700 hover:shadow-xl hover:shadow-teal-500/30">
-                Inizia la prova gratuita
+                {t('heroCtaPrimary')}
               </Link>
               <a href="#features" className="rounded-xl border border-slate-300 px-8 py-3.5 text-base font-semibold text-slate-700 transition hover:bg-slate-50">
-                Scopri di più
+                {t('heroCtaSecondary')}
               </a>
             </div>
           </div>
@@ -119,18 +120,15 @@ export default function LandingPage() {
       <section id="features" className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-slate-900">Tutto quello che serve al tuo staff</h2>
-            <p className="mx-auto max-w-2xl text-slate-600">
-              Dalla gestione degli atleti alla periodizzazione AI-assisted,
-              TrainMind AI copre l&apos;intero workflow della preparazione atletica.
-            </p>
+            <h2 className="mb-4 text-3xl font-bold text-slate-900">{t('featuresTitle')}</h2>
+            <p className="mx-auto max-w-2xl text-slate-600">{t('featuresSubtitle')}</p>
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-teal-200 hover:shadow-lg hover:shadow-teal-500/5">
+              <div key={f.titleKey} className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-teal-200 hover:shadow-lg hover:shadow-teal-500/5">
                 <div className="mb-4 text-3xl">{f.icon}</div>
-                <h3 className="mb-2 text-lg font-semibold text-slate-900">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-600">{f.desc}</p>
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">{t(f.titleKey)}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{t(f.descKey)}</p>
               </div>
             ))}
           </div>
@@ -141,38 +139,34 @@ export default function LandingPage() {
       <section id="pricing" className="bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-slate-900">Piani e prezzi</h2>
-            <p className="mx-auto max-w-xl text-slate-600">
-              Scegli il piano adatto alla tua organizzazione. Tutti i piani includono 14 giorni di prova gratuita.
-            </p>
+            <h2 className="mb-4 text-3xl font-bold text-slate-900">{t('pricingTitle')}</h2>
+            <p className="mx-auto max-w-xl text-slate-600">{t('pricingSubtitle')}</p>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
             {PRICING.map((plan) => (
               <div
                 key={plan.name}
                 className={`relative rounded-2xl border bg-white p-8 ${
-                  plan.popular
-                    ? 'border-teal-500 shadow-xl shadow-teal-500/10'
-                    : 'border-slate-200'
+                  plan.popular ? 'border-teal-500 shadow-xl shadow-teal-500/10' : 'border-slate-200'
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-teal-600 px-4 py-1 text-xs font-semibold text-white">
-                    Più popolare
+                    {t('pricingPopular')}
                   </div>
                 )}
                 <h3 className="mb-2 text-xl font-bold text-slate-900">{plan.name}</h3>
                 <div className="mb-6 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-slate-900">&euro;{plan.price}</span>
-                  <span className="text-slate-500">{plan.period}</span>
+                  <span className="text-slate-500">{t('pricingPeriod')}</span>
                 </div>
                 <ul className="mb-8 space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-slate-600">
+                  {plan.featureKeys.map((featureKey) => (
+                    <li key={featureKey} className="flex items-center gap-2 text-sm text-slate-600">
                       <svg className="h-4 w-4 flex-shrink-0 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      {f}
+                      {t(featureKey)}
                     </li>
                   ))}
                 </ul>
@@ -184,7 +178,7 @@ export default function LandingPage() {
                       : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {plan.cta}
+                  {t(plan.ctaKey)}
                 </Link>
               </div>
             ))}
@@ -195,12 +189,10 @@ export default function LandingPage() {
       {/* ─── CTA ────────────────────────────────────────── */}
       <section className="py-20">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="mb-4 text-3xl font-bold text-slate-900">Pronto a trasformare la tua preparazione atletica?</h2>
-          <p className="mx-auto mb-8 max-w-xl text-slate-600">
-            Unisciti ai preparatori fisici che usano TrainMind AI per prendere decisioni migliori, più velocemente.
-          </p>
+          <h2 className="mb-4 text-3xl font-bold text-slate-900">{t('ctaTitle')}</h2>
+          <p className="mx-auto mb-8 max-w-xl text-slate-600">{t('ctaSubtitle')}</p>
           <Link href="/login" className="inline-flex rounded-xl bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700">
-            Inizia la prova gratuita
+            {t('ctaButton')}
           </Link>
         </div>
       </section>
@@ -217,11 +209,11 @@ export default function LandingPage() {
             <span className="text-sm font-semibold text-slate-900">TrainMind AI</span>
           </div>
           <div className="flex gap-6 text-sm text-slate-500">
-            <a href="#features" className="hover:text-slate-700">Funzionalità</a>
-            <a href="#pricing" className="hover:text-slate-700">Prezzi</a>
-            <a href="mailto:info@trainmind.ai" className="hover:text-slate-700">Contatti</a>
+            <a href="#features" className="hover:text-slate-700">{t('navFeatures')}</a>
+            <a href="#pricing" className="hover:text-slate-700">{t('navPricing')}</a>
+            <a href="mailto:info@trainmind.ai" className="hover:text-slate-700">{t('footerContact')}</a>
           </div>
-          <p className="text-sm text-slate-400">&copy; {new Date().getFullYear()} TrainMind AI. Tutti i diritti riservati.</p>
+          <p className="text-sm text-slate-400">&copy; {new Date().getFullYear()} TrainMind AI. {t('footerRights')}</p>
         </div>
       </footer>
     </div>

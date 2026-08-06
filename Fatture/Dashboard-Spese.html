@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrainMind — Spese infrastruttura</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#0f1720;--card:#182430;--bd:#24384a;--tx:#e8eef4;--mut:#8fa6ba;
+        --acc:#4da3ff;--ok:#3ecf8e;--warn:#ffb020;--bad:#ff5c5c;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:28px 20px 60px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{margin:0 0 4px;font-size:26px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:26px}
+  h2{font-size:16px;margin:34px 0 12px;color:var(--acc);
+     text-transform:uppercase;letter-spacing:.7px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  .kpi{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
+  .kpi .lab{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .val{font-size:25px;font-weight:650;margin-top:6px}
+  .kpi .note{color:var(--mut);font-size:11.5px;margin-top:5px;line-height:1.45}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--mut);font-weight:600;font-size:11px;
+     text-transform:uppercase;letter-spacing:.5px;padding:9px 10px;border-bottom:1px solid var(--bd)}
+  td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+  .p-alta{background:rgba(255,92,92,.16);color:var(--bad)}
+  .p-media{background:rgba(255,176,32,.16);color:var(--warn)}
+  .p-bassa{background:rgba(62,207,142,.14);color:var(--ok)}
+  .p-scaduto{background:rgba(143,166,186,.16);color:var(--mut)}
+  .empty{color:var(--mut);font-size:13px;padding:14px 4px}
+  .warn{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.35);
+        border-radius:10px;padding:13px 16px;font-size:13px;color:#ffd9a0}
+  canvas{max-height:270px}
+  /* barra di aggiornamento */
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .azioni{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  button{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:9px;
+         padding:9px 16px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+  button:hover:not(:disabled){border-color:var(--acc)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.primario{background:var(--acc);border-color:var(--acc);color:#06121f}
+  button.primario:hover:not(:disabled){filter:brightness(1.1)}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);cursor:pointer}
+  #esito{margin:14px 0 0;border-radius:10px;font-size:12.5px;display:none}
+  #esito.on{display:block}
+  #esito .head{padding:11px 15px;font-weight:600}
+  #esito.ok .head{background:rgba(62,207,142,.14);color:var(--ok)}
+  #esito.ko .head{background:rgba(255,92,92,.14);color:var(--bad)}
+  #esito.run .head{background:rgba(77,163,255,.14);color:var(--acc)}
+  #esito pre{margin:0;padding:13px 15px;background:var(--card);border:1px solid var(--bd);
+             border-top:none;border-radius:0 0 10px 10px;white-space:pre-wrap;
+             font-family:ui-monospace,"Cascadia Code",Consolas,monospace;
+             font-size:12px;line-height:1.55;color:var(--mut);max-height:290px;overflow:auto}
+  .hint{background:var(--card);border:1px solid var(--bd);border-radius:10px;
+        padding:12px 15px;font-size:12.5px;color:var(--mut);line-height:1.6;max-width:430px}
+  .hint code{background:rgba(255,255,255,.07);padding:2px 6px;border-radius:5px;
+             font-family:ui-monospace,Consolas,monospace;color:var(--tx)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>TrainMind — Spese infrastruttura</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div id="barra"></div>
+  </div>
+  <div id="esito"><div class="head"></div><pre></pre></div>
+  <div id="app"></div>
+</div>
+<script>
+const D = {"analisi": {"generato_il": "2026-08-05T15:04:01", "n_fatture": 3, "totale_storico": 23.3, "iva_storica": 4.2, "per_mese": {"2026-07": {"netto": 19.1, "iva": 4.2, "totale": 23.3}}, "per_anno": {"2026": {"netto": 19.1, "iva": 4.2, "totale": 23.3}}, "per_fornitore": {"IONOS SE": 12.6, "OpenAI OpCo, LLC": 10.7}, "per_categoria": {"Infrastruttura": 12.6, "AI / API": 10.7}, "ricorrente_mensile": 6.61, "ricorrente_annuale": 79.3, "ricorrente_mensile_senza_sconti": 23.48, "scadenze": [{"contratto": "IONOS VPS Linux L+ (trainmind-vps)", "tipo": "Fine sconto", "data": "2026-10-13", "giorni": 69, "aumento_eur": 15.86, "periodicita": "mensile", "nota": "Sconto -13,00 EUR/mese valido dal 14/07/2026 al 13/10/2026. Dal 14/10/2026 il costo passa a 18,00 EUR netti (21,96 EUR IVA inclusa).", "urgenza": "media"}, {"contratto": "Dominio trainmind-app.com (IONOS Pack Dominio)", "tipo": "Fine sconto + Rinnovo", "data": "2027-07-13", "giorni": 342, "aumento_eur": 12.2, "periodicita": "annuale", "nota": "Sconto -10,00 EUR valido dal 14/07/2026 al 13/07/2027. Rinnovo 14/07/2027 a 15,00 EUR netti (18,30 EUR IVA inclusa). Include 0,14 EUR di ICANN Fee.", "urgenza": "bassa"}], "previsione_12m": [{"mese": "2026-08", "previsto": 6.1}, {"mese": "2026-09", "previsto": 6.1}, {"mese": "2026-10", "previsto": 6.1}, {"mese": "2026-11", "previsto": 21.96}, {"mese": "2026-12", "previsto": 21.96}, {"mese": "2027-01", "previsto": 21.96}, {"mese": "2027-02", "previsto": 21.96}, {"mese": "2027-03", "previsto": 21.96}, {"mese": "2027-04", "previsto": 21.96}, {"mese": "2027-05", "previsto": 21.96}, {"mese": "2027-06", "previsto": 21.96}, {"mese": "2027-07", "previsto": 40.26}], "previsione_totale_12m": 234.24, "iva_per_trimestre": {"2026 T3": 4.2}, "breakeven": null, "metriche_presenti": false}, "fatture": [{"hash": "85177240af1981ef", "file": "ionos/IONOS fattura 2026-07-15 - FA_109994109545.pdf", "fornitore": "ionos", "fornitore_nome": "IONOS SE", "categoria": "Infrastruttura", "numero": "109994109545", "data": "2026-07-15", "descrizione": "IONOS Pack Dominio", "contratto": "112970496", "periodo_da": "2026-07-14", "periodo_a": "2027-07-13", "sconto_a": "2027-07-13", "valuta": "EUR", "cambio": 1.0, "cambio_fonte": "n/a", "netto": 5.0, "iva": 1.1, "iva_percento": 22.0, "totale": 6.1, "netto_eur": 5.0, "iva_eur": 1.1, "totale_eur": 6.1, "voci": [{"n": 1, "descrizione": "Dominio .com", "netto": 15.0, "iva_percento": 22.0}, {"n": 2, "descrizione": "Sconto", "netto": -10.0, "iva_percento": 22.0}], "avvisi": [], "origine": "pdf"}, {"hash": "a967b30c977fd7d9", "file": "ionos/IONOS fattura 2026-07-16 - FA_109994113183.pdf", "fornitore": "ionos", "fornitore_nome": "IONOS SE", "categoria": "Infrastruttura", "numero": "109994113183", "data": "2026-07-16", "descrizione": "IONOS VPS Linux L+", "contratto": "112969652", "periodo_da": "2026-07-14", "periodo_a": "2026-08-13", "sconto_a": "2026-10-13", "valuta": "EUR", "cambio": 1.0, "cambio_fonte": "n/a", "netto": 5.33, "iva": 1.17, "iva_percento": 22.0, "totale": 6.5, "netto_eur": 5.33, "iva_eur": 1.17, "totale_eur": 6.5, "voci": [{"n": 1, "descrizione": "Tariﬀa base", "netto": 18.0, "iva_percento": 22.0}, {"n": 2, "descrizione": "Sconto", "netto": -13.0, "iva_percento": 22.0}, {"n": 3, "descrizione": "Contributo di attivazione", "netto": 0.0, "iva_percento": 22.0}, {"n": 4, "descrizione": "IP addizionale", "netto": 0.0, "iva_percento": 22.0}, {"n": 5, "descrizione": "IONOS Cloud", "netto": 0.33, "iva_percento": 22.0}, {"n": 6, "descrizione": "IP addizionale", "netto": 0.0, "iva_percento": 22.0}], "avvisi": [], "origine": "pdf"}, {"hash": "7d086931899cd565", "file": "openai/Invoice-2B15F888-0001.pdf", "fornitore": "openai", "fornitore_nome": "OpenAI OpCo, LLC", "categoria": "AI / API", "numero": "2B15F888-0001", "data": "2026-07-21", "descrizione": "OpenAI API usage credit", "contratto": null, "periodo_da": null, "periodo_a": null, "sconto_a": null, "valuta": "USD", "cambio": 0.877273, "cambio_fonte": "ricavato dall'IVA in EUR riportata in fattura", "netto": 10.0, "iva": 2.2, "iva_percento": 22.0, "totale": 12.2, "netto_eur": 8.77, "iva_eur": 1.93, "totale_eur": 10.7, "voci": [], "avvisi": [], "origine": "pdf"}], "contratti": [{"id": "ionos-vps", "fornitore": "ionos", "descrizione": "IONOS VPS Linux L+ (trainmind-vps)", "contratto": "112969652", "categoria": "Infrastruttura", "ricorrenza": "mensile", "giorno_rinnovo": 14, "costo_netto_pieno": 18.0, "costo_netto_attuale": 5.0, "iva_percento": 22.0, "sconto_fino_al": "2026-10-13", "nota_sconto": "Sconto -13,00 EUR/mese valido dal 14/07/2026 al 13/10/2026. Dal 14/10/2026 il costo passa a 18,00 EUR netti (21,96 EUR IVA inclusa)."}, {"id": "ionos-dominio", "fornitore": "ionos", "descrizione": "Dominio trainmind-app.com (IONOS Pack Dominio)", "contratto": "112970496", "categoria": "Dominio", "ricorrenza": "annuale", "costo_netto_pieno": 15.0, "costo_netto_attuale": 5.0, "iva_percento": 22.0, "scade_il": "2027-07-13", "sconto_fino_al": "2027-07-13", "nota_sconto": "Sconto -10,00 EUR valido dal 14/07/2026 al 13/07/2027. Rinnovo 14/07/2027 a 15,00 EUR netti (18,30 EUR IVA inclusa). Include 0,14 EUR di ICANN Fee."}, {"id": "openai-api", "fornitore": "openai", "descrizione": "Crediti API OpenAI (consumo variabile)", "categoria": "AI / API", "ricorrenza": "a consumo", "costo_netto_pieno": null, "costo_netto_attuale": null, "iva_percento": 22.0, "nota_sconto": "Ricarica manuale di crediti. Il costo reale per operazione e' tracciato nella tabella ai_usage_logs del DB TrainMind (campo costUsd)."}, {"id": "resend-free", "fornitore": "resend", "descrizione": "Resend - piano Free", "categoria": "Email transazionali", "ricorrenza": "mensile", "costo_netto_pieno": 0.0, "costo_netto_attuale": 0.0, "iva_percento": 22.0, "nota_sconto": "Gratuito fino a 100 email/giorno (~3.000/mese) e 1 dominio. Superata la soglia serve il piano Pro (20 USD/mese). Da monitorare quando crescono gli utenti."}]};
+const A = D.analisi;
+const eur = n => (n===null||n===undefined) ? "—" :
+  new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n);
+const mesiIt=["","gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+const mLab = m => { const [a,b]=m.split("-"); return mesiIt[+b]+" "+a.slice(2); };
+const esc = s => String(s??"").replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+
+document.getElementById("sub").textContent =
+  "Aggiornato il " + A.generato_il.replace("T"," ") + " · " + A.n_fatture + " fatture registrate";
+
+/* ---- barra di aggiornamento -------------------------------------------
+   Il bottone puo' funzionare solo se la pagina arriva dal server locale.
+   Aperta con doppio clic (file://) il browser vieta di lanciare programmi,
+   quindi in quel caso mostro il comando da copiare invece di un bottone finto. */
+const vivo = location.protocol === "http:" || location.protocol === "https:";
+const barra = document.getElementById("barra");
+const esito = document.getElementById("esito");
+
+if (vivo) {
+  barra.innerHTML = `<div class="azioni">
+      <label class="chk"><input type="checkbox" id="chkVps" checked> includi metriche dal VPS</label>
+      <button id="btnAgg" class="primario">Aggiorna ora</button>
+    </div>`;
+  document.getElementById("btnAgg").addEventListener("click", aggiorna);
+} else {
+  barra.innerHTML = `<div class="hint">
+    Per aggiornare con un bottone lancia <code>aggiorna.bat --dashboard</code>
+    (o <code>bash aggiorna.sh --dashboard</code>): apre questa stessa pagina da un
+    server locale, dove il bottone funziona.<br><br>
+    Aperta con un doppio clic il browser non puo' eseguire programmi sul computer,
+    quindi qui il bottone sarebbe solo decorativo.</div>`;
+}
+
+function mostra(stato, titolo, testo) {
+  esito.className = "on " + stato;
+  esito.querySelector(".head").textContent = titolo;
+  const pre = esito.querySelector("pre");
+  pre.textContent = testo || "";
+  pre.style.display = testo ? "" : "none";
+}
+
+async function aggiorna() {
+  const btn = document.getElementById("btnAgg");
+  const conVps = document.getElementById("chkVps").checked;
+  btn.disabled = true;
+  const testoOrig = btn.textContent;
+  btn.textContent = "Aggiornamento…";
+  mostra("run", conVps ? "In corso — collegamento al VPS, lettura fatture, report…"
+                       : "In corso — lettura fatture, report…", "");
+  try {
+    const r = await fetch("/api/aggiorna?metriche=" + (conVps ? "1" : "0"), { method: "POST" });
+    const d = await r.json();
+    if (d.ok) {
+      mostra("ok", "Fatto — ricarico la pagina…", d.output);
+      setTimeout(() => location.reload(), 1400);
+    } else {
+      mostra("ko", "L'aggiornamento non e' andato a buon fine", d.output || d.errore || "");
+      btn.disabled = false; btn.textContent = testoOrig;
+    }
+  } catch (e) {
+    mostra("ko", "Server locale non raggiungibile",
+      "La finestra del terminale che serve la dashboard e' stata chiusa?\n\n" + e);
+    btn.disabled = false; btn.textContent = testoOrig;
+  }
+}
+
+const be = A.breakeven;
+const prossima = A.scadenze.find(s => s.giorni >= 0);
+
+let h = "";
+
+/* KPI */
+h += `<div class="kpis">
+  <div class="kpi"><div class="lab">Costo ricorrente / mese</div>
+    <div class="val">${eur(A.ricorrente_mensile)}</div>
+    <div class="note">IVA inclusa, ai prezzi scontati di oggi</div></div>
+  <div class="kpi"><div class="lab">Su base annua</div>
+    <div class="val">${eur(A.ricorrente_annuale)}</div>
+    <div class="note">Senza sconti sarebbe ${eur(A.ricorrente_mensile_senza_sconti*12)}</div></div>
+  <div class="kpi"><div class="lab">Previsione 12 mesi</div>
+    <div class="val">${eur(A.previsione_totale_12m)}</div>
+    <div class="note">Tiene conto della fine degli sconti</div></div>
+  <div class="kpi"><div class="lab">Totale speso finora</div>
+    <div class="val">${eur(A.totale_storico)}</div>
+    <div class="note">di cui ${eur(A.iva_storica)} di IVA</div></div>
+</div>`;
+
+/* Scadenze */
+h += `<h2>Rinnovi e scadenze</h2><div class="card">`;
+if (A.scadenze.length) {
+  h += `<table><thead><tr><th>Data</th><th>Tra</th><th>Tipo</th><th>Contratto</th>
+        <th class="num">Impatto / mese</th><th>Cosa succede</th></tr></thead><tbody>`;
+  for (const s of A.scadenze) {
+    h += `<tr>
+      <td>${s.data}</td>
+      <td><span class="pill p-${s.urgenza}">${s.giorni<0?"scaduto":s.giorni+" gg"}</span></td>
+      <td>${esc(s.tipo)}</td><td>${esc(s.contratto)}</td>
+      <td class="num">${s.aumento_eur?("+"+eur(s.aumento_eur)):"—"}</td>
+      <td style="color:var(--mut);font-size:12px">${esc(s.nota||"")}</td></tr>`;
+  }
+  h += `</tbody></table>`;
+} else { h += `<div class="empty">Nessuna scadenza configurata.</div>`; }
+h += `</div>`;
+
+/* Grafici */
+h += `<h2>Andamento</h2><div class="grid2">
+  <div class="card"><canvas id="cMese"></canvas></div>
+  <div class="card"><canvas id="cPrev"></canvas></div>
+</div>`;
+
+h += `<div class="grid2" style="margin-top:16px">
+  <div class="card"><canvas id="cForn"></canvas></div>
+  <div class="card">
+    <table><thead><tr><th>Categoria</th><th class="num">Totale</th></tr></thead><tbody>`;
+for (const [k,v] of Object.entries(A.per_categoria))
+  h += `<tr><td>${esc(k)}</td><td class="num">${eur(v)}</td></tr>`;
+h += `</tbody></table></div></div>`;
+
+/* Break-even */
+h += `<h2>Costo per utente e break-even</h2><div class="card">`;
+if (be) {
+  h += `<div class="kpis">
+    <div class="kpi"><div class="lab">Organizzazioni</div><div class="val">${be.organizzazioni_totali}</div>
+      <div class="note">${be.organizzazioni_paganti} paganti</div></div>
+    <div class="kpi"><div class="lab">Costo per organizzazione</div><div class="val">${eur(be.costo_per_organizzazione)}</div>
+      <div class="note">al mese</div></div>
+    <div class="kpi"><div class="lab">Costo per atleta</div><div class="val">${eur(be.costo_per_atleta)}</div>
+      <div class="note">${be.atleti_attivi} atleti attivi</div></div>
+    <div class="kpi"><div class="lab">Quota AI</div><div class="val">${be.quota_ai_percento ?? "—"}%</div>
+      <div class="note">${eur(be.costo_ai_eur_mese)} di OpenAI questo mese</div></div>`;
+  if (be.margine_eur !== undefined && be.margine_eur !== null) {
+    h += `<div class="kpi"><div class="lab">Margine mensile</div>
+      <div class="val" style="color:${be.in_pareggio?"var(--ok)":"var(--bad)"}">${eur(be.margine_eur)}</div>
+      <div class="note">${be.in_pareggio?"Sei in pareggio":"Sotto il break-even"}</div></div>`;
+  }
+  h += `</div><div class="note" style="color:var(--mut);font-size:12px;margin-top:12px">
+    Metriche lette dal DB di produzione, aggiornate al ${esc(be.aggiornato_al||"?")}.</div>`;
+} else {
+  h += `<div class="empty">Metriche utenti non ancora scaricate dal VPS.<br><br>
+    ${vivo ? `Premi <b>Aggiorna ora</b> qui sopra con la casella
+      "includi metriche dal VPS" spuntata.` :
+      `Lancia <code>aggiorna.bat</code> dalla cartella Fatture.`}
+    Serve una chiave SSH gia' configurata per il server; le impostazioni di
+    connessione stanno in <code>_sistema/config.json</code>, sezione <code>vps</code>.</div>`;
+}
+h += `</div>`;
+
+/* IVA */
+h += `<h2>IVA per trimestre</h2><div class="card"><table>
+  <thead><tr><th>Periodo</th><th class="num">IVA assolta</th></tr></thead><tbody>`;
+const ivaT = Object.entries(A.iva_per_trimestre);
+if (ivaT.length) for (const [k,v] of ivaT) h += `<tr><td>${k}</td><td class="num">${eur(v)}</td></tr>`;
+else h += `<tr><td colspan="2" class="empty">Nessun dato.</td></tr>`;
+h += `<tr><td><b>Totale</b></td><td class="num"><b>${eur(A.iva_storica)}</b></td></tr>
+  </tbody></table></div>`;
+
+/* Registro */
+h += `<h2>Tutte le fatture</h2><div class="card"><table>
+  <thead><tr><th>Data</th><th>Fornitore</th><th>Descrizione</th><th>N.</th>
+  <th class="num">Netto</th><th class="num">IVA</th><th class="num">Totale €</th></tr></thead><tbody>`;
+for (const f of [...D.fatture].reverse()) {
+  h += `<tr><td>${f.data??"—"}</td><td>${esc(f.fornitore_nome)}</td>
+    <td>${esc(f.descrizione||"")}</td><td style="font-size:11px;color:var(--mut)">${esc(f.numero||"")}</td>
+    <td class="num">${eur(f.netto_eur)}</td><td class="num">${eur(f.iva_eur)}</td>
+    <td class="num"><b>${eur(f.totale_eur)}</b></td></tr>`;
+}
+h += `</tbody></table></div>`;
+
+document.getElementById("app").innerHTML = h;
+
+/* render grafici */
+if (window.Chart) {
+  const gr = "#8fa6ba", gd = "rgba(255,255,255,.06)";
+  Chart.defaults.color = gr;
+  Chart.defaults.borderColor = gd;
+  const mesi = Object.keys(A.per_mese);
+  new Chart(document.getElementById("cMese"), {
+    type: "bar",
+    data: { labels: mesi.map(mLab), datasets: [
+      { label:"Netto", data: mesi.map(m=>A.per_mese[m].netto), backgroundColor:"#4da3ff" },
+      { label:"IVA",   data: mesi.map(m=>A.per_mese[m].iva),   backgroundColor:"#2b5f8f" }]},
+    options:{responsive:true, plugins:{title:{display:true,text:"Speso per mese (EUR)"}},
+      scales:{x:{stacked:true},y:{stacked:true}}}
+  });
+  new Chart(document.getElementById("cPrev"), {
+    type: "line",
+    data: { labels: A.previsione_12m.map(p=>mLab(p.mese)),
+      datasets:[{label:"Previsto", data:A.previsione_12m.map(p=>p.previsto),
+        borderColor:"#ffb020", backgroundColor:"rgba(255,176,32,.15)", fill:true, tension:.25}]},
+    options:{responsive:true, plugins:{title:{display:true,text:"Previsione prossimi 12 mesi (EUR, IVA incl.)"}}}
+  });
+  const fk = Object.keys(A.per_fornitore);
+  new Chart(document.getElementById("cForn"), {
+    type: "doughnut",
+    data:{labels:fk, datasets:[{data:fk.map(k=>A.per_fornitore[k]),
+      backgroundColor:["#4da3ff","#3ecf8e","#ffb020","#ff5c5c","#a78bfa"]}]},
+    options:{responsive:true, plugins:{title:{display:true,text:"Ripartizione per fornitore"},
+      legend:{position:"bottom"}}}
+  });
+}
+</script>
+</body>
+</html>

@@ -34,7 +34,7 @@ import httpx
 
 # URLs
 LOCAL_LLM_URL = "http://localhost:8000"
-AI_SERVICE_URL = "http://localhost:3002"
+AI_SERVICE_URL = "http://localhost:3004"
 
 passed = 0
 failed = 0
@@ -262,7 +262,7 @@ def main():
 
     if not service_up and not args.local_only:
         print("  ⚠️  AI service not running. Start with:")
-        print("     cd apps/ai-service && uvicorn app.main:app --port 3002")
+        print("     cd apps/ai-service && uvicorn app.main:app --port 3004")
         print("  Skipping service tests.\n")
 
     test("Health check + provider status", test_service_health, skip=skip_service)

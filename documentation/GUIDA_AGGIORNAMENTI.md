@@ -18,14 +18,30 @@ Domini: `app.trainmind-app.com` (web) · `api.trainmind-app.com` (API) · `atlet
    ```powershell
    scp .\apps\web\src\percorso\file.tsx root@31.70.77.212:/opt/trainmind/trainmind-app/apps/web/src/percorso/file.tsx
    ```
+
+   Per più file usa un tar (evita più scp e mantiene i percorsi):
+   ```powershell
+   tar -czf update.tar.gz apps/web/src/a.tsx apps/api/src/b.ts
+   scp update.tar.gz root@31.70.77.212:/opt/trainmind/
+   Remove-Item update.tar.gz
+   ```
+   ```bash
+   # sul server
+   tar -xzf /opt/trainmind/update.tar.gz -C /opt/trainmind/trainmind-app
+   rm /opt/trainmind/update.tar.gz
+   ```
 2. Ricostruisci **solo il servizio toccato** e riavvia (SSH sul server - ssh root@31.70.77.212):
    ```bash
-   dc build web      # oppure: api, athlete, ai-service
-   dc up -d
-   dc ps             # attendi "healthy"
+   dc build --no-cache web      # oppure: api, athlete, ai-service
+   dc up -d --force-recreate web
+   dc ps                        # attendi "healthy"
    ```
 
 Quale servizio ricostruire: file in `apps/web/` o `packages/ui` → `web` · file in `apps/api/` o `packages/db|utils|types` → `api` (e spesso anche `web` se condivisi) · cartella `trainmind-athlete/` → `athlete` · `apps/ai-service/` → `ai-service`.
+
+> ⚠️ **Usa sempre `--no-cache`** quando aggiorni sorgenti TS/TSX. Il layer `COPY . .` del Dockerfile è ingannevole: Docker può considerarlo cached anche quando i file sono cambiati (soprattutto dopo un tar/scp), e servirti codice vecchio nel bundle mentre il sorgente nel container è quello nuovo. `--no-cache` costa 2 minuti in più ma ti garantisce che il bundle sia effettivamente rifatto. In alternativa, forza l'invalidamento con `touch /opt/trainmind/trainmind-app/apps/api/src/server.ts` prima del build.
+
+> ⚠️ **`--force-recreate`** assicura che il nuovo container parta anche se l'immagine ha lo stesso tag: senza di lui, `dc up -d` può decidere che "il servizio è già up con quell'immagine" e non ricrearlo.
 
 ### Caso B — Tante modifiche / non ricordi cosa hai toccato
 
@@ -58,10 +74,33 @@ Con un repo privato il flusso diventa `git push` dal PC e `git pull && dc build 
 
 Dopo aver caricato il nuovo `schema.prisma` sul server:
 ```bash
+# a) BACKUP prima di toccare lo schema
+/opt/trainmind/backup.sh
+
+# b) RIBUILDA anche l'immagine "migrate" — senza questo, prisma db push
+#    usa lo schema.prisma CONGELATO nell'immagine vecchia e ti dice
+#    "Already in sync" senza fare nulla.
+dc --profile tools build migrate
+
+# c) Applica lo schema al DB
 dc run --rm migrate pnpm --filter @trainmind/db exec prisma db push --accept-data-loss
-dc build api && dc up -d      # rigenera il client Prisma nell'immagine
+
+# d) Verifica che le colonne siano davvero cambiate
+docker exec trainmind-postgres psql -U trainmind -d trainmind_db -c "\d NOMETABELLA"
+
+# e) Rigenera il client Prisma nell'immagine API e riavvia
+dc build --no-cache api && dc up -d --force-recreate api
 ```
 > `db push` allinea il DB allo schema. Con dati importanti fai PRIMA un backup manuale (sez. 3).
+
+### Alternativa quando il servizio `migrate` è problematico
+
+Se il `db push` non risponde (ad es. per un problema di rebuild dell'immagine `migrate`) e hai già un file di migrazione SQL idempotente in `packages/db/prisma/migrations/*/migration.sql`, puoi applicarlo direttamente al DB:
+```bash
+docker exec -i trainmind-postgres psql -U trainmind -d trainmind_db < \
+  /opt/trainmind/trainmind-app/packages/db/prisma/migrations/DATA_NOME/migration.sql
+```
+Usa questo bypass solo se lo script usa `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS` — altrimenti rischi di rompere il DB.
 
 ## 2b. Script one-shot (seed, fix dati)
 
@@ -126,6 +165,8 @@ Problemi noti già risolti (non reintrodurli):
 - Prisma su Alpine: serve `apk add openssl libc6-compat` nel Dockerfile api
 - Next.js standalone in monorepo: `server.js` sta in `apps/web/`, non nella radice
 - Le variabili `NEXT_PUBLIC_*` sono "cotte" nella build: cambiarle richiede `dc build web`
+- **Docker cache del `COPY . .`**: dopo un tar/scp Docker può considerare il layer cached e servire il **bundle vecchio** anche se il sorgente nel container è nuovo. Sintomo classico: `docker exec trainmind-api cat /app/apps/api/src/lib/legal.ts` mostra la nuova versione, ma il DB salva ancora la vecchia. Fix: usa sempre `dc build --no-cache` (vedi sez. 1).
+- **Servizio `migrate` con schema stale**: il servizio `migrate` è buildato con lo stesso Dockerfile dell'API e ha lo `schema.prisma` congelato al momento della build. Dopo un cambio schema, PRIMA di `dc run --rm migrate ...` devi lanciare `dc --profile tools build migrate` (vedi sez. 2), altrimenti prisma dirà "Already in sync" ma il DB non verrà toccato.
 
 ---
 

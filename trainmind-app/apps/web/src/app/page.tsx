@@ -1,16 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   BarChart3,
   Brain,
   CalendarRange,
   CheckCircle2,
-  ChevronDown,
   FileText,
-  Globe,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -18,11 +16,12 @@ import {
   Zap,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/brand-logo';
+import { LangSwitcher } from '@/components/i18n/lang-switcher';
+import { useLocaleStore, type Locale } from '@/lib/i18n/store';
 
 /* ─────────────────────────────────────────────────────────
  * Types
  * ───────────────────────────────────────────────────────── */
-type Locale = 'it' | 'en' | 'es';
 type BillingCycle = 'monthly' | 'yearly';
 
 /* ─────────────────────────────────────────────────────────
@@ -451,8 +450,16 @@ const PLANS: Plan[] = [
 const SHOW_PRICING = false;
 
 export default function LandingPage() {
-  const [locale, setLocale] = useState<Locale>('it');
+  // La lingua vive nello store globale (localStorage + profilo utente):
+  // cosi resta impostata anche navigando verso /login o /register.
+  const storeLocale = useLocaleStore((s) => s.locale);
   const [billing, setBilling] = useState<BillingCycle>('monthly');
+  const [mounted, setMounted] = useState(false);
+
+  // In SSR non possiamo leggere localStorage: renderizziamo in italiano e
+  // passiamo alla lingua reale al primo mount, evitando errori di idratazione.
+  useEffect(() => setMounted(true), []);
+  const locale: Locale = mounted ? storeLocale : 'it';
 
   const t = (key: TKey): string => T[locale][key] ?? T.it[key];
 
@@ -488,7 +495,7 @@ export default function LandingPage() {
                 {t('nav.pricing')}
               </a>
             )}
-            <LangSwitcher locale={locale} onChange={setLocale} />
+            <LangSwitcher />
             <Link
               href="/login"
               className="hidden text-sm font-medium text-slate-700 hover:text-slate-900 md:inline"
@@ -948,85 +955,6 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────
- * Language switcher
- * ───────────────────────────────────────────────────────── */
-const LOCALE_LABELS: Record<Locale, string> = { it: 'IT', en: 'EN', es: 'ES' };
-const LOCALE_NAMES: Record<Locale, string> = {
-  it: 'Italiano',
-  en: 'English',
-  es: 'Español',
-};
-
-function LangSwitcher({
-  locale,
-  onChange,
-}: {
-  locale: Locale;
-  onChange: (l: Locale) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function escHandler(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('keydown', escHandler);
-    return () => {
-      document.removeEventListener('mousedown', handler);
-      document.removeEventListener('keydown', escHandler);
-    };
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Select language"
-        aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-      >
-        <Globe className="h-3.5 w-3.5 text-slate-500" />
-        {LOCALE_LABELS[locale]}
-        <ChevronDown
-          className={`h-3 w-3 text-slate-400 transition ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[140px] overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-          {(Object.keys(LOCALE_LABELS) as Locale[]).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => {
-                onChange(l);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${
-                locale === l ? 'font-semibold text-teal-700' : 'text-slate-700'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <span className="font-mono text-[0.65rem] text-slate-400">
-                  {LOCALE_LABELS[l]}
-                </span>
-                {LOCALE_NAMES[l]}
-              </span>
-              {locale === l && <CheckCircle2 className="h-3 w-3" />}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

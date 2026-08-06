@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from openai import APIError
 
-from app.models.schemas import ChatRequest, ChatResponse
+from app.models.schemas import ChatRequest, ChatResponse, UsageInfo
 from app.services.rag import get_rag_service
 from app.services.context_builder import get_context_builder
 from app.services.prompts import SYSTEM_PROMPT_CHAT
@@ -29,6 +29,7 @@ async def generate_sse_stream(
     sources: list,
     temperature: float = 0.7,
     max_tokens: int = 2048,
+    model: str | None = None,
 ):
     """
     Genera una risposta in streaming SSE.
@@ -38,6 +39,7 @@ async def generate_sse_stream(
         sources: Lista di Source objects
         temperature: Temperatura del modello
         max_tokens: Max token nella risposta
+        model: Override del modello (arriva da apps/api)
 
     Yields:
         String in formato SSE
@@ -46,13 +48,22 @@ async def generate_sse_stream(
 
     try:
         content_buffer = ""
+        usage_sink: dict = {}
         for chunk in openai_client.chat_completion_stream(
             messages=messages,
+            model=model,
             temperature=temperature,
             max_tokens=max_tokens,
+            usage_sink=usage_sink,
         ):
             content_buffer += chunk
             yield f"data: {json.dumps({'type': 'content', 'chunk': chunk})}\n\n"
+
+        # Consumo token: emesso prima di 'done' così apps/api lo intercetta
+        # mentre fa da pipe verso il browser. Il frontend ignora i tipi
+        # che non conosce, quindi non serve modificarlo.
+        if usage_sink:
+            yield f"data: {json.dumps({'type': 'usage', 'usage': usage_sink})}\n\n"
 
         # Invia le fonti alla fine
         if sources:
@@ -164,6 +175,7 @@ async def chat_with_rag(request: ChatRequest):
                     sources=sources,
                     temperature=request.temperature,
                     max_tokens=request.max_tokens,
+                    model=request.model,
                 ),
                 media_type="text/event-stream",
                 headers={
@@ -177,22 +189,27 @@ async def chat_with_rag(request: ChatRequest):
         logger.debug("Chat non-streaming response")
         openai_client = get_openai_client()
 
-        response_content = openai_client.chat_completion(
+        llm_result = openai_client.chat_completion_full(
             messages=openai_messages,
+            model=request.model,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
         )
+        response_content = llm_result.content
 
         logger.info(
             "Chat completed successfully",
             response_length=len(response_content),
             sources_count=len(sources),
+            model=llm_result.model,
+            total_tokens=llm_result.total_tokens,
         )
 
         return ChatResponse(
             content=response_content,
             sources=sources,
             finish_reason="stop",
+            usage=UsageInfo(**llm_result.as_usage_dict()),
         )
 
     except APIError as e:

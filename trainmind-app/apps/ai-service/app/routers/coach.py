@@ -11,7 +11,7 @@ import structlog
 from fastapi import APIRouter, HTTPException
 from openai import APIError
 
-from app.models.schemas import CoachRequest, CoachResponse
+from app.models.schemas import CoachRequest, CoachResponse, UsageInfo
 from app.services.rag import get_rag_service
 from app.services.context_builder import get_context_builder
 from app.services.prompts import SYSTEM_PROMPT_COACH
@@ -48,6 +48,7 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
             request.question,
             namespaces=request.namespaces,
             athlete_id=request.athlete_id,
+            model=request.model,
         )
         cached = cache_get("response", cache_key)
         if cached:
@@ -84,17 +85,21 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
             athlete_context=athlete_context,
         )
 
-        # Chiama OpenAI
-        response_content = openai_client.chat_completion(
+        # Chiama il modello (il modello effettivo arriva da apps/api)
+        llm_result = openai_client.chat_completion_full(
             messages=messages,
+            model=request.model,
             temperature=0.7,
             max_tokens=2048,
         )
+        response_content = llm_result.content
 
         logger.info(
             "Coach consultation completed",
             response_length=len(response_content),
             sources_count=len(sources),
+            model=llm_result.model,
+            total_tokens=llm_result.total_tokens,
         )
 
         # Estrai riferimenti dai metadati delle fonti
@@ -109,10 +114,13 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
             answer=response_content,
             sources=sources,
             references=references,
+            usage=UsageInfo(**llm_result.as_usage_dict()),
         )
 
-        # Cache the response
-        cache_set("response", cache_key, result.model_dump())
+        # Cache the response.
+        # `usage` viene escluso: una risposta servita dalla cache non consuma
+        # token, contarli di nuovo gonfierebbe lo storico dei costi.
+        cache_set("response", cache_key, result.model_dump(exclude={"usage"}))
 
         return result
 

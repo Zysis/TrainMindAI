@@ -76,6 +76,70 @@ interface OpenAIMessage {
 interface FallbackOptions {
   temperature?: number;
   max_tokens?: number;
+  /**
+   * Modello da usare. Arriva dal routing per operazione in `lib/ai-models.ts`.
+   * Senza questo parametro il percorso di emergenza userebbe sempre
+   * `OPENAI_MODEL` (gpt-4o), vanificando il risparmio proprio quando
+   * l'ai-service è giù.
+   */
+  model?: string;
+}
+
+/** Consumo token riportato da OpenAI, nel formato atteso da `recordAiUsage`. */
+export interface FallbackUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  model: string;
+  provider: 'openai';
+  estimated: false;
+}
+
+/** Risposta grezza di OpenAI, limitata ai campi che servono qui. */
+interface OpenAICompletionPayload {
+  model?: string;
+  choices?: Array<{ message?: { content?: string } }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+}
+
+/** Normalizza `usage` in modo che sia sempre presente e coerente. */
+function toFallbackUsage(
+  data: OpenAICompletionPayload,
+  requestedModel: string,
+): FallbackUsage {
+  const prompt = data.usage?.prompt_tokens ?? 0;
+  const completion = data.usage?.completion_tokens ?? 0;
+  return {
+    prompt_tokens: prompt,
+    completion_tokens: completion,
+    total_tokens: data.usage?.total_tokens ?? prompt + completion,
+    model: data.model || requestedModel,
+    provider: 'openai',
+    estimated: false,
+  };
+}
+
+/** Modello di default del percorso di emergenza. */
+function resolveModel(options: FallbackOptions): string {
+  return options.model || process.env.OPENAI_MODEL || 'gpt-4o';
+}
+
+/**
+ * Formatta il recupero senza arrotondare.
+ *
+ * Arrotondare ai minuti mostrerebbe 90 secondi come "2 min": un errore del 33%
+ * su un parametro che il preparatore usa davvero. I minuti si mostrano solo
+ * quando il valore è esatto. Deve restare allineato a `format_rest()` in
+ * apps/ai-service/app/routers/generate.py.
+ */
+function formatRest(seconds: number): string {
+  if (seconds < 60) return `${seconds} sec`;
+  if (seconds % 60 === 0) return `${seconds / 60} min`;
+  return `${Math.floor(seconds / 60)} min ${seconds % 60} sec`;
 }
 
 export interface AIExercise {
@@ -114,7 +178,7 @@ export interface AIGeneratedPlan {
 export async function openAIGenerate(
   prompt: string,
   options: FallbackOptions = {},
-): Promise<{ content: string; structured_plan: AIGeneratedPlan | null; sources: never[]; fallback: true }> {
+): Promise<{ content: string; structured_plan: AIGeneratedPlan | null; sources: never[]; fallback: true; usage: FallbackUsage }> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error('OPENAI_KEY_MISSING');
@@ -125,6 +189,8 @@ export async function openAIGenerate(
     { role: 'user', content: prompt },
   ];
 
+  const model = resolveModel(options);
+
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -132,7 +198,7 @@ export async function openAIGenerate(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model,
       messages,
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 4096,
@@ -146,9 +212,8 @@ export async function openAIGenerate(
     throw new Error(`OpenAI API error ${response.status}: ${errText}`);
   }
 
-  const data = await response.json() as {
-    choices: Array<{ message: { content: string } }>;
-  };
+  const data = await response.json() as OpenAICompletionPayload;
+  const usage = toFallbackUsage(data, model);
 
   const raw = data.choices?.[0]?.message?.content || '';
 
@@ -178,7 +243,7 @@ export async function openAIGenerate(
           const ex = session.exercises[i];
           let line = `  ${i + 1}. ${ex.name} — ${ex.sets}x${ex.reps}`;
           if (ex.intensity) line += ` @ ${ex.intensity}`;
-          if (ex.restSeconds) line += ` | Rec: ${ex.restSeconds >= 60 ? `${Math.round(ex.restSeconds / 60)} min` : `${ex.restSeconds} sec`}`;
+          if (ex.restSeconds) line += ` | Rec: ${formatRest(ex.restSeconds)}`;
           if (ex.notes) line += ` (${ex.notes})`;
           lines.push(line);
         }
@@ -193,6 +258,7 @@ export async function openAIGenerate(
     structured_plan: structuredPlan,
     sources: [],
     fallback: true,
+    usage,
   };
 }
 
@@ -202,7 +268,7 @@ export async function openAIGenerate(
 export async function openAIChat(
   messages: OpenAIMessage[],
   options: FallbackOptions = {},
-): Promise<{ answer: string; sources: never[]; references: never[]; fallback: true }> {
+): Promise<{ answer: string; sources: never[]; references: never[]; fallback: true; usage: FallbackUsage }> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error('OPENAI_KEY_MISSING');
@@ -213,6 +279,8 @@ export async function openAIChat(
     ...messages,
   ];
 
+  const model = resolveModel(options);
+
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -220,7 +288,7 @@ export async function openAIChat(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model,
       messages: fullMessages,
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 2048,
@@ -233,15 +301,14 @@ export async function openAIChat(
     throw new Error(`OpenAI API error ${response.status}: ${errText}`);
   }
 
-  const data = await response.json() as {
-    choices: Array<{ message: { content: string } }>;
-  };
+  const data = await response.json() as OpenAICompletionPayload;
 
   return {
     answer: data.choices?.[0]?.message?.content || '',
     sources: [],
     references: [],
     fallback: true,
+    usage: toFallbackUsage(data, model),
   };
 }
 
