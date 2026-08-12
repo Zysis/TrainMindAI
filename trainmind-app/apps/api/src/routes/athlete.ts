@@ -96,14 +96,14 @@ export async function athleteRoutes(app: FastifyInstance) {
       where: { id: organizationId },
       select: { name: true },
     });
-    const orgName = orgRow?.name || 'La tua squadra';
+    const orgName = orgRow?.name || 'Your team';
     const athleteName = `${athlete.firstName} ${athlete.lastName}`.trim();
 
     // Invio email (asincrono — in log-only mode se RESEND_API_KEY non è configurata)
     sendEmail(
       {
         to: [email],
-        subject: `${orgName} ti invita su TrainMind`,
+        subject: `${orgName} invited you to TrainMind`,
         html: buildAthleteInviteHtml({ athleteName, orgName, inviteLink }),
         text: buildAthleteInviteText({ athleteName, orgName, inviteLink }),
       },
@@ -719,31 +719,31 @@ function buildAthleteInviteHtml(opts: { athleteName: string; orgName: string; in
   const safeName = escapeHtml(opts.athleteName);
   const safeOrg = escapeHtml(opts.orgName);
   return `<!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; margin: 0; padding: 24px; color: #0f172a;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <h1 style="margin: 0 0 8px 0; font-size: 22px; color: #0f766e;">Ciao ${safeName},</h1>
+    <h1 style="margin: 0 0 8px 0; font-size: 22px; color: #0f766e;">Hi ${safeName},</h1>
     <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #334155;">
-      <strong>${safeOrg}</strong> ti ha invitato su <strong>TrainMind AI</strong>, l'app per comunicare col tuo preparatore, registrare il tuo benessere quotidiano e seguire i tuoi allenamenti.
+      <strong>${safeOrg}</strong> invited you to <strong>TrainMind</strong>, the app to stay in touch with your strength coach, log how you feel each day and follow your training.
     </p>
     <p style="text-align: center; margin: 28px 0;">
       <a href="${opts.inviteLink}" style="display: inline-block; padding: 14px 28px; background: #0f766e; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
-        Crea il tuo account
+        Create your account
       </a>
     </p>
     <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.6; color: #64748b;">
-      Il link è valido per 7 giorni. Se il pulsante non funziona, copia e incolla questo indirizzo nel browser:
+      The link is valid for 7 days. If the button doesn't work, copy and paste this address into your browser:
     </p>
     <p style="margin: 0 0 24px 0; font-size: 12px; word-break: break-all; color: #475569;">
       <a href="${opts.inviteLink}" style="color: #0f766e;">${opts.inviteLink}</a>
     </p>
     <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;">
-      💡 Dopo la registrazione, dal tuo telefono puoi installare TrainMind come app: apri il menu del browser e scegli "Aggiungi a schermata Home".
+      💡 After signing up you can install TrainMind as an app on your phone: open the browser menu and choose "Add to Home Screen".
     </p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
     <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-      Se non ti aspettavi questa email, puoi ignorarla: l'invito scadrà automaticamente.
+      If you weren't expecting this email you can ignore it: the invitation will expire on its own.
     </p>
   </div>
 </body>
@@ -751,18 +751,18 @@ function buildAthleteInviteHtml(opts: { athleteName: string; orgName: string; in
 }
 
 function buildAthleteInviteText(opts: { athleteName: string; orgName: string; inviteLink: string }): string {
-  return `Ciao ${opts.athleteName},
+  return `Hi ${opts.athleteName},
 
-${opts.orgName} ti ha invitato su TrainMind AI.
+${opts.orgName} invited you to TrainMind.
 
-Crea il tuo account cliccando qui:
+Create your account here:
 ${opts.inviteLink}
 
-Il link è valido per 7 giorni.
+The link is valid for 7 days.
 
-Dopo la registrazione, dal tuo telefono puoi installare TrainMind come app: apri il menu del browser e scegli "Aggiungi a schermata Home".
+After signing up you can install TrainMind as an app on your phone: open the browser menu and choose "Add to Home Screen".
 
-— Team TrainMind`;
+— The TrainMind team`;
 }
 
 function escapeHtml(s: string): string {

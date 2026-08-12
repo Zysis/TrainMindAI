@@ -1,5 +1,5 @@
 # ============================================
-# TrainMind AI — Frontend Dockerfile (Next.js)
+# TrainMind — Frontend Dockerfile (Next.js)
 # ============================================
 
 # Stage 1: Builder — full workspace install (pnpm puts each
@@ -26,10 +26,15 @@ ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ARG NEXT_PUBLIC_ATHLETE_APP_URL=
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+# Sottopercorso sotto cui l'app viene servita: vuoto se sta alla radice del
+# dominio, '/app' quando alla radice c'e' il sito vetrina LAB21. Il valore
+# finisce dentro il bundle: per cambiarlo serve ricostruire l'immagine.
+ARG NEXT_PUBLIC_BASE_PATH=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_ATHLETE_APP_URL=$NEXT_PUBLIC_ATHLETE_APP_URL
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 
 # Build the web app with turbo
 RUN pnpm turbo build --filter=@trainmind/web

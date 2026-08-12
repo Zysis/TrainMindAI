@@ -1,0 +1,25 @@
+/* ============================================================
+   Reset, tipografia di base, utility e animazioni di reveal
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--txt);font-family:var(--font-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;letter-spacing:-.035em;line-height:1.03}
+
+.mono{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.bleed{width:100%}
+.inner{max-width:var(--maxw);margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+
+/* rispetta le preferenze di accessibilita' */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .rv{opacity:1;transform:none}
+}

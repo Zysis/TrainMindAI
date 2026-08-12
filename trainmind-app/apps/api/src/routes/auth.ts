@@ -87,6 +87,7 @@ export async function authRoutes(app: FastifyInstance) {
       consentHealthData,
       acceptMarketing,
       uiLanguage,
+      plan,
     } = parsed.data;
 
     const userAgent = request.headers['user-agent'] ?? null;
@@ -112,13 +113,22 @@ export async function authRoutes(app: FastifyInstance) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
 
+    // Il piano scelto in registrazione diventa il tier dell'organizzazione.
+    // Lo schema garantisce uno dei tre valori, con starter come default.
+    const PLAN_TO_TIER = {
+      starter: 'STARTER',
+      professional: 'PROFESSIONAL',
+      ultra: 'ULTRA',
+    } as const;
+    const tier = PLAN_TO_TIER[plan];
+
     const result = await app.prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
           name: organizationName,
           slug: `${slug}-${Date.now().toString(36)}`,
           sport: 'basketball',
-          tier: 'STARTER',
+          tier,
         },
       });
 
@@ -131,8 +141,9 @@ export async function authRoutes(app: FastifyInstance) {
           role: 'ADMIN',
           organizationId: organization.id,
           // La lingua scelta sulla landing/registrazione diventa la lingua
-          // di default dell'account su qualsiasi dispositivo.
-          locale: uiLanguage ?? 'it',
+          // di default dell'account su qualsiasi dispositivo. Se il client
+          // non la manda si usa l'inglese, come nell'interfaccia.
+          locale: uiLanguage ?? 'en',
         },
       });
 
@@ -639,7 +650,7 @@ export async function authRoutes(app: FastifyInstance) {
     await sendEmail(
       {
         to: [user.email],
-        subject: 'Reimposta la tua password — TrainMind AI',
+        subject: 'Reset your password — TrainMind',
         html: buildPasswordResetEmailHtml({
           firstName: user.firstName,
           resetUrl,

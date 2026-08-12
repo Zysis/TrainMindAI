@@ -1,0 +1,8 @@
+/* ── Bottoni ─────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--acc);color:#03211B;padding:13px 24px;border-radius:999px;font-weight:600;font-size:14.5px;transition:.28s;border:0;cursor:pointer;font-family:var(--font-body)}
+.btn:hover{background:var(--acc-l);transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,201,167,.32)}
+.btn-lg{padding:17px 34px;font-size:16px}
+.btn-o{background:transparent;border:1.5px solid var(--line);color:var(--txt)}
+.btn-o:hover{background:var(--txt);color:#fff;border-color:var(--txt);box-shadow:none}
+.btn-w{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.35);color:#fff;backdrop-filter:blur(8px)}
+.btn-w:hover{background:#fff;color:var(--ink);border-color:#fff;box-shadow:none}

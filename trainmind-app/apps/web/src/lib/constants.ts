@@ -1,8 +1,8 @@
 // ============================================
-// TrainMind AI — Frontend Constants
+// TrainMind — Frontend Constants
 // ============================================
 
-export const APP_NAME = 'TrainMind AI';
+export const APP_NAME = 'TrainMind';
 export const APP_DESCRIPTION = 'Piattaforma AI per preparatori fisici nel basket';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';

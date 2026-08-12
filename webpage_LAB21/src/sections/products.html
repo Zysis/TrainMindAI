@@ -1,0 +1,76 @@
+<!-- ══ DAL LABORATORIO ══ -->
+<section class="sec compact attaccata" id="products">
+  <div class="inner">
+    <div class="sh">
+      <div class="rv">
+        <span class="kick mono" data-i18n="products.kicker">01 — Dal laboratorio</span>
+        <h2 data-i18n-html="products.title">Il laboratorio.</h2>
+      </div>
+      <p class="rv d1" data-i18n="products.lead">Ogni strumento nasce da un problema reale visto in campo. Prima guardiamo come lavora davvero chi allena: quante ore costa un report, in quale punto si perde il tempo, cosa serve avere in mano il lunedì mattina. Poi cerchiamo nella letteratura scientifica quello che regge sui dati veri, lo trasformiamo in modello, in un software e lo mettiamo nelle mani di preparatori in attività. Una regola tiene insieme il tutto: se non serve il lunedì mattina, non lo usiamo.</p>
+    </div>
+  </div>
+
+  <!-- vetrina TrainMind -->
+  <div class="showcase bleed rv">
+    <div class="sc-txt">
+      <span class="badge mono" data-i18n="tm.badge">In laboratorio · in prova con i preparatori</span>
+      <h3>TrainMind</h3>
+      <div class="sc-claim" data-i18n="tm.claim">La piattaforma di gestione della preparazione fisica pensata per il basket.</div>
+      <p data-i18n="tm.desc">Risparmia tempo e tieni sempre tutto sotto controllo. Dati sempre disponibili e report per staff e società in pochi minuti. Tutto potenziato con un sistema di supporto alle decisioni.</p>
+      <div class="sc-feats">
+        <div data-i18n="tm.f1">Un posto solo per tutti i dati</div>
+        <div data-i18n="tm.f2">Carichi, test, wellness, presenze</div>
+        <div data-i18n="tm.f3">Report in un clic, anche da tablet</div>
+        <div data-i18n="tm.f4">L'AI scrive, tu decidi</div>
+      </div>
+      <div class="sc-actions">
+        <!-- Porta all'app TrainMind: landing con login e registrazione.
+             L'indirizzo arriva da src/js/config.js (links.trainmind). -->
+        <a href="#" data-link="trainmind" data-link-blank class="btn btn-lg" data-i18n="tm.cta1">Scopri di più</a>
+      </div>
+    </div>
+    <!-- Il video è montato da tools/build-showcase-video.py a partire dalle
+         immagini coach*: rilanciare lo script dopo averle cambiate. -->
+    <div class="sc-media has-video">
+      <video src="/assets/video/trainmind-showcase.mp4"
+             poster="/assets/img/trainmind-showcase.jpg"
+             autoplay muted loop playsinline preload="metadata"></video>
+      <div class="float f1">
+        <div class="lb" data-i18n="tm.float1.label">Carico settimanale</div>
+        <b>612<small class="unit"> AU</small></b>
+        <div class="dt">▲ 8% <span data-i18n="tm.float1.delta">vs media</span></div>
+        <div class="bars"><i style="height:40%"></i><i style="height:64%"></i><i style="height:50%"></i><i style="height:86%"></i><i style="height:70%"></i><i style="height:96%"></i><i style="height:58%"></i></div>
+      </div>
+      <div class="float f2">
+        <div class="lb" data-i18n="tm.float2.label">Segnalazione</div>
+        <div class="txt" data-i18n="tm.float2.text">Tre atleti in calo di readiness da due sedute. Il carico di domani è da guardare.</div>
+        <div class="dt" style="margin-top:12px" data-i18n="tm.float2.cta">Apri il dettaglio →</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ FASCIA NUMERI ══
+     Sono i numeri del problema raccolti sul campo, non promesse di risultato:
+     restano veri finché non cambia il lavoro dei preparatori. -->
+<div class="band bleed">
+  <div class="inner band-in">
+    <div class="st rv">
+      <b class="num"><span class="cnt" data-to="3">0</span></b>
+      <span class="lbl" data-i18n="band.1">ore per il report settimanale, quasi mai spese ad analizzare</span>
+    </div>
+    <div class="st rv d1">
+      <b class="num"><span class="cnt" data-to="40">0</span><i class="suf">″</i></b>
+      <span class="lbl" data-i18n="band.2">lo sguardo del capo allenatore su quel report</span>
+    </div>
+    <div class="st rv d2">
+      <b class="num"><span class="cnt" data-to="4">0</span></b>
+      <span class="lbl" data-i18n="band.3">posti diversi dove vivono i dati: GPS, test, wellness, presenze</span>
+    </div>
+    <div class="st rv d3">
+      <b class="num"><span class="cnt" data-to="10">0</span><i class="suf">′</i></b>
+      <span class="lbl" data-i18n="band.4">dal primo caricamento al primo report: l'obiettivo di TrainMind</span>
+    </div>
+  </div>
+</div>

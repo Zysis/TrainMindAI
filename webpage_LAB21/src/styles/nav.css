@@ -1,0 +1,18 @@
+/* ── Barra di navigazione ────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:90;transition:.35s;border-bottom:1px solid transparent}
+nav.solid{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom-color:var(--line)}
+.nav-in{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);height:82px;display:flex;align-items:center;gap:40px}
+.logo{height:26px;width:auto}
+.logo.dark-only{display:block}.logo.light-only{display:none}
+nav:not(.solid) .logo.dark-only{display:none}
+nav:not(.solid) .logo.light-only{display:block}
+.nl{display:flex;gap:6px;margin-left:auto}
+.nl a{font-size:14.5px;font-weight:500;padding:10px 16px;border-radius:10px;transition:.2s;color:var(--txt)}
+nav:not(.solid) .nl a{color:#fff}
+.nl a:hover{background:rgba(0,201,167,.12);color:var(--acc-d)}
+.nr{display:flex;align-items:center;gap:14px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+nav:not(.solid) .lang{border-color:rgba(255,255,255,.3)}
+.lang button{background:none;border:0;cursor:pointer;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;padding:7px 11px;color:var(--txt-2);transition:.2s}
+nav:not(.solid) .lang button{color:rgba(255,255,255,.75)}
+.lang button.on{background:var(--acc);color:#04211B;font-weight:500}

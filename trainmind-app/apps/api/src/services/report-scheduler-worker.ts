@@ -124,7 +124,7 @@ async function executeSchedule(
   const emailRes = await sendEmail(
     {
       to: schedule.recipients,
-      subject: `[TrainMind AI] ${schedule.name} — ${from} → ${to}`,
+      subject: `[TrainMind] ${schedule.name} — ${from} → ${to}`,
       html,
       attachments: [attachment],
     },

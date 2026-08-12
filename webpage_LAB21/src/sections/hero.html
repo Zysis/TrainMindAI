@@ -1,0 +1,51 @@
+<!-- ══ HERO ══ -->
+<section class="hero" id="top">
+  <!-- Due immagini sovrapposte + le particelle: la transizione è gestita
+       da src/js/hero-morph.js. Per tornare a una sola immagine basta
+       cancellare il secondo <img> e il <canvas>. -->
+  <div class="hero-media wire">
+    <img src="/assets/img/hero3-1920.webp"
+         srcset="/assets/img/hero3-1280.webp 1280w,
+                 /assets/img/hero3-1920.webp 1920w,
+                 /assets/img/hero3-2560.webp 2560w"
+         sizes="100vw" alt="" fetchpriority="high">
+    <img class="alt" src="/assets/img/hero4-1920.webp"
+         srcset="/assets/img/hero4-1280.webp 1280w,
+                 /assets/img/hero4-1920.webp 1920w,
+                 /assets/img/hero4-2560.webp 2560w"
+         sizes="100vw" alt="" loading="lazy" decoding="async">
+    <canvas class="hero-fx" aria-hidden="true"></canvas>
+  </div>
+  <div class="hero-in inner">
+    <div class="hero-flex">
+      <div class="hero-copy">
+        <div class="pill mono rv"><i></i><span data-i18n="hero.badge">an innovation lab for science in sport</span></div>
+        <h1 class="rv d1" data-i18n-html="hero.title">Trasformiamo i dati<br>in <em>performance reale.</em></h1>
+        <p class="rv d2" data-i18n="hero.lead">Costruiamo strumenti che supportano il lavoro quotidiano. Il primo esce adesso dal laboratorio e si chiama TrainMind, nato con i preparatori del basket italiano.</p>
+        <div class="hcta rv d3">
+          <a href="#method" class="btn btn-lg btn-w" data-i18n="hero.cta2">Come lavoriamo</a>
+        </div>
+      </div>
+
+      <!-- Pannello dimostrativo: dati di esempio, non un collegamento reale -->
+      <div class="live rv d4">
+        <div class="live-h">
+          <b data-i18n="hero.live.title">Carico di squadra</b>
+          <span class="chip-live"><i></i>DEMO</span>
+        </div>
+        <svg viewBox="0 0 320 96" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00C9A7" stop-opacity=".45"/><stop offset="1" stop-color="#00C9A7" stop-opacity="0"/></linearGradient></defs>
+          <path d="M0,74 L32,64 L64,70 L96,44 L128,52 L160,30 L192,38 L224,20 L256,26 L288,12 L320,18 L320,96 L0,96 Z" fill="url(#g1)"/>
+          <polyline points="0,74 32,64 64,70 96,44 128,52 160,30 192,38 224,20 256,26 288,12 320,18" fill="none" stroke="#00C9A7" stroke-width="2.4" stroke-linejoin="round"/>
+          <polyline points="0,86 32,82 64,84 96,74 128,78 160,68 192,72 224,62 256,66 288,56 320,60" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="live-row">
+          <div><b class="cnt" data-to="12">0</b><span data-i18n="hero.live.m1">Atleti</span></div>
+          <div><b class="cnt" data-to="8">0</b><span data-i18n="hero.live.m2">Settimane</span></div>
+          <div><b class="cnt" data-to="10">0</b><span data-i18n="hero.live.m3">Minuti al report</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span></span><small class="mono" data-i18n="hero.scroll">Scorri</small></div>
+</section>

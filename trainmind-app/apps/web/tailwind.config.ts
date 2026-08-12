@@ -58,10 +58,32 @@ const config: Config = {
           500: '#3B82F6',
           700: '#1D4ED8',
         },
+
+        /* ──────────────────────────────────────────────────────────
+         * Palette LAB21 — usata SOLO dalla landing page pubblica.
+         * Namespace separato di proposito: la dashboard continua a
+         * usare `teal.*` e `slate.*`, quindi cambiare questi valori
+         * non tocca l'app loggata.
+         * ────────────────────────────────────────────────────────── */
+        lab: {
+          acc: '#00C9A7',      // verde LAB21
+          'acc-d': '#00A489',  // verde scuro — testo su fondo chiaro
+          'acc-l': '#0BE0BC',  // verde chiaro — hover
+          ink: '#07100E',      // nero-verde profondo (hero, sezioni dark)
+          'ink-2': '#0E1A18',
+          paper: '#FFFFFF',
+          'paper-2': '#F4F7F6',
+          'paper-3': '#EAF0EE',
+          txt: '#0B1614',
+          'txt-2': '#5A6B67',
+          line: '#E2E9E7',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        // Titoli in stile LAB21 — usata solo dalla landing
+        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],

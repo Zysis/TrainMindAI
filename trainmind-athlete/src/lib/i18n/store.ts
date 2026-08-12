@@ -2,8 +2,9 @@ import { create } from 'zustand';
 
 export type Locale = 'it' | 'en' | 'es';
 
-export const LOCALES: Locale[] = ['it', 'en', 'es'];
-export const DEFAULT_LOCALE: Locale = 'it';
+/** Ordine con cui compaiono nello switcher: prima la lingua di default. */
+export const LOCALES: Locale[] = ['en', 'it', 'es'];
+export const DEFAULT_LOCALE: Locale = 'en';
 const STORAGE_KEY = 'trainmind-locale';
 /** Marca una scelta esplicita dell'utente (click sullo switcher), distinta
  *  dal semplice rilevamento automatico della lingua del browser. */
@@ -22,25 +23,20 @@ export function isLocale(value: unknown): value is Locale {
 }
 
 /**
- * Prima apertura: proviamo a indovinare dalla lingua del dispositivo
- * (`es-ES` -> `es`), con fallback italiano. Dalla seconda in poi vince
- * sempre la scelta salvata in localStorage.
+ * Prima visita: inglese per tutti, indipendentemente dalla lingua del
+ * dispositivo. Dalla seconda in poi vince sempre la scelta salvata in
+ * localStorage, e per chi ha un account quella salvata sul profilo.
+ *
+ * Fino all'11/08/2026 qui si leggeva `navigator.languages` per indovinare
+ * la lingua: un dispositivo italiano apriva l'app in italiano. È stato
+ * tolto di proposito, perché il prodotto si presenta in inglese. Chi vuole
+ * l'italiano lo sceglie dallo switcher, e da lì in poi se lo ritrova.
  */
-function detectBrowserLocale(): Locale {
-  if (typeof navigator === 'undefined') return DEFAULT_LOCALE;
-  const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
-  for (const tag of candidates) {
-    const base = tag.toLowerCase().split('-')[0];
-    if (isLocale(base)) return base;
-  }
-  return DEFAULT_LOCALE;
-}
-
 function getInitialLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
   const stored = localStorage.getItem(STORAGE_KEY);
   if (isLocale(stored)) return stored;
-  return detectBrowserLocale();
+  return DEFAULT_LOCALE;
 }
 
 /** true se l'utente ha scelto la lingua a mano: ha la precedenza sul profilo. */

@@ -1,7 +1,31 @@
+/**
+ * Sottopercorso sotto cui l'app viene servita.
+ *
+ * Vuoto in sviluppo: l'app sta alla radice di localhost:3000, come sempre.
+ * In produzione il dominio ospita alla radice il sito vetrina LAB21 e
+ * TrainMind vive sotto `/app`: si imposta NEXT_PUBLIC_BASE_PATH=/app come
+ * build arg (vedi apps/web/Dockerfile e docker-compose.deploy.yml).
+ *
+ * `basePath` riscrive le rotte e i <Link>; `assetPrefix` fa lo stesso per i
+ * file in /_next. I riferimenti scritti a mano ai file di public/ NON sono
+ * coperti: per quelli c'è withBasePath() in src/lib/base-path.ts.
+ *
+ * La stessa logica sta duplicata in src/lib/base-path.ts perché questo file
+ * è un modulo di configurazione caricato fuori dal bundle TypeScript.
+ */
+const basePath = (() => {
+  const raw = process.env.NEXT_PUBLIC_BASE_PATH;
+  if (!raw) return '';
+  const trimmed = raw.replace(/\/+$/, '');
+  if (trimmed === '') return '';
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  ...(basePath ? { basePath, assetPrefix: basePath } : {}),
   eslint: {
     // Il lint non blocca la build di produzione (gli errori restano
     // visibili in dev e nella CI); da ripulire nel codice con calma.

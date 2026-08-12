@@ -1,5 +1,5 @@
 /**
- * TrainMind AI — Seed "Prima Squadra" per account preparatori (MM, VDB)
+ * TrainMind — Seed "Prima Squadra" per account preparatori (MM, VDB)
  *
  * Per ogni organizzazione target crea:
  * - 1 squadra "Prima Squadra" con 14 giocatori senior (roster diversi per org)

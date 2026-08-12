@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Auth API Client
+// TrainMind — Auth API Client
 // ============================================
 
 import { API_BASE_URL, API_PREFIX } from '../constants';
@@ -116,6 +116,7 @@ export async function register(input: {
   lastName: string;
   organizationName: string;
   dateOfBirth: string; // YYYY-MM-DD — gate 14+
+  plan?: 'starter' | 'professional' | 'ultra'; // piano scelto in registrazione
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   consentHealthData?: boolean; // opt-in art. 9 GDPR

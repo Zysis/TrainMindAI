@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { BASE_PATH, withBasePath } from '@/lib/base-path';
 
 interface PWAState {
   isInstalled: boolean;
@@ -50,8 +51,11 @@ export function usePWA() {
       }
 
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
+        // Il service worker sta in public/, che Next serve sotto il basePath:
+        // sia il file sia lo scope devono seguire il sottopercorso, altrimenti
+        // in produzione la registrazione fallisce con un errore di scope.
+        const registration = await navigator.serviceWorker.register(withBasePath('/sw.js'), {
+          scope: `${BASE_PATH}/`,
         });
 
         swRegistrationRef.current = registration;

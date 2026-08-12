@@ -24,14 +24,32 @@ utente nel database.
 
 | Situazione | Lingua usata |
 |---|---|
-| Prima visita in assoluto | Lingua del browser (`it`/`en`/`es`), fallback italiano |
+| Prima visita in assoluto | **Inglese**, qualunque sia la lingua del browser |
 | Visite successive | Ultima scelta salvata in `localStorage` |
 | Login, con lingua scelta a mano dallo switcher | **Vince la scelta** e viene salvata sul profilo |
 | Login su un dispositivo nuovo, senza scelta manuale | Vince la lingua salvata sul profilo |
 | Cambio lingua in Impostazioni | Vince e viene salvata sul profilo |
 
-La distinzione "scelta a mano" vs "rilevata dal browser" è tenuta dal flag
+La distinzione "scelta a mano" vs "ereditata dal profilo" è tenuta dal flag
 `localStorage['trainmind-locale-explicit']`, scritto solo dallo switcher.
+
+> **Aggiornamento 11/08/2026 — l'inglese è la lingua di default.** Prima la
+> lingua iniziale veniva indovinata da `navigator.languages`, con l'italiano
+> come ripiego: un visitatore italiano apriva tutto in italiano. Il rilevamento
+> automatico è stato **rimosso**: chi non ha ancora scelto vede l'inglese,
+> ovunque. Italiano e spagnolo restano a un clic dallo switcher e, una volta
+> scelti, valgono per le visite successive e per il profilo.
+>
+> Cambiato in: `apps/web`, `trainmind-athlete`, `trainmind-mobile/web`
+> (`DEFAULT_LOCALE = 'en'`, niente `detectBrowserLocale`, `lang="en"`
+> nell'`<html>`, `LOCALES` riordinato con l'inglese per primo) e nel sito
+> vetrina `webpage_LAB21` (`DEFAULT_LANG` in `src/js/i18n.js`). Anche le email
+> dell'API (reset password, invito atleti, report schedulati) e il `locale`
+> assegnato ai nuovi account sono passati all'inglese.
+>
+> **Chi ha già scelto una lingua non viene toccato**: la preferenza in
+> `localStorage` e quella sul profilo continuano a vincere. Il cambio si vede
+> solo da chi arriva per la prima volta o da un dispositivo nuovo.
 
 ### File modificati
 
@@ -151,7 +169,7 @@ Checklist manuale su `http://localhost:3000`:
 3. Impostazioni → la lingua selezionata è **ES**.
 4. Logout, poi login di nuovo → resta spagnolo.
 5. Finestra in incognito → login con lo stesso account senza toccare lo switcher → l'app parte in spagnolo (lingua letta dal profilo).
-6. Incognito, senza login, browser in inglese → la landing si apre già in inglese.
+6. Incognito, senza login, **anche con browser in italiano** → la landing si apre in inglese (dall'11/08/2026 il default non dipende più dal browser).
 
 Verifica che la colonna sia valorizzata:
 

@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Exercise Types
+// TrainMind — Exercise Types
 // ============================================
 
 export interface Exercise {

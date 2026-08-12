@@ -1320,7 +1320,13 @@
       "rule8": "Almeno 8 caratteri",
       "ruleUpper": "Almeno una lettera maiuscola",
       "ruleNumber": "Almeno un numero"
-    }
+    },
+    "planLabel": "Piano",
+    "planHint": "Puoi cambiarlo in qualsiasi momento dalle impostazioni.",
+    "planStarter": "Starter",
+    "planProfessional": "Professional",
+    "planUltra": "Ultra",
+    "planPerMonth": "/mese"
   },
   "fieldTraining": {
     "title": "Allenamento in campo",
@@ -1386,12 +1392,12 @@
     "allSynced": "Tutte le modifiche sincronizzate"
   },
   "pwa": {
-    "updateAvailable": "Una nuova versione di TrainMind AI è disponibile",
+    "updateAvailable": "Una nuova versione di TrainMind è disponibile",
     "updateDesc": "Aggiorna per ottenere le ultime funzioni e correzioni",
     "update": "Aggiorna",
     "later": "Più tardi",
-    "installTitle": "Installa TrainMind AI",
-    "installDescIOS": "Aggiungi TrainMind AI alla schermata iniziale per un accesso rapido e l'uso offline",
+    "installTitle": "Installa TrainMind",
+    "installDescIOS": "Aggiungi TrainMind alla schermata iniziale per un accesso rapido e l'uso offline",
     "installSteps": "Per installare:",
     "iosStep1": "Tocca il bottone di condivisione",
     "iosStep2": "Scorri verso il basso e tocca \"Aggiungi alla schermata iniziale\"",

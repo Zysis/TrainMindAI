@@ -1,9 +1,50 @@
-# TrainMind AI — Reverse proxy con HTTPS automatico (Let's Encrypt)
-# I domini arrivano dalle variabili APP_DOMAIN e API_DOMAIN nel .env.deploy
+# TrainMind — Reverse proxy con HTTPS automatico (Let's Encrypt)
+# I domini arrivano dalle variabili nel .env.deploy
+#
+# ┌─ Assetto degli indirizzi ───────────────────────────────────────────┐
+# │                                                                     │
+# │  {$SITE_DOMAIN}/            → sito vetrina LAB21   (container lab21)│
+# │  {$SITE_DOMAIN}/app         → TrainMind            (container web)  │
+# │  {$API_DOMAIN}              → API                  (container api)  │
+# │  {$ATHLETE_DOMAIN}          → PWA atleti           (container athlete)
+# │  {$APP_DOMAIN}              → 301 verso {$SITE_DOMAIN}/app          │
+# │                                                                     │
+# └─────────────────────────────────────────────────────────────────────┘
+#
+# Il sottopercorso è {$APP_BASE_PATH} (di norma "/app") e deve combaciare con
+# il build arg NEXT_PUBLIC_BASE_PATH del container web: è Next stesso a
+# generare i propri URL con quel prefisso, quindi il proxy NON lo rimuove
+# (nessun handle_path, che invece lo taglierebbe).
+#
+# SITE_DOMAIN è una variabile a sé proprio perché il nome del prodotto può
+# cambiare: al trasloco su un dominio nuovo si aggiorna il .env.deploy e si
+# ricostruisce il container web, senza toccare questo file.
 
-{$APP_DOMAIN} {
-	reverse_proxy web:3000
+{$SITE_DOMAIN} {
 	encode gzip
+
+	# TrainMind sotto {$APP_BASE_PATH} — il prefisso resta nel path.
+	# Due pattern e non "/app*": quello con l'asterisco attaccato
+	# catturerebbe anche indirizzi come /apparecchiature, che devono
+	# restare al sito vetrina. Servono un matcher con nome e la
+	# direttiva `path`, perche' `handle` accetta un solo matcher
+	# scritto in linea: "handle /a /b {" non e' sintassi valida.
+	@app path {$APP_BASE_PATH} {$APP_BASE_PATH}/*
+	handle @app {
+		reverse_proxy web:3000
+	}
+
+	# Tutto il resto è il sito vetrina LAB21 (file statici).
+	handle {
+		reverse_proxy lab21:80
+	}
+}
+
+# Vecchio indirizzo dell'app: resta valido e rimanda al nuovo.
+# Serve ai link di reset password già spediti e ai segnalibri esistenti.
+# {uri} conserva il percorso: /dashboard → {$SITE_DOMAIN}/app/dashboard
+{$APP_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{$APP_BASE_PATH}{uri} permanent
 }
 
 {$API_DOMAIN} {

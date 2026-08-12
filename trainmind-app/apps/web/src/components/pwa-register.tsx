@@ -93,7 +93,7 @@ export function PWARegister() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  Una nuova versione di TrainMind AI è disponibile
+                  Una nuova versione di TrainMind è disponibile
                 </p>
                 <p className="text-xs text-teal-100">
                   Aggiorna per ottenere le ultime funzioni e correzioni
@@ -124,10 +124,10 @@ export function PWARegister() {
           <div className="bg-white dark:bg-slate-800 rounded-t-xl sm:rounded-xl w-full sm:max-w-md sm:mx-4 p-6 shadow-2xl">
             <div className="text-center">
               <h3 className="text-xl font-bold text-teal-900 mb-2">
-                Installa TrainMind AI
+                Installa TrainMind
               </h3>
               <p className="text-gray-600 text-sm mb-6">
-                Aggiungi TrainMind AI alla schermata iniziale per un accesso più
+                Aggiungi TrainMind alla schermata iniziale per un accesso più
                 veloce e un'esperienza migliore.
               </p>
 
@@ -196,7 +196,7 @@ export function PWARegister() {
               </div>
 
               <h3 className="text-xl font-bold text-teal-900 mb-2">
-                Installa TrainMind AI
+                Installa TrainMind
               </h3>
               <p className="text-gray-600 text-sm mb-6">
                 Installa l'app per un accesso più veloce e un'esperienza offline.

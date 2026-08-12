@@ -1,0 +1,15 @@
+/* ── Adattamento tablet / mobile ─────────────────────────── */
+@media(max-width:1100px){
+  .showcase,.mgrid,.sh{grid-template-columns:1fr}
+  .band-in{grid-template-columns:1fr 1fr}
+  /* su due colonne la linea di separazione va tolta a inizio riga */
+  .band .st:nth-child(odd){border-left:0;padding-left:0}
+  .nl{display:none}
+  .sc-txt{max-width:none}
+}
+@media(max-width:680px){
+  .band-in,.cinfo,.sc-feats,.team-testo{grid-template-columns:1fr}
+  .band .st{border-left:0;padding:0}
+  .hero{min-height:88vh}
+  .f1,.f2{display:none}
+}

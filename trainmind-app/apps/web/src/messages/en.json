@@ -1303,7 +1303,13 @@
       "rule8": "At least 8 characters",
       "ruleUpper": "At least one uppercase letter",
       "ruleNumber": "At least one number"
-    }
+    },
+    "planLabel": "Plan",
+    "planHint": "You can change it any time from settings.",
+    "planStarter": "Starter",
+    "planProfessional": "Professional",
+    "planUltra": "Ultra",
+    "planPerMonth": "/month"
   },
   "fieldTraining": {
     "title": "Field Training",
@@ -1369,12 +1375,12 @@
     "allSynced": "All changes synced"
   },
   "pwa": {
-    "updateAvailable": "A new version of TrainMind AI is available",
+    "updateAvailable": "A new version of TrainMind is available",
     "updateDesc": "Update to get the latest features and fixes",
     "update": "Update",
     "later": "Later",
-    "installTitle": "Install TrainMind AI",
-    "installDescIOS": "Add TrainMind AI to your home screen for quick access and offline use",
+    "installTitle": "Install TrainMind",
+    "installDescIOS": "Add TrainMind to your home screen for quick access and offline use",
     "installSteps": "To install:",
     "iosStep1": "Tap the share button",
     "iosStep2": "Scroll down and tap \"Add to Home Screen\"",

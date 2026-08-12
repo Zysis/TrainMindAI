@@ -2,7 +2,7 @@
 
 import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { useLocaleStore, type Locale } from './store';
+import { useLocaleStore, DEFAULT_LOCALE, type Locale } from './store';
 
 // Import statici: evitano i problemi di dynamic import con Next.js.
 import itMessages from '@/messages/it.json';
@@ -36,7 +36,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   // In SSR non conosciamo localStorage: partiamo da 'it' e passiamo alla
   // lingua reale al primo mount, evitando errori di idratazione.
-  const activeLocale = mounted ? locale : 'it';
+  const activeLocale = mounted ? locale : DEFAULT_LOCALE;
 
   return (
     <NextIntlClientProvider

@@ -60,7 +60,7 @@ export function describeEmailMode(): string {
 }
 
 function getDefaultFrom(): string {
-  return process.env.REPORT_FROM_EMAIL || 'TrainMind AI <onboarding@resend.dev>';
+  return process.env.REPORT_FROM_EMAIL || 'TrainMind <onboarding@resend.dev>';
 }
 
 /**
@@ -155,19 +155,19 @@ export function buildPasswordResetEmailHtml(opts: {
   expiryMinutes: number;
 }): string {
   return `<!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; margin: 0; padding: 24px;">
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">Reimposta la tua password</h1>
-    <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 16px 0;">Ciao ${opts.firstName}, abbiamo ricevuto una richiesta di reimpostazione della password per il tuo account TrainMind AI.</p>
+    <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">Reset your password</h1>
+    <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 16px 0;">Hi ${opts.firstName}, we received a request to reset the password for your TrainMind account.</p>
     <p style="text-align: center; margin: 28px 0;">
-      <a href="${opts.resetUrl}" style="display: inline-block; background: #0f766e; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600;">Reimposta password</a>
+      <a href="${opts.resetUrl}" style="display: inline-block; background: #0f766e; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600;">Reset password</a>
     </p>
-    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">Il link scade tra <strong>${opts.expiryMinutes} minuti</strong> e puo' essere usato una sola volta.</p>
-    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">Se il pulsante non funziona, copia e incolla questo indirizzo nel browser:<br><span style="color: #0f766e; word-break: break-all;">${opts.resetUrl}</span></p>
+    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">The link expires in <strong>${opts.expiryMinutes} minutes</strong> and can only be used once.</p>
+    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 16px 0;">If the button doesn't work, copy and paste this address into your browser:<br><span style="color: #0f766e; word-break: break-all;">${opts.resetUrl}</span></p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">Se non hai richiesto tu il reset, ignora questa email: la tua password resta invariata e nessuno puo' accedere al tuo account con questo link.</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">If you didn't request this reset, ignore this email: your password stays unchanged and nobody can access your account with this link.</p>
   </div>
 </body>
 </html>`;
@@ -184,22 +184,22 @@ export function buildReportEmailHtml(opts: {
   summary?: string;
 }): string {
   const audienceLabel = {
-    STAFF: 'Staff tecnico',
-    MEDICAL: 'Staff medico',
-    TRAINER: 'Preparazione atletica',
+    STAFF: 'Coaching staff',
+    MEDICAL: 'Medical staff',
+    TRAINER: 'Strength and conditioning',
   }[opts.audience] || opts.audience;
 
   return `<!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; margin: 0; padding: 24px;">
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">Report ${audienceLabel}</h1>
-    <p style="color: #64748b; margin: 0 0 24px 0; font-size: 14px;">${opts.organizationName} · dal ${opts.periodFrom} al ${opts.periodTo}</p>
+    <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">${audienceLabel} report</h1>
+    <p style="color: #64748b; margin: 0 0 24px 0; font-size: 14px;">${opts.organizationName} · ${opts.periodFrom} to ${opts.periodTo}</p>
     ${opts.summary ? `<div style="background: #f8fafc; border-left: 3px solid #6366f1; padding: 16px; border-radius: 6px; margin-bottom: 24px;"><p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.6;">${opts.summary}</p></div>` : ''}
-    <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">In allegato trovi il report completo nel formato richiesto. Il documento è stato generato automaticamente da TrainMind AI in base alla schedulazione configurata.</p>
+    <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">The full report is attached in the requested format. The document was generated automatically by TrainMind according to the configured schedule.</p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">Questa email è stata inviata automaticamente da TrainMind AI. Per modificare o disattivare la schedulazione, accedi alla dashboard.</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">This email was sent automatically by TrainMind. To change or turn off the schedule, sign in to your dashboard.</p>
   </div>
 </body>
 </html>`;

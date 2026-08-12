@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Database Client (Prisma)
+// TrainMind — Database Client (Prisma)
 // ============================================
 
 import { PrismaClient, Prisma } from '@prisma/client';

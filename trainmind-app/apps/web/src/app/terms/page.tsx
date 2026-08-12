@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Termini di Servizio — TrainMind AI',
+  title: 'Termini di Servizio — TrainMind',
 };
 
 const VERSION = '2026-07-18-beta';
@@ -18,7 +18,7 @@ export default function TermsPage() {
         <div>
           <h2 className="mb-2 text-lg font-semibold text-slate-900">1. Il servizio e la fase Beta</h2>
           <p>
-            TrainMind AI (&quot;il Servizio&quot;) è una piattaforma per preparatori fisici nel basket che consente la
+            TrainMind (&quot;il Servizio&quot;) è una piattaforma per preparatori fisici nel basket che consente la
             gestione di squadre, atleti, allenamenti, test fisici, dati di benessere e infortuni.{' '}
             <strong>
               Il Servizio è attualmente in fase di test (Beta): è fornito &quot;così com&apos;è&quot;, senza garanzie di
@@ -45,10 +45,10 @@ export default function TermsPage() {
             Per i dati personali degli atleti inseriti o raccolti tramite il Servizio (inclusi dati relativi alla
             salute quali benessere, infortuni e percorsi di rientro), il{' '}
             <strong>Titolare del trattamento è l&apos;organizzazione utilizzatrice</strong> (la società sportiva o il
-            preparatore), mentre TrainMind AI agisce come <strong>Responsabile del trattamento</strong> ai sensi
-            dell&apos;art. 28 GDPR. Accettando i presenti Termini, il Titolare incarica TrainMind AI di trattare tali
+            preparatore), mentre TrainMind agisce come <strong>Responsabile del trattamento</strong> ai sensi
+            dell&apos;art. 28 GDPR. Accettando i presenti Termini, il Titolare incarica TrainMind di trattare tali
             dati esclusivamente per l&apos;erogazione del Servizio, secondo le istruzioni documentate impartite
-            tramite l&apos;uso della piattaforma. TrainMind AI: (a) tratta i dati solo per erogare il Servizio; (b)
+            tramite l&apos;uso della piattaforma. TrainMind: (a) tratta i dati solo per erogare il Servizio; (b)
             adotta misure di sicurezza adeguate (cifratura in transito, controllo accessi, backup); (c) non
             comunica i dati a terzi salvo sub-responsabili tecnici necessari (hosting UE, servizi AI di cui
             all&apos;informativa); (d) assiste il Titolare nell&apos;evasione delle richieste degli interessati; (e) al
@@ -71,7 +71,7 @@ export default function TermsPage() {
         <div>
           <h2 className="mb-2 text-lg font-semibold text-slate-900">5. Limitazione di responsabilità</h2>
           <p>
-            Nei limiti consentiti dalla legge, durante la fase Beta TrainMind AI non risponde di danni indiretti,
+            Nei limiti consentiti dalla legge, durante la fase Beta TrainMind non risponde di danni indiretti,
             perdita di dati o mancato guadagno derivanti dall&apos;uso o dall&apos;impossibilità di usare il Servizio. Nulla
             in questi Termini esclude la responsabilità per dolo o colpa grave.
           </p>

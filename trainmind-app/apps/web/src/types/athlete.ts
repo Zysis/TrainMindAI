@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Athlete Types
+// TrainMind — Athlete Types
 // ============================================
 
 export interface Athlete {

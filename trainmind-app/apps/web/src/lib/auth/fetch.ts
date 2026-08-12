@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Authenticated Fetch Utility
+// TrainMind — Authenticated Fetch Utility
 // ============================================
 
 import { API_BASE_URL, API_PREFIX } from '../constants';

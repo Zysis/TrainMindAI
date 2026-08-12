@@ -1,0 +1,14 @@
+/* ── Schede prodotto ─────────────────────────────────────── */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.pc{background:var(--paper);border:1px solid var(--line);border-radius:22px;overflow:hidden;transition:.35s;display:flex;flex-direction:column}
+.pc:hover{transform:translateY(-8px);box-shadow:0 26px 60px rgba(11,22,20,.11);border-color:#CFE5E0}
+.pc-img{aspect-ratio:16/10;position:relative;overflow:hidden;background:var(--paper-3)}
+.pc-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:.6s}
+.pc:hover .pc-img img{transform:scale(1.07)}
+.pc-img::after{content:'';position:absolute;inset:0;background:linear-gradient(150deg,rgba(0,201,167,.5),rgba(7,16,14,.45));mix-blend-mode:color}
+.pc-tag{position:absolute;z-index:2;top:14px;left:14px;background:rgba(255,255,255,.92);color:var(--txt);padding:6px 12px;border-radius:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.pc-b{padding:28px 28px 32px;flex:1;display:flex;flex-direction:column}
+.pc-b h4{font-size:22px;margin-bottom:11px}
+.pc-b p{color:var(--txt-2);font-size:14.5px;line-height:1.75;font-weight:300;flex:1}
+.pc-b .lk{margin-top:22px;color:var(--acc-d);font-weight:600;font-size:14.5px;display:inline-flex;gap:8px;align-items:center;transition:.3s}
+.pc:hover .lk{gap:14px}

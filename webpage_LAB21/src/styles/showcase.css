@@ -1,0 +1,53 @@
+/* ── Vetrina prodotto flagship (TrainMind AI) ────────────── */
+.showcase{display:grid;grid-template-columns:1fr 1.12fr;min-height:600px;background:var(--ink);color:#fff}
+.sc-txt{padding:clamp(40px,5vw,86px);display:flex;flex-direction:column;justify-content:center;max-width:820px;margin-left:auto;width:100%}
+.badge{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:var(--acc);color:#03211B;padding:7px 15px;border-radius:8px;font-weight:600;margin-bottom:26px}
+.sc-txt h3{font-size:clamp(32px,3.6vw,52px);margin-bottom:10px}
+.sc-claim{color:var(--acc);font-family:var(--font-mono);font-size:14px;margin-bottom:24px}
+.sc-txt p{color:rgba(255,255,255,.7);font-size:16px;line-height:1.82;font-weight:300;max-width:54ch}
+.sc-feats{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;margin:34px 0 38px}
+.sc-feats div{padding:14px 0;border-top:1px solid rgba(255,255,255,.12);font-size:14.5px;color:rgba(255,255,255,.8);display:flex;gap:12px;align-items:center}
+.sc-feats div::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--acc);flex:none}
+.sc-actions{display:flex;gap:12px;flex-wrap:wrap}
+.sc-media{position:relative;overflow:hidden;background:#0A1513;min-height:420px}
+.sc-media img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.7)}
+.sc-media::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(7,16,14,.85),rgba(0,201,167,.25))}
+
+/* Con il video il trattamento verde è già dentro il montaggio: qui serve
+   solo un velo leggero, altrimenti le schermate dell'app diventano illeggibili. */
+.sc-media video{display:block;width:100%;height:100%;object-fit:cover}
+.sc-media.has-video::after{background:linear-gradient(120deg,rgba(7,16,14,.42),rgba(0,201,167,.10))}
+
+/* schede UI fluttuanti sopra la foto */
+.float{position:absolute;z-index:3;background:rgba(9,20,18,.82);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px 18px;color:#fff;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.f1{top:9%;right:7%;width:230px;animation:fl 6s ease-in-out infinite}
+.f2{bottom:11%;left:7%;width:262px;animation:fl 7.5s ease-in-out infinite reverse}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.float .lb{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase}
+.float b{display:block;font-family:var(--font-display);font-size:26px;font-weight:600;margin:6px 0 2px}
+.float .unit{font-size:12px;font-weight:400;opacity:.6}
+.float .dt{font-size:11.5px;color:var(--acc)}
+.float .txt{font-size:13.5px;line-height:1.6;margin-top:8px}
+.bars{display:flex;gap:4px;align-items:flex-end;height:44px;margin-top:12px}
+.bars i{flex:1;background:linear-gradient(180deg,var(--acc),rgba(0,201,167,.2));border-radius:2px 2px 0 0;display:block}
+
+/* ── Fascia numeri (sotto la vetrina TrainMind) ───────────────────────────────────────── */
+.band{background:var(--acc);color:#03211B;padding:clamp(56px,6.5vw,96px) 0}
+.band-in{display:grid;grid-template-columns:repeat(4,1fr);column-gap:0;row-gap:clamp(32px,4vw,52px)}
+
+/* Ogni voce è separata da una linea sottile e aperta da una lineetta:
+   la fascia legge come una tabella di dati, non come quattro riquadri. */
+.band .st{padding:0 clamp(20px,2.6vw,44px)}
+.band .st + .st{border-left:1px solid rgba(3,33,27,.20)}
+.band .st:first-child{padding-left:0}
+.band .st:last-child{padding-right:0}
+.band .st::before{content:'';display:block;width:30px;height:3px;
+  background:#03211B;opacity:.32;margin-bottom:clamp(16px,1.8vw,26px)}
+
+/* Il numero è l'elemento grafico della sezione: grande, compatto, pieno. */
+.band .num{display:flex;align-items:flex-start;
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(58px,7.6vw,128px);line-height:.84;letter-spacing:-.055em}
+.band .suf{font-style:normal;font-size:.32em;line-height:1;opacity:.55;margin:.2em 0 0 .04em}
+.band .lbl{display:block;margin-top:clamp(14px,1.7vw,24px);
+  font-size:14.5px;font-weight:500;line-height:1.5;opacity:.74;max-width:22ch}

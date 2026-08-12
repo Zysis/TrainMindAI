@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { User, Building2, Bell, Shield, Palette, Sun, Moon, Sparkles, ArrowUpRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
-import { useLocaleStore, localeLabels, localeFlags, type Locale } from '@/lib/i18n/store';
+import { useLocaleStore, LOCALES, localeLabels, localeFlags } from '@/lib/i18n/store';
 import { useEffect, useState } from 'react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { PLAN_FULL_NAME, tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
@@ -172,7 +172,9 @@ export default function SettingsPage() {
               <label className="label mb-1.5 block dark:text-slate-300">{t('language')}</label>
               <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{t('languageDesc')}</p>
               <div className="flex gap-3">
-                {(['it', 'en', 'es'] as Locale[]).map((loc) => (
+                {/* LOCALES invece di una lista scritta qui: l'ordine segue
+                    quello dello switcher, con la lingua di default per prima. */}
+                {LOCALES.map((loc) => (
                   <button
                     key={loc}
                     onClick={() => setLocale(loc)}

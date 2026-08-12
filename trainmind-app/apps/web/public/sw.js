@@ -1,17 +1,30 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `trainmind-ai-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const API_CACHE = `api-cache-${CACHE_VERSION}`;
 
+/**
+ * Sottopercorso sotto cui l'app è servita ('' alla radice, '/app' in
+ * produzione). Questo file sta in public/ e non passa dal bundler, quindi
+ * non può leggere NEXT_PUBLIC_BASE_PATH: il prefisso si ricava dal proprio
+ * indirizzo, che è già quello giusto (/sw.js oppure /app/sw.js).
+ *
+ * La versione della cache è passata a v2 di proposito: i client che hanno
+ * in cache le voci con i vecchi percorsi assoluti devono ricostruirla.
+ */
+const BASE_PATH = new URL(self.location.href).pathname.replace(/\/sw\.js$/, '');
+const p = (path) => `${BASE_PATH}${path}`;
+
 // Static assets to cache on install
 const STATIC_ASSETS = [
-  '/',
-  '/offline.html',
-  '/manifest.json',
-  '/favicon.svg',
-  '/favicon.ico',
-  '/icons/icon-192x192.svg',
-  '/icons/icon-512x512.svg',
+  p('/'),
+  p('/offline.html'),
+  // Generato da src/app/manifest.ts (prima era public/manifest.json).
+  p('/manifest.webmanifest'),
+  p('/favicon.svg'),
+  p('/favicon.ico'),
+  p('/icons/icon-192x192.svg'),
+  p('/icons/icon-512x512.svg'),
 ];
 
 // Install event - cache static assets
@@ -70,7 +83,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // API calls - Network first, fallback to cache
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith(p('/api/'))) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -97,8 +110,8 @@ self.addEventListener('fetch', (event) => {
   // Static assets - Cache first, fallback to network
   if (
     url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/i) ||
-    url.pathname.startsWith('/_next/') ||
-    url.pathname.startsWith('/icons/')
+    url.pathname.startsWith(p('/_next/')) ||
+    url.pathname.startsWith(p('/icons/'))
   ) {
     event.respondWith(
       caches.match(request).then((response) => {
@@ -144,7 +157,7 @@ self.addEventListener('fetch', (event) => {
             if (response) {
               return response;
             }
-            return caches.match('/offline.html');
+            return caches.match(p('/offline.html'));
           });
         })
     );

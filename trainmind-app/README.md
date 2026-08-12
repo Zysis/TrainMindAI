@@ -1,4 +1,4 @@
-# TrainMind AI
+# TrainMind
 
 Piattaforma SaaS con intelligenza artificiale per preparatori fisici nel basket.
 

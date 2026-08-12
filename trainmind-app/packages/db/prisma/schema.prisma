@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Database Schema (Prisma)
+// TrainMind — Database Schema (Prisma)
 // ============================================
 
 generator client {

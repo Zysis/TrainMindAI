@@ -1,0 +1,28 @@
+FOTO DELL'HERO — landing page
+=============================
+
+Metti qui la foto di sfondo dell'hero, poi apri
+
+    apps/web/src/app/page.tsx
+
+e valorizza la costante in cima al file:
+
+    const HERO_PHOTO: string | null = '/assets/hero/hero-basket.jpg';
+
+(il percorso parte da public/, quindi "public/assets/hero/x.jpg"
+ si scrive "/assets/hero/x.jpg")
+
+Consigli
+--------
+- Dimensione: almeno 1920x1080, meglio 2560 di larghezza.
+- Formato: .webp se puoi (piu' leggero), altrimenti .jpg.
+- Peso: sotto i 400 KB. Se e' piu' pesante, ridimensionala.
+- Soggetto: allenamento, palestra, campo. Lascia spazio "vuoto"
+  in basso a sinistra: li' ci va il titolo.
+- La foto viene virata automaticamente sul verde di marca
+  (classe .hero-media.tint in src/styles/landing.css).
+  Funziona meglio con scatti a contrasto medio-alto e non
+  gia' fortemente colorati.
+
+Se la foto non deve essere virata di verde, togli la classe
+"tint" dal div .hero-media in page.tsx.

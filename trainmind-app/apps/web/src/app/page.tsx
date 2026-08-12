@@ -3,26 +3,71 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
-  Activity,
   BarChart3,
   Brain,
   CalendarRange,
-  CheckCircle2,
   FileText,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
   Users,
   Zap,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { LangSwitcher } from '@/components/i18n/lang-switcher';
-import { useLocaleStore, type Locale } from '@/lib/i18n/store';
+import { useLocaleStore, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/store';
+import { useReveal } from '@/hooks/use-reveal';
+import { withBasePath } from '@/lib/base-path';
+import '@/styles/landing.css';
+
+/* ═════════════════════════════════════════════════════════
+ * FOTO DELL'HERO — slot da riempire
+ * ─────────────────────────────────────────────────────────
+ * Per mettere la foto:
+ *   1. salvala in  apps/web/public/assets/hero/
+ *   2. scrivi qui sotto il suo percorso, es:
+ *        const HERO_PHOTO = '/assets/hero/hero-basket.jpg';
+ *
+ * Finche' resta `null` l'hero mostra la trama scura di fondo
+ * (linee da campo + alone verde) e non carica nessuna immagine:
+ * niente richieste a vuoto, niente icona di immagine rotta.
+ *
+ * Formato consigliato: 1920×1080 o piu' larga, .webp o .jpg.
+ * La foto viene automaticamente virata sul verde di marca dalla
+ * classe `.hero-media.tint` in styles/landing.css: funziona bene
+ * con scatti a contrasto medio-alto, meglio se non gia' colorati.
+ * ═════════════════════════════════════════════════════════ */
+/*const HERO_PHOTO: string | null = null;*/
+/* hero-fine.jpg = stessa immagine con il retino rigenerato piu' fine
+   (125 punti in larghezza invece di ~83) e ridimensionata a 2560px.
+   L'originale resta in hero.jpg se serve tornare indietro. */
+const HERO_PHOTO: string | null = '/assets/hero/hero-fine.jpg';
+
+/* Tono dell'hero: dipende dalla foto.
+ *   'light' → foto chiara: velo bianco a sinistra, testi scuri
+ *   'dark'  → foto scura : velo scuro in basso, testi bianchi
+ * Cambiando questo valore si ribaltano hero e navbar insieme. */
+const HERO_TONE: 'light' | 'dark' = 'light';
 
 /* ─────────────────────────────────────────────────────────
  * Types
  * ───────────────────────────────────────────────────────── */
 type BillingCycle = 'monthly' | 'yearly';
+
+/**
+ * Iniziali di un nome, per gli avatar del pannello hero.
+ * "Luca Bianchi"  → LB
+ * "Andrew O’Neil" → AO
+ * Prende la prima lettera delle prime due parole: cambiando lingua
+ * le sigle si aggiornano da sole, senza doverle tenere allineate.
+ */
+function initials(fullName: string): string {
+  return fullName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+}
 
 /* ─────────────────────────────────────────────────────────
  * Translations (IT / EN / ES)
@@ -31,40 +76,32 @@ const T = {
   it: {
     'nav.features': 'Funzionalità',
     'nav.pricing': 'Prezzi',
-    'nav.login': 'Accedi',
-    'nav.trial': 'Prova gratis',
+    'nav.login': 'Login',
 
-    'hero.badge': 'Stagione 2026 · Live per il basket',
+    'hero.badge': 'Stagione 26/27 · Live per il basket',
     'hero.title.1': 'Allenare di più,',
     'hero.title.2': 'decidere meglio.',
-    'hero.title.3': 'Con l’AI dalla tua parte.',
     'hero.subtitle':
-      'TrainMind AI è la piattaforma che usi ogni giorno per pianificare allenamenti, leggere il carico, prevenire infortuni e generare report. Pensata per preparatori atletici del basket.',
-    'hero.cta.primary': 'Prova gratis 14 giorni',
+      'TrainMind è la piattaforma che usi ogni giorno per pianificare allenamenti, leggere il carico, seguire i tuoi atleti e generare report. Pensata dai preparatori per preparatori atletici del basket.',
     'hero.cta.secondary': 'Vedi la piattaforma',
-    'hero.stat.clubs': 'Società',
-    'hero.stat.athletes': 'Atleti',
-    'hero.stat.reports': 'Tempo report',
-
-    'mockup.url': 'trainmind.ai / dashboard',
-    'mockup.kpi.acwr': 'ACWR',
-    'mockup.kpi.wellness': 'Wellness',
-    'mockup.kpi.athletes': 'Atleti',
-    'mockup.chart.title': 'Load monitoring',
-    'mockup.chart.range': '7 giorni',
-    'mockup.ai.label': 'AI Coach',
-    'mockup.ai.message': 'Pietro è in zona di rischio. Propongo',
-    'mockup.ai.messageBold': 'deload di 2 giorni',
-    'mockup.alert.label': 'Alert',
-    'mockup.alert.value': '3 atleti',
-    'mockup.today.label': 'Oggi',
-    'mockup.today.value': 'Sessione ok',
+    'hero.live.title': 'Squadra · Oggi',
+    'hero.live.load': 'Distribuzione carico (ACWR)',
+    'hero.live.zoneOk': 'ottimale',
+    'hero.live.zoneHi': 'alto',
+    'hero.live.zoneRk': 'a rischio',
+    'hero.live.ai': 'Deload di 2 giorni consigliato per',
+    'hero.live.demo': 'DEMO',
+    // Atleti d'esempio del pannello. a2 e' quello segnalato in fondo.
+    'hero.live.a1': 'Luca Bianchi',
+    'hero.live.a2': 'Davide Marino',
+    'hero.live.a3': 'Andrea Romano',
+    'hero.scroll': 'Scorri',
 
     'features.pill': 'Piattaforma',
     'features.h2.1': 'Tutto quello che serve al tuo staff,',
     'features.h2.2': 'in un’unica piattaforma.',
     'features.sub':
-      'Dalla gestione degli atleti alla periodizzazione AI-assisted — TrainMind AI copre l’intero workflow della preparazione atletica.',
+      'Dalla gestione degli atleti alla periodizzazione, TrainMind copre l’intero workflow della preparazione atletica.',
 
     'features.analytics.label': 'Analytics',
     'features.analytics.title': 'Load monitoring in tempo reale',
@@ -73,11 +110,13 @@ const T = {
     'features.analytics.chartTitle': 'ACWR — Squadra',
     'features.analytics.chartRange': 'Ultimi 14 giorni',
     'features.analytics.alerts': '3 alert',
+    // Iniziali dei giorni, da lunedi' a domenica
+    'features.analytics.days': 'L,M,M,G,V,S,D',
 
-    'features.ai.label': 'AI Coach',
+    'features.ai.label': 'Your personal assistant',
     'features.ai.title': 'Un assistente sempre al tuo fianco',
     'features.ai.desc':
-      'Suggerimenti su periodizzazione, esercizi e protocolli RTP — basati sui dati reali della tua squadra.',
+      'Suggerimenti su periodizzazione, esercizi e protocolli RTP, basati sui dati reali della tua squadra.',
     'features.ai.chatUser': 'Pietro è ancora idoneo per martedì?',
     'features.ai.chatAI': 'Sconsigliato. ACWR 1.42 — propongo deload di 2 giorni.',
 
@@ -99,10 +138,14 @@ const T = {
     'features.security.badge.gdpr': 'GDPR',
     'features.security.badge.iso': 'ISO ready',
     'features.security.badge.encrypted': 'Cifrato',
+    'band.1': 'ore per il report settimanale, quasi mai spese ad analizzare',
+    'band.2': 'lo sguardo del capo allenatore su quel report',
+    'band.3': 'posti diversi dove vivono i dati: GPS, test, wellness, presenze',
+    'band.4': 'dal primo caricamento al primo report: l’obiettivo di TrainMind',
 
+    'pricing.kick': 'Prezzi',
     'pricing.h2': 'Piani e prezzi',
-    'pricing.sub':
-      'Scegli il piano adatto alla tua organizzazione. Tutti i piani includono 14 giorni di prova gratuita.',
+    'pricing.sub': 'Scegli il piano più adatto alle tue esigenze. Entra in TrainMind.',
     'pricing.toggle.monthly': 'Mensile',
     'pricing.toggle.yearly': 'Annuale',
     'pricing.toggle.save': 'Risparmia fino all’11%',
@@ -113,25 +156,25 @@ const T = {
 
     'plan.starter.name': 'Starter',
     'plan.starter.tagline': 'Per chi parte e vuole le basi.',
-    'plan.starter.cta': 'Inizia gratis',
+    'plan.starter.cta': 'Registrati',
     'plan.starter.feat.1': '1 squadra (12 atleti)',
     'plan.starter.feat.2': 'Report base',
     'plan.starter.feat.3': 'Wellness tracking',
     'plan.starter.feat.4': 'Calendario',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'Per società che vogliono fare sul serio.',
-    'plan.pro.cta': 'Prova 14 giorni gratis',
+    'plan.pro.tagline': 'Per i preparatori che vogliono fare sul serio.',
+    'plan.pro.cta': 'Registrati',
     'plan.pro.feat.1': '3 squadre (12 atleti per squadra)',
     'plan.pro.feat.2': 'Report avanzati',
-    'plan.pro.feat.3': 'AI Coach',
+    'plan.pro.feat.3': 'AI Assistant',
     'plan.pro.feat.4': 'Periodizzazione',
     'plan.pro.feat.5': 'RTP',
     'plan.pro.feat.6': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'Per club e federazioni, senza limiti.',
-    'plan.ultra.cta': 'Contattaci',
+    'plan.ultra.tagline': 'La tua piattaforma, senza limiti.',
+    'plan.ultra.cta': 'Registrati',
     'plan.ultra.feat.1': 'Squadre e atleti illimitati',
     'plan.ultra.feat.2': 'Tutto Professional',
     'plan.ultra.feat.3': 'API access',
@@ -139,50 +182,49 @@ const T = {
 
     'cta.h2': 'Pronto a trasformare la tua preparazione atletica?',
     'cta.sub':
-      'Unisciti ai preparatori fisici che usano TrainMind AI per prendere decisioni migliori, più velocemente.',
-    'cta.button': 'Inizia la prova gratuita',
+      'Unisciti ai preparatori fisici che usano TrainMind per prendere decisioni migliori, più velocemente.',
+    'cta.button': 'Crea un account',
 
-    'footer.contact': 'Contatti',
+    'cta.kick': 'Iniziamo',
     'footer.copyright': 'Tutti i diritti riservati.',
+    'footer.tagline': 'La piattaforma per preparatori atletici del basket. Pianifica, monitora il carico e tieni tutti i tuoi dati sempre con te.',
+    'footer.col.product': 'Prodotto',
+    'footer.col.legal': 'Legale',
+    'footer.col.contact': 'Contatti',
+    'footer.privacy': 'Privacy',
+    'footer.terms': 'Termini',
+    'footer.madein': 'Fatto in Italia',
   },
 
   en: {
     'nav.features': 'Features',
     'nav.pricing': 'Pricing',
-    'nav.login': 'Log in',
-    'nav.trial': 'Try for free',
+    'nav.login': 'Login',
 
-    'hero.badge': '2026 Season · Live for basketball',
+    'hero.badge': '26/27 Season · Live for basketball',
     'hero.title.1': 'Train more,',
     'hero.title.2': 'decide better.',
-    'hero.title.3': 'With AI on your side.',
     'hero.subtitle':
-      'TrainMind AI is the platform you use every day to plan training, read load, prevent injuries and generate reports. Built for basketball strength coaches.',
-    'hero.cta.primary': 'Try free for 14 days',
+      'TrainMind is the platform you use every day to plan training, read load, follow your athletes and generate reports. Built by coaches, for basketball strength coaches.',
     'hero.cta.secondary': 'See the platform',
-    'hero.stat.clubs': 'Clubs',
-    'hero.stat.athletes': 'Athletes',
-    'hero.stat.reports': 'Time on reports',
-
-    'mockup.url': 'trainmind.ai / dashboard',
-    'mockup.kpi.acwr': 'ACWR',
-    'mockup.kpi.wellness': 'Wellness',
-    'mockup.kpi.athletes': 'Athletes',
-    'mockup.chart.title': 'Load monitoring',
-    'mockup.chart.range': '7 days',
-    'mockup.ai.label': 'AI Coach',
-    'mockup.ai.message': 'Pietro is in the danger zone. I suggest a',
-    'mockup.ai.messageBold': '2-day deload',
-    'mockup.alert.label': 'Alert',
-    'mockup.alert.value': '3 athletes',
-    'mockup.today.label': 'Today',
-    'mockup.today.value': 'Session OK',
+    'hero.live.title': 'Squad · Today',
+    'hero.live.load': 'Load distribution (ACWR)',
+    'hero.live.zoneOk': 'optimal',
+    'hero.live.zoneHi': 'high',
+    'hero.live.zoneRk': 'at risk',
+    'hero.live.ai': '2-day deload suggested for',
+    'hero.live.demo': 'DEMO',
+    // Atleti d'esempio del pannello. a2 e' quello segnalato in fondo.
+    'hero.live.a1': 'John Smith',
+    'hero.live.a2': 'Ryan Jones',
+    'hero.live.a3': 'Andrew O’Neil',
+    'hero.scroll': 'Scroll',
 
     'features.pill': 'Platform',
     'features.h2.1': 'Everything your staff needs,',
     'features.h2.2': 'on a single platform.',
     'features.sub':
-      'From athlete management to AI-assisted periodization — TrainMind AI covers the entire athletic prep workflow.',
+      'From athlete management to periodization, TrainMind covers the entire athletic prep workflow.',
 
     'features.analytics.label': 'Analytics',
     'features.analytics.title': 'Real-time load monitoring',
@@ -191,12 +233,14 @@ const T = {
     'features.analytics.chartTitle': 'ACWR — Squad',
     'features.analytics.chartRange': 'Last 14 days',
     'features.analytics.alerts': '3 alerts',
+    // Iniziali dei giorni, da lunedi' a domenica
+    'features.analytics.days': 'M,T,W,T,F,S,S',
 
-    'features.ai.label': 'AI Coach',
+    'features.ai.label': 'Your personal assistant',
     'features.ai.title': 'An assistant always by your side',
     'features.ai.desc':
-      'Suggestions on periodization, exercises and RTP protocols — based on your squad’s real data.',
-    'features.ai.chatUser': 'Is Pietro still fit for Tuesday?',
+      'Suggestions on periodization, exercises and RTP protocols, based on your squad’s real data.',
+    'features.ai.chatUser': 'Is Peter still fit for Tuesday?',
     'features.ai.chatAI': 'Not recommended. ACWR 1.42 — I suggest a 2-day deload.',
 
     'features.period.title': 'Periodization',
@@ -217,10 +261,14 @@ const T = {
     'features.security.badge.gdpr': 'GDPR',
     'features.security.badge.iso': 'ISO ready',
     'features.security.badge.encrypted': 'Encrypted',
+    'band.1': 'hours on the weekly report, hardly ever spent analysing it',
+    'band.2': 'the head coach’s glance at that report',
+    'band.3': 'separate places where the data lives: GPS, tests, wellness, attendance',
+    'band.4': 'from first upload to first report: what TrainMind aims for',
 
+    'pricing.kick': 'Pricing',
     'pricing.h2': 'Plans & pricing',
-    'pricing.sub':
-      'Choose the plan that fits your organization. All plans include a 14-day free trial.',
+    'pricing.sub': 'Choose the plan that fits you best. Join TrainMind.',
     'pricing.toggle.monthly': 'Monthly',
     'pricing.toggle.yearly': 'Yearly',
     'pricing.toggle.save': 'Save up to 11%',
@@ -231,25 +279,25 @@ const T = {
 
     'plan.starter.name': 'Starter',
     'plan.starter.tagline': 'For those starting out and wanting the basics.',
-    'plan.starter.cta': 'Start free',
+    'plan.starter.cta': 'Sign up',
     'plan.starter.feat.1': '1 team (12 athletes)',
     'plan.starter.feat.2': 'Basic reports',
     'plan.starter.feat.3': 'Wellness tracking',
     'plan.starter.feat.4': 'Calendar',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'For clubs that want to mean business.',
-    'plan.pro.cta': 'Try 14 days free',
+    'plan.pro.tagline': 'For coaches who mean business.',
+    'plan.pro.cta': 'Sign up',
     'plan.pro.feat.1': '3 teams (12 athletes per team)',
     'plan.pro.feat.2': 'Advanced reports',
-    'plan.pro.feat.3': 'AI Coach',
+    'plan.pro.feat.3': 'AI Assistant',
     'plan.pro.feat.4': 'Periodization',
     'plan.pro.feat.5': 'RTP',
     'plan.pro.feat.6': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'For clubs and federations, no limits.',
-    'plan.ultra.cta': 'Contact us',
+    'plan.ultra.tagline': 'Your platform, no limits.',
+    'plan.ultra.cta': 'Sign up',
     'plan.ultra.feat.1': 'Unlimited teams and athletes',
     'plan.ultra.feat.2': 'Everything in Professional',
     'plan.ultra.feat.3': 'API access',
@@ -257,50 +305,49 @@ const T = {
 
     'cta.h2': 'Ready to transform your athletic preparation?',
     'cta.sub':
-      'Join the strength coaches who use TrainMind AI to make better decisions, faster.',
-    'cta.button': 'Start the free trial',
+      'Join the strength coaches who use TrainMind to make better decisions, faster.',
+    'cta.button': 'Create an account',
 
-    'footer.contact': 'Contact',
+    'cta.kick': 'Get started',
     'footer.copyright': 'All rights reserved.',
+    'footer.tagline': 'The platform for basketball strength coaches. Plan sessions, monitor load and keep all your data with you.',
+    'footer.col.product': 'Product',
+    'footer.col.legal': 'Legal',
+    'footer.col.contact': 'Contact',
+    'footer.privacy': 'Privacy',
+    'footer.terms': 'Terms',
+    'footer.madein': 'Made in Italy',
   },
 
   es: {
     'nav.features': 'Funcionalidades',
     'nav.pricing': 'Precios',
-    'nav.login': 'Iniciar sesión',
-    'nav.trial': 'Prueba gratis',
+    'nav.login': 'Login',
 
-    'hero.badge': 'Temporada 2026 · En vivo para el baloncesto',
+    'hero.badge': 'Temporada 26/27 · En vivo para el baloncesto',
     'hero.title.1': 'Entrenar más,',
     'hero.title.2': 'decidir mejor.',
-    'hero.title.3': 'Con la IA de tu lado.',
     'hero.subtitle':
-      'TrainMind AI es la plataforma que usas cada día para planificar entrenamientos, leer la carga, prevenir lesiones y generar informes. Pensada para preparadores físicos de baloncesto.',
-    'hero.cta.primary': 'Prueba gratis 14 días',
+      'TrainMind es la plataforma que usas cada día para planificar entrenamientos, leer la carga, seguir a tus atletas y generar informes. Pensada por preparadores para preparadores físicos de baloncesto.',
     'hero.cta.secondary': 'Ver la plataforma',
-    'hero.stat.clubs': 'Clubes',
-    'hero.stat.athletes': 'Atletas',
-    'hero.stat.reports': 'Tiempo informes',
-
-    'mockup.url': 'trainmind.ai / panel',
-    'mockup.kpi.acwr': 'ACWR',
-    'mockup.kpi.wellness': 'Wellness',
-    'mockup.kpi.athletes': 'Atletas',
-    'mockup.chart.title': 'Monitoreo de carga',
-    'mockup.chart.range': '7 días',
-    'mockup.ai.label': 'AI Coach',
-    'mockup.ai.message': 'Pietro está en zona de riesgo. Propongo',
-    'mockup.ai.messageBold': 'descarga de 2 días',
-    'mockup.alert.label': 'Alerta',
-    'mockup.alert.value': '3 atletas',
-    'mockup.today.label': 'Hoy',
-    'mockup.today.value': 'Sesión OK',
+    'hero.live.title': 'Equipo · Hoy',
+    'hero.live.load': 'Distribución de carga (ACWR)',
+    'hero.live.zoneOk': 'óptimo',
+    'hero.live.zoneHi': 'alto',
+    'hero.live.zoneRk': 'en riesgo',
+    'hero.live.ai': 'Descarga de 2 días sugerida para',
+    'hero.live.demo': 'DEMO',
+    // Atleti d'esempio del pannello. a2 e' quello segnalato in fondo.
+    'hero.live.a1': 'Lucas Rodríguez',
+    'hero.live.a2': 'Adrià Martínez',
+    'hero.live.a3': 'Jaime Villa',
+    'hero.scroll': 'Desliza',
 
     'features.pill': 'Plataforma',
     'features.h2.1': 'Todo lo que tu staff necesita,',
     'features.h2.2': 'en una única plataforma.',
     'features.sub':
-      'Desde la gestión de atletas hasta la periodización asistida por IA — TrainMind AI cubre todo el flujo de la preparación física.',
+      'Desde la gestión de atletas hasta la periodización, TrainMind cubre todo el flujo de la preparación física.',
 
     'features.analytics.label': 'Analytics',
     'features.analytics.title': 'Monitoreo de carga en tiempo real',
@@ -309,12 +356,14 @@ const T = {
     'features.analytics.chartTitle': 'ACWR — Equipo',
     'features.analytics.chartRange': 'Últimos 14 días',
     'features.analytics.alerts': '3 alertas',
+    // Iniziali dei giorni, da lunedi' a domenica
+    'features.analytics.days': 'L,M,M,J,V,S,D',
 
-    'features.ai.label': 'AI Coach',
+    'features.ai.label': 'Your personal assistant',
     'features.ai.title': 'Un asistente siempre a tu lado',
     'features.ai.desc':
-      'Sugerencias de periodización, ejercicios y protocolos RTP — basados en los datos reales de tu equipo.',
-    'features.ai.chatUser': '¿Pietro sigue apto para el martes?',
+      'Sugerencias de periodización, ejercicios y protocolos RTP, basados en los datos reales de tu equipo.',
+    'features.ai.chatUser': '¿Pedro sigue apto para el martes?',
     'features.ai.chatAI': 'No recomendado. ACWR 1.42 — propongo descarga de 2 días.',
 
     'features.period.title': 'Periodización',
@@ -335,10 +384,14 @@ const T = {
     'features.security.badge.gdpr': 'GDPR',
     'features.security.badge.iso': 'ISO ready',
     'features.security.badge.encrypted': 'Cifrado',
+    'band.1': 'horas para el informe semanal, casi nunca dedicadas a analizarlo',
+    'band.2': 'la mirada del primer entrenador a ese informe',
+    'band.3': 'sitios distintos donde viven los datos: GPS, tests, wellness, asistencia',
+    'band.4': 'del primer volcado al primer informe: el objetivo de TrainMind',
 
+    'pricing.kick': 'Precios',
     'pricing.h2': 'Planes y precios',
-    'pricing.sub':
-      'Elige el plan adecuado para tu organización. Todos los planes incluyen 14 días de prueba gratuita.',
+    'pricing.sub': 'Elige el plan que mejor se adapte a ti. Entra en TrainMind.',
     'pricing.toggle.monthly': 'Mensual',
     'pricing.toggle.yearly': 'Anual',
     'pricing.toggle.save': 'Ahorra hasta el 11%',
@@ -349,25 +402,25 @@ const T = {
 
     'plan.starter.name': 'Starter',
     'plan.starter.tagline': 'Para quien empieza y quiere lo esencial.',
-    'plan.starter.cta': 'Empezar gratis',
+    'plan.starter.cta': 'Regístrate',
     'plan.starter.feat.1': '1 equipo (12 atletas)',
     'plan.starter.feat.2': 'Informes básicos',
     'plan.starter.feat.3': 'Wellness tracking',
     'plan.starter.feat.4': 'Calendario',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'Para clubes que van en serio.',
-    'plan.pro.cta': 'Prueba 14 días gratis',
+    'plan.pro.tagline': 'Para preparadores que van en serio.',
+    'plan.pro.cta': 'Regístrate',
     'plan.pro.feat.1': '3 equipos (12 atletas por equipo)',
     'plan.pro.feat.2': 'Informes avanzados',
-    'plan.pro.feat.3': 'AI Coach',
+    'plan.pro.feat.3': 'AI Assistant',
     'plan.pro.feat.4': 'Periodización',
     'plan.pro.feat.5': 'RTP',
     'plan.pro.feat.6': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'Para clubes y federaciones, sin límites.',
-    'plan.ultra.cta': 'Contáctanos',
+    'plan.ultra.tagline': 'Tu plataforma, sin límites.',
+    'plan.ultra.cta': 'Regístrate',
     'plan.ultra.feat.1': 'Equipos y atletas ilimitados',
     'plan.ultra.feat.2': 'Todo Professional',
     'plan.ultra.feat.3': 'Acceso API',
@@ -375,11 +428,18 @@ const T = {
 
     'cta.h2': '¿Listo para transformar tu preparación física?',
     'cta.sub':
-      'Únete a los preparadores físicos que usan TrainMind AI para tomar mejores decisiones, más rápido.',
-    'cta.button': 'Empezar la prueba gratuita',
+      'Únete a los preparadores físicos que usan TrainMind para tomar mejores decisiones, más rápido.',
+    'cta.button': 'Crea una cuenta',
 
-    'footer.contact': 'Contacto',
+    'cta.kick': 'Empecemos',
     'footer.copyright': 'Todos los derechos reservados.',
+    'footer.tagline': 'La plataforma para preparadores físicos de baloncesto. Planifica, monitoriza la carga y ten todos tus datos siempre contigo.',
+    'footer.col.product': 'Producto',
+    'footer.col.legal': 'Legal',
+    'footer.col.contact': 'Contacto',
+    'footer.privacy': 'Privacidad',
+    'footer.terms': 'Términos',
+    'footer.madein': 'Hecho en Italia',
   },
 } as const;
 
@@ -389,7 +449,10 @@ type TKey = keyof (typeof T)['it'];
  * Pricing data
  * ───────────────────────────────────────────────────────── */
 type Plan = {
+  /** Chiave usata nelle traduzioni ('pro' abbrevia 'professional'). */
   key: 'starter' | 'pro' | 'ultra';
+  /** Valore accettato dall'API, passato a /register come ?plan= */
+  planId: 'starter' | 'professional' | 'ultra';
   /** Slug brand mostrato anche come badge in alto a destra dell'app. */
   slug: 'START' | 'PRO' | 'ULTRA';
   monthly: number;
@@ -401,6 +464,7 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     key: 'starter',
+    planId: 'starter',
     slug: 'START',
     monthly: 14,
     yearly: 150,
@@ -414,6 +478,7 @@ const PLANS: Plan[] = [
   },
   {
     key: 'pro',
+    planId: 'professional',
     slug: 'PRO',
     monthly: 21,
     yearly: 225,
@@ -429,6 +494,7 @@ const PLANS: Plan[] = [
   },
   {
     key: 'ultra',
+    planId: 'ultra',
     slug: 'ULTRA',
     monthly: 30,
     yearly: 320,
@@ -447,7 +513,7 @@ const PLANS: Plan[] = [
  * ───────────────────────────────────────────────────────── */
 // Flag per mostrare/nascondere la sezione prezzi in landing e i link "Prezzi" nel menu.
 // Cambiare a true quando i piani commerciali saranno pubblici.
-const SHOW_PRICING = false;
+const SHOW_PRICING = true;
 
 export default function LandingPage() {
   // La lingua vive nello store globale (localStorage + profilo utente):
@@ -456,383 +522,405 @@ export default function LandingPage() {
   const [billing, setBilling] = useState<BillingCycle>('monthly');
   const [mounted, setMounted] = useState(false);
 
-  // In SSR non possiamo leggere localStorage: renderizziamo in italiano e
-  // passiamo alla lingua reale al primo mount, evitando errori di idratazione.
+  // In SSR non possiamo leggere localStorage: renderizziamo nella lingua di
+  // default e passiamo a quella reale al primo mount, evitando errori di
+  // idratazione.
   useEffect(() => setMounted(true), []);
-  const locale: Locale = mounted ? storeLocale : 'it';
+  const locale: Locale = mounted ? storeLocale : DEFAULT_LOCALE;
+
+  // Comparsa progressiva degli elementi `.rv` allo scroll (stile LAB21)
+  useReveal();
+
+  // La navbar e' trasparente sopra l'hero scuro e diventa bianca appena
+  // si scrolla, altrimenti il testo bianco finirebbe su fondo chiaro.
+  const [navSolid, setNavSolid] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setNavSolid(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const t = (key: TKey): string => T[locale][key] ?? T.it[key];
 
-  const heroStats = [
-    { value: '30+', label: t('hero.stat.clubs') },
-    { value: '1.200+', label: t('hero.stat.athletes') },
-    { value: '−40%', label: t('hero.stat.reports') },
-  ];
-
   return (
-    <div className="min-h-screen bg-white">
+    // `lp` attiva il design system LAB21 definito in styles/landing.css.
+    // Sta solo qui: la dashboard resta sul tema teal/slate.
+    <div className="lp min-h-screen bg-white">
       {/* ─── Navbar ─────────────────────────────────────── */}
-      <nav className="fixed top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-lg">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <BrandLogo className="h-9 w-9" />
-            <span className="text-lg font-bold text-slate-900">
-              TrainMind <span className="text-teal-600">AI</span>
+      <nav
+        className={`nav${navSolid ? ' solid' : ''}${
+          HERO_TONE === 'light' && !navSolid ? ' over-light' : ''
+        }`}
+      >
+        <div className="nav-in">
+          <Link href="/" className="brand" aria-label="TrainMind by LAB21">
+            <BrandLogo
+              tone={HERO_TONE === 'light' || navSolid ? 'light' : 'dark'}
+              className="h-9 w-9"
+            />
+            <span className="wordmark">
+              Train<em>Mind</em>
             </span>
+            <span className="brand-by">by</span>
+            {/* Logo societa'. Due varianti: scura sui fondi chiari,
+                chiara quando la barra e' trasparente su hero scuro. */}
+            <img
+              className="brand-lab21"
+              src={withBasePath(
+                HERO_TONE === 'light' || navSolid
+                  ? '/assets/brand/lab21-wordmark.png'
+                  : '/assets/brand/lab21-wordmark-light.png',
+              )}
+              alt="LAB21"
+              width={960}
+              height={242}
+            />
           </Link>
-          <div className="flex items-center gap-3 md:gap-6">
-            <a
-              href="#features"
-              className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline"
-            >
+
+          <div className="ml-auto hidden items-center gap-1 md:flex">
+            <a href="#features" className="nav-link">
               {t('nav.features')}
             </a>
-            {SHOW_PRICING && (
-              <a
-                href="#pricing"
-                className="hidden text-sm text-slate-600 hover:text-slate-900 md:inline"
-              >
-                {t('nav.pricing')}
-              </a>
-            )}
+            <a href="#pricing" className="nav-link">
+              {t('nav.pricing')}
+            </a>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3 md:ml-0">
             <LangSwitcher />
-            <Link
-              href="/login"
-              className="hidden text-sm font-medium text-slate-700 hover:text-slate-900 md:inline"
-            >
+            <Link href="/login" className="btn btn-o">
               {t('nav.login')}
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-            >
-              {t('nav.trial')}
             </Link>
           </div>
         </div>
       </nav>
 
       {/* ─── Hero ───────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-28 pb-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50/80 via-white to-amber-50/40" />
-        <div
-          className="absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, #0F172A 1px, transparent 0)',
-            backgroundSize: '32px 32px',
-          }}
-        />
-        <div className="pointer-events-none absolute -top-24 right-0 h-[500px] w-[500px] rounded-full bg-teal-300/25 blur-3xl" />
-        <div className="pointer-events-none absolute top-40 left-0 h-[400px] w-[400px] rounded-full bg-amber-200/30 blur-3xl" />
+      <section
+        className={`hero${HERO_TONE === 'light' ? ' on-light' : ''}`}
+        id="top"
+      >
+        {/* Slot foto — vedi HERO_PHOTO in cima al file.
+            Finche' il file non esiste il <img> non viene montato e
+            resta la trama di fondo: nessuna immagine rotta. */}
+        <div className="hero-media tint">
+          <div className="hero-fallback" aria-hidden="true" />
+          {HERO_PHOTO && (
+            /* withBasePath: e' un <img> normale, non next/image, quindi il
+               sottopercorso dell'app non viene aggiunto in automatico. */
+            <img src={withBasePath(HERO_PHOTO)} alt="" fetchPriority="high" />
+          )}
+        </div>
 
-        <div className="relative mx-auto max-w-6xl px-6">
-          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-7">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                {t('hero.badge')}
+        <div className="hero-in inner">
+          <div className="hero-flex">
+            <div className="hero-copy">
+              <div className="pill mono rv">
+                <i />
+                <span>{t('hero.badge')}</span>
               </div>
 
-              <h1 className="mb-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-slate-900 md:text-6xl lg:text-[4.5rem]">
-                {t('hero.title.1')}{' '}
-                <span className="relative inline-block">
-                  <span className="relative z-10">{t('hero.title.2')}</span>
-                  <span className="absolute -bottom-1 left-0 right-0 -z-0 h-3 rounded-sm bg-amber-300/60" />
-                </span>
+              <h1 className="rv d1">
+                {t('hero.title.1')}
                 <br />
-                <span className="bg-gradient-to-r from-teal-600 via-teal-500 to-amber-500 bg-clip-text text-transparent">
-                  {t('hero.title.3')}
-                </span>
+                <em>{t('hero.title.2')}</em>
               </h1>
 
-              <p className="mb-10 max-w-xl text-lg leading-relaxed text-slate-600">
-                {t('hero.subtitle')}
-              </p>
+              <p className="rv d2">{t('hero.subtitle')}</p>
 
-              <div className="mb-12 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/login"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/30"
-                >
-                  {t('hero.cta.primary')}
-                  <Zap className="h-4 w-4 text-amber-300 transition group-hover:translate-x-0.5" />
-                </Link>
-                <a
-                  href="#features"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-base font-semibold text-slate-700 transition hover:border-teal-400 hover:text-teal-700"
-                >
+              <div className="hcta rv d3">
+                <a href="#features" className="btn btn-lg">
                   {t('hero.cta.secondary')}
+                  <Zap className="h-4 w-4" />
                 </a>
               </div>
 
-              <div className="grid max-w-md grid-cols-3 gap-6 border-t border-slate-200/80 pt-6">
-                {heroStats.map((s) => (
-                  <div key={s.label}>
-                    <div className="text-2xl font-extrabold tracking-tight text-slate-900">
-                      {s.value}
-                    </div>
-                    <div className="text-xs uppercase tracking-wider text-slate-500">
-                      {s.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="lg:col-span-5">
-              <HeroMockup t={t} />
+            {/* Pannello di sintesi — valori dimostrativi, non una
+                connessione reale. Mostra cosa fa il prodotto: leggere
+                lo stato della squadra a colpo d'occhio. */}
+            <div className="live rv d4">
+              <div className="live-h">
+                <b>{t('hero.live.title')}</b>
+                <span className="chip-live">
+                  <i />
+                  {t('hero.live.demo')}
+                </span>
+              </div>
+
+              {/* Distribuzione del carico: la larghezza dei segmenti
+                  e' la proporzione degli atleti in ciascuna zona. */}
+              <span className="live-label mono">{t('hero.live.load')}</span>
+              <div className="zones" role="img" aria-label={t('hero.live.load')}>
+                <i className="z-ok" />
+                <i className="z-hi" />
+                <i className="z-rk" />
+              </div>
+              <div className="zones-legend mono">
+                <span>
+                  <i style={{ background: 'var(--acc)' }} />9 {t('hero.live.zoneOk')}
+                </span>
+                <span>
+                  <i style={{ background: 'rgba(0,201,167,.42)' }} />3 {t('hero.live.zoneHi')}
+                </span>
+                <span>
+                  <i style={{ background: 'var(--amber)' }} />2 {t('hero.live.zoneRk')}
+                </span>
+              </div>
+
+              <div className="live-athletes">
+                {[
+                  { key: 'hero.live.a1' as TKey, val: '0.94', dot: 'dot-ok' },
+                  { key: 'hero.live.a2' as TKey, val: '1.42', dot: 'dot-rk' },
+                  { key: 'hero.live.a3' as TKey, val: '1.08', dot: 'dot-hi' },
+                ].map((a) => {
+                  const name = t(a.key);
+                  return (
+                    <div className="ath" key={a.key}>
+                      {/* Le iniziali si ricavano dal nome: cambiando lingua
+                          si aggiornano da sole, senza doverle riallineare. */}
+                      <span className="ath-av">{initials(name)}</span>
+                      <span className="ath-name">{name}</span>
+                      <span className="ath-val">{a.val}</span>
+                      <span className={`ath-dot ${a.dot}`} />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="live-ai">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>
+                  {t('hero.live.ai')} <b>{t('hero.live.a2')}</b>
+                </span>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="scroll-hint">
+          <span />
+          <small className="mono">{t('hero.scroll')}</small>
         </div>
       </section>
 
       {/* ─── Features (Bento) ───────────────────────────── */}
-      <section id="features" className="relative bg-slate-50/40 py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-14 max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
-              {t('features.pill')}
+      <section id="features" className="sec">
+        <div className="inner">
+          {/* `piena` toglie la seconda colonna: il titolo prende tutta
+              la larghezza della sezione e il sottotitolo va sotto. */}
+          <div className="sh piena">
+            <div>
+              <div className="kick mono rv">{t('features.pill')}</div>
+              <h2 className="rv d1">
+                {t('features.h2.1')}{' '}
+                <em className="not-italic text-[var(--acc-d)]">
+                  {t('features.h2.2')}
+                </em>
+              </h2>
+              <p className="mt-7 max-w-3xl rv d2">{t('features.sub')}</p>
             </div>
-            <h2 className="mb-4 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-              {t('features.h2.1')}{' '}
-              <span className="text-teal-600">{t('features.h2.2')}</span>
-            </h2>
-            <p className="text-lg text-slate-600">{t('features.sub')}</p>
           </div>
 
-          <div className="grid auto-rows-[minmax(200px,auto)] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {/* BIG: Analytics */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10 md:col-span-2 lg:col-span-2 lg:row-span-2">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-sm">
+          <div className="bento">
+            {/* Analytics — card alta */}
+            <article className="bc a-ana rv">
+              <div className="bc-head">
+                <span className="bc-ico">
                   <BarChart3 className="h-5 w-5" />
-                </div>
-                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-teal-700">
-                  {t('features.analytics.label')}
                 </span>
+                <span className="mono">{t('features.analytics.label')}</span>
               </div>
-              <h3 className="mb-2 text-2xl font-bold text-slate-900">
-                {t('features.analytics.title')}
-              </h3>
-              <p className="mb-6 text-sm leading-relaxed text-slate-600">
-                {t('features.analytics.desc')}
-              </p>
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-700">
-                      {t('features.analytics.chartTitle')}
+              <h3>{t('features.analytics.title')}</h3>
+              <p>{t('features.analytics.desc')}</p>
+
+              <div className="bc-demo">
+                <div className="bc-panel">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-medium text-[var(--txt)]">
+                        {t('features.analytics.chartTitle')}
+                      </div>
+                      <div className="mono mt-1 text-[var(--txt-2)]">
+                        {t('features.analytics.chartRange')}
+                      </div>
                     </div>
-                    <div className="text-[0.65rem] text-slate-400">
-                      {t('features.analytics.chartRange')}
-                    </div>
+                    <span className="plan-tag">{t('features.analytics.alerts')}</span>
                   </div>
-                  <div className="flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    <span className="text-[0.65rem] font-medium text-amber-700">
-                      {t('features.analytics.alerts')}
-                    </span>
+                  <BentoChart />
+                  <div className="mono mt-2 flex justify-between text-[var(--txt-2)]">
+                    {t('features.analytics.days')
+                      .split(',')
+                      .map((d, i) => (
+                        // Le iniziali si ripetono (in inglese due T e due S):
+                        // la chiave e' l'indice, non la lettera.
+                        <span key={i}>{d}</span>
+                      ))}
                   </div>
                 </div>
-                <BentoChart />
-                <div className="mt-2 flex justify-between text-[0.65rem] text-slate-400">
-                  <span>L</span>
-                  <span>M</span>
-                  <span>M</span>
-                  <span>G</span>
-                  <span>V</span>
-                  <span>S</span>
-                  <span>D</span>
-                </div>
               </div>
-            </div>
+            </article>
 
             {/* AI Coach */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/10 md:col-span-2 lg:col-span-2">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm">
+            <article className="bc a-ai rv d4">
+              <div className="bc-head">
+                <span className="bc-ico">
                   <Brain className="h-5 w-5" />
-                </div>
-                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-amber-700">
-                  {t('features.ai.label')}
                 </span>
+                <span className="mono">{t('features.ai.label')}</span>
               </div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900">
-                {t('features.ai.title')}
-              </h3>
-              <p className="mb-4 text-sm leading-relaxed text-slate-600">
-                {t('features.ai.desc')}
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-end">
-                  <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-slate-100 px-3 py-2 text-xs text-slate-700">
-                    {t('features.ai.chatUser')}
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-400 to-amber-600 text-white">
-                    <Sparkles className="h-3 w-3" />
-                  </div>
-                  <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-gradient-to-r from-teal-600 to-teal-700 px-3 py-2 text-xs text-white">
-                    {t('features.ai.chatAI')}
-                  </div>
-                </div>
+              <h3>{t('features.ai.title')}</h3>
+              <p>{t('features.ai.desc')}</p>
+
+              <div className="bc-demo flex flex-col gap-2">
+                <div className="chat-u">{t('features.ai.chatUser')}</div>
+                <div className="chat-a">{t('features.ai.chatAI')}</div>
               </div>
-            </div>
+            </article>
 
             {/* Periodizzazione */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10">
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                <CalendarRange className="h-5 w-5" />
+            <article className="bc a-per rv d1">
+              <div className="bc-head">
+                <span className="bc-ico">
+                  <CalendarRange className="h-5 w-5" />
+                </span>
               </div>
-              <h3 className="mb-1.5 text-base font-bold text-slate-900">
-                {t('features.period.title')}
-              </h3>
-              <p className="mb-5 text-xs leading-relaxed text-slate-600">
-                {t('features.period.desc')}
-              </p>
-              <div className="space-y-1.5">
-                <div className="flex h-2.5 gap-1">
-                  <div className="flex-[3] rounded-full bg-teal-600" />
-                  <div className="flex-[2] rounded-full bg-teal-400" />
-                  <div className="flex-1 rounded-full bg-amber-400" />
+              <h3>{t('features.period.title')}</h3>
+              <p>{t('features.period.desc')}</p>
+
+              <div className="bc-demo space-y-2">
+                <div className="bars-row">
+                  <i className="flex-[3] bg-[var(--acc)]" />
+                  <i className="flex-[2] bg-[var(--acc)]/55" />
+                  <i className="flex-1 bg-[var(--paper-3)]" />
                 </div>
-                <div className="flex h-2.5 gap-1">
-                  <div className="flex-[2] rounded-full bg-slate-200" />
-                  <div className="flex-[3] rounded-full bg-teal-500" />
-                  <div className="flex-1 rounded-full bg-slate-200" />
+                <div className="bars-row">
+                  <i className="flex-[2] bg-[var(--paper-3)]" />
+                  <i className="flex-[3] bg-[var(--acc)]/75" />
+                  <i className="flex-1 bg-[var(--paper-3)]" />
                 </div>
-                <div className="flex justify-between pt-1 text-[0.65rem] text-slate-400">
+                <div className="mono flex justify-between pt-1 text-[var(--txt-2)]">
                   <span>{t('features.period.macro')}</span>
                   <span>{t('features.period.weeks')}</span>
                 </div>
               </div>
-            </div>
+            </article>
 
             {/* Gestione atleti */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10">
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                <Users className="h-5 w-5" />
+            <article className="bc a-ath rv d2">
+              <div className="bc-head">
+                <span className="bc-ico">
+                  <Users className="h-5 w-5" />
+                </span>
               </div>
-              <h3 className="mb-1.5 text-base font-bold text-slate-900">
-                {t('features.athletes.title')}
-              </h3>
-              <p className="mb-5 text-xs leading-relaxed text-slate-600">
-                {t('features.athletes.desc')}
-              </p>
-              <AvatarStack />
-            </div>
+              <h3>{t('features.athletes.title')}</h3>
+              <p>{t('features.athletes.desc')}</p>
+              <div className="bc-demo">
+                <AvatarStack />
+              </div>
+            </article>
 
-            {/* Report */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10 md:col-span-2 lg:col-span-2">
-              <div className="flex items-start justify-between gap-4">
+            {/* Report automatici */}
+            <article className="bc a-rep rv d3">
+              <div className="flex items-start justify-between gap-6">
                 <div className="flex-1">
-                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                    <FileText className="h-5 w-5" />
+                  <div className="bc-head">
+                    <span className="bc-ico">
+                      <FileText className="h-5 w-5" />
+                    </span>
                   </div>
-                  <h3 className="mb-2 text-lg font-bold text-slate-900">
-                    {t('features.reports.title')}
-                  </h3>
-                  <p className="text-xs leading-relaxed text-slate-600">
-                    {t('features.reports.desc')}
-                  </p>
+                  <h3>{t('features.reports.title')}</h3>
+                  <p>{t('features.reports.desc')}</p>
                 </div>
                 <DocStack />
               </div>
-            </div>
+            </article>
 
-            {/* Sicurezza */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-500/10 md:col-span-2 lg:col-span-2">
-              <div className="flex items-start justify-between gap-4">
+            {/* Sicurezza e GDPR */}
+            <article className="bc a-sec rv d3">
+              <div className="flex items-start justify-between gap-6">
                 <div className="flex-1">
-                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
-                    <ShieldCheck className="h-5 w-5" />
+                  <div className="bc-head">
+                    <span className="bc-ico">
+                      <ShieldCheck className="h-5 w-5" />
+                    </span>
                   </div>
-                  <h3 className="mb-2 text-lg font-bold text-slate-900">
-                    {t('features.security.title')}
-                  </h3>
-                  <p className="text-xs leading-relaxed text-slate-600">
-                    {t('features.security.desc')}
-                  </p>
+                  <h3>{t('features.security.title')}</h3>
+                  <p>{t('features.security.desc')}</p>
                 </div>
-                <div className="flex flex-shrink-0 flex-col gap-1.5">
-                  <SecurityBadge
-                    tone="emerald"
-                    icon={<CheckCircle2 className="h-3 w-3" />}
-                    label={t('features.security.badge.gdpr')}
-                  />
-                  <SecurityBadge
-                    tone="slate"
-                    icon={<ShieldCheck className="h-3 w-3" />}
-                    label={t('features.security.badge.iso')}
-                  />
-                  <SecurityBadge
-                    tone="teal"
-                    icon={<CheckCircle2 className="h-3 w-3" />}
-                    label={t('features.security.badge.encrypted')}
-                  />
+                <div className="flex flex-shrink-0 flex-col gap-2">
+                  <SecurityBadge label={t('features.security.badge.gdpr')} />
+                  <SecurityBadge label={t('features.security.badge.iso')} />
+                  <SecurityBadge label={t('features.security.badge.encrypted')} />
                 </div>
               </div>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
+      {/* ─── Fascia numeri ──────────────────────────────── */}
+      <section className="band">
+        <div className="band-in inner">
+          {[
+            // I suffissi sono unita' di misura: " secondi, ' minuti.
+            { n: '3', suf: '', lbl: t('band.1') },
+            { n: '40', suf: '”', lbl: t('band.2') },
+            { n: '4', suf: '', lbl: t('band.3') },
+            { n: '10', suf: '’', lbl: t('band.4') },
+          ].map((s) => (
+            <div className="st rv" key={s.lbl}>
+              <div className="num">
+                {s.n}
+                {s.suf && <em className="suf">{s.suf}</em>}
+              </div>
+              <span className="lbl">{s.lbl}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ─── Pricing ────────────────────────────────────── */}
-      {SHOW_PRICING && (
-      <section
-        id="pricing"
-        className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-24"
-      >
-        <div className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal-100/40 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl px-6">
-          <div className="mb-10 text-center">
-            <h2 className="mb-4 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-              {t('pricing.h2')}
-            </h2>
-            <p className="mx-auto max-w-xl text-slate-600">{t('pricing.sub')}</p>
+      <section id="pricing" className="sec dark">
+        <div className="inner">
+          <div className="sh piena max-w-3xl">
+            <div>
+              <div className="kick mono rv">{t('pricing.kick')}</div>
+              <h2 className="rv d1">{t('pricing.h2')}</h2>
+              <p className="mt-6 rv d2">{t('pricing.sub')}</p>
+            </div>
           </div>
 
-          {/* Billing toggle */}
-          <div className="mb-12 flex flex-col items-center gap-3">
-            <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+          {/* Interruttore mensile / annuale */}
+          <div className="bt-wrap rv d2">
+            <div className="bt">
               <button
+                type="button"
                 onClick={() => setBilling('monthly')}
-                className={`rounded-full px-5 py-1.5 text-sm font-semibold transition ${
-                  billing === 'monthly'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={billing === 'monthly' ? 'on' : undefined}
               >
                 {t('pricing.toggle.monthly')}
               </button>
               <button
+                type="button"
                 onClick={() => setBilling('yearly')}
-                className={`relative rounded-full px-5 py-1.5 text-sm font-semibold transition ${
-                  billing === 'yearly'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={billing === 'yearly' ? 'on' : undefined}
               >
                 {t('pricing.toggle.yearly')}
-                <span className="absolute -right-2 -top-2 rounded-full bg-amber-400 px-1.5 py-0.5 text-[0.55rem] font-bold leading-none text-slate-900 shadow-sm">
-                  −11%
-                </span>
+                <span className="save">−11%</span>
               </button>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
-              <Sparkles className="h-3 w-3" />
+            <div className="bt-note mono">
+              <Sparkles className="h-3.5 w-3.5" />
               {t('pricing.toggle.save')}
             </div>
           </div>
 
-          {/* Pricing cards */}
-          <div className="grid gap-6 md:grid-cols-3">
-            {PLANS.map((plan) => {
+          {/* Piani */}
+          <div className="pgrid">
+            {PLANS.map((plan, i) => {
               const price = billing === 'monthly' ? plan.monthly : plan.yearly;
               const period =
                 billing === 'monthly'
@@ -844,290 +932,135 @@ export default function LandingPage() {
               );
 
               return (
-                <div
+                <article
                   key={plan.key}
-                  className={`relative flex flex-col rounded-2xl bg-white p-8 transition ${
-                    plan.popular
-                      ? 'border-2 border-transparent bg-clip-padding shadow-xl shadow-teal-500/10 [background-image:linear-gradient(white,white),linear-gradient(135deg,#0D9488,#F59E0B)] [background-origin:border-box]'
-                      : 'border border-slate-200 hover:border-slate-300'
-                  }`}
+                  className={`pc rv${plan.popular ? ' hot' : ''}${i === 1 ? ' d1' : i === 2 ? ' d2' : ''}`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-teal-600 to-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
-                      ★ {t('pricing.popular')}
-                    </div>
+                    <span className="pc-flag">{t('pricing.popular')}</span>
                   )}
 
-                  <div className="mb-3 inline-flex w-fit items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-amber-500">
-                    {plan.slug}
+                  <div className="mb-4 flex items-center gap-3">
+                    <h3 className="!mb-0">{t(`plan.${plan.key}.name` as TKey)}</h3>
+                    <span className="plan-tag">{plan.slug}</span>
                   </div>
-                  <h3 className="mb-1 text-xl font-bold text-slate-900">
-                    {t(`plan.${plan.key}.name` as TKey)}
-                  </h3>
-                  <p className="mb-6 text-sm text-slate-500">
-                    {t(`plan.${plan.key}.tagline` as TKey)}
-                  </p>
 
-                  <div className="mb-1 flex items-baseline gap-1">
-                    <span className="text-5xl font-extrabold tracking-tight text-slate-900">
-                      €{price}
-                    </span>
-                    <span className="text-slate-500">{period}</span>
+                  <p className="tagline">{t(`plan.${plan.key}.tagline` as TKey)}</p>
+
+                  <div className="pc-price">
+                    <span className="pc-cur">€</span>
+                    {price}
+                    <span className="pc-per">{period}</span>
                   </div>
-                  <div className="mb-6 h-4 text-xs text-slate-400">
+                  <div className="pc-eq mono">
                     {billing === 'yearly' &&
-                      t('pricing.equivalent').replace(
-                        '{price}',
-                        `€${monthlyEquivalent}`,
-                      )}
+                      t('pricing.equivalent').replace('{price}', `€${monthlyEquivalent}`)}
                   </div>
 
-                  <ul className="mb-8 flex-1 space-y-3">
+                  <ul className="pc-feats">
                     {plan.features.map((featKey) => (
-                      <li
-                        key={featKey}
-                        className="flex items-start gap-2 text-sm text-slate-600"
-                      >
-                        <CheckCircle2
-                          className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
-                            plan.popular ? 'text-teal-600' : 'text-teal-500'
-                          }`}
-                        />
+                      <li key={featKey}>
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M3 8.5l3.2 3.2L13 5" />
+                        </svg>
                         <span>{t(featKey)}</span>
                       </li>
                     ))}
                   </ul>
 
+                  {/* Percorso relativo, non l'URL assoluto di sviluppo:
+                      cosi' funziona anche in produzione sul dominio vero.
+                      Il piano viaggia nell'URL e arriva preselezionato
+                      nel modulo di registrazione, dove resta modificabile. */}
                   <Link
-                    href="/login"
-                    className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-teal-800'
-                        : 'border border-slate-300 text-slate-700 hover:border-slate-900 hover:bg-slate-900 hover:text-white'
-                    }`}
+                    href={`/register?plan=${plan.planId}`}
+                    className={`btn${plan.popular ? '' : ' btn-o'}`}
                   >
                     {t(`plan.${plan.key}.cta` as TKey)}
                   </Link>
-                </div>
+                </article>
               );
             })}
           </div>
         </div>
       </section>
-      )}
 
       {/* ─── CTA ────────────────────────────────────────── */}
-      <section className="py-20">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="mb-4 text-3xl font-bold text-slate-900">{t('cta.h2')}</h2>
-          <p className="mx-auto mb-8 max-w-xl text-slate-600">{t('cta.sub')}</p>
-          <Link
-            href="/login"
-            className="inline-flex rounded-xl bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700"
-          >
-            {t('cta.button')}
-          </Link>
+      <section className="sec">
+        <div className="inner">
+          <div className="cta-box">
+            <div className="kick mono rv justify-center">{t('cta.kick')}</div>
+            <h2 className="rv d1">{t('cta.h2')}</h2>
+            <p className="rv d2">{t('cta.sub')}</p>
+            <div className="rv d3">
+              <Link href="/register" className="btn btn-lg">
+                {t('cta.button')}
+                <Zap className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ─── Footer ─────────────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white py-12">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
-          <div className="flex items-center gap-2">
-            <BrandLogo className="h-8 w-8" />
-            <span className="text-sm font-semibold text-slate-900">TrainMind AI</span>
+      <footer>
+        <div className="inner">
+          <div className="f-top">
+            <div>
+              <div className="f-brand">
+                <BrandLogo tone="dark" className="h-8 w-8" />
+                <span className="wordmark">
+                  Train<em>Mind</em>
+                </span>
+                <span className="brand-by">by</span>
+                {/* Footer su fondo scuro: serve la variante chiara del logo */}
+                <img
+                  className="brand-lab21"
+                  src={withBasePath('/assets/brand/lab21-wordmark-light.png')}
+                  alt="LAB21"
+                  width={960}
+                  height={242}
+                />
+              </div>
+              <p className="f-tag">{t('footer.tagline')}</p>
+            </div>
+
+            <div className="f-links">
+              <div>
+                <h5>{t('footer.col.product')}</h5>
+                <a href="#features">{t('nav.features')}</a>
+                {SHOW_PRICING && <a href="#pricing">{t('nav.pricing')}</a>}
+                <Link href="/login">{t('nav.login')}</Link>
+              </div>
+              <div>
+                <h5>{t('footer.col.legal')}</h5>
+                <Link href="/privacy">{t('footer.privacy')}</Link>
+                <Link href="/terms">{t('footer.terms')}</Link>
+              </div>
+              <div>
+                <h5>{t('footer.col.contact')}</h5>
+                <a href="mailto:info@trainmind.ai">info@trainmind.ai</a>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-6 text-sm text-slate-500">
-            <a href="#features" className="hover:text-slate-700">
-              {t('nav.features')}
-            </a>
-            {SHOW_PRICING && (
-              <a href="#pricing" className="hover:text-slate-700">
-                {t('nav.pricing')}
-              </a>
-            )}
-            <a href="mailto:info@trainmind.ai" className="hover:text-slate-700">
-              {t('footer.contact')}
-            </a>
+
+          <div className="f-bot">
+            <span>
+              &copy; {new Date().getFullYear()} TrainMind. {t('footer.copyright')}
+            </span>
+            <span className="mono">{t('footer.madein')}</span>
           </div>
-          <p className="text-sm text-slate-400">
-            &copy; {new Date().getFullYear()} TrainMind AI. {t('footer.copyright')}
-          </p>
         </div>
       </footer>
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────
- * Hero — dashboard mockup
- * ───────────────────────────────────────────────────────── */
-function HeroMockup({ t }: { t: (k: TKey) => string }) {
-  return (
-    <div className="relative mx-auto max-w-md lg:max-w-none">
-      <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-tr from-teal-300/30 via-transparent to-amber-200/30 blur-2xl" />
-
-      <div className="relative rotate-1 rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 transition duration-500 hover:rotate-0">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          </div>
-          <div className="text-[0.65rem] font-medium text-slate-400">
-            {t('mockup.url')}
-          </div>
-          <div className="h-2 w-8" />
-        </div>
-
-        <div className="space-y-3 p-4">
-          <div className="grid grid-cols-3 gap-2">
-            <KpiTile
-              icon={<Activity className="h-3.5 w-3.5" />}
-              label={t('mockup.kpi.acwr')}
-              value="1.42"
-              tone="warning"
-            />
-            <KpiTile
-              icon={<TrendingUp className="h-3.5 w-3.5" />}
-              label={t('mockup.kpi.wellness')}
-              value="7.8"
-              tone="success"
-            />
-            <KpiTile
-              icon={<Users className="h-3.5 w-3.5" />}
-              label={t('mockup.kpi.athletes')}
-              value="14"
-              tone="neutral"
-            />
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-xs font-semibold text-slate-700">
-                {t('mockup.chart.title')}
-              </div>
-              <div className="text-[0.65rem] text-slate-400">
-                {t('mockup.chart.range')}
-              </div>
-            </div>
-            <HeroChart />
-          </div>
-
-          <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-gradient-to-r from-teal-50 to-amber-50/40 p-3">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-teal-500 to-teal-700 text-white">
-              <Brain className="h-3.5 w-3.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="mb-0.5 flex items-center gap-1.5">
-                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-teal-700">
-                  {t('mockup.ai.label')}
-                </span>
-                <Sparkles className="h-3 w-3 text-amber-500" />
-              </div>
-              <p className="text-xs leading-snug text-slate-700">
-                {t('mockup.ai.message')}{' '}
-                <strong className="text-slate-900">{t('mockup.ai.messageBold')}</strong>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute -right-3 -top-3 hidden rounded-xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:block">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100">
-            <Activity className="h-3.5 w-3.5 text-amber-600" />
-          </div>
-          <div>
-            <div className="text-[0.65rem] uppercase tracking-wider text-slate-400">
-              {t('mockup.alert.label')}
-            </div>
-            <div className="text-xs font-semibold text-slate-900">
-              {t('mockup.alert.value')}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute -bottom-4 -left-3 hidden rounded-xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:block">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-          </div>
-          <div>
-            <div className="text-[0.65rem] uppercase tracking-wider text-slate-400">
-              {t('mockup.today.label')}
-            </div>
-            <div className="text-xs font-semibold text-slate-900">
-              {t('mockup.today.value')}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function KpiTile({
-  icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  tone: 'warning' | 'success' | 'neutral';
-}) {
-  const surface = {
-    warning: 'border-amber-200 bg-amber-50/60',
-    success: 'border-emerald-200 bg-emerald-50/60',
-    neutral: 'border-slate-200 bg-white',
-  }[tone];
-  const accent = {
-    warning: 'text-amber-600',
-    success: 'text-emerald-600',
-    neutral: 'text-slate-500',
-  }[tone];
-  return (
-    <div className={`rounded-lg border ${surface} p-2`}>
-      <div className={`mb-1 flex items-center gap-1 ${accent}`}>
-        {icon}
-        <span className="text-[0.6rem] font-medium uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="text-base font-bold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
-function HeroChart() {
-  return (
-    <svg viewBox="0 0 200 60" className="h-14 w-full" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0D9488" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <line x1="0" y1="15" x2="200" y2="15" stroke="#E2E8F0" strokeDasharray="2 3" strokeWidth="0.5" />
-      <line x1="0" y1="30" x2="200" y2="30" stroke="#E2E8F0" strokeDasharray="2 3" strokeWidth="0.5" />
-      <line x1="0" y1="45" x2="200" y2="45" stroke="#E2E8F0" strokeDasharray="2 3" strokeWidth="0.5" />
-      <rect x="0" y="8" width="200" height="14" fill="#F59E0B" opacity="0.1" />
-      <path
-        d="M 0 40 L 28 36 L 56 32 L 84 38 L 112 24 L 140 18 L 168 22 L 200 14"
-        fill="none"
-        stroke="#0D9488"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M 0 40 L 28 36 L 56 32 L 84 38 L 112 24 L 140 18 L 168 22 L 200 14 L 200 60 L 0 60 Z"
-        fill="url(#heroChartFill)"
-      />
-      <circle cx="200" cy="14" r="3" fill="#F59E0B" stroke="white" strokeWidth="1.5" />
-    </svg>
   );
 }
 
@@ -1149,18 +1082,18 @@ function BentoChart() {
     <svg viewBox="0 0 280 80" className="h-20 w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="bentoChartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0D9488" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
+          <stop offset="0%" stopColor="#00C9A7" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#00C9A7" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <line x1="0" y1="20" x2="280" y2="20" stroke="#E2E8F0" strokeDasharray="2 4" strokeWidth="0.5" />
-      <line x1="0" y1="40" x2="280" y2="40" stroke="#E2E8F0" strokeDasharray="2 4" strokeWidth="0.5" />
-      <line x1="0" y1="60" x2="280" y2="60" stroke="#E2E8F0" strokeDasharray="2 4" strokeWidth="0.5" />
+      <line x1="0" y1="20" x2="280" y2="20" stroke="#E2E9E7" strokeDasharray="2 4" strokeWidth="0.5" />
+      <line x1="0" y1="40" x2="280" y2="40" stroke="#E2E9E7" strokeDasharray="2 4" strokeWidth="0.5" />
+      <line x1="0" y1="60" x2="280" y2="60" stroke="#E2E9E7" strokeDasharray="2 4" strokeWidth="0.5" />
       <rect x="0" y="10" width="280" height="16" fill="#F59E0B" opacity="0.1" />
       <path
         d="M 0 55 L 40 48 L 80 50 L 120 38 L 160 30 L 200 24 L 240 18 L 280 14"
         fill="none"
-        stroke="#0D9488"
+        stroke="#00C9A7"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -1176,7 +1109,7 @@ function BentoChart() {
           cy={y}
           r="2.5"
           fill="white"
-          stroke="#0D9488"
+          stroke="#00C9A7"
           strokeWidth="1.5"
         />
       ))}
@@ -1186,23 +1119,24 @@ function BentoChart() {
 }
 
 function AvatarStack() {
-  const avatars: Array<{ init: string; from: string; to: string }> = [
-    { init: 'PM', from: 'from-teal-400', to: 'to-teal-600' },
-    { init: 'GR', from: 'from-amber-400', to: 'to-amber-600' },
-    { init: 'LB', from: 'from-slate-500', to: 'to-slate-700' },
-    { init: 'AC', from: 'from-emerald-400', to: 'to-emerald-600' },
+  const avatars: Array<{ init: string; bg: string }> = [
+    { init: 'PM', bg: '#00C9A7' },
+    { init: 'GR', bg: '#00A489' },
+    { init: 'LB', bg: '#0E1A18' },
+    { init: 'AC', bg: '#5A6B67' },
   ];
   return (
     <div className="flex -space-x-2">
       {avatars.map((a) => (
         <div
           key={a.init}
-          className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${a.from} ${a.to} text-[0.65rem] font-bold text-white ring-2 ring-white`}
+          style={{ backgroundColor: a.bg }}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[0.65rem] font-semibold text-white ring-2 ring-white" 
         >
           {a.init}
         </div>
       ))}
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[0.65rem] font-semibold text-slate-600 ring-2 ring-white">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--paper-3)] text-[0.65rem] font-semibold text-[var(--txt-2)] ring-2 ring-white">
         +10
       </div>
     </div>
@@ -1212,44 +1146,43 @@ function AvatarStack() {
 function DocStack() {
   return (
     <div className="flex flex-shrink-0 -space-x-3">
-      <div className="h-24 w-16 rotate-[-6deg] rounded-md border border-slate-200 bg-white p-1.5 shadow-sm">
-        <div className="mb-1 h-1 w-3/4 rounded-full bg-slate-300" />
-        <div className="mb-1 h-1 w-full rounded-full bg-slate-200" />
-        <div className="mb-1 h-1 w-2/3 rounded-full bg-slate-200" />
-        <div className="mb-1 h-1 w-full rounded-full bg-slate-200" />
-        <div className="h-4 w-full rounded-sm bg-teal-100" />
+      <div className="h-24 w-16 rotate-[-6deg] rounded-md border border-[var(--line)] bg-white p-1.5 shadow-sm">
+        <div className="mb-1 h-1 w-3/4 rounded-full bg-[var(--paper-3)]" />
+        <div className="mb-1 h-1 w-full rounded-full bg-[var(--paper-2)]" />
+        <div className="mb-1 h-1 w-2/3 rounded-full bg-[var(--paper-2)]" />
+        <div className="mb-1 h-1 w-full rounded-full bg-[var(--paper-2)]" />
+        <div className="h-4 w-full rounded-sm bg-[var(--acc)]/25" />
       </div>
-      <div className="h-24 w-16 rotate-[4deg] rounded-md border border-slate-200 bg-white p-1.5 shadow-md">
-        <div className="mb-1 h-1 w-2/3 rounded-full bg-slate-300" />
-        <div className="mb-1 h-1 w-full rounded-full bg-slate-200" />
-        <div className="mb-1 h-1 w-3/4 rounded-full bg-slate-200" />
-        <div className="mb-1 h-1 w-full rounded-full bg-slate-200" />
-        <div className="h-4 w-full rounded-sm bg-amber-100" />
+      <div className="h-24 w-16 rotate-[4deg] rounded-md border border-[var(--line)] bg-white p-1.5 shadow-md">
+        <div className="mb-1 h-1 w-2/3 rounded-full bg-[var(--paper-3)]" />
+        <div className="mb-1 h-1 w-full rounded-full bg-[var(--paper-2)]" />
+        <div className="mb-1 h-1 w-3/4 rounded-full bg-[var(--paper-2)]" />
+        <div className="mb-1 h-1 w-full rounded-full bg-[var(--paper-2)]" />
+        <div className="h-4 w-full rounded-sm bg-[var(--acc)]/12" />
       </div>
     </div>
   );
 }
 
-function SecurityBadge({
-  tone,
-  icon,
-  label,
-}: {
-  tone: 'emerald' | 'slate' | 'teal';
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const classes = {
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    slate: 'border-slate-200 bg-slate-50 text-slate-700',
-    teal: 'border-teal-200 bg-teal-50 text-teal-700',
-  }[tone];
+/** Etichetta di conformita' (GDPR, ISO, cifratura) in stile LAB21:
+ *  monospace, bordo sottile, spunta verde. Nessuna variante di colore:
+ *  sono tutte allo stesso livello, non c'e' gerarchia da esprimere. */
+function SecurityBadge({ label }: { label: string }) {
   return (
-    <div
-      className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[0.65rem] font-semibold ${classes}`}
-    >
-      {icon}
-      {label}
+    <div className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--paper-2)] px-3 py-2">
+      <svg
+        viewBox="0 0 16 16"
+        className="h-3.5 w-3.5 flex-none text-[var(--acc-d)]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 8.5l3.2 3.2L13 5" />
+      </svg>
+      <span className="mono text-[var(--txt)]">{label}</span>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * TrainMind AI — Frontend Monitoring & Error Tracking.
+ * TrainMind — Frontend Monitoring & Error Tracking.
  *
  * Sprint 2.5.4: Integrazione Sentry per error tracking frontend.
  * Configurabile via env var NEXT_PUBLIC_SENTRY_DSN.

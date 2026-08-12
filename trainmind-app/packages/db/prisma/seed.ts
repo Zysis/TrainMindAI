@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Database Seed Script (Sprint 1.5)
+// TrainMind — Database Seed Script (Sprint 1.5)
 // ============================================
 
 import { PrismaClient } from '@prisma/client';
@@ -46,7 +46,7 @@ interface ExerciseSeed {
 // MAIN SEED
 // ============================================
 async function main() {
-  console.log('🌱 Seeding TrainMind AI database...\n');
+  console.log('🌱 Seeding TrainMind database...\n');
 
   // ─── Organization ──────────────────────────────────
   const org = await prisma.organization.upsert({

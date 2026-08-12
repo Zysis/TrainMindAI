@@ -117,7 +117,7 @@ function makeHeader(d: D, metadata: ReportMetadata, audienceLabel: string) {
   const generated = new Paragraph({
     children: [
       new TextRun({
-        text: `Generato il ${formatDate(metadata.generatedAt)} da ${metadata.generatedBy} · TrainMind AI`,
+        text: `Generato il ${formatDate(metadata.generatedAt)} da ${metadata.generatedBy} · TrainMind`,
         color: SLATE_500,
         size: 18,
         italics: true,
@@ -715,7 +715,7 @@ export async function renderReportDocx(report: ReportData): Promise<Buffer> {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `TrainMind AI · ${report.metadata.organizationName} · Report ${report.audience} · pagina `,
+            text: `TrainMind · ${report.metadata.organizationName} · Report ${report.audience} · pagina `,
             size: 14,
             color: SLATE_500,
           }),
@@ -728,7 +728,7 @@ export async function renderReportDocx(report: ReportData): Promise<Buffer> {
   });
 
   const doc = new Document({
-    creator: 'TrainMind AI',
+    creator: 'TrainMind',
     title: `Report ${report.audience} - ${report.metadata.organizationName}`,
     description: `Report periodico ${report.metadata.periodFrom} / ${report.metadata.periodTo}`,
     styles: {

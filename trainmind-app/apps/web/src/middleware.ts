@@ -91,7 +91,10 @@ export const config = {
      * middleware su ogni immagine e file di build.
      */
     {
-      source: '/((?!_next/static|_next/image|favicon.ico|icons/|manifest.json|sw.js).*)',
+      // Nota: i percorsi qui sono relativi al basePath — se l'app è servita
+      // sotto /app, Next confronta il matcher con la parte dopo il prefisso.
+      source:
+        '/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|offline.html).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

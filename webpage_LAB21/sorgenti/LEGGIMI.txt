@@ -1,0 +1,7 @@
+Originali ad alta risoluzione, NON pubblicati sul sito.
+
+Tutto ciò che sta in public/ finisce nella cartella dist/ e viene caricato
+online: le immagini sorgente da decine di megabyte vanno tenute qui.
+
+Le versioni per il web si generano da qui, per esempio:
+  python3 tools/resize-hero.py sorgenti/hero3.jpg public/assets/img/hero3

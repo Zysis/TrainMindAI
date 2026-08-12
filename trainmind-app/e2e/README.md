@@ -1,6 +1,6 @@
-# Playwright E2E Tests for TrainMind AI
+# Playwright E2E Tests for TrainMind
 
-This directory contains end-to-end tests for the TrainMind AI application using Playwright.
+This directory contains end-to-end tests for the TrainMind application using Playwright.
 
 ## Setup
 

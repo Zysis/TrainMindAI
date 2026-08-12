@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Shared Utilities
+// TrainMind — Shared Utilities
 // ============================================
 
 /**

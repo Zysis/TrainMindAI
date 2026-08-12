@@ -182,7 +182,7 @@ function renderHeader(metadata: ReportMetadata, audienceLabel: string): string {
         <div style="font-size: 11px; color: #64748b;">Report periodico · ${formatDate(metadata.periodFrom)} — ${formatDate(metadata.periodTo)}</div>
       </div>
       <div class="header-meta">
-        <div><strong>TrainMind AI</strong></div>
+        <div><strong>TrainMind</strong></div>
         <div>Generato il ${formatDate(metadata.generatedAt)}</div>
         <div>Da ${esc(metadata.generatedBy)}</div>
       </div>
@@ -473,13 +473,13 @@ function buildHtml(report: ReportData): string {
 <html lang="it">
 <head>
   <meta charset="UTF-8"/>
-  <title>TrainMind AI Report</title>
+  <title>TrainMind Report</title>
   <style>${CSS}</style>
 </head>
 <body>
   ${body}
   <div class="footer-watermark">
-    <span>TrainMind AI · Report ${esc(report.audience)}</span>
+    <span>TrainMind · Report ${esc(report.audience)}</span>
     <span>${esc(report.metadata.organizationName)} · ${formatDate(report.metadata.generatedAt)}</span>
   </div>
 </body>

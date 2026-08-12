@@ -1,0 +1,28 @@
+/* ── Contenitore di sezione e intestazioni ───────────────── */
+.sec{padding:clamp(84px,9vw,150px) 0;position:relative}
+.sec.alt{background:var(--paper-2)}
+.sec.dark{background:var(--ink);color:#fff}
+.sec.dark h2,.sec.dark h3,.sec.dark h4{color:#fff}
+.sec.mint{background:linear-gradient(160deg,#E6FBF6,#F4FBF9)}
+.sh{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:end;margin-bottom:clamp(40px,5vw,74px)}
+.kick{color:var(--acc-d);display:inline-flex;align-items:center;gap:12px;margin-bottom:20px}
+.kick::before{content:'';width:34px;height:2px;background:var(--acc)}
+.sec.dark .kick{color:var(--acc)}
+.sh h2{font-size:clamp(32px,4.6vw,64px)}
+
+/* Intestazione su una colonna sola, per le sezioni senza testo di spalla:
+   il titolo occupa tutta la larghezza disponibile. */
+.sh.piena{grid-template-columns:1fr}
+
+/* Variante compatta: titolo e testo allineati in alto e meno respiro sopra
+   e sotto. Serve dove l'intestazione è l'unico contenuto prima di un blocco
+   a tutta larghezza, altrimenti resta troppo bianco intorno. */
+.sec.compact{padding:clamp(56px,6vw,92px) 0 clamp(24px,2.5vw,40px)}
+/* Quando la sezione finisce con un blocco a tutta larghezza e ne segue
+   subito un altro, il margine in fondo lascerebbe una striscia di fondo
+   pagina in mezzo ai due. */
+.sec.attaccata{padding-bottom:0}
+.sec.compact .sh{align-items:start;gap:clamp(24px,4vw,60px);margin-bottom:clamp(26px,3vw,46px)}
+.sec.compact .sh h2{margin-top:-.12em}
+.sh p{color:var(--txt-2);font-size:16.5px;line-height:1.8;font-weight:300}
+.sec.dark .sh p{color:rgba(255,255,255,.66)}

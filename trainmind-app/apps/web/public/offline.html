@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrainMind AI - Offline</title>
+    <title>TrainMind - Offline</title>
     <style>
       * {
         margin: 0;
@@ -204,7 +204,7 @@
     <div class="container">
       <div class="logo">TM</div>
 
-      <h1>TrainMind AI</h1>
+      <h1>TrainMind</h1>
       <p class="subtitle">Piattaforma AI per preparatori fisici nel basket</p>
 
       <div class="icon-offline">📡</div>
@@ -233,9 +233,16 @@
     </div>
 
     <script>
+      /* Sottopercorso sotto cui gira l'app ('' alla radice, '/app' in
+         produzione). Questa pagina è statica e non passa dal bundler:
+         il prefisso si ricava dal proprio indirizzo, visto che il file
+         è servito come <prefisso>/offline.html. */
+      var BASE_PATH = window.location.pathname.replace(/\/offline\.html$/, '');
+      var PING = BASE_PATH + '/manifest.webmanifest';
+
       function checkConnection() {
         // Try to fetch a small resource to check connectivity
-        fetch('/manifest.json', { method: 'HEAD' })
+        fetch(PING, { method: 'HEAD' })
           .then(() => {
             // Connection is back, reload the page
             window.location.reload();
@@ -248,12 +255,12 @@
 
       function goHome() {
         // Try to go to dashboard or home
-        window.location.href = '/dashboard';
+        window.location.href = BASE_PATH + '/dashboard';
       }
 
       // Check connection periodically
       setInterval(() => {
-        fetch('/manifest.json', { method: 'HEAD' })
+        fetch(PING, { method: 'HEAD' })
           .then(() => {
             window.location.reload();
           })

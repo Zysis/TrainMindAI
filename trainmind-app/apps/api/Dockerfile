@@ -1,5 +1,5 @@
 # ============================================
-# TrainMind AI — Backend Dockerfile (Fastify)
+# TrainMind — Backend Dockerfile (Fastify)
 # ============================================
 
 # Stage 1: Builder — full workspace install (pnpm puts each

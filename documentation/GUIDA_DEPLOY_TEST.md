@@ -2,13 +2,19 @@
 
 Obiettivo: mettere online `trainmind-app` su un VPS IONOS (trial 30 giorni gratuito), accessibile da internet con HTTPS, e dare accesso a 3–4 preparatori tramite **auto-registrazione**.
 
-Stack: monorepo pnpm/turbo con **web** Next.js (3000), **api** Fastify (3001), **ai-service** Python (3002), **PostgreSQL**, **Redis**. Auth JWT; la registrazione crea un'organizzazione con l'utente come **ADMIN**.
+Stack: monorepo pnpm/turbo con **web** Next.js (3000), **api** Fastify (3001), **ai-service** Python (3004), **PostgreSQL**, **Redis**, più il **sito vetrina LAB21** (statico, cartella `webpage_LAB21`). Auth JWT; la registrazione crea un'organizzazione con l'utente come **ADMIN**.
 
 > **File già pronti nel progetto** (creati il 14/07/2026):
 > - `trainmind-app/docker-compose.deploy.yml` — compose per il VPS (build sul server, include Caddy e migrazioni)
 > - `trainmind-app/infra/Caddyfile` — reverse proxy con HTTPS automatico
 > - `trainmind-app/.env.deploy.example` — variabili da compilare
 > - Dockerfile `api` e `web` **corretti** (l'api non partiva: CMD errato e dipendenze mancanti; il web non riceveva l'URL API in build)
+>
+> **Aggiornamento 11/08/2026 — dominio unico.** Il sito vetrina LAB21 sta alla
+> radice del dominio e l'app è passata sotto `/app`. Se il server è già in piedi
+> con il vecchio assetto, non rifare questa guida da capo: la procedura di
+> migrazione è nella sezione 1c di `GUIDA_AGGIORNAMENTI.md`. I dettagli tecnici
+> stanno in `trainmind-app/docs/deploy-sottopercorso.md`.
 
 > **Runpod non serve qui**: è per noleggio GPU. Per una web-app 24/7 usa Hetzner.
 
@@ -35,18 +41,25 @@ Stack: monorepo pnpm/turbo con **web** Next.js (3000), **api** Fastify (3001), *
 ## 2. Architettura online
 
 ```
-        Internet (preparatori)
-                │ HTTPS 443
-                ▼
-       Caddy (reverse proxy, container)
-   app.tuodominio │ api.tuodominio
-        ▼                  ▼
-     web:3000          api:3001 ──► ai-service:3002
-                           │
-                    postgres / redis
+                    Internet (preparatori)
+                            │ HTTPS 443
+                            ▼
+                Caddy (reverse proxy, container)
+    ┌───────────────┬───────┴────────┬──────────────────┐
+    │ tuodominio/   │ tuodominio/app │ api.tuodominio   │ atleti.tuodominio
+    ▼               ▼                ▼                  ▼
+ lab21:80        web:3000         api:3001 ──► ai-service:3004
+ (sito vetrina)  (web app)           │
+                                postgres / redis
+
+ app.tuodominio → 301 verso tuodominio/app  (vecchio indirizzo dell'app)
 ```
 
-Solo 80/443 esposte; 3000/3001/3002 restano interne alla rete Docker.
+Il percorso utente parte dal sito vetrina: `tuodominio.com` racconta LAB21 e
+TrainMind, il pulsante "Scopri di più" apre la landing dell'app su
+`tuodominio.com/app`, da cui si fa login o registrazione.
+
+Solo 80/443 esposte; 3000/3001/3004 restano interne alla rete Docker.
 
 ---
 
@@ -66,11 +79,15 @@ Solo 80/443 esposte; 3000/3001/3002 restano interne alla rete Docker.
 6. 📅 **Metti un promemoria a ~25 giorni da oggi**: decidere se tenere IONOS a prezzo pieno o migrare (es. Netcup ~9€/mese).
 
 ### Step 3 — Punta il DNS al VPS (~5 min + attesa)
-Nel pannello DNS del dominio crea due record **A**:
-- `app` → IP del VPS
+Nel pannello DNS del dominio crea i record **A**:
+- `@` (dominio nudo) → IP del VPS — è il sito vetrina LAB21, con l'app sotto `/app`
+- `www` → IP del VPS (facoltativo)
 - `api` → IP del VPS
+- `atleti` → IP del VPS
+- `app` → IP del VPS — non serve più a servire l'app, ma tenerlo puntato fa
+  funzionare il redirect verso `/app` per i link già in circolazione
 
-Propagazione: da minuti a qualche ora. Verifica con `nslookup app.tuodominio.com`.
+Propagazione: da minuti a qualche ora. Verifica con `nslookup tuodominio.com`.
 
 ### Step 4 — Prepara il server (~10 min)
 ```bash
@@ -86,6 +103,16 @@ ufw enable
 ```
 
 ### Step 5 — Porta il codice sul server
+
+Sul server servono **due cartelle sorelle**, perché il compose costruisce il sito
+vetrina da `../webpage_LAB21`:
+
+```
+/opt/trainmind/
+├── trainmind-app/     monorepo (web, api, ai-service) + docker-compose.deploy.yml
+└── webpage_LAB21/     sito vetrina LAB21
+```
+
 Consigliato: repo **privato** su GitHub (semplifica gli aggiornamenti con `git pull`):
 ```bash
 # sul server
@@ -104,7 +131,21 @@ scp -r C:\Users\TeamDS\Documents\projects\projects\TrainMindAI\trainmind-app\app
        C:\Users\TeamDS\Documents\projects\projects\TrainMindAI\trainmind-app\.env.deploy.example `
        root@IP_DEL_VPS:/opt/trainmind/trainmind-app/
 ```
-> Attenzione: gli `node_modules` locali NON devono finire sul server (sono enormi e specifici per Windows). Con git il problema non si pone (`.gitignore`).
+E il sito vetrina, nella cartella accanto:
+```powershell
+cd C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+robocopy webpage_LAB21 lab21-stage /E /XD node_modules dist .git sorgenti tools /NFL /NDL /NJH /NJS
+cd lab21-stage; tar -czf ..\webpage_LAB21.tar.gz .; cd ..
+scp .\webpage_LAB21.tar.gz root@IP_DEL_VPS:/opt/trainmind/
+Remove-Item -Recurse -Force .\lab21-stage; Remove-Item .\webpage_LAB21.tar.gz
+```
+```bash
+# sul server
+mkdir -p /opt/trainmind/webpage_LAB21
+tar -xzf /opt/trainmind/webpage_LAB21.tar.gz -C /opt/trainmind/webpage_LAB21
+rm /opt/trainmind/webpage_LAB21.tar.gz
+```
+> Attenzione: gli `node_modules` locali NON devono finire sul server (sono enormi e specifici per Windows). Con git il problema non si pone (`.gitignore`). Della cartella `sorgenti/` di LAB21 non serve nulla: contiene le immagini ad alta risoluzione di partenza, in `public/` ci sono già le versioni web.
 
 ### Step 6 — Configura le variabili (~10 min)
 ```bash
@@ -113,10 +154,16 @@ cp .env.deploy.example .env.deploy
 nano .env.deploy
 ```
 Compila:
-- `APP_DOMAIN` / `API_DOMAIN` → i tuoi sottodomini
+- `SITE_DOMAIN` → il dominio nudo (es. `tuodominio.com`): vetrina alla radice, app sotto `/app`
+- `APP_BASE_PATH` → `/app` (cambiandolo vanno ricostruiti `web` e `lab21`)
+- `APP_DOMAIN` → il vecchio `app.tuodominio.com`, che verrà reindirizzato
+- `API_DOMAIN` / `ATHLETE_DOMAIN` → i sottodomini di API e app atleti
 - `POSTGRES_PASSWORD` → output di `openssl rand -hex 24`
 - `JWT_SECRET` → output di `openssl rand -hex 32`
 - `OPENAI_API_KEY` → la tua chiave
+- `VITE_TRAINMIND_URL` → lasciala **vuota**: il sito vetrina usa il percorso
+  relativo `/app` dello stesso dominio. Si valorizza solo se un domani l'app
+  finisce su un dominio diverso dalla vetrina.
 - Il resto può restare vuoto per i test.
 
 ### Step 7 — Build e avvio (~15–30 min la prima volta)
@@ -134,17 +181,21 @@ dc run --rm migrate pnpm --filter @trainmind/db seed   # dati di riferimento (es
 ```
 
 ### Step 9 — Smoke test
-1. `https://app.tuodominio.com` → carica la pagina di login/registrazione (HTTPS valido, lucchetto verde: ci pensa Caddy da solo).
-2. `curl https://api.tuodominio.com/api/v1/health` → risposta OK.
-3. Registra un account di prova, fai login, naviga la dashboard.
-4. Prova una funzione AI per verificare l'ai-service.
-5. `dc logs -f` per controllare eventuali errori.
+1. `https://tuodominio.com` → carica il sito vetrina LAB21 (HTTPS valido, lucchetto verde: ci pensa Caddy da solo).
+2. Premi **"Scopri di più"** → si apre in una scheda nuova `https://tuodominio.com/app`, la landing di TrainMind con login e registrazione.
+3. `https://app.tuodominio.com/dashboard` → deve rispondere **301** verso `https://tuodominio.com/app/dashboard`.
+4. `curl https://api.tuodominio.com/api/v1/health` → risposta OK.
+5. Registra un account di prova, fai login, naviga la dashboard.
+6. Reset password: il link nell'email deve contenere `/app`.
+7. `curl -s https://tuodominio.com/app/manifest.webmanifest` → i percorsi delle icone iniziano con `/app`.
+8. Prova una funzione AI per verificare l'ai-service.
+9. `dc logs -f` per controllare eventuali errori.
 
 ---
 
 ## 4. Accesso ai preparatori (auto-registrazione)
 
-1. Manda ai 3–4 preparatori il link `https://app.tuodominio.com` con due righe di istruzioni: "Registrati, crea la tua organizzazione, sei ADMIN del tuo spazio".
+1. Manda ai 3–4 preparatori il link `https://tuodominio.com` (partono dal sito vetrina) oppure direttamente `https://tuodominio.com/app` con due righe di istruzioni: "Registrati, crea la tua organizzazione, sei ADMIN del tuo spazio".
 2. Ogni preparatore ottiene un workspace **isolato** — testano anche l'onboarding reale.
 3. **Quando si sono registrati tutti, chiudi la porta**: la registrazione è pubblica e chiunque trovi l'URL potrebbe iscriversi. Opzioni (posso preparartele):
    - basic-auth temporaneo davanti al sito via Caddy (una password condivisa in più);
@@ -170,13 +221,13 @@ dc run --rm migrate pnpm --filter @trainmind/db seed   # dati di riferimento (es
 - [ ] VPS IONOS L+ Ubuntu 24.04 creato, IP annotato
 - [ ] Policy firewall IONOS: porte 22/80/443 (TCP+UDP) aperte dal pannello
 - [ ] Promemoria fine trial (~25 giorni) impostato
-- [ ] Record A `app.` e `api.` → IP
+- [ ] Record A `@`, `www`, `api.`, `atleti.`, `app.` → IP
 - [ ] Docker + firewall sul server
-- [ ] Codice in `/opt/trainmind/trainmind-app`
-- [ ] `.env.deploy` compilato (segreti generati con openssl)
-- [ ] `build` + `up -d` → tutti healthy
+- [ ] Codice in `/opt/trainmind/trainmind-app` **e** `/opt/trainmind/webpage_LAB21`
+- [ ] `.env.deploy` compilato (`SITE_DOMAIN`, `APP_BASE_PATH`, segreti con openssl)
+- [ ] `build` + `up -d` → tutti healthy (`lab21` compreso)
 - [ ] `migrate` + `seed` eseguiti
-- [ ] Smoke test ok (login, /health, funzione AI)
+- [ ] Smoke test ok (vetrina, "Scopri di più" → `/app`, redirect da `app.`, login, /health, funzione AI)
 - [ ] Link inviato ai preparatori
 - [ ] Registrazione chiusa dopo le iscrizioni
 - [ ] Backup schedulato

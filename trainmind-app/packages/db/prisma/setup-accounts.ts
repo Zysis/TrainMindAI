@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Setup account custom
+// TrainMind — Setup account custom
 // ============================================
 // Esegue tre cose, in modo idempotente (puoi rilanciarlo quando vuoi):
 //
@@ -277,7 +277,7 @@ const STARTER_SPEC: OrgSpec = {
 
 // ─── Main ────────────────────────────────────────────────
 async function main() {
-  console.log('🔧 Setup account TrainMind AI...');
+  console.log('🔧 Setup account TrainMind...');
 
   await upgradeAlessandro();
   await createDemoOrg(PRO_SPEC);

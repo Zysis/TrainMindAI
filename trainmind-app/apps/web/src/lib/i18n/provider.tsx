@@ -2,7 +2,7 @@
 
 import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { useLocaleStore, type Locale } from './store';
+import { useLocaleStore, DEFAULT_LOCALE, type Locale } from './store';
 
 // Static imports for messages — avoids dynamic import issues with Next.js
 import itMessages from '@/messages/it.json';
@@ -41,8 +41,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  // SSR: default to 'it' until mounted
-  const activeLocale = mounted ? locale : 'it';
+  // SSR: si parte dalla lingua di default finché non è montato, perché il
+  // server non può leggere localStorage. Deve combaciare con il `lang`
+  // dell'<html> in layout.tsx, altrimenti l'idratazione segnala un
+  // disallineamento.
+  const activeLocale = mounted ? locale : DEFAULT_LOCALE;
   const messages = allMessages[activeLocale];
 
   return (

@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Team Types
+// TrainMind — Team Types
 // ============================================
 
 import type { AthleteSummary } from './athlete';

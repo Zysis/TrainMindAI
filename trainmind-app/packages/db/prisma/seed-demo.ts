@@ -1,5 +1,5 @@
 /**
- * TrainMind AI — Demo Seed Script (Full Season)
+ * TrainMind — Demo Seed Script (Full Season)
  *
  * Creates realistic demo data for user alessandro.vispa@gmail.com:
  * - 3 teams: Under 14 (12), Under 16 (12), Under 18 (15 athletes)

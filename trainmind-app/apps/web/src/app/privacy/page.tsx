@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Informativa Privacy — TrainMind AI',
+  title: 'Informativa Privacy — TrainMind',
 };
 
 const VERSION = '2026-07-18-beta';
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             all&apos;indirizzo email <span className="font-medium">[EMAIL DI CONTATTO]</span>, è il Titolare del
             trattamento per i dati degli <strong>account dei professionisti</strong> (preparatori, staff). Per i
             dati degli <strong>atleti</strong> gestiti tramite la piattaforma, il Titolare è l&apos;organizzazione
-            sportiva che li inserisce; TrainMind AI opera come Responsabile del trattamento ex art. 28 GDPR (vedi{' '}
+            sportiva che li inserisce; TrainMind opera come Responsabile del trattamento ex art. 28 GDPR (vedi{' '}
             <Link href="/terms" className="text-teal-700 underline">
               Termini di Servizio
             </Link>

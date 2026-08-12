@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Globe } from 'lucide-react';
 import {
   LOCALES,
+  DEFAULT_LOCALE,
   localeLabels,
   localeShortLabels,
   useLocaleStore,
@@ -40,7 +41,7 @@ export function LangSwitcher({ className = '' }: { className?: string }) {
     };
   }, []);
 
-  const active: Locale = mounted ? locale : 'it';
+  const active: Locale = mounted ? locale : DEFAULT_LOCALE;
 
   return (
     <div ref={ref} className={`relative ${className}`}>

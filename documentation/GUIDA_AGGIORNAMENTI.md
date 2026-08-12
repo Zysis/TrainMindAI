@@ -1,7 +1,18 @@
 # TrainMind AI — Guida operativa: aggiornamenti, backup e manutenzione
 
 Server: VPS IONOS — IP `31.70.77.212` — codice in `/opt/trainmind/`
-Domini: `app.trainmind-app.com` (web) · `api.trainmind-app.com` (API) · `atleti.trainmind-app.com` (app atleti)
+
+Indirizzi:
+
+| Indirizzo | Cosa serve | Container |
+|---|---|---|
+| `trainmind-app.com/` | sito vetrina LAB21 | `lab21` |
+| `trainmind-app.com/app` | web app TrainMind | `web` |
+| `api.trainmind-app.com` | API | `api` |
+| `atleti.trainmind-app.com` | app atleti | `athlete` |
+| `app.trainmind-app.com` | vecchio indirizzo dell'app: 301 verso `/app` | — |
+
+> Il passaggio da `app.trainmind-app.com` al sottopercorso `/app` è descritto nella sezione 1c. Finché non lo esegui, l'assetto online resta quello vecchio: le modifiche sono già nel codice ma **dormienti**, perché dipendono da variabili che nel `.env.deploy` del server non esistono ancora.
 
 > Prerequisito: l'alias `dc` è salvato nel `~/.bashrc` del server. Se un comando `dc` non viene trovato:
 > ```bash
@@ -32,12 +43,12 @@ Domini: `app.trainmind-app.com` (web) · `api.trainmind-app.com` (API) · `atlet
    ```
 2. Ricostruisci **solo il servizio toccato** e riavvia (SSH sul server - ssh root@31.70.77.212):
    ```bash
-   dc build --no-cache web      # oppure: api, athlete, ai-service
+   dc build --no-cache web      # oppure: api, athlete, ai-service, lab21
    dc up -d --force-recreate web
    dc ps                        # attendi "healthy"
    ```
 
-Quale servizio ricostruire: file in `apps/web/` o `packages/ui` → `web` · file in `apps/api/` o `packages/db|utils|types` → `api` (e spesso anche `web` se condivisi) · cartella `trainmind-athlete/` → `athlete` · `apps/ai-service/` → `ai-service`.
+Quale servizio ricostruire: file in `apps/web/` o `packages/ui` → `web` · file in `apps/api/` o `packages/db|utils|types` → `api` (e spesso anche `web` se condivisi) · cartella `trainmind-athlete/` → `athlete` · `apps/ai-service/` → `ai-service` · cartella `webpage_LAB21/` → `lab21`.
 
 > ⚠️ **Usa sempre `--no-cache`** quando aggiorni sorgenti TS/TSX. Il layer `COPY . .` del Dockerfile è ingannevole: Docker può considerarlo cached anche quando i file sono cambiati (soprattutto dopo un tar/scp), e servirti codice vecchio nel bundle mentre il sorgente nel container è quello nuovo. `--no-cache` costa 2 minuti in più ma ti garantisce che il bundle sia effettivamente rifatto. In alternativa, forza l'invalidamento con `touch /opt/trainmind/trainmind-app/apps/api/src/server.ts` prima del build.
 
@@ -64,6 +75,112 @@ dc build && dc up -d && dc ps
 Stesso schema per `trainmind-athlete` (cartella e archivio dedicati, poi `dc build athlete`).
 
 > ⚠️ Il `.env.deploy` sul server NON va mai sovrascritto o committato: contiene i segreti di produzione.
+
+### Caso C — Hai modificato il sito vetrina LAB21
+
+Il sito sta in un'altra cartella (`webpage_LAB21`), sorella di `trainmind-app` sia sul PC sia sul server: il `docker-compose.deploy.yml` lo cerca in `../webpage_LAB21`. Sul server deve quindi stare in `/opt/trainmind/webpage_LAB21`.
+
+```powershell
+# PowerShell dal PC
+cd C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+robocopy webpage_LAB21 lab21-stage /E /XD node_modules dist .git sorgenti tools /NFL /NDL /NJH /NJS
+cd lab21-stage; tar -czf ..\webpage_LAB21.tar.gz .; cd ..
+scp .\webpage_LAB21.tar.gz root@31.70.77.212:/opt/trainmind/
+Remove-Item -Recurse -Force .\lab21-stage; Remove-Item .\webpage_LAB21.tar.gz
+```
+```bash
+# sul server
+mkdir -p /opt/trainmind/webpage_LAB21
+tar -xzf /opt/trainmind/webpage_LAB21.tar.gz -C /opt/trainmind/webpage_LAB21
+rm /opt/trainmind/webpage_LAB21.tar.gz
+
+dc build --no-cache lab21
+dc up -d --force-recreate lab21
+dc ps
+```
+
+> `sorgenti/` non va sul server: sono le immagini ad alta risoluzione di partenza, in `public/` ci sono già le versioni web. Sono decine di MB inutili da trasferire.
+
+---
+
+## 1c. Passaggio al dominio unico (una tantum)
+
+Sposta l'app da `app.trainmind-app.com` a `trainmind-app.com/app` e mette il sito vetrina LAB21 alla radice. Da fare **una volta sola**: dopo, valgono le procedure normali della sezione 1.
+
+Dettagli tecnici delle modifiche: `trainmind-app/docs/deploy-sottopercorso.md`.
+
+### a) DNS — aggiungi il dominio nudo
+
+Nel pannello DNS di `trainmind-app.com` serve un record **A** per la radice, che oggi probabilmente non c'è:
+
+- `@` → `31.70.77.212`
+- `www` → `31.70.77.212` (facoltativo ma consigliato)
+
+**Non togliere** `app.` : resta puntato al VPS per servire il redirect. Verifica prima di procedere:
+```powershell
+nslookup trainmind-app.com
+```
+
+### b) Porta sul server il codice aggiornato
+
+Sono cambiati sia `trainmind-app` (Caddyfile, compose, app Next) sia `webpage_LAB21` (che sul server ancora non esiste). Usa il **Caso B** per il primo e il **Caso C** per il secondo, fermandoti prima dei comandi `dc build`.
+
+### c) Aggiungi le variabili nuove al `.env.deploy`
+
+```bash
+cd /opt/trainmind/trainmind-app
+cp .env.deploy .env.deploy.bak-$(date +%F)          # rete di sicurezza
+
+cat >> .env.deploy <<'EOF'
+
+# ─── Dominio unico (LAB21 alla radice, TrainMind sotto /app) ───
+SITE_DOMAIN=trainmind-app.com
+APP_BASE_PATH=/app
+# Vuota: il sito vetrina usa il percorso relativo /app dello stesso dominio.
+VITE_TRAINMIND_URL=
+EOF
+
+grep -E 'SITE_DOMAIN|APP_BASE_PATH|APP_DOMAIN|VITE_' .env.deploy   # controlla
+```
+`APP_DOMAIN` resta dov'è: ora indica il vecchio indirizzo da reindirizzare.
+
+### d) Ricostruisci e riavvia
+
+```bash
+dc build --no-cache web lab21
+dc up -d --force-recreate web lab21 caddy
+dc ps                                    # tutti "healthy"
+```
+
+`web` va **ricostruita**, non solo riavviata: il sottopercorso è una `NEXT_PUBLIC_*` e viene incastonato nel bundle durante la build. `caddy` va ricreato perché legge i domini dalle variabili d'ambiente.
+
+### e) Verifica
+
+```bash
+curl -sI https://trainmind-app.com/            | head -1   # 200 → sito LAB21
+curl -sI https://trainmind-app.com/app         | head -1   # 200 → landing TrainMind
+curl -sI https://app.trainmind-app.com/dashboard | head -3 # 301 → .../app/dashboard
+curl -s  https://trainmind-app.com/app/manifest.webmanifest | head -3   # icone con /app
+dc logs --tail=30 caddy                                    # certificato del dominio nudo emesso
+```
+
+Dal browser: apri `trainmind-app.com`, premi "Scopri di più" (si apre in una scheda nuova sulla landing), fai login, chiedi un reset password e controlla che il link nell'email contenga `/app`.
+
+### f) Se qualcosa va storto
+
+Si torna indietro rimettendo il `.env.deploy` di prima e ricostruendo:
+```bash
+cd /opt/trainmind/trainmind-app
+cp .env.deploy.bak-$(date +%F) .env.deploy
+dc build --no-cache web && dc up -d --force-recreate web caddy
+```
+Senza `SITE_DOMAIN` e `APP_BASE_PATH` il Caddyfile nuovo non regge (servirebbe anche il Caddyfile vecchio): se devi rientrare in fretta, recupera la versione precedente di `infra/Caddyfile` da Git.
+
+### Dopo il passaggio
+
+- Chi aveva **installato la PWA** dal vecchio indirizzo deve reinstallarla: lo scope del service worker è legato al dominio, la vecchia registrazione resta su `app.trainmind-app.com`.
+- Il redirect va **tenuto attivo a lungo**: i link di reset password già spediti e i segnalibri dei preparatori passano da lì.
+- Se un domani il prodotto cambia nome: si aggiorna `SITE_DOMAIN`, si verifica il nuovo dominio su Resend, si rifà `dc build --no-cache web lab21`. Il Caddyfile non si tocca.
 
 ### Consiglio per il futuro: GitHub
 Con un repo privato il flusso diventa `git push` dal PC e `git pull && dc build && dc up -d` sul server — niente più scp/tar. Quando vuoi, lo configuriamo.
@@ -152,7 +269,7 @@ scp root@31.70.77.212:/opt/trainmind/backups/trainmind_*.dump C:\Users\TeamDS\Do
 
 ```bash
 dc ps                        # stato container (tutti "healthy"?)
-dc logs --tail=50 api        # log di un servizio (web, api, athlete, ai-service, caddy)
+dc logs --tail=50 api        # log di un servizio (web, api, athlete, ai-service, lab21, caddy)
 dc logs -f api               # log in diretta (Ctrl+C per uscire)
 dc restart api               # riavvio singolo servizio
 curl https://api.trainmind-app.com/api/v1/health   # test API dall'esterno
@@ -167,6 +284,10 @@ Problemi noti già risolti (non reintrodurli):
 - Le variabili `NEXT_PUBLIC_*` sono "cotte" nella build: cambiarle richiede `dc build web`
 - **Docker cache del `COPY . .`**: dopo un tar/scp Docker può considerare il layer cached e servire il **bundle vecchio** anche se il sorgente nel container è nuovo. Sintomo classico: `docker exec trainmind-api cat /app/apps/api/src/lib/legal.ts` mostra la nuova versione, ma il DB salva ancora la vecchia. Fix: usa sempre `dc build --no-cache` (vedi sez. 1).
 - **Servizio `migrate` con schema stale**: il servizio `migrate` è buildato con lo stesso Dockerfile dell'API e ha lo `schema.prisma` congelato al momento della build. Dopo un cambio schema, PRIMA di `dc run --rm migrate ...` devi lanciare `dc --profile tools build migrate` (vedi sez. 2), altrimenti prisma dirà "Already in sync" ma il DB non verrà toccato.
+- **Healthcheck di `web` con il basePath attivo**: la radice dell'app risponde 404 quando è servita sotto `/app`, quindi il controllo punta a `http://127.0.0.1:3000/app`. Se cambi `APP_BASE_PATH` e il container resta "unhealthy" pur rispondendo dal browser, è quasi sempre questo.
+- **Sito vetrina fuori dal monorepo**: `webpage_LAB21` è una cartella sorella, non un workspace pnpm (pnpm non accetta percorsi di workspace fuori dalla root). Sul server deve stare in `/opt/trainmind/webpage_LAB21`, altrimenti `dc build lab21` fallisce con "context not found".
+- **`handle` in Caddy accetta un solo matcher scritto in linea**: `handle /app /app/* { ... }` non è sintassi valida e manda il container in restart loop con *"wrong argument count or unexpected line ending"*. Per più percorsi serve un matcher con nome: `@app path /app /app/*` seguito da `handle @app { ... }`. Il resto dello stack continua a girare, ma senza Caddy nulla è raggiungibile dall'esterno: il sintomo lato browser è `ERR_CONNECTION_REFUSED` su tutti i domini.
+- **Il Caddyfile è montato, non copiato nell'immagine**: dopo averlo modificato basta `dc restart caddy`, non serve alcun `build`.
 
 ---
 

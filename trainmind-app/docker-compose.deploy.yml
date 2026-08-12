@@ -1,5 +1,5 @@
 # ============================================
-# TrainMind AI — Docker Compose (Deploy su VPS)
+# TrainMind — Docker Compose (Deploy su VPS)
 # Build delle immagini direttamente sul server.
 # Uso:
 #   docker compose -f docker-compose.deploy.yml --env-file .env.deploy build
@@ -19,6 +19,11 @@ services:
       - '443:443'
       - '443:443/udp'
     environment:
+      # Dominio principale: alla radice il sito vetrina LAB21,
+      # sotto APP_BASE_PATH l'app TrainMind.
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      APP_BASE_PATH: ${APP_BASE_PATH:-/app}
+      # Vecchio indirizzo dell'app: resta attivo e rimanda al nuovo.
       APP_DOMAIN: ${APP_DOMAIN}
       API_DOMAIN: ${API_DOMAIN}
       ATHLETE_DOMAIN: ${ATHLETE_DOMAIN}
@@ -31,6 +36,36 @@ services:
     depends_on:
       - web
       - api
+      - lab21
+
+  # ─── Sito vetrina LAB21 ───────────────────────────────
+  # Serve la radice del dominio ed e' il punto di ingresso del percorso
+  # utente: da qui "Scopri di piu'" porta alla landing di TrainMind.
+  # Il codice sta in un repository separato, cartella sorella di questo.
+  lab21:
+    build:
+      context: ../webpage_LAB21
+      dockerfile: Dockerfile
+      args:
+        # Vuoto = il sito usa il sottopercorso relativo del suo config
+        # (/app). Si valorizza solo se TrainMind finisce su un altro dominio.
+        VITE_TRAINMIND_URL: ${VITE_TRAINMIND_URL:-}
+    container_name: trainmind-lab21
+    restart: always
+    expose:
+      - '80'
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:80/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   # ─── Web Frontend ─────────────────────────────────────
   web:
@@ -39,7 +74,10 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN}
-        NEXT_PUBLIC_APP_URL: https://${APP_DOMAIN}
+        # L'app non sta piu' su un sottodominio suo: vive sotto
+        # SITE_DOMAIN + APP_BASE_PATH, accanto al sito vetrina.
+        NEXT_PUBLIC_APP_URL: https://${SITE_DOMAIN}${APP_BASE_PATH:-/app}
+        NEXT_PUBLIC_BASE_PATH: ${APP_BASE_PATH:-/app}
         NEXT_PUBLIC_ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     container_name: trainmind-web
@@ -54,7 +92,18 @@ services:
     networks:
       - trainmind-network
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3000']
+      # Con il basePath attivo la radice risponde 404: il controllo
+      # deve puntare al sottopercorso, altrimenti il container risulta
+      # sempre malato e Caddy non parte mai.
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://127.0.0.1:3000${APP_BASE_PATH:-/app}',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -83,7 +132,9 @@ services:
       JWT_EXPIRES_IN: '15m'
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
       ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
-      CORS_ORIGIN: https://${APP_DOMAIN}
+      # CORS ragiona per origine (schema + host), il sottopercorso non conta:
+      # qui va il dominio del sito, non piu' quello dell'app.
+      CORS_ORIGIN: https://${SITE_DOMAIN}
       AI_SERVICE_URL: http://ai-service:3004
       # Routing dei modelli AI: decide quale modello usa ogni operazione.
       # Vive qui e non nell'ai-service perché /ai/wellness-insights e
@@ -102,8 +153,9 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
       # Base del link di reset password inviato per email. Senza questa variabile
       # il codice ripiega su http://localhost:3000 e gli utenti riceverebbero
-      # link inutilizzabili.
-      APP_PUBLIC_URL: https://${APP_DOMAIN}
+      # link inutilizzabili. Deve includere il sottopercorso dell'app: i link
+      # generati sono del tipo <APP_PUBLIC_URL>/reset-password?token=...
+      APP_PUBLIC_URL: https://${SITE_DOMAIN}${APP_BASE_PATH:-/app}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       REPORT_FROM_EMAIL: ${REPORT_FROM_EMAIL:-}
       # Mittente delle email di autenticazione. Il dominio deve essere verificato

@@ -35,6 +35,7 @@ export interface AuthContextType {
     lastName: string;
     organizationName: string;
     dateOfBirth: string;
+    plan?: 'starter' | 'professional' | 'ultra';
     acceptTerms: boolean;
     acceptPrivacy: boolean;
     consentHealthData?: boolean;
@@ -111,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lastName: string;
       organizationName: string;
       dateOfBirth: string;
+      plan?: 'starter' | 'professional' | 'ultra';
       acceptTerms: boolean;
       acceptPrivacy: boolean;
       consentHealthData?: boolean;

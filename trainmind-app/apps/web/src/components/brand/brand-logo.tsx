@@ -2,7 +2,7 @@ import { useId, type SVGProps } from 'react';
 import type { PlanKey } from './plan';
 
 /**
- * BrandLogo — basket "mono teal" di TrainMind AI.
+ * BrandLogo — basket "mono teal" di TrainMind.
  *
  * Geometria: cerchio + cucitura verticale + cucitura orizzontale + due archi
  * laterali, il tutto clippato al cerchio.

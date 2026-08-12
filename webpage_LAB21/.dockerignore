@@ -1,0 +1,15 @@
+# Fuori dal contesto di build: pesano e non servono al sito compilato.
+node_modules
+dist
+.git
+.gitignore
+
+# Immagini sorgente ad alta risoluzione: in public/ finiscono già le
+# versioni web ridimensionate.
+sorgenti
+
+# Documentazione e strumenti di lavoro
+*.docx
+README.md
+tools
+test-*.mjs

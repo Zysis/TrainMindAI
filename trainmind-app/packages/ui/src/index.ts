@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Shared UI Components
+// TrainMind — Shared UI Components
 // ============================================
 
 export { cn } from './lib/utils';

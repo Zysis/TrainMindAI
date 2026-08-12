@@ -40,6 +40,9 @@ export const registerSchema = z
     consentHealthData: z.boolean().optional().default(false),
     acceptMarketing: z.boolean().optional().default(false),
     uiLanguage: z.enum(['it', 'en', 'es']).optional().default('it'),
+    // Piano scelto in registrazione. Opzionale: le vecchie chiamate senza
+    // questo campo continuano a funzionare e ricadono su starter.
+    plan: z.enum(['starter', 'professional', 'ultra']).optional().default('starter'),
   })
   .superRefine((data, ctx) => {
     // Gate età: minimo 14 anni compiuti alla data odierna

@@ -392,7 +392,7 @@ export default function BillingPage() {
                   <h3 className="font-semibold text-slate-900 dark:text-white">Piano Gratuito</h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Stai utilizzando il piano gratuito con funzionalit&agrave; limitate.
-                    Scegli un piano a pagamento per sbloccare tutte le funzionalit&agrave; di TrainMind AI.
+                    Scegli un piano a pagamento per sbloccare tutte le funzionalit&agrave; di TrainMind.
                   </p>
                   <ul className="mt-3 space-y-1.5">
                     <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">

@@ -1,0 +1,15 @@
+/* ============================================================
+   LAB21 — foglio di stile principale
+   Ordine: token -> base -> componenti -> responsive
+   ============================================================ */
+@import './tokens.css';
+@import './base.css';
+@import './buttons.css';
+@import './nav.css';
+@import './hero.css';
+@import './sections.css';
+@import './showcase.css';
+@import './method.css';
+@import './team.css';
+@import './cta.css';
+@import './responsive.css';

@@ -1,0 +1,31 @@
+/* ============================================================
+   LAB21 — Design tokens (colori, spaziature, tipografia)
+   Modifica qui per cambiare la palette su tutto il sito.
+   ============================================================ */
+:root{
+  /* brand */
+  --acc:#00C9A7;          /* verde LAB21 */
+  --acc-d:#00A489;        /* verde scuro (testi su fondo chiaro) */
+  --acc-l:#0BE0BC;        /* verde chiaro (hover) */
+
+  /* fondali */
+  --ink:#07100E;          /* nero-verde profondo */
+  --ink-2:#0E1A18;
+  --paper:#FFFFFF;
+  --paper-2:#F4F7F6;
+  --paper-3:#EAF0EE;
+
+  /* testo e linee */
+  --txt:#0B1614;
+  --txt-2:#5A6B67;
+  --line:#E2E9E7;
+
+  /* layout */
+  --pad:clamp(22px,4.6vw,84px);
+  --maxw:1680px;
+
+  /* tipografia */
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}

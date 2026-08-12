@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Shared Types
+// TrainMind — Shared Types
 // ============================================
 
 export type { Athlete, AthleteDetail, AthleteListResponse, AthleteSummary } from './athlete';

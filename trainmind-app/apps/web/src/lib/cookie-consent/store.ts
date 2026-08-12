@@ -75,7 +75,7 @@ export function clearConsent() {
 export const COPY = {
   it: {
     heading: 'Rispettiamo la tua privacy',
-    body: 'Usiamo cookie tecnici indispensabili per farti usare TrainMind AI. Con il tuo consenso usiamo anche cookie analitici e di marketing per migliorare il prodotto. Puoi accettare, rifiutare o scegliere solo alcune categorie. Puoi cambiare idea in qualunque momento dal link "Preferenze cookie" nel footer.',
+    body: 'Usiamo cookie tecnici indispensabili per farti usare TrainMind. Con il tuo consenso usiamo anche cookie analitici e di marketing per migliorare il prodotto. Puoi accettare, rifiutare o scegliere solo alcune categorie. Puoi cambiare idea in qualunque momento dal link "Preferenze cookie" nel footer.',
     accept: 'Accetta tutto',
     reject: 'Rifiuta tutto',
     customize: 'Personalizza',
@@ -92,7 +92,7 @@ export const COPY = {
   },
   en: {
     heading: 'We respect your privacy',
-    body: 'We use strictly necessary cookies so you can use TrainMind AI. With your consent we also use analytics and marketing cookies to improve the product. You can accept, reject, or pick only some categories. You can change your mind any time via "Cookie preferences" in the footer.',
+    body: 'We use strictly necessary cookies so you can use TrainMind. With your consent we also use analytics and marketing cookies to improve the product. You can accept, reject, or pick only some categories. You can change your mind any time via "Cookie preferences" in the footer.',
     accept: 'Accept all',
     reject: 'Reject all',
     customize: 'Customize',
@@ -109,7 +109,7 @@ export const COPY = {
   },
   es: {
     heading: 'Respetamos tu privacidad',
-    body: 'Usamos cookies estrictamente necesarias para que puedas usar TrainMind AI. Con tu consentimiento también usamos cookies analíticas y de marketing para mejorar el producto. Puedes aceptar, rechazar o elegir solo algunas categorías. Puedes cambiar de opinión en cualquier momento desde "Preferencias de cookies" en el pie de página.',
+    body: 'Usamos cookies estrictamente necesarias para que puedas usar TrainMind. Con tu consentimiento también usamos cookies analíticas y de marketing para mejorar el producto. Puedes aceptar, rechazar o elegir solo algunas categorías. Puedes cambiar de opinión en cualquier momento desde "Preferencias de cookies" en el pie de página.',
     accept: 'Aceptar todo',
     reject: 'Rechazar todo',
     customize: 'Personalizar',

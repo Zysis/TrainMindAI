@@ -1,5 +1,5 @@
 # ============================================
-# TrainMind AI — CD Pipeline (Deploy to Production)
+# TrainMind — CD Pipeline (Deploy to Production)
 # Runs on push to main after CI passes
 # ============================================
 

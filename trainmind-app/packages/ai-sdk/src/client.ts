@@ -1,22 +1,26 @@
-import { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod';
+// Gli schema Zod sono valori a runtime, i tipi no: import separati per
+// soddisfare `consistent-type-imports`.
 import {
+  ChatResponseSchema,
+  GenerateResponseSchema,
+  CoachResponseSchema,
+  EmbedResponseSchema,
+  EmbedStatsSchema,
+  HealthResponseSchema,
+} from './types.js';
+import type {
   ChatRequest,
   ChatResponse,
-  ChatResponseSchema,
   SSEEvent,
   GenerateRequest,
   GenerateResponse,
-  GenerateResponseSchema,
   CoachRequest,
   CoachResponse,
-  CoachResponseSchema,
   EmbedRequest,
   EmbedResponse,
-  EmbedResponseSchema,
   EmbedStats,
-  EmbedStatsSchema,
   HealthResponse,
-  HealthResponseSchema,
 } from './types.js';
 import {
   AIServiceError,

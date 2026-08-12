@@ -2,7 +2,7 @@
   "name": "trainmind-app",
   "version": "0.1.0",
   "private": true,
-  "description": "TrainMind AI — Piattaforma SaaS per preparatori fisici nel basket",
+  "description": "TrainMind — Piattaforma SaaS per preparatori fisici nel basket",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.0.0",
@@ -10,7 +10,8 @@
   },
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "node scripts/dev.mjs",
+    "dev:apps": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",

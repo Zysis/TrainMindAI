@@ -11,7 +11,7 @@ function getApiKey(): string | null {
   return process.env.OPENAI_API_KEY || null;
 }
 
-const CHAT_SYSTEM_PROMPT = `Sei TrainMind AI, un assistente specializzato nella preparazione atletica per il basket.
+const CHAT_SYSTEM_PROMPT = `Sei TrainMind, un assistente specializzato nella preparazione atletica per il basket.
 Sei un esperto di:
 - Periodizzazione dell'allenamento (lineare, ondulata, a blocchi)
 - Forza, potenza esplosiva, condizionamento atletico
@@ -22,7 +22,7 @@ Sei un esperto di:
 
 Rispondi SEMPRE in italiano. Sii specifico con serie, ripetizioni, intensità, recupero.`;
 
-const GENERATE_SYSTEM_PROMPT = `Sei TrainMind AI, un assistente specializzato nella preparazione atletica per il basket.
+const GENERATE_SYSTEM_PROMPT = `Sei TrainMind, un assistente specializzato nella preparazione atletica per il basket.
 Sei un esperto di periodizzazione, forza, potenza, condizionamento, prevenzione infortuni e Return-to-Play.
 
 Quando l'utente chiede di generare un piano di allenamento, rispondi ESCLUSIVAMENTE con un JSON valido (senza markdown, senza backtick, senza testo prima o dopo).

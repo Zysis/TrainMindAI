@@ -1,5 +1,5 @@
 // ============================================
-// TrainMind AI — Shared Type Definitions
+// TrainMind — Shared Type Definitions
 // ============================================
 
 // === Enums ===

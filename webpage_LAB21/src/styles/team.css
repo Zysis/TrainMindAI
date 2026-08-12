@@ -1,0 +1,5 @@
+/* ── Team ────────────────────────────────────────────────── */
+/* Il testo sta su due colonne affiancate sotto il titolo a tutta larghezza:
+   righe più corte, quindi più leggibili, e lo spazio non resta vuoto. */
+.team-testo{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,4vw,64px);max-width:1240px}
+.team-testo p{color:var(--txt-2);font-size:16.5px;line-height:1.8;font-weight:300}

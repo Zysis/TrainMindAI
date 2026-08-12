@@ -1,0 +1,1517 @@
+/* ============================================================
+   TrainMind — Landing page, stile LAB21
+   ------------------------------------------------------------
+   TUTTO qui dentro e' annidato sotto `.lp`, la classe che avvolge
+   la landing. Il motivo: la dashboard usa la palette teal/slate e
+   il font Inter, e non deve cambiare aspetto. Finche' `.lp` sta
+   solo su app/page.tsx, questi stili non escono dalla landing.
+
+   Palette e font stanno in tailwind.config.ts (`lab.*`, `display`)
+   e in globals.css (@import dei font).
+   ============================================================ */
+
+.lp {
+  /* ── Token locali ──────────────────────────────────────── */
+  --acc: #00c9a7;
+  --acc-d: #00a489;
+  --acc-l: #0be0bc;
+
+  --ink: #07100e;
+  --ink-2: #0e1a18;
+  --paper: #ffffff;
+  --paper-2: #f4f7f6;
+  --paper-3: #eaf0ee;
+
+  --txt: #0b1614;
+  --txt-2: #5a6b67;
+  --line: #e2e9e7;
+
+  /* Accento caldo: riservato ai badge di piano START/PRO/ULTRA */
+  --amber: #f59e0b;
+
+  --pad: clamp(22px, 4.6vw, 84px);
+  --maxw: 1680px;
+
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  background: var(--paper);
+  color: var(--txt);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Tipografia ──────────────────────────────────────────── */
+.lp h1,
+.lp h2,
+.lp h3,
+.lp h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+}
+
+/* Micro-etichetta monospace: la cifra stilistica di LAB21.
+   Usata per eyebrow, tag, didascalie e label dei dati. */
+.lp .mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+.lp .inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
+
+/* Sezione: il respiro verticale generoso e' meta' dello stile LAB21. */
+.lp .sec {
+  padding: clamp(84px, 9vw, 150px) 0;
+  position: relative;
+}
+.lp .sec.alt {
+  background: var(--paper-2);
+}
+.lp .sec.dark {
+  background: var(--ink);
+  color: #fff;
+}
+.lp .sec.dark h2,
+.lp .sec.dark h3,
+.lp .sec.dark h4 {
+  color: #fff;
+}
+.lp .sec.mint {
+  background: linear-gradient(160deg, #e6fbf6, #f4fbf9);
+}
+/* Variante compatta: meno respiro quando l'intestazione e' l'unico
+   contenuto prima di un blocco a tutta larghezza. */
+.lp .sec.compact {
+  padding: clamp(56px, 6vw, 92px) 0 clamp(24px, 2.5vw, 40px);
+}
+
+/* ── Intestazione di sezione ─────────────────────────────── */
+.lp .sh {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  align-items: end;
+  margin-bottom: clamp(40px, 5vw, 74px);
+}
+.lp .sh.piena {
+  grid-template-columns: 1fr;
+}
+.lp .sh h2 {
+  font-size: clamp(32px, 4.6vw, 64px);
+}
+.lp .sh p {
+  color: var(--txt-2);
+  font-size: 16.5px;
+  line-height: 1.8;
+  font-weight: 300;
+}
+.lp .sec.dark .sh p {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* Eyebrow con lineetta: apre ogni sezione. */
+.lp .kick {
+  color: var(--acc-d);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.lp .kick::before {
+  content: '';
+  width: 34px;
+  height: 2px;
+  background: var(--acc);
+}
+.lp .sec.dark .kick {
+  color: var(--acc);
+}
+
+/* ── Bottoni ─────────────────────────────────────────────── */
+.lp .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: var(--acc);
+  color: #03211b;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14.5px;
+  font-family: var(--font-body);
+  border: 0;
+  cursor: pointer;
+  transition: 0.28s;
+}
+.lp .btn:hover {
+  background: var(--acc-l);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 201, 167, 0.32);
+}
+.lp .btn-lg {
+  padding: 17px 34px;
+  font-size: 16px;
+}
+/* Outline su fondo chiaro */
+.lp .btn-o {
+  background: transparent;
+  border: 1.5px solid var(--line);
+  color: var(--txt);
+}
+.lp .btn-o:hover {
+  background: var(--txt);
+  color: #fff;
+  border-color: var(--txt);
+  box-shadow: none;
+}
+/* Vetro su fondo scuro (hero) */
+.lp .btn-w {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+.lp .btn-w:hover {
+  background: #fff;
+  color: var(--ink);
+  border-color: #fff;
+  box-shadow: none;
+}
+
+/* ── Pill (badge hero) ───────────────────────────────────── */
+.lp .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  padding: 9px 18px;
+  border-radius: 999px;
+  color: #fff;
+}
+.lp .pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--acc);
+  animation: lp-pulse 2s infinite;
+}
+@keyframes lp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 201, 167, 0);
+  }
+}
+
+/* ── Badge di piano (unico punto dove sopravvive l'amber) ── */
+.lp .plan-tag {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   HERO — a tutta pagina, fondo scuro, testo in basso
+   ════════════════════════════════════════════════════════════ */
+.lp .hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh; /* su mobile evita il salto della barra URL */
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: clamp(48px, 7vw, 96px);
+  overflow: hidden;
+  background: var(--ink);
+}
+
+/* ── Slot foto ───────────────────────────────────────────────
+   La foto si mette in  public/assets/hero/hero-basket.jpg
+   (vedi HERO_PHOTO in app/page.tsx).
+
+   Finche' il file non esiste la richiesta va in 404 e resta
+   visibile il fondo qui sotto: niente icona di immagine rotta,
+   niente riquadro bianco. L'hero e' gia' presentabile "vuoto".
+   ──────────────────────────────────────────────────────────── */
+.lp .hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
+  background-color: var(--ink);
+}
+.lp .hero-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.06);
+}
+
+/* Vira la foto sul verde di marca mantenendo le luci
+   dell'originale. Cambiando --acc cambia anche la foto. */
+.lp .hero-media.tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--acc);
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+.lp .hero-media.tint img {
+  filter: contrast(1.12) brightness(1.05) saturate(1.2);
+}
+
+/* Trama di fondo per lo stato "senza foto": linee da campo da
+   basket, appena percettibili. Sparisce da sola quando la foto
+   c'e', perche' le sta sotto. */
+.lp .hero-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(60% 50% at 78% 18%, rgba(0, 201, 167, 0.18), transparent 62%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 0 1px,
+      transparent 1px 92px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.035) 0 1px,
+      transparent 1px 92px
+    );
+}
+
+/* Gradienti di leggibilita': scuriscono sopra e sotto perche' il
+   testo bianco regga su qualsiasi foto. */
+.lp .hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 16, 14, 0.4) 0%,
+      rgba(7, 16, 14, 0.06) 38%,
+      rgba(7, 16, 14, 0.92) 100%
+    ),
+    radial-gradient(70% 55% at 76% 20%, rgba(0, 201, 167, 0.22), transparent 64%);
+}
+
+.lp .hero-in {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  color: #fff;
+}
+.lp .hero-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 70px;
+  flex-wrap: wrap;
+}
+.lp .hero-copy {
+  flex: 1;
+  min-width: min(560px, 100%);
+}
+.lp .hero h1 {
+  font-size: clamp(44px, 6.6vw, 104px);
+  max-width: 17ch;
+  color: #fff;
+}
+.lp .hero h1 em {
+  font-style: normal;
+  color: var(--acc);
+}
+.lp .hero p {
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.7;
+  max-width: 52ch;
+  margin-top: 30px;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 300;
+}
+.lp .hcta {
+  display: flex;
+  gap: 13px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+/* ── Pannello dati (destra) ──────────────────────────────── */
+.lp .live {
+  width: min(400px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  background: rgba(7, 16, 14, 0.55);
+  backdrop-filter: blur(18px);
+  padding: 22px;
+  color: #fff;
+}
+.lp .live-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.lp .live-h b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.lp .chip-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0, 201, 167, 0.16);
+  color: var(--acc);
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.lp .chip-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--acc);
+  animation: lp-pulse 1.6s infinite;
+}
+/* ── Distribuzione del carico ────────────────────────────
+   Barra unica divisa in tre zone ACWR. Le proporzioni dei
+   segmenti sono i numeri stessi: non serve una legenda a parte,
+   basta leggerli sotto. */
+.lp .live-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 9px;
+}
+.lp .zones {
+  display: flex;
+  gap: 3px;
+  height: 9px;
+}
+.lp .zones i {
+  display: block;
+  border-radius: 999px;
+}
+.lp .zones .z-ok {
+  flex: 9;
+  background: var(--acc);
+}
+.lp .zones .z-hi {
+  flex: 3;
+  background: rgba(0, 201, 167, 0.42);
+}
+.lp .zones .z-rk {
+  flex: 2;
+  background: var(--amber);
+}
+.lp .zones-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.lp .zones-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lp .zones-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* ── Righe atleta ────────────────────────────────────────── */
+.lp .live-athletes {
+  margin-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 6px;
+}
+.lp .ath {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 0;
+}
+.lp .ath + .ath {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.lp .ath-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+.lp .ath-name {
+  flex: 1;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Cifre tabellari: incolonnate anche cambiando valore */
+.lp .ath-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.lp .ath-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.lp .dot-ok {
+  background: var(--acc);
+}
+.lp .dot-hi {
+  background: rgba(0, 201, 167, 0.5);
+}
+.lp .dot-rk {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+/* ── Riga dell'assistente ────────────────────────────────── */
+.lp .live-ai {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+}
+.lp .live-ai svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--acc);
+}
+.lp .live-ai b {
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ── Invito allo scroll ──────────────────────────────────── */
+.lp .scroll-hint {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  color: rgba(255, 255, 255, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.lp .scroll-hint span {
+  width: 1px;
+  height: 38px;
+  background: linear-gradient(rgba(255, 255, 255, 0.5), transparent);
+  animation: lp-drop 1.9s infinite;
+}
+@keyframes lp-drop {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   NAVBAR — trasparente sopra l'hero, solida allo scroll
+   ════════════════════════════════════════════════════════════ */
+.lp .nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  transition: 0.35s;
+  border-bottom: 1px solid transparent;
+}
+.lp .nav.solid {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom-color: var(--line);
+}
+.lp .nav-in {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+  height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+/* Sopra l'hero il testo e' bianco; quando la barra diventa
+   solida passa allo scuro. */
+.lp .nav .nav-link {
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 10px;
+  transition: 0.2s;
+  color: #fff;
+}
+.lp .nav.solid .nav-link {
+  color: var(--txt);
+}
+.lp .nav .nav-link:hover {
+  background: rgba(0, 201, 167, 0.12);
+  color: var(--acc);
+}
+.lp .nav.solid .nav-link:hover {
+  color: var(--acc-d);
+}
+.lp .nav .wordmark {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #fff;
+  transition: 0.35s;
+}
+.lp .nav.solid .wordmark {
+  color: var(--txt);
+}
+.lp .nav .wordmark em {
+  font-style: normal;
+  color: var(--acc);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BENTO — griglia funzionalita'
+   Card in stile LAB21: angoli 22px, bordo sottile, sollevamento
+   deciso all'hover. La griglia resta asimmetrica (bento) perche'
+   e' quello che mostra il prodotto meglio di sei riquadri uguali.
+   ════════════════════════════════════════════════════════════ */
+/* Disposizione dichiarata per aree: la mappa qui sotto e' letteralmente
+   il disegno della griglia.
+       ana = Analytics      per = Periodizzazione   ath = Gestione atleti
+       rep = Report         sec = Sicurezza         ai  = AI Coach        */
+.lp .bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    'ana ana per ath'
+    'ana ana rep rep'
+    'sec sec ai  ai';
+  gap: 22px;
+  align-items: stretch;
+}
+.lp .a-ana { grid-area: ana; }
+.lp .a-per { grid-area: per; }
+.lp .a-ath { grid-area: ath; }
+.lp .a-rep { grid-area: rep; }
+.lp .a-sec { grid-area: sec; }
+.lp .a-ai  { grid-area: ai; }
+/* Card */
+.lp .bc {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  transition: 0.35s;
+}
+.lp .bc:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 26px 60px rgba(11, 22, 20, 0.11);
+  border-color: #cfe5e0;
+}
+/* La card Analytics e' alta due righe: senza questo il riquadro del
+   grafico resta schiacciato in basso e sopra avanza un buco. Qui il
+   pannello prende tutta l'altezza libera e il grafico ci si distende
+   dentro (l'SVG ha preserveAspectRatio="none", quindi si allunga). */
+.lp .a-ana .bc-demo {
+  flex: 1;
+  display: flex;
+  min-height: 220px;
+}
+.lp .a-ana .bc-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.lp .a-ana .bc-panel svg {
+  flex: 1;
+  height: auto;
+  min-height: 130px;
+}
+
+/* Icona: quadrato verde pieno, non un gradiente */
+.lp .bc-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acc);
+  color: #03211b;
+  flex: none;
+}
+/* Variante scura per le card su fondo scuro */
+.lp .sec.dark .bc-ico {
+  background: rgba(0, 201, 167, 0.16);
+  color: var(--acc);
+}
+
+.lp .bc-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 22px;
+}
+.lp .bc-head .mono {
+  color: var(--acc-d);
+}
+.lp .bc h3 {
+  font-size: 22px;
+  margin-bottom: 11px;
+}
+/* Analytics e' la card guida della griglia: titolo piu' grande. */
+.lp .a-ana h3 {
+  font-size: clamp(24px, 2.2vw, 32px);
+}
+.lp .bc p {
+  color: var(--txt-2);
+  font-size: 14.5px;
+  line-height: 1.75;
+  font-weight: 300;
+}
+
+/* Riquadro dimostrativo dentro la card (grafico, chat, timeline) */
+.lp .bc-demo {
+  margin-top: auto;
+  padding-top: 24px;
+}
+.lp .bc-panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-2);
+  padding: 16px;
+}
+
+/* Bolle chat dell'AI Coach */
+.lp .chat-u {
+  align-self: flex-end;
+  max-width: 82%;
+  background: var(--paper-3);
+  color: var(--txt);
+  border-radius: 14px 14px 4px 14px;
+  padding: 10px 13px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.lp .chat-a {
+  align-self: flex-start;
+  max-width: 82%;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 13px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Barre della periodizzazione */
+.lp .bars-row {
+  display: flex;
+  gap: 5px;
+  height: 11px;
+}
+.lp .bars-row i {
+  display: block;
+  border-radius: 999px;
+}
+
+/* Su due colonne l'ordine di lettura resta lo stesso, ma Analytics
+   smette di essere alta due righe: non c'e' piu' nulla da affiancarle. */
+@media (max-width: 1024px) {
+  .lp .bento {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+      'ana ana'
+      'per ath'
+      'rep rep'
+      'sec sec'
+      'ai  ai';
+  }
+  .lp .a-ana .bc-demo {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp .bento {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'ana'
+      'per'
+      'ath'
+      'rep'
+      'sec'
+      'ai';
+  }
+  .lp .bc {
+    padding: 24px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   FASCIA NUMERI — blocco verde pieno tra le sezioni
+   ════════════════════════════════════════════════════════════ */
+.lp .band {
+  background: var(--acc);
+  color: #03211b;
+  padding: clamp(56px, 6.5vw, 96px) 0;
+}
+.lp .band-in {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  row-gap: clamp(32px, 4vw, 52px);
+}
+.lp .band .st {
+  padding: 0 clamp(20px, 2.6vw, 44px);
+}
+.lp .band .st + .st {
+  border-left: 1px solid rgba(3, 33, 27, 0.2);
+}
+.lp .band .st:first-child {
+  padding-left: 0;
+}
+.lp .band .st:last-child {
+  padding-right: 0;
+}
+.lp .band .st::before {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 3px;
+  background: #03211b;
+  opacity: 0.32;
+  margin-bottom: clamp(16px, 1.8vw, 26px);
+}
+/* Il numero e' l'elemento grafico della fascia: grande e compatto. */
+.lp .band .num {
+  display: flex;
+  align-items: flex-start;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(48px, 6.4vw, 104px);
+  line-height: 0.84;
+  letter-spacing: -0.055em;
+}
+.lp .band .suf {
+  font-style: normal;
+  font-size: 0.32em;
+  line-height: 1;
+  opacity: 0.55;
+  margin: 0.2em 0 0 0.04em;
+}
+.lp .band .lbl {
+  display: block;
+  margin-top: clamp(14px, 1.7vw, 24px);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0.74;
+  max-width: 22ch;
+}
+@media (max-width: 860px) {
+  .lp .band-in {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lp .band .st:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .lp .band .st:nth-child(3) {
+    border-left: 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   PRICING
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Interruttore mensile / annuale ──────────────────────── */
+.lp .bt-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: clamp(40px, 5vw, 64px);
+}
+.lp .bt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px;
+  background: var(--paper);
+}
+.lp .bt button {
+  position: relative;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--txt-2);
+  transition: 0.25s;
+}
+.lp .bt button:hover {
+  color: var(--txt);
+}
+.lp .bt button.on {
+  background: var(--ink);
+  color: #fff;
+}
+/* Pastiglia dello sconto agganciata al pulsante "Annuale" */
+.lp .bt .save {
+  position: absolute;
+  top: -9px;
+  right: -10px;
+  background: var(--acc);
+  color: #03211b;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+.lp .bt-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--acc-d);
+}
+
+/* ── Griglia piani ───────────────────────────────────────── */
+.lp .pgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.lp .pc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 34px 30px 30px;
+  transition: 0.35s;
+}
+.lp .pc:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 26px 60px rgba(11, 22, 20, 0.11);
+  border-color: #cfe5e0;
+}
+
+/* Piano consigliato: fondo scuro invece del bordo sfumato.
+   Su una fila di tre card bianche il contrasto pieno si legge
+   da lontano, un bordo colorato no. */
+.lp .pc.hot {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.lp .pc.hot:hover {
+  box-shadow: 0 30px 70px rgba(7, 16, 14, 0.35);
+  border-color: var(--ink);
+}
+
+.lp .pc-flag {
+  position: absolute;
+  top: -12px;
+  left: 30px;
+  background: var(--acc);
+  color: #03211b;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 7px;
+}
+
+.lp .pc h3 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+.lp .pc .tagline {
+  color: var(--txt-2);
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 300;
+  min-height: 3.3em;
+}
+.lp .pc.hot .tagline {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* Prezzo */
+.lp .pc-price {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  margin-top: 22px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  font-size: clamp(46px, 4.4vw, 62px);
+}
+.lp .pc-cur {
+  font-size: 0.44em;
+  margin-top: 0.24em;
+  opacity: 0.6;
+}
+.lp .pc-per {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--txt-2);
+  align-self: flex-end;
+  margin-bottom: 0.28em;
+  margin-left: 4px;
+}
+.lp .pc.hot .pc-per {
+  color: rgba(255, 255, 255, 0.6);
+}
+/* Riga dell'equivalente mensile: altezza fissa perche' le tre
+   card restino allineate anche quando e' vuota (piano mensile). */
+.lp .pc-eq {
+  min-height: 20px;
+  margin-top: 10px;
+  color: var(--txt-2);
+}
+.lp .pc.hot .pc-eq {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Elenco funzionalita' */
+.lp .pc-feats {
+  margin: 26px 0 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.lp .pc.hot .pc-feats {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+.lp .pc-feats li {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--txt);
+}
+.lp .pc.hot .pc-feats li {
+  color: rgba(255, 255, 255, 0.85);
+}
+.lp .pc-feats svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--acc-d);
+}
+.lp .pc.hot .pc-feats svg {
+  color: var(--acc);
+}
+
+/* Il bottone sta sempre in fondo, allineato tra le card */
+.lp .pc .btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 940px) {
+  .lp .pgrid {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .lp .pc .tagline {
+    min-height: 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   HERO CHIARO  —  modificatore `.on-light`
+   ------------------------------------------------------------
+   Si usa quando la foto dell'hero e' chiara: ribalta velo e testi
+   perche' il nero regga sul chiaro invece del bianco sullo scuro.
+   Si attiva da HERO_TONE in app/page.tsx, che mette `.on-light`
+   sull'hero e `.over-light` sulla navbar.
+   ════════════════════════════════════════════════════════════ */
+.lp .hero.on-light {
+  background: var(--paper-2);
+}
+
+/* Velo di leggibilita': schiarisce la meta' sinistra, dove sta il
+   testo, e lascia libera la destra dove sta il soggetto della foto. */
+.lp .hero.on-light .hero-media::after {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(244, 247, 246, 0.96) 0%,
+      rgba(244, 247, 246, 0.9) 30%,
+      rgba(244, 247, 246, 0.62) 46%,
+      rgba(244, 247, 246, 0.18) 62%,
+      transparent 76%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 26%);
+}
+
+/* Trama di fondo: sul chiaro va scurita, non schiarita. */
+.lp .hero.on-light .hero-fallback {
+  opacity: 0.35;
+  background-image:
+    radial-gradient(60% 50% at 78% 18%, rgba(0, 201, 167, 0.16), transparent 62%),
+    repeating-linear-gradient(90deg, rgba(11, 22, 20, 0.05) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(0deg, rgba(11, 22, 20, 0.05) 0 1px, transparent 1px 92px);
+}
+
+.lp .hero.on-light .hero-in {
+  color: var(--txt);
+}
+.lp .hero.on-light h1 {
+  color: var(--txt);
+}
+.lp .hero.on-light h1 em {
+  color: var(--acc-d);
+}
+/* Il lead sta sopra una foto: il grigio tenue usato nelle sezioni
+   piatte non regge, perche' sotto al velo trasparisce l'immagine e
+   il contrasto cambia da riga a riga. Qui serve il testo pieno. */
+.lp .hero.on-light p {
+  color: var(--txt);
+  font-weight: 400;
+}
+
+/* Badge: da vetro chiaro a contorno scuro */
+.lp .hero.on-light .pill {
+  border-color: rgba(11, 22, 20, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--txt);
+  backdrop-filter: blur(10px);
+}
+
+
+.lp .hero.on-light .scroll-hint {
+  color: var(--txt-2);
+}
+.lp .hero.on-light .scroll-hint span {
+  background: linear-gradient(rgba(11, 22, 20, 0.45), transparent);
+}
+
+/* Navbar sopra un hero chiaro: testo scuro anche da trasparente */
+.lp .nav.over-light .nav-link,
+.lp .nav.over-light .wordmark {
+  color: var(--txt);
+}
+.lp .nav.over-light .nav-link:hover {
+  color: var(--acc-d);
+}
+
+/* ════════════════════════════════════════════════════════════
+   WORDMARK COMPOSITO  —  TrainMind by LAB21
+   ════════════════════════════════════════════════════════════ */
+.lp .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  flex-shrink: 0;
+}
+.lp .brand-by {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--txt-2);
+  margin: 0 2px;
+  white-space: nowrap;
+}
+.lp .nav:not(.over-light):not(.solid) .brand-by {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Logo LAB21.
+ *
+ * Il PNG (960x242) non ha margini: le lettere riempiono quasi tutta
+ * l'altezza. Impostare `height` significa quindi decidere l'altezza
+ * delle maiuscole, non dell'ingombro.
+ *
+ * "LAB21" e' tutto maiuscolo, "TrainMind" no: per farli sembrare
+ * della stessa misura le maiuscole devono coincidere, non le altezze
+ * dei riquadri. In Space Grotesk le maiuscole stanno a circa 0,7em,
+ * quindi 0,72em sul font-size del wordmark le allinea. Usando `em`
+ * il rapporto regge anche cambiando la dimensione del testo.
+ */
+.lp .brand-lab21 {
+  /* `em` si risolve sul font-size di questo stesso elemento, che qui
+     e' allineato a quello del wordmark: cambiando --brand-size si
+     ridimensionano testo e logo insieme, restando in proporzione. */
+  font-size: var(--brand-size);
+  height: 0.72em;
+  width: auto;
+  display: block;
+  /* Riporta il logo sulla stessa linea ottica del testo, che nella
+     sua line-box lascia spazio anche ai discendenti. */
+  margin-top: 0.04em;
+}
+
+/* Unico punto in cui si regola la scala dell'intero lockup. */
+.lp .brand {
+  --brand-size: 21px;
+}
+.lp .brand .wordmark {
+  font-size: var(--brand-size);
+}
+
+@media (max-width: 640px) {
+  .lp .brand-by,
+  .lp .brand-lab21 {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   VARIANTI SU FONDO SCURO
+   Servono perche' l'alternanza chiaro/scuro porta il pricing su
+   `.sec.dark`: card, interruttore e divisori vanno reinvertiti.
+   ════════════════════════════════════════════════════════════ */
+
+/* Interruttore mensile/annuale su fondo scuro */
+.lp .sec.dark .bt {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.lp .sec.dark .bt button {
+  color: rgba(255, 255, 255, 0.62);
+}
+.lp .sec.dark .bt button:hover {
+  color: #fff;
+}
+/* Attivo: pastiglia bianca su fondo scuro (l'inverso del chiaro) */
+.lp .sec.dark .bt button.on {
+  background: #fff;
+  color: var(--ink);
+}
+.lp .sec.dark .bt-note {
+  color: var(--acc);
+}
+
+/* Card piano su fondo scuro: superficie leggermente rialzata */
+.lp .sec.dark .pc {
+  background: var(--ink-2);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.lp .sec.dark .pc:hover {
+  border-color: rgba(0, 201, 167, 0.45);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.4);
+}
+.lp .sec.dark .pc .tagline {
+  color: rgba(255, 255, 255, 0.6);
+}
+.lp .sec.dark .pc .pc-per,
+.lp .sec.dark .pc .pc-eq {
+  color: rgba(255, 255, 255, 0.55);
+}
+.lp .sec.dark .pc .pc-feats {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+.lp .sec.dark .pc .pc-feats li {
+  color: rgba(255, 255, 255, 0.85);
+}
+.lp .sec.dark .pc .pc-feats svg {
+  color: var(--acc);
+}
+
+/* Il piano consigliato si inverte di nuovo: bianco pieno sul
+   fondo scuro. Resta l'elemento che si stacca dagli altri due. */
+.lp .sec.dark .pc.hot {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--txt);
+}
+.lp .sec.dark .pc.hot:hover {
+  border-color: var(--paper);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+/* La sezione scura impone il bianco a tutti i titoli (`.sec.dark h3`).
+   Sulla card chiara del piano consigliato quel bianco sparisce sul
+   fondo: qui va riportato al testo scuro, altrimenti il nome del piano
+   resta invisibile. */
+.lp .sec.dark .pc.hot h3 {
+  color: var(--txt);
+}
+.lp .sec.dark .pc.hot .tagline {
+  color: var(--txt-2);
+}
+.lp .sec.dark .pc.hot .pc-per,
+.lp .sec.dark .pc.hot .pc-eq {
+  color: var(--txt-2);
+}
+.lp .sec.dark .pc.hot .pc-feats {
+  border-top-color: var(--line);
+}
+.lp .sec.dark .pc.hot .pc-feats li {
+  color: var(--txt);
+}
+.lp .sec.dark .pc.hot .pc-feats svg {
+  color: var(--acc-d);
+}
+/* Sulla card bianca il bottone verde pieno resta leggibile;
+   sulle altre due serve la variante chiara su fondo scuro. */
+.lp .sec.dark .pc:not(.hot) .btn-o {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+.lp .sec.dark .pc:not(.hot) .btn-o:hover {
+  background: #fff;
+  color: var(--ink);
+  border-color: #fff;
+}
+
+/* ════════════════════════════════════════════════════════════
+   CTA DI CHIUSURA
+   ════════════════════════════════════════════════════════════ */
+.lp .cta-box {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto;
+}
+.lp .cta-box h2 {
+  font-size: clamp(30px, 4.2vw, 58px);
+  margin-bottom: 22px;
+}
+.lp .cta-box p {
+  color: var(--txt-2);
+  font-size: 17px;
+  line-height: 1.8;
+  font-weight: 300;
+  max-width: 54ch;
+  margin: 0 auto 38px;
+}
+.lp .sec.dark .cta-box p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FOOTER — chiude la pagina sullo stesso scuro dell'hero
+   ════════════════════════════════════════════════════════════ */
+.lp footer {
+  background: var(--ink);
+  color: #fff;
+  padding: clamp(56px, 6vw, 84px) 0 40px;
+}
+.lp .f-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 50px;
+  flex-wrap: wrap;
+  padding-bottom: 38px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+}
+.lp .f-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  /* Stessa variabile della navbar: da qui il logo LAB21 ricava
+     l'altezza, restando in proporzione al wordmark. */
+  --brand-size: 20px;
+}
+.lp .f-brand .wordmark {
+  font-family: var(--font-display);
+  font-size: var(--brand-size);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+/* Sul fondo scuro del footer il "by" va schiarito */
+.lp .f-brand .brand-by {
+  color: rgba(255, 255, 255, 0.5);
+}
+/* Sotto i 640px la navbar nasconde "by" e logo per mancanza di
+   spazio; nel footer lo spazio c'e', quindi restano visibili. */
+@media (max-width: 640px) {
+  .lp .f-brand .brand-by,
+  .lp .f-brand .brand-lab21 {
+    display: block;
+  }
+}
+.lp .f-brand .wordmark em {
+  font-style: normal;
+  color: var(--acc);
+}
+.lp .f-tag {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14.5px;
+  max-width: 36ch;
+  line-height: 1.75;
+  margin-top: 16px;
+  font-weight: 300;
+}
+.lp .f-links {
+  display: flex;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+.lp .f-links h5 {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+.lp .f-links a {
+  display: block;
+  font-size: 14.5px;
+  padding: 5px 0;
+  color: rgba(255, 255, 255, 0.82);
+  transition: 0.2s;
+}
+.lp .f-links a:hover {
+  color: var(--acc);
+}
+.lp .f-bot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
+
+/* ── Reveal allo scroll ──────────────────────────────────── */
+.lp .rv {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.lp .rv.in {
+  opacity: 1;
+  transform: none;
+}
+.lp .d1 {
+  transition-delay: 0.08s;
+}
+.lp .d2 {
+  transition-delay: 0.16s;
+}
+.lp .d3 {
+  transition-delay: 0.24s;
+}
+.lp .d4 {
+  transition-delay: 0.32s;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .lp .sh {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+}
+
+/* ── Accessibilita': rispetta "riduci animazioni" ────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lp *,
+  .lp *::before,
+  .lp *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lp .rv {
+    opacity: 1;
+    transform: none;
+  }
+}

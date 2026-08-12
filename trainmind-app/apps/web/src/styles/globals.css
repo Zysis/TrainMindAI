@@ -1,10 +1,17 @@
+/* Gli @import CSS devono precedere qualsiasi altra regola, incluse le
+   direttive @tailwind: se stanno piu' in basso il browser li ignora.
+   - Inter          → corpo testo, usata da tutta l'app
+   - Space Grotesk  → titoli, solo landing (stile LAB21)
+   - JetBrains Mono → micro-etichette, solo landing (stile LAB21) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
   :root {
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 72px;
