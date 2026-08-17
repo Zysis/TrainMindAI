@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { LangSwitcher } from '@/components/i18n/lang-switcher';
+import { openCookiePreferences } from '@/components/cookie-banner';
 import { useLocaleStore, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/store';
 import { useReveal } from '@/hooks/use-reveal';
 import { withBasePath } from '@/lib/base-path';
@@ -193,6 +194,8 @@ const T = {
     'footer.col.contact': 'Contatti',
     'footer.privacy': 'Privacy',
     'footer.terms': 'Termini',
+    'footer.cookies': 'Cookie',
+    'footer.cookiePrefs': 'Preferenze cookie',
     'footer.madein': 'Fatto in Italia',
   },
 
@@ -316,6 +319,8 @@ const T = {
     'footer.col.contact': 'Contact',
     'footer.privacy': 'Privacy',
     'footer.terms': 'Terms',
+    'footer.cookies': 'Cookies',
+    'footer.cookiePrefs': 'Cookie preferences',
     'footer.madein': 'Made in Italy',
   },
 
@@ -439,6 +444,8 @@ const T = {
     'footer.col.contact': 'Contacto',
     'footer.privacy': 'Privacidad',
     'footer.terms': 'Términos',
+    'footer.cookies': 'Cookies',
+    'footer.cookiePrefs': 'Preferencias de cookies',
     'footer.madein': 'Hecho en Italia',
   },
 } as const;
@@ -866,12 +873,17 @@ export default function LandingPage() {
         <div className="band-in inner">
           {[
             // I suffissi sono unita' di misura: " secondi, ' minuti.
-            { n: '3', suf: '', lbl: t('band.1') },
-            { n: '40', suf: '”', lbl: t('band.2') },
-            { n: '4', suf: '', lbl: t('band.3') },
-            { n: '10', suf: '’', lbl: t('band.4') },
+            // ATTENZIONE alla `key` qui sotto: deve essere un id stabile, MAI
+            // il testo tradotto. Con la lingua come key, il cambio di locale
+            // dopo l'hydration cambiava le key, React ricreava questi nodi e
+            // l'IntersectionObserver di useReveal restava agganciato a quelli
+            // vecchi: i nuovi non venivano mai rivelati e la fascia spariva.
+            { id: 'b1', n: '3', suf: '', lbl: t('band.1') },
+            { id: 'b2', n: '40', suf: '”', lbl: t('band.2') },
+            { id: 'b3', n: '4', suf: '', lbl: t('band.3') },
+            { id: 'b4', n: '10', suf: '’', lbl: t('band.4') },
           ].map((s) => (
-            <div className="st rv" key={s.lbl}>
+            <div className="st rv" key={s.id}>
               <div className="num">
                 {s.n}
                 {s.suf && <em className="suf">{s.suf}</em>}
@@ -1044,6 +1056,12 @@ export default function LandingPage() {
                 <h5>{t('footer.col.legal')}</h5>
                 <Link href="/privacy">{t('footer.privacy')}</Link>
                 <Link href="/terms">{t('footer.terms')}</Link>
+                <Link href="/cookies">{t('footer.cookies')}</Link>
+                {/* Riapre il pannello di consenso: le Linee guida del Garante
+                    chiedono che la scelta sui cookie sia sempre revocabile. */}
+                <button type="button" onClick={openCookiePreferences} className="f-linkbtn">
+                  {t('footer.cookiePrefs')}
+                </button>
               </div>
               <div>
                 <h5>{t('footer.col.contact')}</h5>

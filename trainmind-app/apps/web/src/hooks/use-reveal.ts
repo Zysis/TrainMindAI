@@ -14,12 +14,21 @@ import { useEffect } from 'react';
  *
  * Con "riduci animazioni" attivo salta tutto e mostra subito il contenuto,
  * cosi la pagina resta leggibile anche senza transizioni.
+ *
+ * ── Perche' c'e' un MutationObserver ──────────────────────────
+ * `.rv` parte da `opacity: 0`: se un nodo sfugge all'osservazione resta
+ * invisibile per sempre, e il contenuto sparisce dalla pagina senza errori
+ * in console. E' successo davvero con la fascia numeri: il cambio di lingua
+ * dopo l'hydration ricreava quei nodi (erano keyed sul testo tradotto) e
+ * l'IntersectionObserver restava agganciato a quelli buttati via.
+ *
+ * La causa e' stata corretta, ma qui teniamo comunque una rete di sicurezza:
+ * ogni `.rv` che compare nel DOM dopo il primo giro viene agganciato
+ * automaticamente. Meglio un'animazione di troppo che una sezione invisibile.
  */
 export function useReveal(rootRef?: React.RefObject<HTMLElement>) {
   useEffect(() => {
-    const root = rootRef?.current ?? document;
-    const nodes = Array.from(root.querySelectorAll<HTMLElement>('.rv'));
-    if (nodes.length === 0) return;
+    const root: ParentNode = rootRef?.current ?? document;
 
     // Preferenze di accessibilita': niente animazioni, contenuto visibile.
     const reduced =
@@ -27,7 +36,7 @@ export function useReveal(rootRef?: React.RefObject<HTMLElement>) {
       matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (reduced) {
-      nodes.forEach((n) => n.classList.add('in'));
+      root.querySelectorAll<HTMLElement>('.rv').forEach((n) => n.classList.add('in'));
       return;
     }
 
@@ -43,7 +52,35 @@ export function useReveal(rootRef?: React.RefObject<HTMLElement>) {
       { threshold: 0.14 },
     );
 
-    nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
+    /** Aggancia i nodi non ancora rivelati (ri-osservare e' innocuo). */
+    const observeAll = (scope: ParentNode) => {
+      scope.querySelectorAll<HTMLElement>('.rv').forEach((n) => {
+        if (!n.classList.contains('in')) io.observe(n);
+      });
+    };
+
+    observeAll(root);
+
+    // Rete di sicurezza: intercetta i `.rv` aggiunti al DOM piu' tardi
+    // (re-render che ricreano nodi, contenuto condizionale, liste keyed).
+    const mo = new MutationObserver((records) => {
+      records.forEach((r) => {
+        r.addedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) return;
+          if (node.classList.contains('in')) return;
+          if (node.classList.contains('rv')) io.observe(node);
+          observeAll(node);
+        });
+      });
+    });
+    mo.observe(root instanceof Document ? root.body : (root as HTMLElement), {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      io.disconnect();
+      mo.disconnect();
+    };
   }, [rootRef]);
 }

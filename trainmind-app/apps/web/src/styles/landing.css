@@ -1456,6 +1456,23 @@
 .lp .f-links a:hover {
   color: var(--acc);
 }
+/* "Preferenze cookie" e' un pulsante (riapre il pannello di consenso)
+   ma nel footer deve leggersi come gli altri link della colonna. */
+.lp .f-links .f-linkbtn {
+  display: block;
+  font-size: 14.5px;
+  padding: 5px 0;
+  color: rgba(255, 255, 255, 0.82);
+  transition: 0.2s;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.lp .f-links .f-linkbtn:hover {
+  color: var(--acc);
+}
 .lp .f-bot {
   display: flex;
   justify-content: space-between;
