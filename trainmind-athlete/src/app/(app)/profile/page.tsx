@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/stores/auth-store';
 import { User, Mail, MapPin, Ruler, Weight, Hash, LogOut, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { LegalLinks } from '@/components/layout/legal-links';
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -62,6 +63,8 @@ export default function ProfilePage() {
       >
         <LogOut size={16} /> Esci
       </button>
+
+      <LegalLinks className="mt-6" />
 
       <p className="mt-4 text-center text-xs text-slate-400 dark:text-slate-600">
         TrainMind Athlete v0.1.0

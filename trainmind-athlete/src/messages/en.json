@@ -33,5 +33,11 @@
     "save": "Save",
     "cancel": "Cancel",
     "logout": "Log out"
+  },
+  "legal": {
+    "title": "Legal documents",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy"
   }
 }

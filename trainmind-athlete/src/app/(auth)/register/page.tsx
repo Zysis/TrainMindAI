@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, setToken, setRefreshToken } from '@/lib/api';
+import { LegalLinks } from '@/components/layout/legal-links';
 
 interface InviteInfo {
   email: string;
@@ -209,6 +210,10 @@ function RegisterForm() {
         >
           {submitting ? 'Creazione account...' : 'Crea account'}
         </button>
+
+        {/* I tre documenti sempre raggiungibili prima di completare
+            l'iscrizione, non solo quelli citati nelle caselle di consenso. */}
+        <LegalLinks className="pt-2" />
       </form>
     </div>
   );

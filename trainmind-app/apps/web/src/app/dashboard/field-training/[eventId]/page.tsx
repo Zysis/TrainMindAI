@@ -1,21 +1,20 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Play,
   Pause,
-  RotateCcw,
-  Flag,
+  Square,
   CheckCircle2,
   Plus,
   X,
   Timer,
   Users,
   Save,
-  ChevronDown,
-  ChevronUp,
+  ClipboardCheck,
+  Gauge,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
@@ -23,11 +22,7 @@ import { useToast } from '@/components/ui/toast';
 
 // ─── Types ──────────────────────────────────────────────
 
-interface Lap {
-  startMs: number;
-  endMs: number | null;
-  durationMs: number;
-}
+type AttendanceStatus = 'PRESENT' | 'UNAVAILABLE' | 'ABSENT';
 
 interface AthleteInfo {
   id: string;
@@ -41,47 +36,163 @@ interface Entry {
   id: string;
   athleteId: string;
   totalActiveMs: number;
-  laps: Lap[];
+  status: AttendanceStatus | null;
+  note: string | null;
+  rpe: number | null;
   athlete: AthleteInfo;
+}
+
+/** Giocatore in rosa, con il suo semaforo */
+interface RosterPlayer {
+  athleteId: string;
+  athlete: AthleteInfo;
+  status: AttendanceStatus;
+  note: string;
+  /** RPE percepito dal singolo atleta (1-10); se vuoto vale l'RPE di sessione */
+  rpe: number | null;
+}
+
+/** Giocatore ospite: esiste solo in questa sessione, nome editabile */
+interface GuestPlayer {
+  id: string;
+  name: string;
+  status: AttendanceStatus;
+  note: string;
+}
+
+type ExerciseState = 'idle' | 'running' | 'paused' | 'done';
+
+/** Esercizio come viene salvato sul server (colonna JSON sulla sessione) */
+interface StoredExercise {
+  id: string;
+  name: string;
+  isWarmup: boolean;
+  players: number;
+  courts: number;
+  activityMs: number;
+  pauseMs: number;
+  breakMs: number;
+  state: ExerciseState;
+  breakRunning: boolean;
+}
+
+/** Esercizio nel browser: aggiunge gli ancoraggi dei segmenti in corso */
+interface Exercise extends StoredExercise {
+  segmentStart: number | null; // Date.now() del segmento attività/pausa corrente
+  breakStart: number | null; // Date.now() del break in corso
 }
 
 interface FieldSession {
   id: string;
-  calendarEventId: string;
+  calendarEventId: string | null;
+  trainingSessionId: string | null;
   teamId: string | null;
   status: string;
   startedAt: string;
   completedAt: string | null;
+  availableAthletes: number | null;
+  durationMinutes: number | null;
+  sessionRpe: number | null;
+  exercises: StoredExercise[] | null;
+  guests: GuestPlayer[] | null;
   entries: Entry[];
   team: { id: string; name: string; color: string | null } | null;
   calendarEvent: { id: string; title: string; startTime: string; endTime: string; type: string } | null;
-}
-
-interface TimerState {
-  running: boolean;
-  elapsed: number; // total accumulated ms (paused time)
-  lapStart: number | null; // Date.now() when current lap started, null if paused
-  laps: Lap[];
+  trainingSession: { id: string; title: string; date: string; duration: number | null } | null;
 }
 
 // ─── Helpers ────────────────────────────────────────────
 
 function formatMs(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
+  const sign = ms < 0 ? '-' : '';
+  const abs = Math.abs(ms);
+  const totalSec = Math.floor(abs / 1000);
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
   if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return `${sign}${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  return `${sign}${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function formatMsShort(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSec / 60);
+/** Come formatMs ma arrotondando al secondo: usato per i valori derivati
+ *  (effettivo, intensità metabolica) per allinearsi al foglio Excel di riferimento. */
+function formatMsRound(ms: number): string {
+  const sign = ms < 0 ? '-' : '';
+  const totalSec = Math.round(Math.abs(ms) / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  if (hours > 0) {
+    return `${sign}${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+  return `${sign}${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function uid(prefix: string): string {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeStatus(value: unknown): AttendanceStatus {
+  return value === 'UNAVAILABLE' || value === 'ABSENT' ? value : 'PRESENT';
+}
+
+/** RPE accettato solo se intero fra 1 e 10, altrimenti null (= non compilato) */
+function normalizeRpe(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.round(n);
+  return i >= 1 && i <= 10 ? i : null;
+}
+
+/** Tipi di evento che hanno anche la tabella esercizi coi cronometri */
+const EXERCISE_TYPES = new Set(['basket']);
+
+// ─── Exercise math ──────────────────────────────────────
+// Attività e Pause sono due cronometri separati: Start avvia l'attività,
+// il secondo tocco ferma l'attività e avvia la pausa.
+// Netto = Attività − Pause (formula richiesta, può risultare negativa).
+
+function liveActivity(ex: Exercise, now: number): number {
+  return ex.activityMs + (ex.state === 'running' && ex.segmentStart != null ? now - ex.segmentStart : 0);
+}
+
+function livePause(ex: Exercise, now: number): number {
+  return ex.pauseMs + (ex.state === 'paused' && ex.segmentStart != null ? now - ex.segmentStart : 0);
+}
+
+function liveBreak(ex: Exercise, now: number): number {
+  return ex.breakMs + (ex.breakRunning && ex.breakStart != null ? now - ex.breakStart : 0);
+}
+
+function netMs(ex: Exercise, now: number): number {
+  return liveActivity(ex, now) - livePause(ex, now);
+}
+
+function effectiveMs(ex: Exercise, now: number, available: number): number {
+  if (available <= 0) return 0;
+  return netMs(ex, now) * (ex.players / available);
+}
+
+function intensityMs(ex: Exercise, now: number, available: number): number {
+  return effectiveMs(ex, now, available) * ex.courts;
+}
+
+/** Congela i segmenti in corso negli accumulatori, per il salvataggio */
+function freezeExercise(ex: Exercise, now: number): StoredExercise {
+  return {
+    id: ex.id,
+    name: ex.name,
+    isWarmup: ex.isWarmup,
+    players: ex.players,
+    courts: ex.courts,
+    activityMs: Math.max(0, Math.round(liveActivity(ex, now))),
+    pauseMs: Math.max(0, Math.round(livePause(ex, now))),
+    breakMs: Math.max(0, Math.round(liveBreak(ex, now))),
+    state: ex.state,
+    breakRunning: ex.breakRunning,
+  };
 }
 
 // ─── Page ───────────────────────────────────────────────
@@ -89,213 +200,334 @@ function formatMsShort(ms: number): string {
 export default function FieldTrainingPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const t = useTranslations('calendar');
-  const eventId = params.eventId as string;
+  // La stessa pagina serve sia gli eventi di calendario sia le sessioni della
+  // programmazione: `?source=session` dice quale delle due cose e' l'id.
+  const routeId = params.eventId as string;
+  const fromPlan = searchParams.get('source') === 'session';
 
   const [session, setSession] = useState<FieldSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
-  const [showAddAthlete, setShowAddAthlete] = useState(false);
-  const [availableAthletes, setAvailableAthletes] = useState<AthleteInfo[]>([]);
 
-  // Timer states per athlete
-  const [timers, setTimers] = useState<Map<string, TimerState>>(new Map());
-  const animRef = useRef<number | null>(null);
-  const [, setTick] = useState(0); // force re-renders for timer display
+  // Roster + semafori
+  const [roster, setRoster] = useState<RosterPlayer[]>([]);
+  const [guests, setGuests] = useState<GuestPlayer[]>([]);
+
+  // Esercizi
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+
+  // Carico: durata effettiva della seduta e RPE di sessione (fallback)
+  const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+  const [sessionRpe, setSessionRpe] = useState<number | null>(null);
+
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [, setTick] = useState(0); // forza il re-render dei cronometri
+
+  // Atleti disponibili = semafori verdi (rosa + ospiti), non editabile
+  const available =
+    roster.filter((p) => p.status === 'PRESENT').length +
+    guests.filter((g) => g.status === 'PRESENT').length;
 
   // ─── Initialize session ─────────────────────────────────
 
   const initRef = useRef(false);
   const initSession = useCallback(async () => {
-    if (initRef.current) return; // prevent StrictMode double-invoke
+    if (initRef.current) return; // evita il doppio invoke di StrictMode
     initRef.current = true;
     setLoading(true);
     try {
-      // Try to get existing session
-      const res = await apiFetch<{ data: { session: FieldSession } }>(`/field-training/by-event/${eventId}`);
+      const lookup = fromPlan
+        ? `/field-training/by-session/${routeId}`
+        : `/field-training/by-event/${routeId}`;
+      const res = await apiFetch<{ data: { session: FieldSession } }>(lookup);
       setSession(res.data.session);
-      initTimersFromEntries(res.data.session.entries);
+      hydrate(res.data.session);
     } catch {
-      // Create new session (POST handles race conditions gracefully)
+      // Crea la sessione (il POST gestisce le race condition)
       try {
         const res = await apiFetch<{ data: { session: FieldSession } }>('/field-training/start', {
           method: 'POST',
-          body: JSON.stringify({ calendarEventId: eventId }),
+          body: JSON.stringify(
+            fromPlan ? { trainingSessionId: routeId } : { calendarEventId: routeId },
+          ),
         });
         setSession(res.data.session);
-        initTimersFromEntries(res.data.session.entries);
+        hydrate(res.data.session);
       } catch (err) {
         toast('error', err instanceof Error ? err.message : t('ftSessionStartError'));
-        initRef.current = false; // allow retry
+        initRef.current = false; // consente il retry
       }
     }
     setLoading(false);
-  }, [eventId]);
+  }, [routeId, fromPlan]);
 
-  const initTimersFromEntries = (entries: Entry[]) => {
-    const map = new Map<string, TimerState>();
-    for (const entry of entries) {
-      map.set(entry.athleteId, {
-        running: false,
-        elapsed: entry.totalActiveMs,
-        lapStart: null,
-        laps: entry.laps || [],
-      });
+  const hydrate = (s: FieldSession) => {
+    const now = Date.now();
+    // Su una sessione chiusa i cronometri non devono ripartire: i tempi
+    // restano quelli congelati al momento del completamento.
+    const completed = s.status === 'COMPLETED';
+
+    setRoster(
+      (s.entries || []).map((e) => ({
+        athleteId: e.athleteId,
+        athlete: e.athlete,
+        status: normalizeStatus(e.status),
+        note: e.note || '',
+        rpe: normalizeRpe(e.rpe),
+      })),
+    );
+
+    // Durata effettiva: quella salvata, altrimenti quella dedotta dall'evento
+    // o dalla sessione di piano. Resta comunque modificabile a mano.
+    let duration = s.durationMinutes ?? null;
+    if (duration == null && s.calendarEvent?.startTime && s.calendarEvent?.endTime) {
+      duration = Math.max(
+        0,
+        Math.round(
+          (new Date(s.calendarEvent.endTime).getTime() -
+            new Date(s.calendarEvent.startTime).getTime()) / 60000,
+        ),
+      );
     }
-    setTimers(map);
+    if (duration == null) duration = s.trainingSession?.duration ?? null;
+    setDurationMinutes(duration);
+    setSessionRpe(normalizeRpe(s.sessionRpe));
+
+    const rawGuests: unknown = s.guests;
+    setGuests(
+      (Array.isArray(rawGuests) ? (rawGuests as Partial<GuestPlayer>[]) : []).map((g) => ({
+        id: typeof g.id === 'string' && g.id ? g.id : uid('gu'),
+        name: typeof g.name === 'string' ? g.name : '',
+        status: normalizeStatus(g.status),
+        note: typeof g.note === 'string' ? g.note : '',
+      })),
+    );
+
+    const rawExercises: unknown = s.exercises;
+    const list = Array.isArray(rawExercises) ? (rawExercises as Partial<StoredExercise>[]) : [];
+    setExercises(
+      list.map((e) => {
+        const state: ExerciseState =
+          e.state === 'running' || e.state === 'paused' || e.state === 'done' ? e.state : 'idle';
+        const breakRunning = Boolean(e.breakRunning);
+        return {
+          id: typeof e.id === 'string' && e.id ? e.id : uid('ex'),
+          name: typeof e.name === 'string' ? e.name : '',
+          isWarmup: Boolean(e.isWarmup),
+          players: Number(e.players) || 0,
+          courts: Number(e.courts) || 0,
+          activityMs: Number(e.activityMs) || 0,
+          pauseMs: Number(e.pauseMs) || 0,
+          breakMs: Number(e.breakMs) || 0,
+          state: completed && state !== 'idle' ? 'done' : state,
+          breakRunning: completed ? false : breakRunning,
+          // il segmento in corso riparte da adesso: il tempo tra l'ultimo
+          // autosave e il reload va perso, come prima
+          segmentStart: !completed && (state === 'running' || state === 'paused') ? now : null,
+          breakStart: !completed && breakRunning ? now : null,
+        };
+      }),
+    );
   };
 
   useEffect(() => {
     initSession();
   }, [initSession]);
 
-  // ─── Animation loop for running timers ──────────────────
+  // ─── Tick loop mentre qualcosa gira ─────────────────────
+
+  const anyExerciseRunning = exercises.some(
+    (ex) => ex.state === 'running' || ex.state === 'paused' || ex.breakRunning,
+  );
 
   useEffect(() => {
-    const tick = () => {
-      setTick((t) => t + 1);
-      animRef.current = requestAnimationFrame(tick);
-    };
-
-    // Check if any timer is running
-    let anyRunning = false;
-    for (const [, ts] of timers) {
-      if (ts.running) { anyRunning = true; break; }
-    }
-
-    if (anyRunning) {
-      animRef.current = requestAnimationFrame(tick);
-    }
-
+    if (!anyExerciseRunning) return;
+    tickRef.current = setInterval(() => setTick((n) => n + 1), 200);
     return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
+      if (tickRef.current) clearInterval(tickRef.current);
+      tickRef.current = null;
     };
-  }, [timers]);
+  }, [anyExerciseRunning]);
 
-  // ─── Timer actions ──────────────────────────────────────
+  // ─── Roster actions ─────────────────────────────────────
 
-  const getDisplayTime = (ts: TimerState): number => {
-    if (ts.running && ts.lapStart) {
-      return ts.elapsed + (Date.now() - ts.lapStart);
-    }
-    return ts.elapsed;
+  const setPlayerStatus = (athleteId: string, status: AttendanceStatus) => {
+    setRoster((prev) =>
+      prev.map((p) => (p.athleteId === athleteId ? { ...p, status, note: status === 'PRESENT' ? '' : p.note } : p)),
+    );
   };
 
-  const startTimer = (athleteId: string) => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      const ts = map.get(athleteId);
-      if (!ts || ts.running) return prev;
-      map.set(athleteId, { ...ts, running: true, lapStart: Date.now() });
-      return map;
-    });
+  const setPlayerNote = (athleteId: string, note: string) => {
+    setRoster((prev) => prev.map((p) => (p.athleteId === athleteId ? { ...p, note } : p)));
   };
 
-  const pauseTimer = (athleteId: string) => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      const ts = map.get(athleteId);
-      if (!ts || !ts.running || !ts.lapStart) return prev;
-      const lapDuration = Date.now() - ts.lapStart;
-      const newElapsed = ts.elapsed + lapDuration;
-      const newLaps = [...ts.laps, {
-        startMs: ts.lapStart,
-        endMs: Date.now(),
-        durationMs: lapDuration,
-      }];
-      map.set(athleteId, { running: false, elapsed: newElapsed, lapStart: null, laps: newLaps });
-      return map;
-    });
+  const setPlayerRpe = (athleteId: string, rpe: number | null) => {
+    setRoster((prev) => prev.map((p) => (p.athleteId === athleteId ? { ...p, rpe } : p)));
   };
 
-  const addLap = (athleteId: string) => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      const ts = map.get(athleteId);
-      if (!ts || !ts.running || !ts.lapStart) return prev;
-      const now = Date.now();
-      const lapDuration = now - ts.lapStart;
-      const newElapsed = ts.elapsed + lapDuration;
-      const newLaps = [...ts.laps, {
-        startMs: ts.lapStart,
-        endMs: now,
-        durationMs: lapDuration,
-      }];
-      map.set(athleteId, { running: true, elapsed: newElapsed, lapStart: now, laps: newLaps });
-      return map;
-    });
+  const addGuest = () => {
+    setGuests((prev) => [...prev, { id: uid('gu'), name: '', status: 'PRESENT', note: '' }]);
   };
 
-  const resetTimer = (athleteId: string) => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      map.set(athleteId, { running: false, elapsed: 0, lapStart: null, laps: [] });
-      return map;
-    });
+  const patchGuest = (id: string, patch: Partial<GuestPlayer>) => {
+    setGuests((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
   };
 
-  // ─── Start/Stop All ─────────────────────────────────────
+  const removeGuest = (id: string) => {
+    setGuests((prev) => prev.filter((g) => g.id !== id));
+  };
 
-  const startAll = () => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      for (const [id, ts] of map) {
-        if (!ts.running) {
-          map.set(id, { ...ts, running: true, lapStart: Date.now() });
+  // ─── Exercise actions ───────────────────────────────────
+
+  const addExercise = () => {
+    setExercises((prev) => [
+      ...prev,
+      {
+        id: uid('ex'),
+        name: t('ftExerciseDefaultName', { n: prev.length + 1 }),
+        isWarmup: false,
+        players: 0,
+        courts: 1,
+        activityMs: 0,
+        pauseMs: 0,
+        breakMs: 0,
+        state: 'idle',
+        breakRunning: false,
+        segmentStart: null,
+        breakStart: null,
+      },
+    ]);
+  };
+
+  const patchExercise = (id: string, patch: Partial<Exercise>) => {
+    setExercises((prev) => prev.map((ex) => (ex.id === id ? { ...ex, ...patch } : ex)));
+  };
+
+  const removeExercise = (id: string) => {
+    setExercises((prev) => prev.filter((ex) => ex.id !== id));
+  };
+
+  /** Start / pausa. Avviare un esercizio chiude il break in corso. */
+  const toggleExercise = (id: string) => {
+    const now = Date.now();
+    setExercises((prev) =>
+      prev.map((ex) => {
+        if (ex.id !== id) {
+          if (ex.breakRunning && ex.breakStart != null) {
+            return { ...ex, breakMs: ex.breakMs + (now - ex.breakStart), breakRunning: false, breakStart: null };
+          }
+          return ex;
         }
-      }
-      return map;
-    });
+        if (ex.state === 'idle' || ex.state === 'done') {
+          const breakMs = ex.breakRunning && ex.breakStart != null ? ex.breakMs + (now - ex.breakStart) : ex.breakMs;
+          return { ...ex, state: 'running', segmentStart: now, breakMs, breakRunning: false, breakStart: null };
+        }
+        if (ex.state === 'running') {
+          const activityMs = ex.activityMs + (ex.segmentStart != null ? now - ex.segmentStart : 0);
+          return { ...ex, state: 'paused', activityMs, segmentStart: now };
+        }
+        // paused → running
+        const pauseMs = ex.pauseMs + (ex.segmentStart != null ? now - ex.segmentStart : 0);
+        return { ...ex, state: 'running', pauseMs, segmentStart: now };
+      }),
+    );
   };
 
-  const pauseAll = () => {
-    setTimers((prev) => {
-      const map = new Map(prev);
-      for (const [id, ts] of map) {
-        if (ts.running && ts.lapStart) {
-          const lapDuration = Date.now() - ts.lapStart;
-          map.set(id, {
-            running: false,
-            elapsed: ts.elapsed + lapDuration,
-            lapStart: null,
-            laps: [...ts.laps, { startMs: ts.lapStart, endMs: Date.now(), durationMs: lapDuration }],
-          });
-        }
-      }
-      return map;
-    });
+  /** Stop: chiude l'esercizio e avvia subito il cronometro del break. */
+  const stopExercise = (id: string) => {
+    const now = Date.now();
+    setExercises((prev) =>
+      prev.map((ex) => {
+        if (ex.id !== id) return ex;
+        if (ex.state !== 'running' && ex.state !== 'paused') return ex;
+        const segment = ex.segmentStart != null ? now - ex.segmentStart : 0;
+        return {
+          ...ex,
+          state: 'done',
+          activityMs: ex.activityMs + (ex.state === 'running' ? segment : 0),
+          pauseMs: ex.pauseMs + (ex.state === 'paused' ? segment : 0),
+          segmentStart: null,
+          breakRunning: true,
+          breakStart: now,
+        };
+      }),
+    );
+  };
+
+  const stopBreak = (id: string) => {
+    const now = Date.now();
+    setExercises((prev) =>
+      prev.map((ex) => {
+        if (ex.id !== id || !ex.breakRunning || ex.breakStart == null) return ex;
+        return { ...ex, breakMs: ex.breakMs + (now - ex.breakStart), breakRunning: false, breakStart: null };
+      }),
+    );
   };
 
   // ─── Autosave ───────────────────────────────────────────
 
   const [saving, setSaving] = useState(false);
 
+  /** Salva presenze + esercizi. Con `stop` congela anche i cronometri in corso
+   *  (usato dal completamento: la seduta è finita, i tempi non devono più correre). */
+  const persist = useCallback(async (stop = false) => {
+    if (!session) return;
+    const now = Date.now();
+    const frozen = exercises.map((ex) => {
+      const snapshot = freezeExercise(ex, now);
+      if (!stop) return snapshot;
+      return {
+        ...snapshot,
+        state: snapshot.state === 'idle' ? 'idle' : ('done' as ExerciseState),
+        breakRunning: false,
+      };
+    });
+    await Promise.all([
+      apiFetch(`/field-training/${session.id}/roster`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          availableAthletes: available,
+          durationMinutes: durationMinutes ?? null,
+          sessionRpe: sessionRpe ?? null,
+          athletes: roster.map((p) => ({
+            athleteId: p.athleteId,
+            status: p.status,
+            note: p.note || null,
+            rpe: p.status === 'PRESENT' ? p.rpe : null,
+          })),
+          guests: guests.map((g) => ({ id: g.id, name: g.name, status: g.status, note: g.note || null })),
+        }),
+      }),
+      apiFetch(`/field-training/${session.id}/exercises`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          availableAthletes: available,
+          exercises: frozen,
+        }),
+      }),
+    ]);
+  }, [session, roster, guests, exercises, available, durationMinutes, sessionRpe]);
+
   const saveData = useCallback(async (showToast = false) => {
     if (!session) return;
-    const entries = Array.from(timers.entries()).map(([athleteId, ts]) => ({
-      athleteId,
-      totalActiveMs: getDisplayTime(ts),
-      laps: ts.laps,
-    }));
     if (showToast) setSaving(true);
     try {
-      await apiFetch(`/field-training/${session.id}/entries`, {
-        method: 'PUT',
-        body: JSON.stringify(entries),
-      });
+      await persist();
       if (showToast) toast('success', t('gtDataSaved'));
     } catch (err) {
       if (showToast) toast('error', err instanceof Error ? err.message : t('gtSaveError'));
     } finally {
       if (showToast) setSaving(false);
     }
-  }, [session, timers]);
+  }, [session, persist]);
 
-  // Autosave every 15 seconds
+  // Autosave ogni 15 secondi
   useEffect(() => {
     if (!session) return;
-    const interval = setInterval(saveData, 15000);
+    const interval = setInterval(() => { void saveData(); }, 15000);
     return () => clearInterval(interval);
   }, [saveData, session]);
 
@@ -303,90 +535,24 @@ export default function FieldTrainingPage() {
 
   const completeSession = async () => {
     if (!session) return;
-
-    // Build final entries with correct elapsed times BEFORE state update
-    const now = Date.now();
-    const finalEntries = Array.from(timers.entries()).map(([athleteId, ts]) => {
-      let totalActiveMs = ts.elapsed;
-      const laps = [...ts.laps];
-      // If timer is running, add current lap
-      if (ts.running && ts.lapStart) {
-        const lapDuration = now - ts.lapStart;
-        totalActiveMs += lapDuration;
-        laps.push({ startMs: ts.lapStart, endMs: now, durationMs: lapDuration });
-      }
-      return { athleteId, totalActiveMs, laps };
-    });
-
-    // Pause all timers (visual update)
-    pauseAll();
-
     setCompleting(true);
     try {
-      // Save final data directly (bypass stale state)
-      await apiFetch(`/field-training/${session.id}/entries`, {
-        method: 'PUT',
-        body: JSON.stringify(finalEntries),
-      });
-
-      // Complete session
-      const res = await apiFetch<{ data: { completed: boolean; trainingSessions: number } }>(
+      await persist(true); // congela i cronometri prima di chiudere
+      const res = await apiFetch<{ data: { completed: boolean; trainingSessions: number; skippedNoRpe?: number } }>(
         `/field-training/${session.id}/complete`,
         { method: 'PUT', body: JSON.stringify({}) },
       );
       toast('success', t('ftSessionCompletedMsg', { count: res.data.trainingSessions }));
+      if (res.data.skippedNoRpe) {
+        // Senza RPE o senza durata non si puo' calcolare il carico:
+        // quei giocatori restano registrati come presenti ma senza sRPE.
+        toast('info', t('ftSkippedNoRpe', { count: res.data.skippedNoRpe }));
+      }
       router.push('/dashboard/calendar');
     } catch (err) {
       toast('error', err instanceof Error ? err.message : t('gtCompletionError'));
     }
     setCompleting(false);
-  };
-
-  // ─── Add/Remove athlete ─────────────────────────────────
-
-  const loadAvailableAthletes = async () => {
-    try {
-      const res = await apiFetch<{ data: AthleteInfo[] }>('/athletes?limit=100');
-      const existing = new Set(session?.entries.map((e) => e.athleteId) || []);
-      setAvailableAthletes((res.data || []).filter((a) => !existing.has(a.id)));
-    } catch { /* ignore */ }
-    setShowAddAthlete(true);
-  };
-
-  const addAthlete = async (athleteId: string) => {
-    if (!session) return;
-    try {
-      const res = await apiFetch<{ data: { entry: Entry } }>(`/field-training/${session.id}/athletes`, {
-        method: 'POST',
-        body: JSON.stringify({ athleteId }),
-      });
-      setSession((prev) => prev ? { ...prev, entries: [...prev.entries, res.data.entry] } : prev);
-      setTimers((prev) => {
-        const map = new Map(prev);
-        map.set(athleteId, { running: false, elapsed: 0, lapStart: null, laps: [] });
-        return map;
-      });
-      setAvailableAthletes((prev) => prev.filter((a) => a.id !== athleteId));
-      toast('success', t('ftAthleteAdded'));
-    } catch {
-      toast('error', t('ftAddAthleteError'));
-    }
-  };
-
-  const removeAthlete = async (athleteId: string) => {
-    if (!session) return;
-    try {
-      await apiFetch(`/field-training/${session.id}/athletes/${athleteId}`, { method: 'DELETE' });
-      setSession((prev) => prev ? { ...prev, entries: prev.entries.filter((e) => e.athleteId !== athleteId) } : prev);
-      setTimers((prev) => {
-        const map = new Map(prev);
-        map.delete(athleteId);
-        return map;
-      });
-      toast('success', t('ftAthleteRemoved'));
-    } catch {
-      toast('error', t('ftRemoveAthleteError'));
-    }
   };
 
   // ─── Render ─────────────────────────────────────────────
@@ -407,38 +573,68 @@ export default function FieldTrainingPage() {
           onClick={() => router.push('/dashboard/calendar')}
           className="text-sm text-teal-600 hover:underline"
         >
-          Torna al calendario
+          {t('ftBackToCalendar')}
         </button>
       </div>
     );
   }
 
   const isCompleted = session.status === 'COMPLETED';
-  const anyRunning = Array.from(timers.values()).some((ts) => ts.running);
-  const totalEntries = session.entries.length;
+  const now = Date.now();
 
-  // Summary stats
-  const totalActiveTime = Array.from(timers.values()).reduce((sum, ts) => sum + getDisplayTime(ts), 0);
-  const avgActiveTime = totalEntries > 0 ? totalActiveTime / totalEntries : 0;
+  const eventType = session.calendarEvent?.type || (fromPlan ? 'session' : 'basket');
+  // La tabella esercizi resta solo sull'allenamento basket (e sulle sedute
+  // vecchie che l'hanno gia' compilata): sugli altri tipi serve solo il carico.
+  const showExercises = EXERCISE_TYPES.has(eventType) || exercises.length > 0;
+  const sessionTitle =
+    session.calendarEvent?.title || session.trainingSession?.title || t('ftFieldTraining');
+
+  // Carico = RPE x durata effettiva. Chi non ha un RPE proprio usa quello di sessione.
+  const rpeOf = (p: RosterPlayer) => (p.status === 'PRESENT' ? p.rpe ?? sessionRpe : null);
+  const loadOf = (p: RosterPlayer) => {
+    const r = rpeOf(p);
+    return r && durationMinutes ? r * durationMinutes : null;
+  };
+  const loadedPlayers = roster.filter((p) => loadOf(p) != null);
+  const totalLoad = loadedPlayers.reduce((sum, p) => sum + (loadOf(p) || 0), 0);
+  const avgRpe = loadedPlayers.length
+    ? loadedPlayers.reduce((sum, p) => sum + (rpeOf(p) || 0), 0) / loadedPlayers.length
+    : 0;
+
+  const unavailableCount =
+    roster.filter((p) => p.status === 'UNAVAILABLE').length + guests.filter((g) => g.status === 'UNAVAILABLE').length;
+  const absentCount =
+    roster.filter((p) => p.status === 'ABSENT').length + guests.filter((g) => g.status === 'ABSENT').length;
+
+  // ─── Totali ────────────────────────────────────────────
+  const totalActivity = exercises.reduce((sum, ex) => sum + liveActivity(ex, now), 0);
+  const totalPlayed = exercises.reduce((sum, ex) => sum + (ex.isWarmup ? 0 : liveActivity(ex, now)), 0);
+  const totalPauses = exercises.reduce((sum, ex) => sum + livePause(ex, now), 0);
+  const totalNet = exercises.reduce((sum, ex) => sum + netMs(ex, now), 0);
+  const totalEffective = exercises.reduce((sum, ex) => sum + effectiveMs(ex, now, available), 0);
+  const density = totalPlayed > 0 ? totalEffective / totalPlayed : 0;
+
+  const cellNum = 'px-2 py-2 text-right font-mono text-sm tabular-nums whitespace-nowrap';
+  const headCell = 'px-2 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap';
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/dashboard/calendar')}
-            className="rounded-lg p-2 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-700"
+            className="rounded-lg p-2 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              <Timer className="mr-2 inline h-6 w-6 text-orange-600" />
-              {t('title')}
+              <ClipboardCheck className="mr-2 inline h-6 w-6 text-orange-600" />
+              {showExercises ? t('title') : t('ftAttendance')}
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {session.calendarEvent?.title || t('ftFieldTraining')}
+              {sessionTitle}
               {session.team && (
                 <span className="ml-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-white"
                   style={{ backgroundColor: session.team.color || '#94a3b8' }}
@@ -461,28 +657,11 @@ export default function FieldTrainingPage() {
               <button
                 onClick={() => saveData(true)}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {saving ? t('gtSaving') : t('gtSave')}
               </button>
-              {!anyRunning ? (
-                <button
-                  onClick={startAll}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                >
-                  <Play className="h-4 w-4" />
-                  {t('ftStartAll')}
-                </button>
-              ) : (
-                <button
-                  onClick={pauseAll}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
-                >
-                  <Pause className="h-4 w-4" />
-                  {t('ftPauseAll')}
-                </button>
-              )}
               <button
                 onClick={completeSession}
                 disabled={completing}
@@ -500,239 +679,626 @@ export default function FieldTrainingPage() {
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+      {/* Atleti disponibili (calcolato) + totali */}
+      <div className="grid gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-900/20 p-4">
+          <div className="flex items-center gap-2 text-teal-700 dark:text-teal-300">
             <Users className="h-4 w-4" />
-            <span className="text-xs font-medium">{t('ftAthletes')}</span>
+            <span className="text-xs font-semibold">{t('ftAvailableAthletes')}</span>
           </div>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{totalEntries}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-            <Timer className="h-4 w-4" />
-            <span className="text-xs font-medium">{t('ftTotalActiveTime')}</span>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tabular-nums text-slate-900 dark:text-white">{available}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('ftOfInRoster', { count: roster.length + guests.length })}
+            </span>
           </div>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{formatMs(totalActiveTime)}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-            <Timer className="h-4 w-4" />
-            <span className="text-xs font-medium">{t('ftAvgPerAthlete')}</span>
-          </div>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{formatMs(avgActiveTime)}</p>
-        </div>
-      </div>
 
-      {/* Add athlete button */}
-      {!isCompleted && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadAvailableAthletes}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-600"
-          >
-            <Plus className="h-4 w-4" />
-            {t('ftAddAthlete')}
-          </button>
-        </div>
-      )}
-
-      {/* Add athlete dropdown */}
-      {showAddAthlete && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ftSelectAthleteToAdd')}</h3>
-            <button onClick={() => setShowAddAthlete(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
-              <X className="h-4 w-4" />
-            </button>
+        {showExercises ? (
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+            <StatTile label={t('ftTotalTime')} value={formatMs(totalActivity)} />
+            <StatTile label={t('ftTotalPlayed')} value={formatMs(totalPlayed)} />
+            <StatTile label={t('ftTotalPauses')} value={formatMs(totalPauses)} />
+            <StatTile label={t('ftTotalNet')} value={formatMs(totalNet)} />
+            <StatTile label={t('ftEffectivePerPlayer')} value={formatMsRound(totalEffective)} highlight />
+            <StatTile label={t('ftDensity')} value={`${(density * 100).toFixed(1)}%`} highlight />
           </div>
-          {availableAthletes.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftAllAthletesIn')}</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {availableAthletes.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => addAthlete(a.id)}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm transition-colors hover:bg-teal-50 hover:border-teal-300"
-                >
-                  {a.jerseyNumber != null && (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-2xs font-bold text-slate-600 dark:text-slate-400">
-                      {a.jerseyNumber}
-                    </span>
-                  )}
-                  <span className="font-medium text-slate-700 dark:text-slate-300">{a.lastName} {a.firstName}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Athlete timer cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {session.entries.map((entry) => {
-          const ts = timers.get(entry.athleteId);
-          if (!ts) return null;
-          return (
-            <AthleteTimerCard
-              key={entry.athleteId}
-              athlete={entry.athlete}
-              timerState={ts}
-              displayTime={getDisplayTime(ts)}
-              isCompleted={isCompleted}
-              onStart={() => startTimer(entry.athleteId)}
-              onPause={() => pauseTimer(entry.athleteId)}
-              onLap={() => addLap(entry.athleteId)}
-              onReset={() => resetTimer(entry.athleteId)}
-              onRemove={() => removeAthlete(entry.athleteId)}
+        ) : (
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label={t('ftPresentCount')} value={String(available)} />
+            <StatTile label={t('ftAvgRpe')} value={avgRpe ? avgRpe.toFixed(1) : '—'} />
+            <StatTile label={t('ftTotalLoad')} value={totalLoad ? String(Math.round(totalLoad)) : '—'} highlight />
+            <StatTile
+              label={t('ftAvgLoad')}
+              value={loadedPlayers.length ? String(Math.round(totalLoad / loadedPlayers.length)) : '—'}
+              highlight
             />
-          );
-        })}
+          </div>
+        )}
       </div>
 
-      {session.entries.length === 0 && (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
-          <Users className="h-10 w-10 text-slate-300" />
-          <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftNoAthletesInSession')}</p>
+      {/* ─── Carico della seduta ───────────────────────────── */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {t('ftDurationMinutes')}
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={600}
+              value={durationMinutes ?? ''}
+              disabled={isCompleted}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDurationMinutes(v === '' ? null : Math.max(0, Math.min(600, Number(v) || 0)));
+              }}
+              className="mt-1 w-28 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm tabular-nums text-slate-900 dark:text-white outline-none focus:border-teal-500 disabled:opacity-60"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {t('ftSessionRpe')}
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={sessionRpe ?? ''}
+              disabled={isCompleted}
+              placeholder="1-10"
+              onChange={(e) => setSessionRpe(normalizeRpe(e.target.value))}
+              className="mt-1 w-28 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm tabular-nums text-slate-900 dark:text-white outline-none focus:border-teal-500 disabled:opacity-60"
+            />
+          </div>
+          <p className="flex-1 min-w-[16rem] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            <Gauge className="mr-1 inline h-3.5 w-3.5" />
+            {t('ftLoadFormula')}
+          </p>
+        </div>
+      </div>
+
+      {/* ─── Giocatori + semaforo ──────────────────────────── */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('ftPlayers')}</h2>
+            <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-green-500" />{available}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />{unavailableCount}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-red-500" />{absentCount}
+              </span>
+            </span>
+            {totalLoad > 0 && (
+              <span className="rounded-full bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 text-xs font-medium text-teal-700 dark:text-teal-300">
+                {t('ftTotalLoad')}: {Math.round(totalLoad)}
+              </span>
+            )}
+          </div>
           {!isCompleted && (
             <button
-              onClick={loadAvailableAthletes}
-              className="text-sm text-teal-600 hover:underline"
+              onClick={addGuest}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-600"
             >
-              {t('ftAddAthletes')}
+              <Plus className="h-4 w-4" />
+              {t('ftAddPlayer')}
             </button>
           )}
+        </div>
+
+        {roster.length === 0 && guests.length === 0 ? (
+          <div className="flex h-32 flex-col items-center justify-center gap-3">
+            <Users className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftNoPlayers')}</p>
+          </div>
+        ) : (
+          <div className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-3">
+            {roster.map((p) => (
+              <PlayerRow
+                key={p.athleteId}
+                label={`${p.athlete.lastName} ${p.athlete.firstName}`}
+                sublabel={p.athlete.position}
+                jersey={p.athlete.jerseyNumber}
+                status={p.status}
+                note={p.note}
+                isCompleted={isCompleted}
+                rpe={p.rpe}
+                fallbackRpe={sessionRpe}
+                load={loadOf(p)}
+                onRpe={(v) => setPlayerRpe(p.athleteId, v)}
+                onStatus={(s) => setPlayerStatus(p.athleteId, s)}
+                onNote={(n) => setPlayerNote(p.athleteId, n)}
+              />
+            ))}
+            {guests.map((g) => (
+              <PlayerRow
+                key={g.id}
+                label={g.name}
+                editableLabel
+                isGuest
+                status={g.status}
+                note={g.note}
+                isCompleted={isCompleted}
+                onLabel={(name) => patchGuest(g.id, { name })}
+                onStatus={(s) => patchGuest(g.id, { status: s, note: s === 'PRESENT' ? '' : g.note })}
+                onNote={(note) => patchGuest(g.id, { note })}
+                onRemove={() => removeGuest(g.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ─── Esercizi (solo allenamento basket) ─────────────── */}
+      {showExercises && (
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('ftExercises')}</h2>
+          {!isCompleted && (
+            <button
+              onClick={addExercise}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-600"
+            >
+              <Plus className="h-4 w-4" />
+              {t('ftAddExercise')}
+            </button>
+          )}
+        </div>
+
+        {exercises.length === 0 ? (
+          <div className="flex h-40 flex-col items-center justify-center gap-3">
+            <Timer className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftNoExercises')}</p>
+            {!isCompleted && (
+              <button onClick={addExercise} className="text-sm text-teal-600 hover:underline">
+                {t('ftAddExercise')}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] border-collapse">
+              <thead className="bg-slate-100 dark:bg-slate-900">
+                <tr>
+                  <th className={`${headCell} text-left`}>{t('ftActivity')}</th>
+                  <th className={`${headCell} text-center`}>{t('ftPlayersUsed')}</th>
+                  <th className={`${headCell} text-center`}>{t('ftCourts')}</th>
+                  <th className={`${headCell} text-right`}>{t('ftActivityTime')}</th>
+                  <th className={`${headCell} text-right`}>{t('ftPauses')}</th>
+                  <th className={`${headCell} text-right`}>{t('ftNet')}</th>
+                  <th className={`${headCell} text-right`}>{t('ftEffective')}</th>
+                  <th className={`${headCell} text-right`}>{t('ftMetabolicIntensity')}</th>
+                  <th className={`${headCell} text-right`} />
+                </tr>
+              </thead>
+              <tbody>
+                {exercises.map((ex, idx) => (
+                  <ExerciseRows
+                    key={ex.id}
+                    ex={ex}
+                    idx={idx}
+                    now={now}
+                    available={available}
+                    isCompleted={isCompleted}
+                    showBreakRow={ex.breakRunning || ex.breakMs > 0}
+                    cellNum={cellNum}
+                    onPatch={(patch) => patchExercise(ex.id, patch)}
+                    onToggle={() => toggleExercise(ex.id)}
+                    onStop={() => stopExercise(ex.id)}
+                    onStopBreak={() => stopBreak(ex.id)}
+                    onRemove={() => removeExercise(ex.id)}
+                  />
+                ))}
+              </tbody>
+              <tfoot className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <tr>
+                  <td className="px-2 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {t('ftTotals')}
+                  </td>
+                  <td />
+                  <td />
+                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalActivity)}</td>
+                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalPauses)}</td>
+                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalNet)}</td>
+                  <td className={`${cellNum} font-bold text-teal-700 dark:text-teal-300`}>{formatMsRound(totalEffective)}</td>
+                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>
+                    {formatMsRound(exercises.reduce((s, ex) => s + intensityMs(ex, now, available), 0))}
+                  </td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Stat tile ──────────────────────────────────────────
+
+function StatTile({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl border p-3 ${
+      highlight
+        ? 'border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-900/20'
+        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+    }`}>
+      <p className="text-2xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={`mt-1 font-mono text-lg font-bold tabular-nums ${
+        highlight ? 'text-teal-700 dark:text-teal-300' : 'text-slate-900 dark:text-white'
+      }`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// ─── Riga giocatore col semaforo ────────────────────────
+
+function PlayerRow({
+  label,
+  sublabel,
+  jersey,
+  status,
+  note,
+  isCompleted,
+  editableLabel,
+  isGuest,
+  rpe,
+  fallbackRpe,
+  load,
+  onLabel,
+  onStatus,
+  onNote,
+  onRpe,
+  onRemove,
+}: {
+  label: string;
+  sublabel?: string;
+  jersey?: number | null;
+  status: AttendanceStatus;
+  note: string;
+  isCompleted: boolean;
+  editableLabel?: boolean;
+  isGuest?: boolean;
+  rpe?: number | null;
+  fallbackRpe?: number | null;
+  load?: number | null;
+  onLabel?: (value: string) => void;
+  onStatus: (status: AttendanceStatus) => void;
+  onNote: (value: string) => void;
+  onRpe?: (value: number | null) => void;
+  onRemove?: () => void;
+}) {
+  const t = useTranslations('calendar');
+
+  const border =
+    status === 'PRESENT'
+      ? 'border-green-300 dark:border-green-800 bg-green-50/40 dark:bg-green-900/10'
+      : status === 'UNAVAILABLE'
+        ? 'border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10'
+        : 'border-red-300 dark:border-red-900 bg-red-50/40 dark:bg-red-900/10';
+
+  return (
+    <div className={`rounded-xl border px-3 py-2 ${border}`}>
+      <div className="flex items-center gap-2">
+        {jersey != null && (
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
+            {jersey}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          {editableLabel ? (
+            <input
+              type="text"
+              value={label}
+              disabled={isCompleted}
+              placeholder={t('ftGuestName')}
+              onChange={(e) => onLabel?.(e.target.value)}
+              className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-sm font-semibold text-slate-900 dark:text-white outline-none hover:border-slate-300 focus:border-teal-500 dark:hover:border-slate-600 disabled:opacity-60"
+            />
+          ) : (
+            <p className="truncate px-1.5 text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
+          )}
+          <p className="truncate px-1.5 text-2xs text-slate-400 dark:text-slate-500">
+            {isGuest ? t('ftGuest') : sublabel}
+          </p>
+        </div>
+
+        {/* Semaforo: tre pulsanti, sempre tutti e tre visibili */}
+        <div className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-1.5 py-1">
+          <StatusDot
+            active={status === 'PRESENT'}
+            disabled={isCompleted}
+            title={t('ftPresent')}
+            onClick={() => onStatus('PRESENT')}
+            tone="green"
+          />
+          <StatusDot
+            active={status === 'UNAVAILABLE'}
+            disabled={isCompleted}
+            title={t('ftUnavailable')}
+            onClick={() => onStatus('UNAVAILABLE')}
+            tone="amber"
+          />
+          <StatusDot
+            active={status === 'ABSENT'}
+            disabled={isCompleted}
+            title={t('ftAbsent')}
+            onClick={() => onStatus('ABSENT')}
+            tone="red"
+          />
+        </div>
+        <div className="flex flex-shrink-0 items-center">
+          {onRemove && !isCompleted && (
+            <button
+              onClick={onRemove}
+              title={t('ftRemovePlayer')}
+              className="ml-0.5 rounded-md p-1 text-slate-300 transition-colors hover:text-red-500"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {status !== 'PRESENT' && (
+        <input
+          type="text"
+          value={note}
+          disabled={isCompleted}
+          placeholder={t('ftNotePlaceholder')}
+          onChange={(e) => onNote(e.target.value)}
+          className="mt-1.5 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 outline-none focus:border-teal-500 disabled:opacity-60"
+        />
+      )}
+
+      {/* RPE del singolo + carico calcolato. Vuoto = eredita l'RPE di sessione. */}
+      {status === 'PRESENT' && onRpe && (
+        <div className="mt-1.5 flex items-center gap-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('ftRpe')}
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={rpe ?? ''}
+            disabled={isCompleted}
+            placeholder={fallbackRpe ? String(fallbackRpe) : '1-10'}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === '') return onRpe(null);
+              const n = Math.round(Number(v));
+              onRpe(Number.isFinite(n) && n >= 1 && n <= 10 ? n : null);
+            }}
+            className="w-16 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs tabular-nums text-slate-900 dark:text-white outline-none focus:border-teal-500 disabled:opacity-60"
+          />
+          <span className="ml-auto text-2xs text-slate-500 dark:text-slate-400">
+            {t('ftLoad')}:{' '}
+            <span className="font-mono font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              {load != null ? Math.round(load) : '—'}
+            </span>
+          </span>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Athlete Timer Card ─────────────────────────────────
+// Classi scritte per intero: Tailwind non genera nomi costruiti a runtime.
+const DOT_TONES = {
+  green: {
+    on: 'bg-green-500 border-green-600 ring-2 ring-green-300 ring-offset-1 dark:ring-offset-slate-900',
+    off: 'bg-green-100 border-green-400 hover:bg-green-300 dark:bg-green-950 dark:border-green-700',
+  },
+  amber: {
+    on: 'bg-amber-400 border-amber-500 ring-2 ring-amber-200 ring-offset-1 dark:ring-offset-slate-900',
+    off: 'bg-amber-100 border-amber-400 hover:bg-amber-300 dark:bg-amber-950 dark:border-amber-700',
+  },
+  red: {
+    on: 'bg-red-500 border-red-600 ring-2 ring-red-300 ring-offset-1 dark:ring-offset-slate-900',
+    off: 'bg-red-100 border-red-400 hover:bg-red-300 dark:bg-red-950 dark:border-red-800',
+  },
+} as const;
 
-function AthleteTimerCard({
-  athlete,
-  timerState,
-  displayTime,
+function StatusDot({
+  active,
+  disabled,
+  title,
+  onClick,
+  tone,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  title: string;
+  onClick: () => void;
+  tone: keyof typeof DOT_TONES;
+}) {
+  const palette = DOT_TONES[tone];
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      disabled={disabled}
+      onClick={onClick}
+      className={`h-6 w-6 cursor-pointer rounded-full border-2 transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+        active ? palette.on : palette.off
+      }`}
+    />
+  );
+}
+
+// ─── Riga esercizio + riga break ────────────────────────
+
+function ExerciseRows({
+  ex,
+  idx,
+  now,
+  available,
   isCompleted,
-  onStart,
-  onPause,
-  onLap,
-  onReset,
+  showBreakRow,
+  cellNum,
+  onPatch,
+  onToggle,
+  onStop,
+  onStopBreak,
   onRemove,
 }: {
-  athlete: AthleteInfo;
-  timerState: TimerState;
-  displayTime: number;
+  ex: Exercise;
+  idx: number;
+  now: number;
+  available: number;
   isCompleted: boolean;
-  onStart: () => void;
-  onPause: () => void;
-  onLap: () => void;
-  onReset: () => void;
+  showBreakRow: boolean;
+  cellNum: string;
+  onPatch: (patch: Partial<Exercise>) => void;
+  onToggle: () => void;
+  onStop: () => void;
+  onStopBreak: () => void;
   onRemove: () => void;
 }) {
   const t = useTranslations('calendar');
-  const [showLaps, setShowLaps] = useState(false);
-  const { running, laps } = timerState;
+  const activity = liveActivity(ex, now);
+  const pause = livePause(ex, now);
+  const net = netMs(ex, now);
+  const effective = effectiveMs(ex, now, available);
+  const intensity = intensityMs(ex, now, available);
+  const running = ex.state === 'running';
+  const paused = ex.state === 'paused';
+
+  const numInput =
+    'w-16 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-center text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500 disabled:opacity-60';
 
   return (
-    <div className={`rounded-xl border bg-white dark:bg-slate-800 px-4 py-3 transition-shadow ${
-      running ? 'border-green-300 shadow-sm shadow-green-100' : 'border-slate-200 dark:border-slate-700'
-    }`}>
-      {/* Top row: Name + Timer */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0">
-          {athlete.jerseyNumber != null && (
-            <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-              running ? 'bg-green-100 text-green-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-            }`}>
-              {athlete.jerseyNumber}
-            </span>
+    <>
+      <tr className={`border-b border-slate-100 dark:border-slate-700 ${
+        running ? 'bg-green-50/60 dark:bg-green-900/10' : paused ? 'bg-amber-50/60 dark:bg-amber-900/10' : ''
+      }`}>
+        <td className="px-2 py-2">
+          <div className="flex items-center gap-2">
+            <span className="w-5 text-xs text-slate-400 dark:text-slate-500">{idx + 1}</span>
+            <input
+              type="text"
+              value={ex.name}
+              disabled={isCompleted}
+              placeholder={t('ftExerciseName')}
+              onChange={(e) => onPatch({ name: e.target.value })}
+              className="min-w-[8rem] flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-slate-900 dark:text-white outline-none hover:border-slate-200 focus:border-teal-500 dark:hover:border-slate-600 disabled:opacity-60"
+            />
+            <label className="flex flex-shrink-0 cursor-pointer items-center gap-1 text-2xs text-slate-500 dark:text-slate-400" title={t('ftWarmupHint')}>
+              <input
+                type="checkbox"
+                checked={ex.isWarmup}
+                disabled={isCompleted}
+                onChange={(e) => onPatch({ isWarmup: e.target.checked })}
+                className="h-3.5 w-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+              />
+              {t('ftWarmup')}
+            </label>
+            {running && <span className="h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-green-500" />}
+            {paused && <span className="h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-amber-500" />}
+          </div>
+        </td>
+        <td className="px-2 py-2 text-center">
+          <input
+            type="number"
+            min={0}
+            max={999}
+            value={ex.players}
+            disabled={isCompleted}
+            onChange={(e) => onPatch({ players: Number.parseInt(e.target.value, 10) || 0 })}
+            className={numInput}
+          />
+        </td>
+        <td className="px-2 py-2 text-center">
+          <input
+            type="number"
+            min={0}
+            max={99}
+            value={ex.courts}
+            disabled={isCompleted}
+            onChange={(e) => onPatch({ courts: Number.parseInt(e.target.value, 10) || 0 })}
+            className={numInput}
+          />
+        </td>
+        <td className={`${cellNum} ${running ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-900 dark:text-white'}`}>
+          {formatMs(activity)}
+        </td>
+        <td className={`${cellNum} ${paused ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-600 dark:text-slate-400'}`}>
+          {formatMs(pause)}
+        </td>
+        <td className={`${cellNum} ${net < 0 ? 'text-red-600' : 'text-slate-900 dark:text-white'}`}>{formatMs(net)}</td>
+        <td className={`${cellNum} text-teal-700 dark:text-teal-300 font-semibold`}>{formatMsRound(effective)}</td>
+        <td className={`${cellNum} text-slate-900 dark:text-white`}>{formatMsRound(intensity)}</td>
+        <td className="px-2 py-2">
+          {!isCompleted && (
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                onClick={onToggle}
+                title={running ? t('ftPause') : t('ftStart')}
+                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-white ${
+                  running ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                {running ? t('ftPause') : ex.state === 'idle' ? t('ftStart') : t('ftResume')}
+              </button>
+              <button
+                onClick={onStop}
+                disabled={ex.state !== 'running' && ex.state !== 'paused'}
+                title={t('ftStop')}
+                className="inline-flex items-center gap-1 rounded-md bg-slate-700 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-30"
+              >
+                <Square className="h-3.5 w-3.5" />
+                {t('ftStop')}
+              </button>
+              <button
+                onClick={onRemove}
+                title={t('ftRemoveExercise')}
+                className="rounded-md p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-              {athlete.lastName} {athlete.firstName}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{athlete.position}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {running && <span className="h-2 w-2 animate-pulse rounded-full bg-green-500 flex-shrink-0" />}
-          <span className={`font-mono text-xl font-bold tabular-nums ${
-            running ? 'text-green-600' : displayTime > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-300'
-          }`}>
-            {formatMs(displayTime)}
-          </span>
-        </div>
-      </div>
+        </td>
+      </tr>
 
-      {/* Bottom row: Controls + Laps */}
-      <div className="mt-2.5 flex items-center justify-between">
-        {!isCompleted ? (
-          <div className="flex items-center gap-1.5">
-            {!running ? (
-              <button
-                onClick={onStart}
-                className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
-              >
-                <Play className="h-3 w-3" />
-                {displayTime > 0 ? t('ftResume') : t('ftStart')}
-              </button>
-            ) : (
-              <>
+      {showBreakRow && (
+        <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+          <td colSpan={3} className="px-2 py-1.5 pl-9 text-xs font-medium italic text-slate-500 dark:text-slate-400">
+            {t('ftBreak')}
+          </td>
+          <td className={`${cellNum} ${ex.breakRunning ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+            {formatMs(liveBreak(ex, now))}
+          </td>
+          <td colSpan={4} />
+          <td className="px-2 py-1.5">
+            {!isCompleted && ex.breakRunning && (
+              <div className="flex justify-end">
                 <button
-                  onClick={onPause}
-                  className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+                  onClick={onStopBreak}
+                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-2xs font-medium text-blue-700 hover:bg-blue-100"
                 >
-                  <Pause className="h-3 w-3" />
+                  <Square className="h-3 w-3" />
+                  {t('ftStopBreak')}
                 </button>
-                <button
-                  onClick={onLap}
-                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                >
-                  <Flag className="h-3 w-3" />
-                </button>
-              </>
+              </div>
             )}
-            {!running && displayTime > 0 && (
-              <button
-                onClick={onReset}
-                className="rounded-md border border-slate-200 dark:border-slate-700 p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
-              >
-                <RotateCcw className="h-3 w-3" />
-              </button>
-            )}
-            {!running && displayTime === 0 && (
-              <button onClick={onRemove} className="rounded-md p-1.5 text-slate-300 hover:text-red-500 transition-colors">
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-        ) : <div />}
-
-        {laps.length > 0 && (
-          <button
-            onClick={() => setShowLaps(!showLaps)}
-            className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
-          >
-            {laps.length} lap
-            {showLaps ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </button>
-        )}
-      </div>
-
-      {/* Laps detail (expandable) */}
-      {showLaps && laps.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-100 dark:border-slate-700 pt-2">
-          {laps.map((lap, i) => (
-            <span key={i} className="text-xs text-slate-500 dark:text-slate-400">
-              <span className="text-slate-400 dark:text-slate-500">L{i + 1}</span> {formatMsShort(lap.durationMs)}
-            </span>
-          ))}
-        </div>
+          </td>
+        </tr>
       )}
-    </div>
+    </>
   );
 }

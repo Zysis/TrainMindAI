@@ -31,9 +31,12 @@ interface PerformanceChartsProps {
   athleteId?: string;
   teamId?: string | null;
   days?: number;
+  /** yyyy-mm-dd: quando presenti hanno la precedenza su days */
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-export function PerformanceCharts({ athleteId, teamId, days = 30 }: PerformanceChartsProps) {
+export function PerformanceCharts({ athleteId, teamId, days = 30, dateFrom, dateTo }: PerformanceChartsProps) {
   const locale = useLocale();
   const t = useTranslations('analyticsExt');
   const tCommon = useTranslations('common');
@@ -46,6 +49,8 @@ export function PerformanceCharts({ athleteId, teamId, days = 30 }: PerformanceC
       setLoading(true);
       try {
         const params = new URLSearchParams({ days: days.toString() });
+        if (dateFrom) params.set('from', dateFrom);
+        if (dateTo) params.set('to', dateTo);
         if (athleteId) params.set('athleteId', athleteId);
         if (teamId) params.set('teamId', teamId);
         const res = await apiFetch<{ data: PerformanceData[]; perAthlete?: AthletePerformance[] }>(`/analytics/performance?${params}`);
@@ -59,7 +64,7 @@ export function PerformanceCharts({ athleteId, teamId, days = 30 }: PerformanceC
       }
     };
     load();
-  }, [athleteId, teamId, days]);
+  }, [athleteId, teamId, days, dateFrom, dateTo]);
 
   if (loading) {
     return (

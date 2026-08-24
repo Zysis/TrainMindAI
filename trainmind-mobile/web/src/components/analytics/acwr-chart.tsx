@@ -23,6 +23,9 @@ interface AcwrChartProps {
   athleteId?: string;
   teamId?: string | null;
   days?: number;
+  /** yyyy-mm-dd: quando presenti hanno la precedenza su days */
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 const ZONE_DEFS = {
@@ -32,7 +35,7 @@ const ZONE_DEFS = {
   danger: { labelKey: 'zoneHighRisk', color: 'text-red-600', bg: 'bg-red-50', icon: AlertTriangle },
 } as const;
 
-export function AcwrChart({ athleteId, teamId, days = 60 }: AcwrChartProps) {
+export function AcwrChart({ athleteId, teamId, days = 60, dateFrom, dateTo }: AcwrChartProps) {
   const locale = useLocale();
   const t = useTranslations('analyticsExt');
   const tCommon = useTranslations('common');
@@ -54,6 +57,8 @@ export function AcwrChart({ athleteId, teamId, days = 60 }: AcwrChartProps) {
       setLoading(true);
       try {
         const params = new URLSearchParams({ days: days.toString() });
+        if (dateFrom) params.set('from', dateFrom);
+        if (dateTo) params.set('to', dateTo);
         if (athleteId) params.set('athleteId', athleteId);
         if (teamId) params.set('teamId', teamId);
         const res = await apiFetch<{ data: AcwrEntry[] }>(`/analytics/acwr?${params}`);
@@ -66,7 +71,7 @@ export function AcwrChart({ athleteId, teamId, days = 60 }: AcwrChartProps) {
       }
     };
     load();
-  }, [athleteId, teamId, days]);
+  }, [athleteId, teamId, days, dateFrom, dateTo]);
 
   if (loading) {
     return (

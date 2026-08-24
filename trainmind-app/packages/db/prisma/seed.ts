@@ -323,7 +323,8 @@ async function main() {
     create: {
       id: 'seed-injury-1',
       athleteId: athletes[2].id, // Davide Marino
-      type: 'Distorsione',
+      type: 'ligament',
+      onset: 'traumatic',
       location: 'Caviglia destra',
       severity: 2,
       status: 'RECOVERING',
@@ -352,7 +353,7 @@ async function main() {
     { type: 'vertical_jump', unit: 'cm', min: 45, max: 70 },
     { type: 'sprint_20m', unit: 's', min: 2.8, max: 3.5 },
     { type: 'body_fat', unit: '%', min: 8, max: 16 },
-    { type: 'squat_1rm', unit: 'kg', min: 100, max: 180 },
+    { type: '1rm_squat', unit: 'kg', min: 100, max: 180 },
   ];
 
   let metricCount = 0;
@@ -378,12 +379,12 @@ async function main() {
 
   // ─── Calendar Events ────────────────────────────────
   const calendarEvents = [
-    { title: 'Allenamento squadra', type: 'training', daysFromNow: 1, hours: 16, duration: 2 },
+    { title: 'Allenamento squadra', type: 'basket', daysFromNow: 1, hours: 16, duration: 2 },
     { title: 'Partita vs Virtus', type: 'match', daysFromNow: 5, hours: 18, duration: 2.5 },
     { title: 'Visita medica - Davide Marino', type: 'medical', daysFromNow: 2, hours: 10, duration: 1 },
     { title: 'Riunione staff tecnico', type: 'meeting', daysFromNow: 3, hours: 9, duration: 1 },
-    { title: 'Allenamento individuale Luca', type: 'training', daysFromNow: 1, hours: 14, duration: 1.5 },
-    { title: 'Recovery session', type: 'training', daysFromNow: 4, hours: 10, duration: 1 },
+    { title: 'Allenamento individuale Luca', type: 'individual', daysFromNow: 1, hours: 14, duration: 1.5 },
+    { title: 'Recovery session', type: 'gym', daysFromNow: 4, hours: 10, duration: 1 },
   ];
 
   for (const ev of calendarEvents) {

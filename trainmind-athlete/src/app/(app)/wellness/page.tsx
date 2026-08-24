@@ -7,9 +7,9 @@ import { Heart, Moon, Frown, Activity, Brain, Smile, CheckCircle2 } from 'lucide
 
 const FIELDS = [
   { key: 'sleepQuality', label: 'Qualità sonno', icon: Moon, low: 'Pessimo', high: 'Eccellente' },
-  { key: 'fatigue', label: 'Fatica', icon: Activity, low: 'Riposato', high: 'Esausto' },
-  { key: 'soreness', label: 'Dolori muscolari', icon: Frown, low: 'Nessuno', high: 'Molto forte' },
-  { key: 'stress', label: 'Stress', icon: Brain, low: 'Rilassato', high: 'Molto stressato' },
+  { key: 'fatigue', label: 'Fatica', icon: Activity, low: 'Esausto', high: 'Riposato' },
+  { key: 'soreness', label: 'Dolori muscolari', icon: Frown, low: 'Molto forte', high: 'Nessuno' },
+  { key: 'stress', label: 'Stress', icon: Brain, low: 'Molto stressato', high: 'Rilassato' },
   { key: 'mood', label: 'Umore', icon: Smile, low: 'Pessimo', high: 'Ottimo' },
 ] as const;
 

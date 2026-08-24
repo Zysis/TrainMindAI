@@ -28,9 +28,10 @@ const categoryColors: Record<string, 'teal' | 'info' | 'warning' | 'danger' | 's
   Propriocezione: 'info',
   Prevenzione: 'success',
   Flessibilita: 'teal',
-  Resistenza: 'warning',
+  'Condizionamento-Metabolico': 'warning',
+  Mobilita: 'teal',
+  Release: 'info',
   Riabilitazione: 'danger',
-  Condizionamento: 'warning',
   'Basket-Specifico': 'teal',
 };
 

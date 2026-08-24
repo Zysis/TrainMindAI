@@ -303,7 +303,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             if (athleteWellness.length > 0) {
               const latest = athleteWellness[0];
               metricValue = Math.round(
-                ((latest.sleepQuality + latest.mood + (6 - latest.fatigue) + (6 - latest.soreness) + (6 - latest.stress)) / 25) * 100
+                ((latest.sleepQuality + latest.mood + latest.fatigue + latest.soreness + latest.stress) / 25) * 100
               );
               message = `Wellness score di ${athlete.firstName} ${athlete.lastName}: ${metricValue}% (soglia: ${condition.operator} ${condition.threshold})`;
             }
@@ -406,6 +406,18 @@ export async function notificationRoutes(app: FastifyInstance) {
       include: { team: { select: { id: true, name: true, color: true } } },
     });
 
+    // `athleteId` non ha una relazione Prisma su CalendarEvent: i nomi si
+    // risolvono con una query a parte, senza toccare lo schema.
+    const eventAthleteIds = [...new Set(rawEvents.map((e) => e.athleteId).filter((x): x is string => Boolean(x)))];
+    const athleteNameById = new Map<string, string>();
+    if (eventAthleteIds.length > 0) {
+      const eventAthletes = await app.prisma.athlete.findMany({
+        where: { id: { in: eventAthleteIds }, organizationId: request.user.organizationId },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      for (const a of eventAthletes) athleteNameById.set(a.id, `${a.lastName} ${a.firstName}`);
+    }
+
     const events = rawEvents.map((e) => ({
       id: e.id,
       title: e.title,
@@ -418,6 +430,8 @@ export async function notificationRoutes(app: FastifyInstance) {
       teamId: e.team?.id ?? null,
       teamName: e.team?.name ?? null,
       teamColor: e.team?.color ?? null,
+      athleteId: e.athleteId ?? null,
+      athleteName: e.athleteId ? athleteNameById.get(e.athleteId) ?? null : null,
     }));
 
     // Also fetch training sessions in the range for auto-display
@@ -452,7 +466,9 @@ export async function notificationRoutes(app: FastifyInstance) {
       startTime: base,
       endTime: new Date(base.getTime() + (s.duration || 60) * 60000),
       allDay: false,
-      type: 'training',
+      // Tipo dedicato: le sessioni dei piani non sono eventi creati a mano e
+      // non devono ereditare l'etichetta di una delle categorie scelte dall'utente.
+      type: 'session',
       color: s.status === 'COMPLETED' ? '#22c55e' : s.status === 'IN_PROGRESS' ? '#0d9488' : '#3b82f6',
       isSession: true,
       sessionId: s.id,
@@ -478,7 +494,7 @@ export async function notificationRoutes(app: FastifyInstance) {
       startTime: z.string(),
       endTime: z.string(),
       allDay: z.boolean().default(false),
-      type: z.enum(['training', 'field_training', 'match', 'medical', 'meeting', 'other']).default('other'),
+      type: z.enum(['gym', 'basket', 'individual', 'shooting', 'match', 'rehab', 'meeting', 'medical', 'other']).default('other'),
       color: z.string().optional(),
       athleteId: z.string().optional(),
       teamId: z.string().optional(),

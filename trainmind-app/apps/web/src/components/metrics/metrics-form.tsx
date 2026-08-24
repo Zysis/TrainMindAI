@@ -84,8 +84,13 @@ const metricCategoryDefs: MetricCategoryDef[] = [
 const metricTypeDefs: MetricTypeDef[] = [
   // ── Anthropometric ──
   { key: 'height', labelKey: 'mt_height', unit: 'cm', descKey: 'mtDesc_height', min: 100, max: 250, step: 0.5, higherIsBetter: true, category: 'anthropometric' },
+  { key: 'sitting_height', labelKey: 'mt_sitting_height', unit: 'cm', descKey: 'mtDesc_sitting_height', min: 60, max: 130, step: 0.5, higherIsBetter: true, category: 'anthropometric' },
+  { key: 'standing_reach', labelKey: 'mt_standing_reach', unit: 'cm', descKey: 'mtDesc_standing_reach', min: 150, max: 320, step: 0.5, higherIsBetter: true, category: 'anthropometric' },
   { key: 'body_weight', labelKey: 'mt_body_weight', unit: 'kg', descKey: 'mtDesc_body_weight', min: 30, max: 180, step: 0.1, higherIsBetter: false, category: 'anthropometric' },
   { key: 'wing_span', labelKey: 'mt_wing_span', unit: 'cm', descKey: 'mtDesc_wing_span', min: 100, max: 280, step: 0.5, higherIsBetter: true, category: 'anthropometric' },
+  { key: 'hand_length', labelKey: 'mt_hand_length', unit: 'cm', descKey: 'mtDesc_hand_length', min: 10, max: 30, step: 0.1, higherIsBetter: true, category: 'anthropometric' },
+  { key: 'hand_span', labelKey: 'mt_hand_span', unit: 'cm', descKey: 'mtDesc_hand_span', min: 15, max: 30, step: 0.1, higherIsBetter: true, category: 'anthropometric' },
+  { key: 'foot_length', labelKey: 'mt_foot_length', unit: 'cm', descKey: 'mtDesc_foot_length', min: 15, max: 40, step: 0.1, higherIsBetter: true, category: 'anthropometric' },
   { key: 'body_fat', labelKey: 'mt_body_fat', unit: '%', descKey: 'mtDesc_body_fat', min: 3, max: 40, step: 0.1, higherIsBetter: false, category: 'anthropometric' },
 
   // ── Strength ──

@@ -240,6 +240,7 @@ export interface ReportMetadata {
   generatedBy: string;      // User name
   logoUrl?: string;
   teamName?: string;        // When report is filtered by team
+  athleteName?: string;     // When report is filtered by a single athlete
 }
 
 // ─── Audience-specific payloads ──────────────────────────

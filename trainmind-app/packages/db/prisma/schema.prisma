@@ -362,6 +362,10 @@ model TrainingSession {
   rpe            Int? // 1-10
   isTemplate     Boolean       @default(false)
   aiModified     Boolean       @default(false) // true when AI adaptation has been applied
+  // true quando il foglio presenze ha generato le righe per singolo atleta:
+  // da quel momento gli analytics NON attribuiscono più questa riga di squadra
+  // a tutta la rosa, altrimenti il carico verrebbe contato due volte.
+  detailedByAttendance Boolean  @default(false)
   weekId         String?
   athleteId      String?
   organizationId String
@@ -373,6 +377,7 @@ model TrainingSession {
   organization     Organization      @relation(fields: [organizationId], references: [id])
   sessionExercises SessionExercise[]
   sessionLogs      SessionLog[]
+  attendanceSheet  FieldTrainingSession?
 
   @@index([weekId])
   @@index([athleteId])
@@ -487,8 +492,9 @@ model WellnessLog {
 model Injury {
   id           String       @id @default(cuid())
   athleteId    String
-  type         String
-  location     String // body part
+  type         String // muscular, tendon, ligament, bone, joint
+  onset        String? // contusive, overuse, traumatic, non_traumatic
+  location     String // body part: codice predefinito oppure testo libero
   severity     Int // 1-5
   status       InjuryStatus @default(ACTIVE)
   dateOccurred DateTime
@@ -881,17 +887,26 @@ model Simulation {
 
 model FieldTrainingSession {
   id              String    @id @default(cuid())
-  calendarEventId String    @unique
+  // Il foglio presenze si aggancia a un evento di calendario OPPURE a una
+  // sessione della programmazione: uno dei due, mai entrambi.
+  calendarEventId String?   @unique
+  trainingSessionId String? @unique
   teamId          String?
   organizationId  String
   status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
   notes           String?
+  availableAthletes Int?    // giocatori col semaforo verde al momento del salvataggio
+  durationMinutes Int?      // durata effettiva usata per il carico (RPE × durata)
+  sessionRpe      Int?      // RPE di sessione: vale per gli atleti senza RPE proprio
+  exercises       Json      @default("[]") // Array of { id, name, isWarmup, players, courts, activityMs, pauseMs, breakMs, state, breakRunning }
+  guests          Json      @default("[]") // Giocatori ospiti, solo per questa sessione: { id, name, status, note }
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  calendarEvent CalendarEvent        @relation(fields: [calendarEventId], references: [id], onDelete: Cascade)
+  calendarEvent   CalendarEvent?     @relation(fields: [calendarEventId], references: [id], onDelete: Cascade)
+  trainingSession TrainingSession?   @relation(fields: [trainingSessionId], references: [id], onDelete: Cascade)
   team          Team?                @relation(fields: [teamId], references: [id])
   organization  Organization         @relation(fields: [organizationId], references: [id])
   entries       FieldTrainingEntry[]
@@ -907,6 +922,9 @@ model FieldTrainingEntry {
   athleteId              String
   totalActiveMs          Int    @default(0)
   laps                   Json   @default("[]") // Array of { startMs, endMs, durationMs }
+  status                 String @default("PRESENT") // PRESENT, UNAVAILABLE, ABSENT
+  note                   String? // motivo facoltativo per indisponibile/assente
+  rpe                    Int? // 1-10 percepito dal singolo atleta; se assente vale sessionRpe
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -915,6 +933,7 @@ model FieldTrainingEntry {
 
   @@unique([fieldTrainingSessionId, athleteId])
   @@index([athleteId])
+  @@index([status])
   @@map("field_training_entries")
 }
 

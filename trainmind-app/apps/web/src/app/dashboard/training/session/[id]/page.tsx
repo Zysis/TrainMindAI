@@ -84,7 +84,9 @@ const categoryColors: Record<string, string> = {
   Propriocezione: 'bg-cyan-100 text-cyan-700',
   Prevenzione: 'bg-blue-100 text-blue-700',
   Flessibilita: 'bg-violet-100 text-violet-700',
-  Resistenza: 'bg-pink-100 text-pink-700',
+  'Condizionamento-Metabolico': 'bg-pink-100 text-pink-700',
+  Mobilita: 'bg-teal-100 text-teal-700',
+  Release: 'bg-indigo-100 text-indigo-700',
   Riabilitazione: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
 };
 

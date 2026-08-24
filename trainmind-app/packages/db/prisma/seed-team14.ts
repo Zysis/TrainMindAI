@@ -117,13 +117,13 @@ const ROSTERS: Record<string, PlayerDef[]> = {
 const METRIC_TYPES = [
   { type: 'vertical_jump', unit: 'cm', guardRange: [48, 65], bigRange: [40, 58] },
   { type: 'sprint_20m', unit: 's', guardRange: [2.75, 3.05], bigRange: [2.95, 3.35] },
-  { type: 'agility_t_test', unit: 's', guardRange: [8.6, 9.8], bigRange: [9.2, 10.5] },
+  { type: 't_test', unit: 's', guardRange: [8.6, 9.8], bigRange: [9.2, 10.5] },
   { type: 'body_fat', unit: '%', guardRange: [7, 12], bigRange: [9, 15] },
-  { type: 'vo2max', unit: 'ml/kg/min', guardRange: [52, 62], bigRange: [46, 56] },
-  { type: 'bench_press_1rm', unit: 'kg', guardRange: [80, 115], bigRange: [95, 140] },
-  { type: 'squat_1rm', unit: 'kg', guardRange: [120, 165], bigRange: [140, 200] },
+  { type: 'vo2_max', unit: 'ml/kg/min', guardRange: [52, 62], bigRange: [46, 56] },
+  { type: '1rm_bench', unit: 'kg', guardRange: [80, 115], bigRange: [95, 140] },
+  { type: '1rm_squat', unit: 'kg', guardRange: [120, 165], bigRange: [140, 200] },
   { type: 'standing_reach', unit: 'cm', guardRange: [235, 252], bigRange: [255, 280] },
-  { type: 'wingspan', unit: 'cm', guardRange: [185, 200], bigRange: [200, 222] },
+  { type: 'wing_span', unit: 'cm', guardRange: [185, 200], bigRange: [200, 222] },
   { type: 'hand_span', unit: 'cm', guardRange: [21, 24], bigRange: [23, 27] },
 ];
 
@@ -308,7 +308,7 @@ async function seedOrg(orgName: string) {
         const isTimeBased = mt.unit === 's';
         let value = rand(range[0], range[1]);
         if (isTimeBased) value /= progressFactor; // tempi più bassi = meglio
-        else if (!['standing_reach', 'wingspan', 'hand_span'].includes(mt.type)) value *= progressFactor;
+        else if (!['standing_reach', 'wing_span', 'hand_span'].includes(mt.type)) value *= progressFactor;
         metricBatch.push({
           athleteId: athlete.id,
           date: MEASURE_DATES[mIdx],
@@ -499,6 +499,7 @@ async function seedOrg(orgName: string) {
   interface InjuryCfg {
     athleteIdx: number;
     type: string;
+    onset: string;
     location: string;
     severity: number;
     occurred: string;
@@ -510,7 +511,8 @@ async function seedOrg(orgName: string) {
   const INJURY_CONFIGS: InjuryCfg[] = [
     {
       athleteIdx: 4, // esterno
-      type: 'Distorsione',
+      type: 'ligament',
+      onset: 'traumatic',
       location: 'Caviglia destra',
       severity: 2,
       occurred: '2025-11-08',
@@ -520,7 +522,8 @@ async function seedOrg(orgName: string) {
     },
     {
       athleteIdx: 9, // lungo
-      type: 'Stiramento',
+      type: 'muscular',
+      onset: 'non_traumatic',
       location: 'Ischiocrurali sinistri',
       severity: 3,
       occurred: '2026-02-14',
@@ -530,7 +533,8 @@ async function seedOrg(orgName: string) {
     },
     {
       athleteIdx: 12, // centro
-      type: 'Tendinopatia',
+      type: 'tendon',
+      onset: 'overuse',
       location: 'Tendine rotuleo destro',
       severity: 2,
       occurred: '2026-06-10',
@@ -558,6 +562,7 @@ async function seedOrg(orgName: string) {
       data: {
         athleteId: athlete.id,
         type: cfg.type,
+        onset: cfg.onset,
         location: cfg.location,
         severity: cfg.severity,
         status: resolved ? 'RESOLVED' : 'RECOVERING',

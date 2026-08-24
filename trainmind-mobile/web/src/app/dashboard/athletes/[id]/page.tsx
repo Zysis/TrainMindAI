@@ -423,7 +423,7 @@ export default function AthleteProfilePage() {
 
 // ─── Physical Profile Card (Panoramica) ────────────────────
 
-const ANTHROPOMETRIC_KEYS = ['height', 'body_weight', 'wing_span', 'body_fat'];
+const ANTHROPOMETRIC_KEYS = ['height', 'sitting_height', 'standing_reach', 'body_weight', 'wing_span', 'hand_span', 'hand_length', 'foot_length', 'body_fat'];
 
 function AthletePhysicalProfile({
   metrics,

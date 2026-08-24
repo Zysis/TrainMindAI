@@ -181,8 +181,8 @@ export default function DashboardPage() {
                 <div key={i} className="flex items-center justify-between rounded-lg border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3">
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{a.athlete}</span>
                   <div className="flex gap-2">
-                    {a.fatigue >= 4 && <Badge variant="danger">{t('fatShort')}: {a.fatigue}</Badge>}
-                    {a.soreness >= 4 && <Badge variant="danger">{t('sorShort')}: {a.soreness}</Badge>}
+                    {a.fatigue <= 2 && <Badge variant="danger">{t('fatShort')}: {a.fatigue}</Badge>}
+                    {a.soreness <= 2 && <Badge variant="danger">{t('sorShort')}: {a.soreness}</Badge>}
                     {a.mood <= 2 && <Badge variant="warning">{t('moodShort')}: {a.mood}</Badge>}
                   </div>
                 </div>
@@ -264,10 +264,10 @@ export default function DashboardPage() {
                     <td className="py-2.5 font-medium text-slate-900 dark:text-white">{w.athlete.firstName} {w.athlete.lastName}</td>
                     <td className="py-2.5 text-slate-500 dark:text-slate-400">{new Date(w.date).toLocaleDateString(locale)}</td>
                     <td className="py-2.5 text-center">
-                      <Badge variant={w.fatigue >= 4 ? 'danger' : w.fatigue >= 3 ? 'warning' : 'success'}>{w.fatigue}/5</Badge>
+                      <Badge variant={w.fatigue <= 2 ? 'danger' : w.fatigue <= 3 ? 'warning' : 'success'}>{w.fatigue}/5</Badge>
                     </td>
                     <td className="py-2.5 text-center">
-                      <Badge variant={w.soreness >= 4 ? 'danger' : w.soreness >= 3 ? 'warning' : 'success'}>{w.soreness}/5</Badge>
+                      <Badge variant={w.soreness <= 2 ? 'danger' : w.soreness <= 3 ? 'warning' : 'success'}>{w.soreness}/5</Badge>
                     </td>
                     <td className="py-2.5 text-center">
                       <Badge variant={w.mood <= 2 ? 'danger' : w.mood <= 3 ? 'warning' : 'success'}>{w.mood}/5</Badge>

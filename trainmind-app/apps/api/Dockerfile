@@ -11,6 +11,18 @@ FROM node:20-alpine AS builder
 # libc6-compat è raccomandato da Prisma su Alpine
 RUN apk add --no-cache openssl libc6-compat
 
+# Chromium di sistema per Puppeteer (report PDF). Il browser che Puppeteer
+# scarica da solo è compilato per glibc e su Alpine (musl) non parte: si
+# installa quello dei pacchetti e si salta il download.
+# Il pacchetto installa sia `chromium` sia `chromium-browser`: NON creare
+# symlink, si finisce per sovrascrivere il launcher con un link a se stesso.
+# `--version` in coda serve da verifica: se il nome cambiasse, il build
+# fallisce qui invece di produrre un'immagine senza browser.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont \
+    && chromium-browser --version
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 RUN npm install -g pnpm
 
 WORKDIR /app

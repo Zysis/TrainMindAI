@@ -2,7 +2,9 @@ export const metadata = {
   title: 'Informativa Privacy — TrainMind Atleti',
 };
 
-const VERSION = '2026-07-18-beta';
+// Allineata a LEGAL_VERSIONS.PRIVACY_ATHLETE in apps/api/src/lib/legal.ts:
+// e' la versione che viene registrata in ConsentRecord all'accettazione.
+const VERSION = '2026-07-21-v2.0';
 
 export default function PrivacyPage() {
   return (

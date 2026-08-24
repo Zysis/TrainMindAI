@@ -175,9 +175,10 @@ export async function dashboardRoutes(app: FastifyInstance) {
         }
       : null;
 
-    // Athletes at risk: high fatigue or soreness in latest log
+    // Atleti a rischio: su tutte le voci 5 è il valore migliore,
+    // quindi il campanello d'allarme è un valore BASSO.
     const atRiskAthletes = recentWellness.filter(
-      (w) => w.fatigue >= 4 || w.soreness >= 4 || w.mood <= 2
+      (w) => w.fatigue <= 2 || w.soreness <= 2 || w.mood <= 2
     );
 
     // Injury status summary

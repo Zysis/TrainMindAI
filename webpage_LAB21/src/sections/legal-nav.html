@@ -1,0 +1,25 @@
+<!-- ══ NAVIGAZIONE PAGINE LEGALI ══ -->
+<!-- Barra ridotta: logo (torna alla home) + selettore lingua.
+     Il selettore usa gli stessi data-lang della nav principale, quindi
+     initLang() lo gestisce senza modifiche: la lingua scelta qui resta
+     salvata e vale anche per il resto del sito.
+
+     La classe "solid" e' obbligatoria: in nav.css tutto lo stile chiaro
+     (logo scuro, pulsanti lingua leggibili, fondo bianco) sta dietro a
+     `nav.solid`, mentre `nav:not(.solid)` e' la variante trasparente
+     pensata per stare sopra l'hero scuro della home. Senza "solid" queste
+     pagine, che hanno il fondo chiaro, mostrerebbero il logo bianco su
+     bianco e i pulsanti lingua illeggibili. -->
+<nav class="legal-nav solid">
+  <div class="nav-in">
+    <a href="/" aria-label="LAB21 — home">
+      <img class="logo dark-only" src="/logo/lab21-wordmark.png" alt="LAB21">
+      <img class="logo light-only" src="/logo/lab21-wordmark-light.png" alt="LAB21">
+    </a>
+    <div class="lang">
+      <button type="button" data-lang="en" class="on">EN</button>
+      <button type="button" data-lang="it">IT</button>
+      <button type="button" data-lang="es">ES</button>
+    </div>
+  </div>
+</nav>

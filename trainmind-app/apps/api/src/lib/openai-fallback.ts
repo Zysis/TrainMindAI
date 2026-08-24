@@ -59,7 +59,7 @@ Il JSON deve avere questa struttura ESATTA:
 
 REGOLE:
 - Ogni sessione DEVE avere un array "exercises" con esercizi strutturati
-- Ogni esercizio deve avere: "name" (nome preciso), "category" (Forza/Potenza/Pliometria/Velocita/Agilita/Core/Propriocezione/Prevenzione/Flessibilita/Resistenza/Riabilitazione), "sets" (numero), "reps" (stringa, es. "8-12" o "30sec"), "restSeconds" (numero in secondi)
+- Ogni esercizio deve avere: "name" (nome preciso), "category" (Forza/Potenza/Pliometria/Velocita/Agilita/Core/Propriocezione/Prevenzione/Flessibilita/Mobilita/Release/Condizionamento-Metabolico/Riabilitazione), "sets" (numero), "reps" (stringa, es. "8-12" o "30sec"), "restSeconds" (numero in secondi)
 - Campi opzionali esercizio: "intensity" (es. "70% 1RM"), "notes"
 - Ogni settimana deve avere 3-4 sessioni
 - Il campo "duration" è in minuti

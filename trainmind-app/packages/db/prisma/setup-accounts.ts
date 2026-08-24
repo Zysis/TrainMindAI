@@ -206,8 +206,8 @@ async function createDemoOrg(spec: OrgSpec) {
 
   // Calendar events (idempotenti via ID stabili)
   const events = [
-    { offset: 1, hour: 16, duration: 2, title: 'Allenamento squadra', type: 'training' },
-    { offset: 2, hour: 10, duration: 1, title: 'Recovery session', type: 'training' },
+    { offset: 1, hour: 16, duration: 2, title: 'Allenamento squadra', type: 'basket' },
+    { offset: 2, hour: 10, duration: 1, title: 'Recovery session', type: 'gym' },
     { offset: 4, hour: 18, duration: 2, title: 'Partita amichevole', type: 'match' },
   ];
   for (const ev of events) {

@@ -21,6 +21,9 @@ interface WellnessHeatmapProps {
   athleteId?: string;
   teamId?: string | null;
   days?: number;
+  /** yyyy-mm-dd: quando presenti hanno la precedenza su days */
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // Color scale for wellness score (0-100)
@@ -32,7 +35,7 @@ function getScoreColor(score: number): string {
   return 'bg-red-500';
 }
 
-export function WellnessHeatmap({ athleteId, teamId, days = 14 }: WellnessHeatmapProps) {
+export function WellnessHeatmap({ athleteId, teamId, days = 14, dateFrom, dateTo }: WellnessHeatmapProps) {
   const locale = useLocale();
   const t = useTranslations('analyticsExt');
   const tWellness = useTranslations('wellness');
@@ -44,6 +47,8 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14 }: WellnessHeatma
       setLoading(true);
       try {
         const params = new URLSearchParams({ days: days.toString() });
+        if (dateFrom) params.set('from', dateFrom);
+        if (dateTo) params.set('to', dateTo);
         if (athleteId) params.set('athleteId', athleteId);
         if (teamId) params.set('teamId', teamId);
         const res = await apiFetch<{ data: HeatmapEntry[] }>(`/analytics/wellness-heatmap?${params}`);
@@ -55,7 +60,7 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14 }: WellnessHeatma
       }
     };
     load();
-  }, [athleteId, teamId, days]);
+  }, [athleteId, teamId, days, dateFrom, dateTo]);
 
   if (loading) {
     return (
@@ -101,7 +106,8 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14 }: WellnessHeatma
 
   return (
     <div className="card overflow-x-auto">
-      <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">{t('heatmapTitle')}</h3>
+      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{t('heatmapTitle')}</h3>
+      <p className="mb-4 mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{t('heatmapFormula')}</p>
 
       <div className="min-w-[600px]">
         {/* Date headers */}
@@ -134,7 +140,7 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14 }: WellnessHeatma
                   <div
                     key={date}
                     className={`h-10 w-10 rounded-md flex items-center justify-center text-xs font-bold text-white ${getScoreColor(entry.wellnessScore)} cursor-default transition-transform hover:scale-110`}
-                    title={`${athleteName} - ${formatDate(date)}\n${tWellness('score')}: ${entry.wellnessScore}%\n${tWellness('sleepLabel')}: ${entry.sleepQuality}/5\n${tWellness('fatigueLabel')}: ${entry.fatigue}/5\n${tWellness('sorenessLabel')}: ${entry.soreness}/5\n${tWellness('stressLabel')}: ${entry.stress}/5\n${tWellness('moodLabel')}: ${entry.mood}/5`}
+                    title={`${athleteName} - ${formatDate(date)}\n${tWellness('sleepLabel')}: ${entry.sleepQuality}/5\n${tWellness('fatigueLabel')}: ${entry.fatigue}/5\n${tWellness('sorenessLabel')}: ${entry.soreness}/5\n${tWellness('stressLabel')}: ${entry.stress}/5\n${tWellness('moodLabel')}: ${entry.mood}/5\n———\n${tWellness('score')}: (${entry.sleepQuality}+${entry.fatigue}+${entry.soreness}+${entry.stress}+${entry.mood}) / 25 × 100 = ${entry.wellnessScore}%`}
                   >
                     {entry.wellnessScore}
                   </div>

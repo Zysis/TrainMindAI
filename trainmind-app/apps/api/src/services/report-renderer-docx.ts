@@ -102,6 +102,18 @@ function makeHeader(d: D, metadata: ReportMetadata, audienceLabel: string) {
       spacing: { after: 60 },
     }));
   }
+  if (metadata.athleteName) {
+    sections.push(new Paragraph({
+      children: [
+        new TextRun({
+          text: `Atleta: ${metadata.athleteName}`,
+          bold: true,
+          size: 22,
+        }),
+      ],
+      spacing: { after: 60 },
+    }));
+  }
 
   const period = new Paragraph({
     children: [

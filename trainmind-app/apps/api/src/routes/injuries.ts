@@ -71,6 +71,7 @@ export async function injuryRoutes(app: FastifyInstance) {
     const { athleteId } = request.params as { athleteId: string };
     const body = request.body as {
       type: string;
+      onset?: string;
       location: string;
       severity: number;
       dateOccurred: string;
@@ -86,6 +87,7 @@ export async function injuryRoutes(app: FastifyInstance) {
       data: {
         athleteId,
         type: body.type,
+        onset: body.onset || null,
         location: body.location,
         severity: Math.min(5, Math.max(1, body.severity)),
         dateOccurred: new Date(body.dateOccurred),
@@ -103,6 +105,7 @@ export async function injuryRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = request.body as {
       type?: string;
+      onset?: string;
       location?: string;
       severity?: number;
       status?: 'ACTIVE' | 'RECOVERING' | 'RESOLVED';
@@ -119,6 +122,7 @@ export async function injuryRoutes(app: FastifyInstance) {
       where: { id },
       data: {
         ...(body.type && { type: body.type }),
+        ...(body.onset !== undefined && { onset: body.onset || null }),
         ...(body.location && { location: body.location }),
         ...(body.severity && { severity: Math.min(5, Math.max(1, body.severity)) }),
         ...(body.status && { status: body.status }),

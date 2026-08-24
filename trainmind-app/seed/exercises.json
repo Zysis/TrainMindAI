@@ -2952,7 +2952,7 @@
   {
     "name": "Court Sprints",
     "nameEN": "Court Sprints",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "I court sprints sono sprint su un campo da basket a piena intensità. Nel basket, ricreano le esigenze fisiologiche del gioco con cambio di direzione e accelerazioni rapide.",
     "muscleGroups": [
       "Glutes",
@@ -2983,7 +2983,7 @@
   {
     "name": "Suicide Runs",
     "nameEN": "Suicide Runs",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "I suicide runs sono serie di sprint con cambi di direzione a distanze progressive. Nel basket, ricreano i pattern di corsa del gioco con accelerazione e decelerazione ripetute.",
     "muscleGroups": [
       "Glutes",
@@ -3014,7 +3014,7 @@
   {
     "name": "Full Court Transition",
     "nameEN": "Full Court Transition",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Le full court transition simulano i movimenti di transizione offesa-difesa nel basket. Nel basket, ricreano gli sprint da un capo all'altro del campo con cambi di ritmo.",
     "muscleGroups": [
       "Glutes",
@@ -3044,7 +3044,7 @@
   {
     "name": "Half Court Slides",
     "nameEN": "Half Court Slides",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Le half court slides sono movimenti laterali rapidissimi su metà campo. Nel basket, allena la capacità di movimento laterale sostenuto tipico della difesa.",
     "muscleGroups": [
       "Hip Abductors",
@@ -3073,7 +3073,7 @@
   {
     "name": "17s (Baseline to Baseline)",
     "nameEN": "17s Baseline to Baseline",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il drill 17s è uno sprint da baseline a baseline ripetuto. Nel basket, allena la capacità di accelerazione ripetuta, specifico alle transizioni di gioco.",
     "muscleGroups": [
       "Glutes",
@@ -3102,7 +3102,7 @@
   {
     "name": "300-Yard Shuttle",
     "nameEN": "300-Yard Shuttle",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il 300-yard shuttle è un test di resistenza anaerobica. Nel basket, valuta la capacità di mantenere intensità durante i 4 quarti di gioco.",
     "muscleGroups": [
       "Glutes",
@@ -3131,7 +3131,7 @@
   {
     "name": "Tabata Court Drill",
     "nameEN": "Tabata Court Drill",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il tabata court drill è un HIIT protocol su campo da basket. Nel basket, sviluppa capacità cardiovascolare con intervalli di alta intensità.",
     "muscleGroups": [
       "Glutes",
@@ -3160,7 +3160,7 @@
   {
     "name": "Pick and Roll Conditioning",
     "nameEN": "Pick and Roll Conditioning",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il pick and roll conditioning è un drill che simula il movimento pick and roll con alta intensità. Nel basket, allena i pattern specifici di gioco ad alta intensità.",
     "muscleGroups": [
       "Glutes",
@@ -3189,7 +3189,7 @@
   {
     "name": "Fast Break Drill",
     "nameEN": "Fast Break Drill",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il fast break drill allena il movimento rapido da difesa a offesa. Nel basket, sviluppa la capacità di transizione e il ritmo di gioco.",
     "muscleGroups": [
       "Glutes",
@@ -3218,7 +3218,7 @@
   {
     "name": "Continuous Layup Drill",
     "nameEN": "Continuous Layup Drill",
-    "category": "Condizionamento",
+    "category": "Condizionamento-Metabolico",
     "description": "Il continuous layup drill è una sequenza di layup consecutivi. Nel basket, allena la capacità di eseguire movimenti tecnici ad alta intensità e il condizionamento aerobico.",
     "muscleGroups": [
       "Quadriceps",

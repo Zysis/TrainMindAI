@@ -98,13 +98,13 @@ const TEAM_C_PLAYERS = [
 const METRIC_TYPES = [
   { type: 'vertical_jump', unit: 'cm', guardRange: [35, 50], bigRange: [30, 45] },
   { type: 'sprint_20m', unit: 's', guardRange: [2.9, 3.3], bigRange: [3.1, 3.6] },
-  { type: 'agility_t_test', unit: 's', guardRange: [9.2, 10.8], bigRange: [9.8, 11.2] },
+  { type: 't_test', unit: 's', guardRange: [9.2, 10.8], bigRange: [9.8, 11.2] },
   { type: 'body_fat', unit: '%', guardRange: [8, 14], bigRange: [10, 16] },
-  { type: 'vo2max', unit: 'ml/kg/min', guardRange: [46, 56], bigRange: [42, 52] },
-  { type: 'bench_press_1rm', unit: 'kg', guardRange: [40, 70], bigRange: [55, 90] },
-  { type: 'squat_1rm', unit: 'kg', guardRange: [70, 110], bigRange: [90, 140] },
+  { type: 'vo2_max', unit: 'ml/kg/min', guardRange: [46, 56], bigRange: [42, 52] },
+  { type: '1rm_bench', unit: 'kg', guardRange: [40, 70], bigRange: [55, 90] },
+  { type: '1rm_squat', unit: 'kg', guardRange: [70, 110], bigRange: [90, 140] },
   { type: 'standing_reach', unit: 'cm', guardRange: [210, 230], bigRange: [230, 260] },
-  { type: 'wingspan', unit: 'cm', guardRange: [170, 190], bigRange: [190, 215] },
+  { type: 'wing_span', unit: 'cm', guardRange: [170, 190], bigRange: [190, 215] },
   { type: 'hand_span', unit: 'cm', guardRange: [19, 23], bigRange: [22, 26] },
 ];
 

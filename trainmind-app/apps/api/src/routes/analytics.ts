@@ -211,8 +211,12 @@ export async function analyticsRoutes(app: FastifyInstance) {
       athlete: { organizationId },
       date: { gte: from, lte: to },
     };
-    if (query.athleteId) where.athleteId = query.athleteId;
-    if (query.teamId) {
+    // L'atleta è più specifico della squadra: se c'è, vince lui. Con due `if`
+    // separati il filtro squadra sovrascriveva quello atleta e la heatmap
+    // mostrava tutta la rosa anche selezionando un singolo giocatore.
+    if (query.athleteId) {
+      where.athleteId = query.athleteId;
+    } else if (query.teamId) {
       // Resolve team athlete IDs for reliable filtering
       const teamAthletes = await app.prisma.athleteTeam.findMany({
         where: { teamId: query.teamId },
@@ -239,7 +243,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       stress: log.stress,
       mood: log.mood,
       wellnessScore: Math.round(
-        ((log.sleepQuality + log.mood + (6 - log.fatigue) + (6 - log.soreness) + (6 - log.stress)) / 25) * 100
+        ((log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress) / 25) * 100
       ),
     }));
 
@@ -253,7 +257,13 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { organizationId } = request.user;
 
     const to = query.to ? new Date(query.to) : new Date();
-    const from = new Date(to.getTime() - Math.max(query.days, 28) * 86400000);
+    // Inizio richiesto (filtro date) oppure finestra `days`.
+    const displayFrom = query.from
+      ? new Date(query.from)
+      : new Date(to.getTime() - Math.max(query.days, 28) * 86400000);
+    // Il carico cronico guarda indietro 21 giorni: si leggono 28 giorni in più
+    // prima dell'inizio, così il primo punto del grafico è già calcolabile.
+    const from = new Date(displayFrom.getTime() - 28 * 86400000);
 
     const acwrSessionWhere: Record<string, unknown> = {
       status: 'COMPLETED',
@@ -289,6 +299,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
         date: true,
         duration: true,
         rpe: true,
+        detailedByAttendance: true,
         athleteId: true,
         athlete: { select: { id: true, firstName: true, lastName: true } },
         week: {
@@ -329,8 +340,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
         // Individual session → single athlete
         if (!byAthlete[s.athleteId]) byAthlete[s.athleteId] = [];
         byAthlete[s.athleteId].push({ date: sessionDate, load });
-      } else {
-        // Team session → attribute to all athletes in team
+      } else if (!s.detailedByAttendance) {
+        // Team session → attribute to all athletes in team.
+        // Saltata quando il foglio presenze ha già generato le righe per
+        // singolo atleta: altrimenti il carico si conterebbe due volte.
         const teamId = s.week?.trainingPlan?.teamId;
         if (teamId && teamAthletesMap[teamId]) {
           for (const athleteId of teamAthletesMap[teamId]) {
@@ -353,7 +366,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     }> = [];
 
     for (const [athleteId, athleteSessions] of Object.entries(byAthlete)) {
-      const startDate = new Date(from.getTime() + 21 * 86400000);
+      const startDate = new Date(displayFrom.getTime());
       const current = new Date(startDate);
 
       while (current <= to) {
@@ -400,6 +413,148 @@ export async function analyticsRoutes(app: FastifyInstance) {
       : acwrData;
 
     return reply.send({ success: true, data: filteredAcwr });
+  });
+
+  // ─── GET /analytics/attendance ───────────────────────────
+  // Presenze per atleta sui fogli presenze registrati, con il dettaglio per
+  // tipologia di allenamento, l'RPE medio e il carico accumulato.
+  //
+  // Denominatore = numero di fogli in cui l'atleta compare in rosa (cioe' gli
+  // allenamenti della sua squadra), non il totale assoluto dei fogli: un
+  // giocatore aggiunto a meta' stagione non risulta assente per il periodo
+  // precedente.
+  app.get('/analytics/attendance', async (request, reply) => {
+    const query = analyticsQuerySchema.parse(request.query);
+    const { organizationId } = request.user;
+
+    const to = query.to ? new Date(query.to) : new Date();
+    to.setHours(23, 59, 59, 999);
+    const from = query.from ? new Date(query.from) : new Date(to.getTime() - query.days * 86400000);
+    from.setHours(0, 0, 0, 0);
+
+    const sheetWhere: Record<string, unknown> = {
+      organizationId,
+      startedAt: { gte: from, lte: to },
+    };
+    if (query.teamId) sheetWhere.teamId = query.teamId;
+
+    const sheets = await app.prisma.fieldTrainingSession.findMany({
+      where: sheetWhere,
+      select: {
+        id: true,
+        startedAt: true,
+        durationMinutes: true,
+        sessionRpe: true,
+        calendarEvent: { select: { type: true, startTime: true, endTime: true } },
+        trainingSessionId: true,
+        entries: {
+          select: {
+            athleteId: true,
+            status: true,
+            rpe: true,
+            athlete: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    type Bucket = {
+      trainings: number;
+      present: number;
+      unavailable: number;
+      absent: number;
+      rpeSum: number;
+      rpeCount: number;
+      load: number;
+    };
+    const emptyBucket = (): Bucket => ({
+      trainings: 0, present: 0, unavailable: 0, absent: 0, rpeSum: 0, rpeCount: 0, load: 0,
+    });
+
+    const athleteNames: Record<string, { id: string; firstName: string; lastName: string }> = {};
+    const totals: Record<string, Bucket> = {};
+    const byType: Record<string, Record<string, Bucket>> = {};
+    const typeTotals: Record<string, number> = {};
+
+    for (const sheet of sheets) {
+      // Le sessioni della programmazione non hanno un tipo di evento:
+      // le raggruppiamo sotto "session".
+      const type = sheet.calendarEvent?.type || (sheet.trainingSessionId ? 'session' : 'other');
+      typeTotals[type] = (typeTotals[type] || 0) + 1;
+
+      // Durata effettiva, con la stessa catena di fallback del completamento
+      let duration = sheet.durationMinutes ?? null;
+      if (duration == null && sheet.calendarEvent?.startTime && sheet.calendarEvent?.endTime) {
+        duration = Math.round(
+          (sheet.calendarEvent.endTime.getTime() - sheet.calendarEvent.startTime.getTime()) / 60000,
+        );
+      }
+
+      for (const entry of sheet.entries) {
+        if (query.athleteId && entry.athleteId !== query.athleteId) continue;
+        athleteNames[entry.athleteId] = entry.athlete;
+
+        if (!totals[entry.athleteId]) totals[entry.athleteId] = emptyBucket();
+        if (!byType[entry.athleteId]) byType[entry.athleteId] = {};
+        if (!byType[entry.athleteId][type]) byType[entry.athleteId][type] = emptyBucket();
+
+        const buckets = [totals[entry.athleteId], byType[entry.athleteId][type]];
+        for (const b of buckets) b.trainings++;
+
+        if (entry.status === 'PRESENT') {
+          for (const b of buckets) b.present++;
+          const rpe = entry.rpe ?? sheet.sessionRpe ?? null;
+          if (rpe) {
+            for (const b of buckets) {
+              b.rpeSum += rpe;
+              b.rpeCount++;
+              if (duration && duration > 0) b.load += rpe * duration;
+            }
+          }
+        } else if (entry.status === 'UNAVAILABLE') {
+          for (const b of buckets) b.unavailable++;
+        } else {
+          for (const b of buckets) b.absent++;
+        }
+      }
+    }
+
+    const shape = (b: Bucket) => ({
+      trainings: b.trainings,
+      present: b.present,
+      unavailable: b.unavailable,
+      absent: b.absent,
+      attendanceRate: b.trainings > 0 ? Math.round((b.present / b.trainings) * 1000) / 10 : null,
+      avgRpe: b.rpeCount > 0 ? Math.round((b.rpeSum / b.rpeCount) * 10) / 10 : null,
+      totalLoad: Math.round(b.load),
+    });
+
+    const athletes = Object.keys(totals)
+      .map((id) => ({
+        athleteId: id,
+        firstName: athleteNames[id]?.firstName || '',
+        lastName: athleteNames[id]?.lastName || '',
+        ...shape(totals[id]),
+        byType: Object.fromEntries(
+          Object.entries(byType[id] || {}).map(([type, b]) => [type, shape(b)]),
+        ),
+      }))
+      .sort((a, b) => (b.attendanceRate ?? -1) - (a.attendanceRate ?? -1));
+
+    return reply.send({
+      success: true,
+      data: {
+        athletes,
+        types: Object.keys(typeTotals).sort(),
+        summary: {
+          totalSheets: sheets.length,
+          sheetsByType: typeTotals,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        },
+      },
+    });
   });
 
   // ─── GET /analytics/team-overview — Team risk distribution summary ───
@@ -468,6 +623,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
         date: true,
         duration: true,
         rpe: true,
+        detailedByAttendance: true,
         week: {
           select: {
             trainingPlan: { select: { teamId: true } },
@@ -498,7 +654,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
       if (s.athleteId) {
         if (!athleteSessionLoads[s.athleteId]) athleteSessionLoads[s.athleteId] = [];
         athleteSessionLoads[s.athleteId].push({ date: sessionDate, load });
-      } else {
+      } else if (!s.detailedByAttendance) {
+        // Vedi sopra: niente doppio conteggio con le presenze registrate.
         const sessTeamId = s.week?.trainingPlan?.teamId;
         if (sessTeamId && teamAthletesMap[sessTeamId]) {
           for (const aid of teamAthletesMap[sessTeamId]) {
@@ -520,7 +677,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       const avgWellnessScore = athleteWellness.length > 0
         ? Math.round(
             athleteWellness.reduce((sum, w) => {
-              return sum + ((w.sleepQuality + w.mood + (6 - w.fatigue) + (6 - w.soreness) + (6 - w.stress)) / 25) * 100;
+              return sum + ((w.sleepQuality + w.mood + w.fatigue + w.soreness + w.stress) / 25) * 100;
             }, 0) / athleteWellness.length
           )
         : null;

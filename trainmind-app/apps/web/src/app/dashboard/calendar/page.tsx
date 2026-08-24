@@ -8,15 +8,19 @@ import {
   X,
   Clock,
   Dumbbell,
+  Dribbble,
+  User,
+  Target,
   Swords,
+  HeartPulse,
   Stethoscope,
   Users,
   CalendarDays,
   Trash2,
-  CircleDot,
+  ClipboardList,
+  ClipboardCheck,
   ExternalLink,
   Layers,
-  Timer,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
@@ -37,6 +41,8 @@ interface CalendarEvent {
   color: string | null;
   isSession?: boolean;
   sessionId?: string;
+  athleteId?: string | null;
+  athleteName?: string | null;
   status?: string;
   aiModified?: boolean;
   teamId?: string | null;
@@ -65,13 +71,62 @@ interface WeekContext {
 // ─── Constants ──────────────────────────────────────────
 
 const EVENT_TYPE_STYLES: Record<string, { labelKey: string; color: string; bg: string; icon: typeof Dumbbell }> = {
-  training: { labelKey: 'training', color: 'text-teal-700', bg: 'bg-teal-50 border-teal-200', icon: Dumbbell },
-  field_training: { labelKey: 'fieldTraining', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: CircleDot },
-  match: { labelKey: 'match', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Swords },
-  medical: { labelKey: 'medical', color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: Stethoscope },
-  meeting: { labelKey: 'meeting', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: Users },
-  other: { labelKey: 'other', color: 'text-slate-700 dark:text-slate-300', bg: 'bg-slate-50 border-slate-200 dark:border-slate-700', icon: CalendarDays },
+  gym: { labelKey: 'typeGym', color: 'text-teal-700', bg: 'bg-teal-50 border-teal-200', icon: Dumbbell },
+  basket: { labelKey: 'typeBasket', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Dribbble },
+  individual: { labelKey: 'typeIndividual', color: 'text-sky-700', bg: 'bg-sky-50 border-sky-200', icon: User },
+  shooting: { labelKey: 'typeShooting', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Target },
+  match: { labelKey: 'typeMatch', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Swords },
+  rehab: { labelKey: 'typeRehab', color: 'text-rose-700', bg: 'bg-rose-50 border-rose-200', icon: HeartPulse },
+  meeting: { labelKey: 'typeMeeting', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: Users },
+  medical: { labelKey: 'typeMedical', color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: Stethoscope },
+  other: { labelKey: 'typeOther', color: 'text-slate-700 dark:text-slate-300', bg: 'bg-slate-50 border-slate-200 dark:border-slate-700', icon: CalendarDays },
+  // Non selezionabile a mano: l'API marca così le sessioni dei piani di allenamento
+  session: { labelKey: 'typeSession', color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200', icon: Layers },
 };
+
+/** Tipi che si possono scegliere creando un evento (`session` la assegna l'API) */
+const CREATABLE_TYPES = ['gym', 'basket', 'individual', 'shooting', 'match', 'rehab', 'meeting', 'medical', 'other'];
+
+/** Tipi di allenamento con foglio presenze: semafori, RPE per atleta e carico.
+ *  Le sessioni della programmazione (`isSession`) lo hanno comunque. */
+const ATTENDANCE_TYPES = new Set(['gym', 'basket', 'individual', 'shooting', 'rehab']);
+
+/** true se l'evento merita il pulsante 'Presenze' */
+function hasAttendance(ev: { type: string; isSession?: boolean; sessionId?: string }): boolean {
+  if (ev.isSession) return Boolean(ev.sessionId);
+  return ATTENDANCE_TYPES.has(ev.type);
+}
+
+/** Ordine delle fasi del protocollo Return To Play, come nell'API */
+const RTP_PHASE_ORDER = ['PHASE_1', 'PHASE_2', 'PHASE_3', 'PHASE_4', 'PHASE_5', 'CLEARED'];
+
+interface RtpProtocolInfo {
+  protocolId: string;
+  athleteId: string;
+  athleteName: string;
+  phase: string;
+}
+
+interface RtpApiProtocol {
+  id: string;
+  currentPhase: string;
+  athlete: { id: string; firstName: string; lastName: string };
+}
+
+/** Protocolli RTP attivi, usati dagli eventi di tipo Rehab */
+async function fetchActiveRtp(): Promise<RtpProtocolInfo[]> {
+  try {
+    const res = await apiFetch<{ data: { protocols: RtpApiProtocol[] } }>('/rtp');
+    return (res.data?.protocols || []).map((p) => ({
+      protocolId: p.id,
+      athleteId: p.athlete.id,
+      athleteName: `${p.athlete.lastName} ${p.athlete.firstName}`,
+      phase: p.currentPhase,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 const statusColors: Record<string, string> = {
   COMPLETED: 'bg-green-500',
@@ -604,7 +659,9 @@ export default function CalendarPage() {
               onClose={() => setSelectedEvent(null)}
               onDelete={deleteEvent}
               onNavigateToSession={(sessionId) => router.push(`/dashboard/sessions/${sessionId}`)}
-              onOpenFieldTimers={(eventId) => router.push(`/dashboard/field-training/${eventId}`)}
+              onOpenFieldTimers={(id, fromPlan) =>
+                router.push(`/dashboard/field-training/${id}${fromPlan ? '?source=session' : ''}`)
+              }
               onOpenGameTracking={(eventId) => router.push(`/dashboard/game/${eventId}`)}
             />
           ) : selectedDay ? (
@@ -614,7 +671,9 @@ export default function CalendarPage() {
               onSelectEvent={setSelectedEvent}
               onCreateEvent={() => setShowCreateModal(true)}
               onNavigateToSession={(sessionId) => router.push(`/dashboard/sessions/${sessionId}`)}
-              onOpenFieldTimers={(eventId) => router.push(`/dashboard/field-training/${eventId}`)}
+              onOpenFieldTimers={(id, fromPlan) =>
+                router.push(`/dashboard/field-training/${id}${fromPlan ? '?source=session' : ''}`)
+              }
               onOpenGameTracking={(eventId) => router.push(`/dashboard/game/${eventId}`)}
               periodizationContexts={periodizationByDay.get(selectedDay.getDate()) || []}
             />
@@ -655,7 +714,7 @@ function DayDetail({
   onSelectEvent: (e: CalendarEvent) => void;
   onCreateEvent: () => void;
   onNavigateToSession?: (sessionId: string) => void;
-  onOpenFieldTimers?: (eventId: string) => void;
+  onOpenFieldTimers?: (id: string, fromPlan?: boolean) => void;
   onOpenGameTracking?: (eventId: string) => void;
   periodizationContexts: WeekContext[];
 }) {
@@ -777,12 +836,16 @@ function DayDetail({
                         </span>
                       </div>
                     )}
-                    {ev.type === 'field_training' && !ev.isSession && onOpenFieldTimers && (
+                    {hasAttendance(ev) && onOpenFieldTimers && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); onOpenFieldTimers(ev.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenFieldTimers(ev.isSession ? ev.sessionId! : ev.id, Boolean(ev.isSession));
+                        }}
                         className="mt-1 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-2xs font-medium text-orange-700 hover:bg-orange-200 transition-colors"
                       >
-                        <Timer className="h-3 w-3" /> {t('timers')}
+                        <ClipboardCheck className="h-3 w-3" />
+                        {ev.type === 'basket' && !ev.isSession ? t('exercisesShort') : t('attendanceShort')}
                       </button>
                     )}
                     {ev.type === 'match' && !ev.isSession && onOpenGameTracking && (
@@ -790,7 +853,7 @@ function DayDetail({
                         onClick={(e) => { e.stopPropagation(); onOpenGameTracking(ev.id); }}
                         className="mt-1 inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-2xs font-medium text-purple-700 hover:bg-purple-200 transition-colors"
                       >
-                        <Timer className="h-3 w-3" /> {t('gameMinutes')}
+                        <ClipboardList className="h-3 w-3" /> {t('gameMinutes')}
                       </button>
                     )}
                   </div>
@@ -827,13 +890,60 @@ function EventDetail({
   onClose: () => void;
   onDelete: (id: string) => void;
   onNavigateToSession?: (sessionId: string) => void;
-  onOpenFieldTimers?: (eventId: string) => void;
+  onOpenFieldTimers?: (id: string, fromPlan?: boolean) => void;
   onOpenGameTracking?: (eventId: string) => void;
 }) {
   const t = useTranslations('calendar');
+  const tInjuries = useTranslations('injuries');
   const locale = useLocale();
+  const router = useRouter();
+  const { toast } = useToast();
   const eventTypeConfig = useEventTypeConfig(t);
   const cfg = eventTypeConfig[event.type] || eventTypeConfig.other;
+
+  // ─── Rehab: protocollo RTP dell'atleta collegato ───────
+  const [rtp, setRtp] = useState<RtpProtocolInfo | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+
+  useEffect(() => {
+    if (event.type !== 'rehab' || !event.athleteId) {
+      setRtp(null);
+      return;
+    }
+    let cancelled = false;
+    fetchActiveRtp().then((list) => {
+      if (cancelled) return;
+      setRtp(list.find((p) => p.athleteId === event.athleteId) || null);
+    });
+    return () => { cancelled = true; };
+  }, [event.type, event.athleteId]);
+
+  const phaseLabel = (phase: string) => {
+    const idx = RTP_PHASE_ORDER.indexOf(phase);
+    if (phase === 'CLEARED') return t('rtpCleared');
+    return idx >= 0 ? tInjuries(`phase${idx + 1}Label`) : phase;
+  };
+
+  const nextPhase = rtp ? RTP_PHASE_ORDER[RTP_PHASE_ORDER.indexOf(rtp.phase) + 1] : undefined;
+
+  const advancePhase = async () => {
+    if (!rtp || !nextPhase) return;
+    setAdvancing(true);
+    try {
+      await apiFetch(`/rtp/${rtp.protocolId}/advance`, {
+        method: 'POST',
+        body: JSON.stringify({ targetPhase: nextPhase }),
+      });
+      setRtp({ ...rtp, phase: nextPhase });
+      toast('success', tInjuries('phaseAdvanced'));
+    } catch (err) {
+      // 422 quando i criteri della fase corrente non sono soddisfatti:
+      // il messaggio dell'API dice quanti ne mancano.
+      toast('error', err instanceof Error ? err.message : tInjuries('advancePhase'));
+    } finally {
+      setAdvancing(false);
+    }
+  };
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
@@ -884,15 +994,48 @@ function EventDetail({
           </div>
         )}
 
-        {/* Field training → Cronometri button */}
-        {event.type === 'field_training' && !event.isSession && onOpenFieldTimers && (
+        {/* Allenamenti e sessioni di piano → foglio presenze, RPE e carico.
+            Sul basket il foglio contiene anche la tabella esercizi. */}
+        {hasAttendance(event) && onOpenFieldTimers && (
           <button
-            onClick={() => onOpenFieldTimers(event.id)}
+            onClick={() =>
+              onOpenFieldTimers(event.isSession ? event.sessionId! : event.id, Boolean(event.isSession))
+            }
             className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-orange-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
           >
-            <Timer className="h-4 w-4" />
-            {t('trainingTimers')}
+            {event.type === 'basket' && !event.isSession ? (
+              <><Dribbble className="h-4 w-4" />{t('fieldSession')}</>
+            ) : (
+              <><ClipboardCheck className="h-4 w-4" />{t('attendanceSheet')}</>
+            )}
           </button>
+        )}
+
+        {/* Rehab → protocollo Return To Play */}
+        {event.type === 'rehab' && !event.isSession && rtp && (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+            <p className="text-xs font-medium text-rose-700">{t('rtpProtocol')}</p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-900">{rtp.athleteName}</p>
+            <p className="mt-0.5 text-xs text-slate-600">{phaseLabel(rtp.phase)}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {nextPhase && (
+                <button
+                  onClick={advancePhase}
+                  disabled={advancing}
+                  className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {tInjuries('advancePhase')}
+                </button>
+              )}
+              <button
+                onClick={() => router.push('/dashboard/injuries')}
+                className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100"
+              >
+                <ExternalLink className="h-3 w-3" />
+                {t('openInjuryCard')}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Match → Game tracking button */}
@@ -901,7 +1044,7 @@ function EventDetail({
             onClick={() => onOpenGameTracking(event.id)}
             className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-purple-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-purple-700"
           >
-            <Timer className="h-4 w-4" />
+            <ClipboardList className="h-4 w-4" />
             {t('gameMinutes')}
           </button>
         )}
@@ -950,11 +1093,21 @@ function CreateEventModal({
   const [description, setDescription] = useState('');
   const [type, setType] = useState('other');
   const [teamId, setTeamId] = useState(selectedTeamId || '');
+  const [athleteId, setAthleteId] = useState('');
+  const [rtpList, setRtpList] = useState<RtpProtocolInfo[]>([]);
   const [startDate, setStartDate] = useState(dateStr);
   const [startTimeVal, setStartTimeVal] = useState('09:00');
   const [endTimeVal, setEndTimeVal] = useState('10:00');
   const [allDay, setAllDay] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Gli eventi Rehab si agganciano a un atleta con protocollo RTP attivo
+  useEffect(() => {
+    if (type !== 'rehab' || rtpList.length > 0) return;
+    let cancelled = false;
+    fetchActiveRtp().then((list) => { if (!cancelled) setRtpList(list); });
+    return () => { cancelled = true; };
+  }, [type, rtpList.length]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
@@ -972,6 +1125,7 @@ function CreateEventModal({
           endTime,
           allDay,
           teamId: teamId || undefined,
+          athleteId: type === 'rehab' && athleteId ? athleteId : undefined,
         }),
       });
       onCreated();
@@ -1019,8 +1173,8 @@ function CreateEventModal({
                 onChange={(e) => setType(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
               >
-                {Object.entries(eventTypeConfig).map(([k, v]) => (
-                  <option key={k} value={k}>{v.label}</option>
+                {CREATABLE_TYPES.map((k) => (
+                  <option key={k} value={k}>{eventTypeConfig[k]?.label || k}</option>
                 ))}
               </select>
             </div>
@@ -1038,6 +1192,25 @@ function CreateEventModal({
               </select>
             </div>
           </div>
+
+          {type === 'rehab' && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('injuredAthlete')}</label>
+              <select
+                value={athleteId}
+                onChange={(e) => setAthleteId(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+              >
+                <option value="">{t('noAthlete')}</option>
+                {rtpList.map((p) => (
+                  <option key={p.athleteId} value={p.athleteId}>{p.athleteName}</option>
+                ))}
+              </select>
+              {rtpList.length === 0 && (
+                <p className="mt-1 text-2xs text-slate-400">{t('noActiveRtp')}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">{t('dateLabel')}</label>

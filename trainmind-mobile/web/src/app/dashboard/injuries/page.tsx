@@ -126,13 +126,24 @@ const SEVERITY_COLORS = ['', 'text-green-600', 'text-yellow-600', 'text-orange-6
 
 const INJURY_TYPE_DEFS: { value: string; labelKey: string }[] = [
   { value: 'muscular', labelKey: 'typeMuscular' },
-  { value: 'ligament', labelKey: 'typeLigament' },
   { value: 'tendon', labelKey: 'typeTendon' },
+  { value: 'ligament', labelKey: 'typeLigament' },
   { value: 'bone', labelKey: 'typeBone' },
   { value: 'joint', labelKey: 'typeJoint' },
+];
+
+/** Tipi non più selezionabili: restano per leggere gli infortuni storici */
+const LEGACY_TYPE_DEFS: { value: string; labelKey: string }[] = [
   { value: 'contusion', labelKey: 'typeContusion' },
   { value: 'overuse', labelKey: 'typeOveruse' },
   { value: 'other', labelKey: 'typeOther' },
+];
+
+const INJURY_ONSET_DEFS: { value: string; labelKey: string }[] = [
+  { value: 'contusive', labelKey: 'onsetContusive' },
+  { value: 'overuse', labelKey: 'onsetOveruse' },
+  { value: 'traumatic', labelKey: 'onsetTraumatic' },
+  { value: 'non_traumatic', labelKey: 'onsetNonTraumatic' },
 ];
 
 const BODY_LOCATION_DEFS: { value: string; labelKey: string }[] = [
@@ -164,6 +175,7 @@ const BODY_LOCATION_DEFS: { value: string; labelKey: string }[] = [
 interface InjuryForm {
   athleteId: string;
   type: string;
+  onset: string;
   location: string;
   severity: number;
   dateOccurred: string;
@@ -208,6 +220,21 @@ export default function InjuriesRTPPage() {
     () => INJURY_TYPE_DEFS.map(({ value, labelKey }) => ({ value, label: t(labelKey) })),
     [t]
   );
+  const INJURY_ONSETS = useMemo<{ value: string; label: string }[]>(
+    () => INJURY_ONSET_DEFS.map(({ value, labelKey }) => ({ value, label: t(labelKey) })),
+    [t],
+  );
+  /** Etichetta di un tipo, compresi quelli storici non più selezionabili */
+  const typeLabelOf = useMemo(
+    () => {
+      const all = [...INJURY_TYPE_DEFS, ...LEGACY_TYPE_DEFS];
+      return (value: string) => {
+        const def = all.find((d) => d.value === value);
+        return def ? t(def.labelKey) : value;
+      };
+    },
+    [t],
+  );
   const BODY_LOCATIONS = useMemo<{ value: string; label: string }[]>(
     () => BODY_LOCATION_DEFS.map(({ value, labelKey }) => ({ value, label: t(labelKey) })),
     [t]
@@ -228,7 +255,7 @@ export default function InjuriesRTPPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [injuryForm, setInjuryForm] = useState<InjuryForm>({
-    athleteId: '', type: 'muscular', location: 'knee_r', severity: 3, dateOccurred: new Date().toISOString().slice(0, 10), notes: '',
+    athleteId: '', type: 'muscular', onset: '', location: 'knee_r', severity: 3, dateOccurred: new Date().toISOString().slice(0, 10), notes: '',
   });
 
   // Advance modal
@@ -291,6 +318,7 @@ export default function InjuriesRTPPage() {
           method: 'POST',
           body: JSON.stringify({
             type: injuryForm.type,
+            onset: injuryForm.onset || undefined,
             location: injuryForm.location,
             severity: injuryForm.severity,
             dateOccurred: injuryForm.dateOccurred,
@@ -412,7 +440,7 @@ export default function InjuriesRTPPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">{rtpDetail.athlete.firstName} {rtpDetail.athlete.lastName}</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{rtpDetail.athlete.position} — {rtpDetail.injury.type} ({BODY_LOCATIONS.find((l) => l.value === rtpDetail.injury.location)?.label || rtpDetail.injury.location})</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{rtpDetail.athlete.position} — {typeLabelOf(rtpDetail.injury.type)} ({BODY_LOCATIONS.find((l) => l.value === rtpDetail.injury.location)?.label || rtpDetail.injury.location})</p>
               </div>
             </div>
           </div>
@@ -711,7 +739,7 @@ export default function InjuriesRTPPage() {
 
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">{p.injury.type} — {BODY_LOCATIONS.find((l) => l.value === p.injury.location)?.label || p.injury.location}</span>
+                    <span className="text-slate-500 dark:text-slate-400">{typeLabelOf(p.injury.type)} — {BODY_LOCATIONS.find((l) => l.value === p.injury.location)?.label || p.injury.location}</span>
                     <span className={SEVERITY_COLORS[p.injury.severity]}>{SEVERITY_LABELS[p.injury.severity]}</span>
                   </div>
 
@@ -759,7 +787,34 @@ export default function InjuriesRTPPage() {
           />
           <div className="grid grid-cols-2 gap-4">
             <Select label={t('typeLabel')} options={INJURY_TYPES} value={injuryForm.type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setInjuryForm((f: InjuryForm) => ({ ...f, type: e.target.value }))} />
-            <Select label={t('locationLabel')} options={BODY_LOCATIONS} value={injuryForm.location} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setInjuryForm((f: InjuryForm) => ({ ...f, location: e.target.value }))} />
+            <Select
+              label={t('onsetLabel')}
+              options={[{ value: '', label: t('onsetNone') }, ...INJURY_ONSETS]}
+              value={injuryForm.onset}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setInjuryForm((f: InjuryForm) => ({ ...f, onset: e.target.value }))}
+            />
+          </div>
+          {/* Localizzazione: elenco di suggerimenti ma testo libero, per le sedi
+              che non rientrano nell'elenco. Se il testo coincide con una voce
+              nota si salva il suo codice, così resta tradotta. */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t('locationLabel')}</label>
+            <input
+              list="injury-locations"
+              value={BODY_LOCATIONS.find((l) => l.value === injuryForm.location)?.label ?? injuryForm.location}
+              placeholder={t('locationPlaceholder')}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const typed = e.target.value;
+                const match = BODY_LOCATIONS.find((l) => l.label.toLowerCase() === typed.trim().toLowerCase());
+                setInjuryForm((f: InjuryForm) => ({ ...f, location: match ? match.value : typed }));
+              }}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+            <datalist id="injury-locations">
+              {BODY_LOCATIONS.map((l) => (
+                <option key={l.value} value={l.label} />
+              ))}
+            </datalist>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select

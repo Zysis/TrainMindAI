@@ -576,12 +576,17 @@ export async function aiRoutes(app: FastifyInstance) {
       const summary = wellnessLogs.map((log: Record<string, unknown>) => {
         const athlete = log.athlete as { firstName: string; lastName: string; position: string } | null;
         const name = athlete ? `${athlete.firstName} ${athlete.lastName}` : 'Sconosciuto';
-        return `${name} (${(log.date as Date).toISOString().slice(0, 10)}): Sonno=${log.sleep}/10, Fatica=${log.fatigue}/10, Dolore=${log.soreness}/10, Stress=${log.stress}/10, Umore=${log.mood}/10`;
+        return `${name} (${(log.date as Date).toISOString().slice(0, 10)}): Sonno=${log.sleepQuality}/5, Fatica=${log.fatigue}/5, Dolore=${log.soreness}/5, Stress=${log.stress}/5, Umore=${log.mood}/5`;
       }).join('\n');
 
+      // Su tutte e cinque le voci 5 è la condizione migliore e 1 la peggiore:
+      // senza dirlo, il modello legge "Fatica=1" come poca fatica.
+      const scaleNote =
+        'Scala 1-5 su tutte le voci, dove 5 è sempre la condizione migliore e 1 la peggiore ' +
+        '(Fatica 1 = molto affaticato, 5 = per niente affaticato; stessa logica per Dolore e Stress).';
       const question = athlete_id
-        ? `Analizza i dati wellness di questo atleta degli ultimi ${days} giorni e fornisci raccomandazioni:\n\n${summary}`
-        : `Analizza i dati wellness del team degli ultimi ${days} giorni. Identifica atleti a rischio e fornisci raccomandazioni:\n\n${summary}`;
+        ? `Analizza i dati wellness di questo atleta degli ultimi ${days} giorni e fornisci raccomandazioni. ${scaleNote}\n\n${summary}`
+        : `Analizza i dati wellness del team degli ultimi ${days} giorni. Identifica atleti a rischio e fornisci raccomandazioni. ${scaleNote}\n\n${summary}`;
 
       // Call AI coach with wellness data.
       // NB: riusa l'endpoint /ai/coach dell'ai-service, ma è un'operazione

@@ -108,7 +108,7 @@ function computeWellnessScore(log: {
   stress: number;
 }): number {
   return Math.round(
-    ((log.sleepQuality + log.mood + (6 - log.fatigue) + (6 - log.soreness) + (6 - log.stress)) / 25) * 100,
+    ((log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress) / 25) * 100,
   );
 }
 

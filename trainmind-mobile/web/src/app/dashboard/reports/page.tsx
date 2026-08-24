@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FileText, Download, Eye, Loader2, CalendarClock } from 'lucide-react';
@@ -15,11 +15,11 @@ import { useTeam } from '@/hooks/use-team';
 type Audience = 'STAFF' | 'MEDICAL' | 'TRAINER';
 type Format = 'JSON' | 'PDF' | 'DOCX';
 
-const AUDIENCE_KEYS: Record<string, string> = {
-  STAFF: 'audienceStaff',
-  MEDICAL: 'audienceMedical',
-  TRAINER: 'audienceTrainer',
-};
+interface AthleteOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
 
 function todayMinusDays(days: number): string {
   const d = new Date();
@@ -40,9 +40,21 @@ interface ReportPreview {
     generatedAt: string;
     generatedBy: string;
     teamName?: string;
+    athleteName?: string;
   };
   summary?: string;
   kpis?: Array<{ label: string; value: string | number; trend?: string }>;
+}
+
+/** Estrae il messaggio d'errore dell'API, che risponde `{ error: { message } }` */
+async function readApiError(res: Response): Promise<string> {
+  const text = await res.text();
+  try {
+    const parsed = JSON.parse(text) as { error?: { message?: string }; message?: string };
+    return parsed.error?.message || parsed.message || text || `HTTP ${res.status}`;
+  } catch {
+    return text || `HTTP ${res.status}`;
+  }
 }
 
 export default function ReportsPage() {
@@ -56,6 +68,8 @@ export default function ReportsPage() {
   const { toast } = useToast();
   const { teams } = useTeam();
   const [teamId, setTeamId] = useState<string>('');
+  const [athleteId, setAthleteId] = useState<string>('');
+  const [athletes, setAthletes] = useState<AthleteOption[]>([]);
   const [audience, setAudience] = useState<Audience>('STAFF');
   const [periodFrom, setPeriodFrom] = useState(todayMinusDays(30));
   const [periodTo, setPeriodTo] = useState(todayIso());
@@ -65,6 +79,38 @@ export default function ReportsPage() {
   const [preview, setPreview] = useState<ReportPreview | null>(null);
   const [rawJson, setRawJson] = useState<unknown>(null);
 
+  // Elenco atleti, ristretto alla squadra scelta
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const params = new URLSearchParams({ limit: '100' });
+        if (teamId) params.set('teamId', teamId);
+        const res = await apiFetch<{ data: AthleteOption[] }>(`/athletes?${params}`);
+        if (cancelled) return;
+        const list = res.data || [];
+        setAthletes(list);
+        setAthleteId((prev) => (prev && !list.some((a) => a.id === prev) ? '' : prev));
+      } catch {
+        if (!cancelled) setAthletes([]);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [teamId]);
+
+  function requestBody(format: Format) {
+    return JSON.stringify({
+      audience,
+      periodFrom,
+      periodTo,
+      format,
+      includeAISummary,
+      ...(teamId ? { teamId } : {}),
+      ...(athleteId ? { athleteId } : {}),
+    });
+  }
+
   async function handleGeneratePreview() {
     setLoading(true);
     setPreview(null);
@@ -72,17 +118,7 @@ export default function ReportsPage() {
     try {
       const res = await apiFetch<{ success: boolean; data: { report: ReportPreview } }>(
         '/ai/report',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            audience,
-            periodFrom,
-            periodTo,
-            format: 'JSON',
-            includeAISummary,
-            ...(teamId ? { teamId } : {}),
-          }),
-        },
+        { method: 'POST', body: requestBody('JSON') },
       );
       setPreview(res.data.report);
       setRawJson(res.data.report);
@@ -110,27 +146,28 @@ export default function ReportsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          audience,
-          periodFrom,
-          periodTo,
-          format,
-          includeAISummary,
-          ...(teamId ? { teamId } : {}),
-        }),
+        body: requestBody(format),
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
+        throw new Error(await readApiError(res));
       }
 
       const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error(t('toastEmptyFile'));
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const teamSlug = teamId ? `-${(teams.find((t) => t.id === teamId)?.name || 'team').toLowerCase().replace(/\s+/g, '_')}` : '';
-      a.download = `report-${audience.toLowerCase()}${teamSlug}-${periodFrom}_${periodTo}.${format.toLowerCase()}`;
+      const teamSlug = teamId
+        ? `-${(teams.find((x) => x.id === teamId)?.name || 'team').toLowerCase().replace(/\s+/g, '_')}`
+        : '';
+      const athlete = athletes.find((x) => x.id === athleteId);
+      const athleteSlug = athlete
+        ? `-${`${athlete.lastName}_${athlete.firstName}`.toLowerCase().replace(/\s+/g, '_')}`
+        : '';
+      a.download = `report-${audience.toLowerCase()}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}.${format.toLowerCase()}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -154,7 +191,7 @@ export default function ReportsPage() {
         </div>
         <Link
           href="/dashboard/reports/schedules"
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
           <CalendarClock className="h-4 w-4" />
           {t('schedules')}
@@ -179,11 +216,21 @@ export default function ReportsPage() {
             label={t('team')}
             options={[
               { value: '', label: t('allTeams') },
-              ...teams.map((t) => ({ value: t.id, label: t.name })),
+              ...teams.map((team) => ({ value: team.id, label: team.name })),
             ]}
             value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
+            onChange={(e) => { setTeamId(e.target.value); setAthleteId(''); }}
           />
+          <Select
+            label={t('athlete')}
+            options={[
+              { value: '', label: t('wholeTeam') },
+              ...athletes.map((a) => ({ value: a.id, label: `${a.lastName} ${a.firstName}` })),
+            ]}
+            value={athleteId}
+            onChange={(e) => setAthleteId(e.target.value)}
+          />
+          <div className="hidden md:block" />
           <Input
             label={t('from')}
             type="date"
@@ -197,6 +244,10 @@ export default function ReportsPage() {
             onChange={(e) => setPeriodTo(e.target.value)}
           />
         </div>
+
+        {athleteId && (
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('athleteReportHint')}</p>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
@@ -222,7 +273,7 @@ export default function ReportsPage() {
             type="button"
             onClick={() => handleDownload('PDF')}
             disabled={downloading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {downloading === 'PDF' ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -235,7 +286,7 @@ export default function ReportsPage() {
             type="button"
             onClick={() => handleDownload('DOCX')}
             disabled={downloading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {downloading === 'DOCX' ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -251,7 +302,12 @@ export default function ReportsPage() {
       {preview && (
         <div className="card space-y-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {t('preview')}{preview.metadata.teamName ? ` — ${preview.metadata.teamName}` : ''}
+            {t('preview')}
+            {preview.metadata.athleteName
+              ? ` — ${preview.metadata.athleteName}`
+              : preview.metadata.teamName
+                ? ` — ${preview.metadata.teamName}`
+                : ''}
           </h2>
 
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4">
@@ -268,6 +324,12 @@ export default function ReportsPage() {
                 <div>
                   <p className="text-xs uppercase text-slate-500 dark:text-slate-400">{t('team')}</p>
                   <p className="font-medium text-slate-900 dark:text-white">{preview.metadata.teamName}</p>
+                </div>
+              )}
+              {preview.metadata.athleteName && (
+                <div>
+                  <p className="text-xs uppercase text-slate-500 dark:text-slate-400">{t('athlete')}</p>
+                  <p className="font-medium text-slate-900 dark:text-white">{preview.metadata.athleteName}</p>
                 </div>
               )}
               <div>

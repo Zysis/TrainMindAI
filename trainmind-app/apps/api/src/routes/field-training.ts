@@ -5,7 +5,10 @@
  *   POST   /field-training/start             create session from calendar event
  *   GET    /field-training/:id               get session with entries
  *   GET    /field-training/by-event/:eventId  get session by calendar event id
+ *   GET    /field-training/by-session/:sessionId  get session by training session id
  *   PUT    /field-training/:id/entries       bulk save timer data (autosave)
+ *   PUT    /field-training/:id/exercises     save exercises + available athletes
+ *   PUT    /field-training/:id/roster        save attendance (traffic light) + guest players
  *   PUT    /field-training/:id/complete      mark complete → create training sessions for analytics
  *   POST   /field-training/:id/athletes      add athlete to session
  *   DELETE /field-training/:id/athletes/:athleteId  remove athlete from session
@@ -24,20 +27,21 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
   app.post('/field-training/start', auth, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const schema = z.object({
-        calendarEventId: z.string().min(1),
+        calendarEventId: z.string().min(1).optional(),
+        trainingSessionId: z.string().min(1).optional(),
         teamId: z.string().optional(),
       });
       const parsed = schema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'calendarEventId richiesto' } });
+      if (!parsed.success || (!parsed.data.calendarEventId && !parsed.data.trainingSessionId)) {
+        return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Serve calendarEventId oppure trainingSessionId' } });
       }
 
       const { organizationId } = request.user;
-      const { calendarEventId, teamId } = parsed.data;
+      const { calendarEventId, trainingSessionId, teamId } = parsed.data;
 
-      // Check if session already exists for this event
-      const existing = await app.prisma.fieldTrainingSession.findUnique({
-        where: { calendarEventId },
+      // Il foglio esiste già?
+      const existing = await app.prisma.fieldTrainingSession.findFirst({
+        where: calendarEventId ? { calendarEventId } : { trainingSessionId },
         include: {
           entries: {
             include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
@@ -48,15 +52,33 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: { session: existing, created: false } });
       }
 
-      // Verify calendar event exists
-      const calendarEvent = await app.prisma.calendarEvent.findFirst({
-        where: { id: calendarEventId, userId: request.user.userId },
-      });
-      if (!calendarEvent) {
-        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Evento calendario non trovato (id: ${calendarEventId})` } });
-      }
+      let effectiveTeamId: string | null = teamId || null;
+      let defaultDuration: number | null = null;
 
-      const effectiveTeamId = teamId || calendarEvent.teamId;
+      if (calendarEventId) {
+        const calendarEvent = await app.prisma.calendarEvent.findFirst({
+          where: { id: calendarEventId, userId: request.user.userId },
+        });
+        if (!calendarEvent) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Evento calendario non trovato (id: ${calendarEventId})` } });
+        }
+        effectiveTeamId = effectiveTeamId || calendarEvent.teamId;
+        defaultDuration = Math.max(
+          1,
+          Math.round((calendarEvent.endTime.getTime() - calendarEvent.startTime.getTime()) / 60000),
+        );
+      } else {
+        // Sessione della programmazione: la squadra si risale dal piano
+        const trainingSession = await app.prisma.trainingSession.findFirst({
+          where: { id: trainingSessionId, organizationId },
+          include: { week: { select: { trainingPlan: { select: { teamId: true } } } } },
+        });
+        if (!trainingSession) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Sessione non trovata (id: ${trainingSessionId})` } });
+        }
+        effectiveTeamId = effectiveTeamId || trainingSession.week?.trainingPlan?.teamId || null;
+        defaultDuration = trainingSession.duration || null;
+      }
 
       // Load athletes from team if available
       let athleteIds: string[] = [];
@@ -73,7 +95,9 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       try {
         session = await app.prisma.fieldTrainingSession.create({
           data: {
-            calendarEventId,
+            calendarEventId: calendarEventId || null,
+            trainingSessionId: trainingSessionId || null,
+            durationMinutes: defaultDuration,
             teamId: effectiveTeamId || null,
             organizationId,
             entries: {
@@ -90,18 +114,22 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
               orderBy: { athlete: { lastName: 'asc' } },
             },
             team: { select: { id: true, name: true, color: true } },
+            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+            trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
         });
       } catch (createErr) {
         // Race condition: session was created between findUnique and create
-        const raceSession = await app.prisma.fieldTrainingSession.findUnique({
-          where: { calendarEventId },
+        const raceSession = await app.prisma.fieldTrainingSession.findFirst({
+          where: calendarEventId ? { calendarEventId } : { trainingSessionId },
           include: {
             entries: {
               include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
               orderBy: { athlete: { lastName: 'asc' } },
             },
             team: { select: { id: true, name: true, color: true } },
+            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+            trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
         });
         if (raceSession) {
@@ -133,6 +161,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+            trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
         });
 
@@ -143,6 +172,38 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: { session } });
       } catch (err) {
         request.log.error(err, 'field-training/by-event error');
+        const message = err instanceof Error ? err.message : 'Errore caricamento sessione';
+        return reply.status(500).send({ success: false, error: { code: 'INTERNAL', message } });
+      }
+    },
+  );
+
+  // ─── GET /field-training/by-session/:sessionId ──────────
+  // Foglio presenze di una sessione della programmazione
+  app.get<{ Params: { sessionId: string } }>(
+    '/field-training/by-session/:sessionId',
+    auth,
+    async (request, reply) => {
+      try {
+        const session = await app.prisma.fieldTrainingSession.findFirst({
+          where: { trainingSessionId: request.params.sessionId },
+          include: {
+            entries: {
+              include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
+              orderBy: { athlete: { lastName: 'asc' } },
+            },
+            team: { select: { id: true, name: true, color: true } },
+            trainingSession: { select: { id: true, title: true, date: true, duration: true } },
+          },
+        });
+
+        if (!session || session.organizationId !== request.user.organizationId) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
+        }
+
+        return reply.send({ success: true, data: { session } });
+      } catch (err) {
+        request.log.error(err, 'field-training/by-session error');
         const message = err instanceof Error ? err.message : 'Errore caricamento sessione';
         return reply.status(500).send({ success: false, error: { code: 'INTERNAL', message } });
       }
@@ -229,6 +290,132 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
     },
   );
 
+  // ─── PUT /field-training/:id/exercises ──────────────────
+  // Save the exercise table (name, players, courts, stopwatch totals) + available athletes
+  app.put<{ Params: { id: string } }>(
+    '/field-training/:id/exercises',
+    auth,
+    async (request, reply) => {
+      const exerciseSchema = z.object({
+        id: z.string().min(1),
+        name: z.string().max(200),
+        isWarmup: z.boolean(),
+        players: z.number().int().min(0).max(999),
+        courts: z.number().int().min(0).max(99),
+        activityMs: z.number().int().min(0),
+        pauseMs: z.number().int().min(0),
+        breakMs: z.number().int().min(0),
+        state: z.enum(['idle', 'running', 'paused', 'done']),
+        breakRunning: z.boolean(),
+      });
+      const schema = z.object({
+        availableAthletes: z.number().int().min(0).max(999).nullable().optional(),
+        exercises: z.array(exerciseSchema).max(100),
+      });
+      const parsed = schema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Dati esercizi non validi', details: parsed.error.flatten() } });
+      }
+
+      const session = await app.prisma.fieldTrainingSession.findFirst({
+        where: { id: request.params.id, organizationId: request.user.organizationId },
+      });
+      if (!session) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
+      }
+
+      await app.prisma.fieldTrainingSession.update({
+        where: { id: session.id },
+        data: {
+          exercises: parsed.data.exercises as unknown as Prisma.InputJsonValue,
+          ...(parsed.data.availableAthletes !== undefined
+            ? { availableAthletes: parsed.data.availableAthletes }
+            : {}),
+        },
+      });
+
+      return reply.send({ success: true, data: { saved: parsed.data.exercises.length } });
+    },
+  );
+
+  // ─── PUT /field-training/:id/roster ─────────────────────
+  // Presenze col semaforo (verde/giallo/rosso) + giocatori ospiti di sessione
+  app.put<{ Params: { id: string } }>(
+    '/field-training/:id/roster',
+    auth,
+    async (request, reply) => {
+      const statusEnum = z.enum(['PRESENT', 'UNAVAILABLE', 'ABSENT']);
+      const schema = z.object({
+        availableAthletes: z.number().int().min(0).max(999).nullable().optional(),
+        durationMinutes: z.number().int().min(0).max(600).nullable().optional(),
+        sessionRpe: z.number().int().min(1).max(10).nullable().optional(),
+        athletes: z.array(z.object({
+          athleteId: z.string().min(1),
+          status: statusEnum,
+          note: z.string().max(500).nullable().optional(),
+          rpe: z.number().int().min(1).max(10).nullable().optional(),
+        })).max(200),
+        guests: z.array(z.object({
+          id: z.string().min(1),
+          name: z.string().max(120),
+          status: statusEnum,
+          note: z.string().max(500).nullable().optional(),
+        })).max(100),
+      });
+      const parsed = schema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Dati presenze non validi', details: parsed.error.flatten() } });
+      }
+
+      const session = await app.prisma.fieldTrainingSession.findFirst({
+        where: { id: request.params.id, organizationId: request.user.organizationId },
+      });
+      if (!session) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
+      }
+
+      await app.prisma.$transaction([
+        app.prisma.fieldTrainingSession.update({
+          where: { id: session.id },
+          data: {
+            guests: parsed.data.guests as unknown as Prisma.InputJsonValue,
+            ...(parsed.data.availableAthletes !== undefined
+              ? { availableAthletes: parsed.data.availableAthletes }
+              : {}),
+            ...(parsed.data.durationMinutes !== undefined
+              ? { durationMinutes: parsed.data.durationMinutes }
+              : {}),
+            ...(parsed.data.sessionRpe !== undefined
+              ? { sessionRpe: parsed.data.sessionRpe }
+              : {}),
+          },
+        }),
+        ...parsed.data.athletes.map((a) =>
+          app.prisma.fieldTrainingEntry.upsert({
+            where: {
+              fieldTrainingSessionId_athleteId: {
+                fieldTrainingSessionId: session.id,
+                athleteId: a.athleteId,
+              },
+            },
+            update: { status: a.status, note: a.note ?? null, rpe: a.rpe ?? null },
+            create: {
+              fieldTrainingSessionId: session.id,
+              athleteId: a.athleteId,
+              status: a.status,
+              note: a.note ?? null,
+              rpe: a.rpe ?? null,
+              totalActiveMs: 0,
+              laps: [],
+            },
+          }),
+        ),
+      ]);
+
+      return reply.send({ success: true, data: { athletes: parsed.data.athletes.length, guests: parsed.data.guests.length } });
+    },
+  );
+
   // ─── POST /field-training/:id/athletes ──────────────────
   // Add athlete to session
   app.post<{ Params: { id: string } }>(
@@ -308,7 +495,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
           entries: { include: { athlete: { select: { id: true, firstName: true, lastName: true } } } },
-          calendarEvent: { select: { title: true, startTime: true } },
+          calendarEvent: { select: { title: true, startTime: true, endTime: true } },
+          trainingSession: { select: { id: true, title: true, date: true, duration: true } },
         },
       });
       if (!session) {
@@ -323,27 +511,45 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
 
-      // For each athlete with active time > 0, create/update a TrainingSession
-      // so the data feeds into analytics (sRPE, ACWR, load charts)
+      const presentEntries = session.entries.filter((e) => e.status === 'PRESENT');
+
+      // Durata effettiva: quella scritta nel foglio, altrimenti la si deduce.
+      // È il moltiplicatore del carico, quindi non si inventa: se manca del
+      // tutto, nessuna riga viene creata.
+      let durationMinutes = session.durationMinutes ?? null;
+      if (durationMinutes == null && session.trainingSession?.duration) {
+        durationMinutes = session.trainingSession.duration;
+      }
+      if (durationMinutes == null && session.calendarEvent?.startTime && session.calendarEvent?.endTime) {
+        durationMinutes = Math.round(
+          (session.calendarEvent.endTime.getTime() - session.calendarEvent.startTime.getTime()) / 60000,
+        );
+      }
+
+      const sessionTitle = session.calendarEvent?.title || session.trainingSession?.title || 'Allenamento';
+      const sessionDate = session.calendarEvent?.startTime || session.trainingSession?.date || session.startedAt;
+
+      // Una TrainingSession per ogni giocatore presente con un RPE: il carico
+      // (sRPE = RPE × durata) entra così negli analytics già esistenti.
+      // Chi non ha un RPE proprio eredita quello di sessione.
       const createdSessions: string[] = [];
-      for (const entry of session.entries) {
-        if (entry.totalActiveMs <= 0) continue;
+      let skippedNoRpe = 0;
 
-        const durationMinutes = Math.round(entry.totalActiveMs / 60000);
-        if (durationMinutes < 1) continue;
-
-        const lapsArray = (entry.laps as Array<{ startMs: number; endMs: number | null; durationMs: number }>) || [];
-        const lapsText = lapsArray.map((lap, i) =>
-          `Intervallo ${i + 1}: ${Math.round(lap.durationMs / 1000)}s`
-        ).join(', ');
+      for (const entry of presentEntries) {
+        const rpe = entry.rpe ?? session.sessionRpe ?? null;
+        if (!rpe || !durationMinutes || durationMinutes < 1) {
+          skippedNoRpe++;
+          continue;
+        }
 
         const ts = await app.prisma.trainingSession.create({
           data: {
-            title: `${session.calendarEvent?.title || 'Allenamento in campo'} — ${entry.athlete.firstName} ${entry.athlete.lastName}`,
-            date: session.calendarEvent?.startTime || session.startedAt,
+            title: `${sessionTitle} — ${entry.athlete.firstName} ${entry.athlete.lastName}`,
+            date: sessionDate,
             duration: durationMinutes,
+            rpe,
             status: 'COMPLETED',
-            notes: `Tempo attivo registrato con cronometro: ${durationMinutes} min. ${lapsArray.length} intervalli. ${lapsText}`,
+            notes: `Presenza registrata. Carico ${rpe * durationMinutes} (RPE ${rpe} × ${durationMinutes} min).`,
             athleteId: entry.athleteId,
             organizationId,
           },
@@ -351,11 +557,22 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         createdSessions.push(ts.id);
       }
 
+      // Se il foglio appartiene a una sessione della programmazione, quella
+      // riga di squadra non va più attribuita a tutta la rosa: adesso il
+      // carico arriva dalle righe per singolo atleta appena create.
+      if (session.trainingSessionId && createdSessions.length > 0) {
+        await app.prisma.trainingSession.update({
+          where: { id: session.trainingSessionId },
+          data: { detailedByAttendance: true, status: 'COMPLETED' },
+        });
+      }
+
       return reply.send({
         success: true,
         data: {
           completed: true,
           trainingSessions: createdSessions.length,
+          skippedNoRpe,
           sessionIds: createdSessions,
         },
       });

@@ -46,16 +46,17 @@ export const RPE_SCALE = [
 export const EXERCISE_CATEGORIES = [
   'Forza',
   'Potenza',
-  'Resistenza',
+  'Condizionamento-Metabolico',
   'Velocita',
   'Agilita',
   'Flessibilita',
+  'Mobilita',
+  'Release',
   'Propriocezione',
   'Core',
   'Pliometria',
   'Prevenzione',
   'Riabilitazione',
-  'Condizionamento',
   'Basket-Specifico',
 ] as const;
 

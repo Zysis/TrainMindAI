@@ -37,5 +37,20 @@ export default defineConfig({
   plugins: [htmlInclude()],
   server: { port: 5173, open: true },
   preview: { port: 4173 },
-  build: { outDir: 'dist', assetsDir: 'assets', emptyOutDir: true }
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+    // Sito multipagina: oltre alla home ci sono le tre pagine legali.
+    // Ognuna e' un entry point a se', condivide gli stessi stili e usa
+    // src/js/legal.js (solo lingua + link, niente animazioni).
+    rollupOptions: {
+      input: {
+        main: resolve(process.cwd(), 'index.html'),
+        privacy: resolve(process.cwd(), 'legal/privacy.html'),
+        cookie: resolve(process.cwd(), 'legal/cookie.html'),
+        notice: resolve(process.cwd(), 'legal/note-legali.html')
+      }
+    }
+  }
 })

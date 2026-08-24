@@ -44,6 +44,7 @@ const generateReportSchema = z.object({
   format: z.enum(['PDF', 'DOCX', 'JSON']).default('JSON'),
   includeAISummary: z.boolean().optional().default(true),
   teamId: z.string().optional(),
+  athleteId: z.string().optional(),
 });
 
 // ─── Helpers ────────────────────────────────────────────
@@ -68,7 +69,7 @@ function computeWellnessScore(log: {
   stress: number;
 }): number {
   const numerator =
-    log.sleepQuality + log.mood + (6 - log.fatigue) + (6 - log.soreness) + (6 - log.stress);
+    log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress;
   return (numerator / 25) * 100;
 }
 
@@ -172,12 +173,19 @@ async function aggregateStaff(
   to: Date,
   metadata: ReportMetadata,
   teamId?: string,
+  athleteId?: string,
 ): Promise<StaffReportData> {
   const prisma = app.prisma;
 
   // Active athletes — filter by team if specified
   let athletes;
-  if (teamId) {
+  if (athleteId) {
+    // Report del singolo atleta: ogni aggregazione parte da lui solo
+    athletes = await prisma.athlete.findMany({
+      where: { id: athleteId, organizationId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+  } else if (teamId) {
     const teamAthletes = await prisma.athleteTeam.findMany({
       where: { teamId },
       select: { athlete: { select: { id: true, firstName: true, lastName: true } } },
@@ -216,6 +224,7 @@ async function aggregateStaff(
       date: true,
       rpe: true,
       duration: true,
+      detailedByAttendance: true,
       week: { select: { trainingPlan: { select: { teamId: true } } } },
     },
   });
@@ -237,6 +246,14 @@ async function aggregateStaff(
         return map;
       })();
 
+  // Le sessioni di squadra (athleteId null) vengono attribuite a tutta la rosa:
+  // sul report del singolo va tenuto solo lui.
+  if (athleteId) {
+    for (const key of Object.keys(teamAthletesMap)) {
+      teamAthletesMap[key] = teamAthletesMap[key].filter((id: string) => id === athleteId);
+    }
+  }
+
   const sessionLogs: Array<{ athleteId: string; date: Date; rpe: number; duration: number }> = [];
   for (const s of rawSessions) {
     if (!s.date) continue;
@@ -244,8 +261,9 @@ async function aggregateStaff(
     const duration = s.duration || 60;
     if (s.athleteId) {
       sessionLogs.push({ athleteId: s.athleteId, date: s.date, rpe, duration });
-    } else {
-      // Team-plan session → attribute to all team athletes
+    } else if (!s.detailedByAttendance) {
+      // Team-plan session → attribute to all team athletes.
+      // Saltata se le presenze hanno già prodotto le righe per atleta.
       const sessTeamId = s.week?.trainingPlan?.teamId;
       if (sessTeamId && teamAthletesMap[sessTeamId]) {
         for (const aid of teamAthletesMap[sessTeamId]) {
@@ -412,12 +430,16 @@ async function aggregateMedical(
   to: Date,
   metadata: ReportMetadata,
   teamId?: string,
+  athleteId?: string,
 ): Promise<MedicalReportData> {
   const prisma = app.prisma;
 
   // If team filter, get team athlete IDs
   let teamAthleteIds: string[] | undefined;
-  if (teamId) {
+  if (athleteId) {
+    // Report del singolo atleta
+    teamAthleteIds = [athleteId];
+  } else if (teamId) {
     const ta = await prisma.athleteTeam.findMany({
       where: { teamId },
       select: { athleteId: true },
@@ -707,11 +729,18 @@ async function aggregateTrainer(
   to: Date,
   metadata: ReportMetadata,
   teamId?: string,
+  athleteId?: string,
 ): Promise<TrainerReportData> {
   const prisma = app.prisma;
 
   let athletes;
-  if (teamId) {
+  if (athleteId) {
+    // Report del singolo atleta: ogni aggregazione parte da lui solo
+    athletes = await prisma.athlete.findMany({
+      where: { id: athleteId, organizationId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+  } else if (teamId) {
     const teamAthletes = await prisma.athleteTeam.findMany({
       where: { teamId },
       select: { athlete: { select: { id: true, firstName: true, lastName: true } } },
@@ -756,7 +785,7 @@ async function aggregateTrainer(
   }
   const sessions = await prisma.trainingSession.findMany({
     where: adherenceWhere,
-    select: { status: true, athleteId: true, duration: true, rpe: true, week: { select: { trainingPlan: { select: { teamId: true } } } } },
+    select: { status: true, athleteId: true, duration: true, rpe: true, detailedByAttendance: true, week: { select: { trainingPlan: { select: { teamId: true } } } } },
   });
 
   // Build adherence map: attribute team-plan sessions to all team athletes
@@ -767,8 +796,9 @@ async function aggregateTrainer(
     const targetIds: string[] = [];
     if (s.athleteId) {
       if (adherenceMap[s.athleteId]) targetIds.push(s.athleteId);
-    } else {
-      // Team-plan session → attribute to all team athletes
+    } else if (!s.detailedByAttendance) {
+      // Team-plan session → attribute to all team athletes.
+      // Saltata se le presenze hanno già prodotto le righe per atleta.
       const sessTeamId = s.week?.trainingPlan?.teamId;
       if (sessTeamId) {
         const teamMembers = teamId
@@ -827,6 +857,7 @@ async function aggregateTrainer(
       date: true,
       rpe: true,
       duration: true,
+      detailedByAttendance: true,
       week: { select: { trainingPlan: { select: { teamId: true } } } },
     },
   });
@@ -839,7 +870,9 @@ async function aggregateTrainer(
     const duration = s.duration || 60;
     if (s.athleteId) {
       sessionLogs.push({ athleteId: s.athleteId, date: s.date, rpe, duration });
-    } else {
+    } else if (!s.detailedByAttendance) {
+      // Niente doppio conteggio: se il foglio presenze ha gia generato le
+      // righe per singolo atleta, la riga di squadra non si riattribuisce.
       const sessTeamId = s.week?.trainingPlan?.teamId;
       if (sessTeamId && trainerTeamMap[sessTeamId]) {
         for (const aid of trainerTeamMap[sessTeamId]) {
@@ -995,7 +1028,7 @@ export async function reportRoutes(app: FastifyInstance) {
         });
       }
 
-      const { audience, periodFrom, periodTo, format, includeAISummary, teamId } = parsed.data;
+      const { audience, periodFrom, periodTo, format, includeAISummary, teamId, athleteId } = parsed.data;
       const { organizationId, userId } = request.user;
 
       let result: GenerateReportOutput;
@@ -1010,6 +1043,7 @@ export async function reportRoutes(app: FastifyInstance) {
           format,
           includeAISummary,
           teamId,
+          athleteId,
         });
       } catch (err) {
         request.log.error({ err }, 'Report generation failed');
@@ -1043,6 +1077,8 @@ export interface GenerateReportInput {
   format: 'JSON' | 'PDF' | 'DOCX';
   includeAISummary: boolean;
   teamId?: string;
+  /** Report del singolo atleta: restringe ogni aggregazione a lui solo */
+  athleteId?: string;
 }
 
 export interface GenerateReportOutput {
@@ -1053,7 +1089,7 @@ export interface GenerateReportOutput {
 }
 
 export async function generateReport(input: GenerateReportInput): Promise<GenerateReportOutput> {
-  const { app, organizationId, userId, audience, periodFrom, periodTo, format, includeAISummary, teamId } = input;
+  const { app, organizationId, userId, audience, periodFrom, periodTo, format, includeAISummary, teamId, athleteId } = input;
 
   const from = new Date(periodFrom + 'T00:00:00Z');
   const to = new Date(periodTo + 'T23:59:59Z');
@@ -1061,11 +1097,21 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
     throw new Error('periodFrom deve essere anteriore a periodTo');
   }
 
-  const [org, user, team] = await Promise.all([
+  const [org, user, team, athlete] = await Promise.all([
     app.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
     app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
     teamId ? app.prisma.team.findUnique({ where: { id: teamId }, select: { name: true } }) : null,
+    athleteId
+      ? app.prisma.athlete.findFirst({
+          where: { id: athleteId, organizationId },
+          select: { firstName: true, lastName: true },
+        })
+      : null,
   ]);
+
+  if (athleteId && !athlete) {
+    throw new Error('Atleta non trovato in questa organizzazione');
+  }
 
   const metadata: ReportMetadata = {
     audience,
@@ -1075,15 +1121,16 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
     generatedAt: new Date().toISOString(),
     generatedBy: user ? `${user.firstName} ${user.lastName}` : '—',
     teamName: team?.name,
+    athleteName: athlete ? `${athlete.firstName} ${athlete.lastName}` : undefined,
   };
 
   let report: ReportData;
   if (audience === 'STAFF') {
-    report = await aggregateStaff(app, organizationId, from, to, metadata, teamId);
+    report = await aggregateStaff(app, organizationId, from, to, metadata, teamId, athleteId);
   } else if (audience === 'MEDICAL') {
-    report = await aggregateMedical(app, organizationId, from, to, metadata, teamId);
+    report = await aggregateMedical(app, organizationId, from, to, metadata, teamId, athleteId);
   } else {
-    report = await aggregateTrainer(app, organizationId, from, to, metadata, teamId);
+    report = await aggregateTrainer(app, organizationId, from, to, metadata, teamId, athleteId);
   }
 
   if (includeAISummary) {
@@ -1100,7 +1147,10 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
   }
 
   const teamSlug = team?.name ? `-${team.name.toLowerCase().replace(/\s+/g, '_')}` : '';
-  const baseFilename = `report-${audience.toLowerCase()}${teamSlug}-${periodFrom}_${periodTo}`;
+  const athleteSlug = athlete
+    ? `-${`${athlete.lastName}_${athlete.firstName}`.toLowerCase().replace(/\s+/g, '_')}`
+    : '';
+  const baseFilename = `report-${audience.toLowerCase()}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}`;
 
   if (format === 'JSON') {
     return {

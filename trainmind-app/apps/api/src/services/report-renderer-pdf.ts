@@ -30,21 +30,52 @@ let browserPromise: Promise<any> | null = null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getBrowser(): Promise<any> {
-  if (!browserPromise) {
-    browserPromise = (async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const puppeteer: any = await import('puppeteer').catch((err) => {
-        throw new Error(
-          `Puppeteer non installato. Esegui: pnpm add puppeteer --filter @trainmind/api. Dettagli: ${String(err)}`,
-        );
-      });
-      return puppeteer.default.launch({
+  // Il browser viene riusato tra un report e l'altro, ma la promise NON va
+  // memorizzata quando fallisce o quando Chrome muore: altrimenti ogni PDF
+  // successivo eredita l'errore finché non si riavvia l'API.
+  const cached = browserPromise;
+  if (cached) {
+    try {
+      const browser = await cached;
+      const alive =
+        typeof browser?.connected === 'boolean'
+          ? browser.connected
+          : typeof browser?.isConnected === 'function'
+            ? browser.isConnected()
+            : Boolean(browser);
+      if (alive) return browser;
+    } catch {
+      // il tentativo precedente è fallito: si riprova da zero
+    }
+    if (browserPromise === cached) browserPromise = null;
+  }
+
+  const attempt = (async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const puppeteer: any = await import('puppeteer').catch((err) => {
+      throw new Error(
+        `Puppeteer non installato. Esegui: pnpm add puppeteer --filter @trainmind/api. Dettagli: ${String(err)}`,
+      );
+    });
+    try {
+      return await puppeteer.default.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       });
-    })();
-  }
-  return browserPromise;
+    } catch (err) {
+      throw new Error(
+        'Chrome per Puppeteer non disponibile: il pacchetto è installato ma il browser non è stato scaricato. ' +
+          'Esegui `npx puppeteer browsers install chrome` dalla cartella apps/api. ' +
+          `Dettagli: ${String(err)}`,
+      );
+    }
+  })();
+
+  browserPromise = attempt;
+  attempt.catch(() => {
+    if (browserPromise === attempt) browserPromise = null;
+  });
+  return attempt;
 }
 
 export async function closePdfRenderer(): Promise<void> {
@@ -173,12 +204,16 @@ function renderHeader(metadata: ReportMetadata, audienceLabel: string): string {
   const teamLine = metadata.teamName
     ? `<div style="font-size: 12px; color: #0d9488; font-weight: 600; margin-top: 2px;">Squadra: ${esc(metadata.teamName)}</div>`
     : '';
+  const athleteLine = metadata.athleteName
+    ? `<div style="font-size: 12px; color: #0f172a; font-weight: 600; margin-top: 2px;">Atleta: ${esc(metadata.athleteName)}</div>`
+    : '';
   return `
     <div class="header">
       <div>
         <div class="badge">${esc(audienceLabel)}</div>
         <h1>${esc(metadata.organizationName)}</h1>
         ${teamLine}
+        ${athleteLine}
         <div style="font-size: 11px; color: #64748b;">Report periodico · ${formatDate(metadata.periodFrom)} — ${formatDate(metadata.periodTo)}</div>
       </div>
       <div class="header-meta">
