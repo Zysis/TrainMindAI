@@ -58,6 +58,12 @@ Il JSON deve avere questa struttura ESATTA:
 }
 
 REGOLE:
+- NUMERO DI SETTIMANE: l'esempio qui sopra mostra UNA settimana solo per far
+  vedere la forma, NON la quantita'. Se l'utente chiede N settimane, l'array
+  "weeks" deve contenere ESATTAMENTE N oggetti, con "weekNumber" da 1 a N.
+  Non fermarti alla prima e non riassumere le altre a parole.
+- Ogni settimana ha contenuti propri: i carichi progrediscono, l'ultima
+  settimana di un blocco lungo e' di scarico.
 - Ogni sessione DEVE avere un array "exercises" con esercizi strutturati
 - Ogni esercizio deve avere: "name" (nome preciso), "category" (Forza/Potenza/Pliometria/Velocita/Agilita/Core/Propriocezione/Prevenzione/Flessibilita/Mobilita/Release/Condizionamento-Metabolico/Riabilitazione), "sets" (numero), "reps" (stringa, es. "8-12" o "30sec"), "restSeconds" (numero in secondi)
 - Campi opzionali esercizio: "intensity" (es. "70% 1RM"), "notes"
@@ -98,7 +104,7 @@ export interface FallbackUsage {
 /** Risposta grezza di OpenAI, limitata ai campi che servono qui. */
 interface OpenAICompletionPayload {
   model?: string;
-  choices?: Array<{ message?: { content?: string } }>;
+  choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -216,6 +222,12 @@ export async function openAIGenerate(
   const usage = toFallbackUsage(data, model);
 
   const raw = data.choices?.[0]?.message?.content || '';
+
+  // Risposta tagliata dal limite di token: il JSON e' monco e non si parsa.
+  // Meglio un errore chiaro che un piano silenziosamente vuoto.
+  if (data.choices?.[0]?.finish_reason === 'length') {
+    throw new Error('AI_RESPONSE_TRUNCATED');
+  }
 
   // Try to parse as structured plan
   let structuredPlan: AIGeneratedPlan | null = null;

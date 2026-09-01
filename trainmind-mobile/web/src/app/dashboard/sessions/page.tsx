@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ClipboardList, Search, Clock, Plus, ChevronRight, Trash2, Dumbbell,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
 import { Modal } from '@/components/ui/modal';
@@ -39,6 +40,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<SessionTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortMode, setSortMode] = useState<'chronological' | 'recent'>('recent');
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
@@ -48,13 +50,17 @@ export default function SessionsPage() {
   const { toast } = useToast();
   const t = useTranslations('sessions');
   const tCommon = useTranslations('common');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deletingSession, setDeletingSession] = useState(false);
+  const tPer = useTranslations('periodization');
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('templates', '1');
       if (search) params.set('search', search);
+      params.set('sort', sortMode);
       params.set('page', String(page));
       params.set('limit', '30');
 
@@ -70,16 +76,14 @@ export default function SessionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, sortMode]);
 
+  // Un solo effetto: pagina, ricerca e ordinamento stanno tutti nelle
+  // dipendenze. Prima ce n'erano due e al montaggio partivano due richieste.
   useEffect(() => {
-    loadSessions();
-  }, [page]);
-
-  useEffect(() => {
-    const timer = setTimeout(loadSessions, 300);
+    const timer = setTimeout(loadSessions, search ? 300 : 0);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [loadSessions, search]);
 
   const handleCreate = async () => {
     if (!form.title.trim()) return;
@@ -105,15 +109,18 @@ export default function SessionsPage() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!confirm(t('deleteTemplateConfirm'))) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingSession(true);
     try {
-      await apiFetch(`/training/session-templates/${id}`, { method: 'DELETE' });
+      await apiFetch(`/training/session-templates/${deleteTarget.id}`, { method: 'DELETE' });
       toast('success', t('sessionDeletedToast'));
+      setDeleteTarget(null);
       loadSessions();
     } catch {
-      toast('error', 'Errore nell\'eliminazione');
+      toast('error', t('sessionDeleteError'));
+    } finally {
+      setDeletingSession(false);
     }
   };
 
@@ -143,16 +150,33 @@ export default function SessionsPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          placeholder={t('searchSessions')}
-          className="input-field w-full pl-10"
-        />
+      {/* Search + ordine */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder={t('searchSessions')}
+            className="input-field w-full pl-10"
+          />
+        </div>
+        <div className="flex flex-shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
+          {(['chronological', 'recent'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => { setSortMode(mode); setPage(1); }}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                sortMode === mode
+                  ? 'bg-teal-700 text-white'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              {mode === 'chronological' ? tPer('sortChronological') : tPer('sortRecent')}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Stats bar */}
@@ -168,8 +192,8 @@ export default function SessionsPage() {
       ) : sessions.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-16">
           <ClipboardList className="mb-3 h-12 w-12 text-slate-300 dark:text-slate-500" />
-          <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">Nessuna sessione</p>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">Crea la tua prima sessione di allenamento</p>
+          <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('noSessions')}</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{t('noSessionsHint')}</p>
           <button
             onClick={() => setShowCreate(true)}
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
@@ -204,7 +228,7 @@ export default function SessionsPage() {
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
-                    onClick={(e) => handleDelete(e, s.id)}
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: s.id, title: s.title }); }}
                     className="rounded p-1.5 text-slate-300 dark:text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition"
                     title={tCommon('delete')}
                   >
@@ -318,6 +342,16 @@ export default function SessionsPage() {
           />
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t('deleteTemplateTitle')}
+        message={t('deleteTemplateConfirm', { name: deleteTarget?.title ?? '' })}
+        detail={t('deleteTemplateDetail')}
+        busy={deletingSession}
+        onConfirm={handleDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

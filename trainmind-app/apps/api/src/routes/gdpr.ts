@@ -170,7 +170,10 @@ export async function gdprRoutes(app: FastifyInstance) {
   // collegato viene disattivato.
   app.post<{ Params: { id: string }; Body: { reason?: string } }>(
     '/gdpr/erase-athlete/:id',
-    { preHandler: [requireMinRole('ADMIN')] },
+    // Accessibile al preparatore per scelta esplicita dell'utente. Resta
+    // irreversibile: l'interfaccia chiede conferma nominando l'atleta, e ogni
+    // esecuzione lascia una riga nei log con chi l'ha fatta.
+    { preHandler: [requireMinRole('TRAINER')] },
     async (request, reply) => {
       const { id: athleteId } = request.params;
       const { organizationId, userId: actorId } = request.user;

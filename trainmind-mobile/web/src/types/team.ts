@@ -9,6 +9,7 @@ export interface Team {
   name: string;
   description: string | null;
   color: string | null;
+  logoUrl: string | null;
   _count: {
     athleteTeams: number;
     trainingPlans: number;

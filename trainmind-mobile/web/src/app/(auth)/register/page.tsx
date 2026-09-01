@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useAuth } from '@/hooks/use-auth';
 import { AuthShell } from '@/components/auth/auth-shell';
 
 export default function RegisterPage() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const apiError = useApiError();
   const { register, isAuthenticated } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -46,7 +48,7 @@ export default function RegisterPage() {
       await register({ email, password, firstName, lastName, organizationName });
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('registerError'));
+      setError(apiError(err, t('registerError')));
     } finally {
       setIsSubmitting(false);
     }

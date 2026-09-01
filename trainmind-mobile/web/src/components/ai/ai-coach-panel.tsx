@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Sparkles, Loader2, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 interface Source {
@@ -31,6 +32,7 @@ const QUICK_QUESTIONS = [
 
 export function AICoachPanel({ initialContext, category, compact = false }: AICoachPanelProps) {
   const t = useTranslations('ai');
+  const apiError = useApiError();
   const [question, setQuestion] = useState(initialContext || '');
   const [answer, setAnswer] = useState('');
   const [sources, setSources] = useState<Source[]>([]);
@@ -60,7 +62,7 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
       setAnswer(payload.answer || payload.content || '');
       setSources(payload.sources || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
+      setError(apiError(err, 'Errore sconosciuto'));
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +148,7 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
         {isLoading && (
           <div className="flex items-center gap-2 py-4">
             <Loader2 className="h-5 w-5 animate-spin text-teal-600" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">Il Coach AI sta analizzando...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('coachAnalyzing')}</p>
           </div>
         )}
 

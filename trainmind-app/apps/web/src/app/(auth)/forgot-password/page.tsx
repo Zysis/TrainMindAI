@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { requestPasswordReset } from '@/lib/auth/api';
 import { AuthShell } from '@/components/auth/auth-shell';
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('auth');
+  const apiError = useApiError();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function ForgotPasswordPage() {
       // in modo identico nei due casi, per non rivelare quali account esistono.
       setSentTo(email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('forgot.error'));
+      setError(apiError(err, t('forgot.error')));
     } finally {
       setIsSubmitting(false);
     }

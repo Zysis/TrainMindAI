@@ -22,6 +22,7 @@ import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -91,6 +92,7 @@ function fmtDate(iso: string | null, locale: string): string {
 
 export default function SchedulesPage() {
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('reports');
   const locale = useLocale();
 
@@ -172,7 +174,7 @@ export default function SchedulesPage() {
       );
       setSchedules(res.data.schedules);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('toastLoadError'));
+      toast('error', apiError(err, t('toastLoadError')));
     } finally {
       setLoading(false);
     }
@@ -254,7 +256,7 @@ export default function SchedulesPage() {
       setShowModal(false);
       fetchSchedules();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('toastSaveError'));
+      toast('error', apiError(err, t('toastSaveError')));
     } finally {
       setSubmitting(false);
     }
@@ -270,7 +272,7 @@ export default function SchedulesPage() {
       toast('success', s.isActive ? t('toastSchedulePaused') : t('toastScheduleReactivated'));
       fetchSchedules();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('toastToggleError'));
+      toast('error', apiError(err, t('toastToggleError')));
     }
   }
 
@@ -282,7 +284,7 @@ export default function SchedulesPage() {
       toast('success', t('toastReportSent', { name: s.name }));
       fetchSchedules();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('toastManualRunFailed'));
+      toast('error', apiError(err, t('toastManualRunFailed')));
     } finally {
       setRunningId(null);
     }
@@ -296,7 +298,7 @@ export default function SchedulesPage() {
       toast('success', t('toastScheduleDeleted'));
       fetchSchedules();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('toastDeleteError'));
+      toast('error', apiError(err, t('toastDeleteError')));
     } finally {
       setDeletingId(null);
     }

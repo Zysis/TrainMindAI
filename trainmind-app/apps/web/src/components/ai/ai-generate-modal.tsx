@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Sparkles, Loader2, Copy, Check, Calendar, Clock } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { WeekdayPicker, weekdayNames } from '@/components/ui/weekday-picker';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 
 interface Athlete {
   id: string;
@@ -50,11 +53,28 @@ export interface AIStructuredPlan {
   weeks: AIWeek[];
 }
 
+interface AITeam {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
 interface AIGenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
   athletes: Athlete[];
-  onPlanGenerated?: (plan: AIStructuredPlan, athleteId?: string) => void;
+  teams?: AITeam[];
+  /** Squadra selezionata in alto nella dashboard: e' solo il valore iniziale. */
+  defaultTeamId?: string | null;
+  onPlanGenerated?: (
+    plan: AIStructuredPlan,
+    options: {
+      athleteId?: string;
+      teamId?: string;
+      startDate?: string;
+      trainingDays?: number[];
+    },
+  ) => void;
 }
 
 const PHASE_OPTIONS = [
@@ -64,29 +84,66 @@ const PHASE_OPTIONS = [
   { value: 'recovery', label: 'Recovery / Deload' },
 ];
 
-const GOAL_OPTIONS: Array<{ value: string; labelKey?: string; label?: string }> = [
-  { value: 'forza-massimale', labelKey: 'goalMaxStrength' },
-  { value: 'potenza', labelKey: 'goalExplosivePower' },
-  { value: 'ipertrofia', labelKey: 'goalFunctionalHypertrophy' },
+const GOAL_OPTIONS: Array<{ value: string; labelKey?: string; label?: string; hint?: string }> = [
+  // Le prime quattro voci sono le zone della curva forza-velocita': il nome
+  // inglese e' quello canonico in letteratura, l'italiano quello che il coach
+  // usa a voce. `hint` non si vede a schermo, va nel prompt: senza, l'AI
+  // tratterebbe "Forza Esplosiva" e "Forza Reattiva" come sinonimi.
+  {
+    value: 'forza-massimale',
+    labelKey: 'goalMaxStrength',
+    hint: 'zona forza massima: carichi 85-100% 1RM, 1-5 ripetizioni, recuperi completi 3-5 minuti',
+  },
+  {
+    value: 'forza-dinamica-massima',
+    labelKey: 'goalStrengthSpeed',
+    hint: 'zona forza-velocita\': carichi 70-85% 1RM mossi con intento massimale, 3-5 ripetizioni, recuperi 3 minuti',
+  },
+  {
+    value: 'forza-esplosiva',
+    labelKey: 'goalExplosivePower',
+    hint: 'zona di picco della potenza meccanica: carichi 30-70% 1RM, 3-6 ripetizioni veloci, recuperi 2-3 minuti',
+  },
+  {
+    value: 'forza-reattiva',
+    labelKey: 'goalSpeedStrength',
+    hint: 'zona velocita\'-forza: sovraccarichi 0-30% 1RM, pliometria e ciclo allungamento-accorciamento con tempi di contatto brevi, 3-6 ripetizioni, recuperi 2-3 minuti',
+  },
+  {
+    value: 'ipertrofia',
+    labelKey: 'goalHypertrophy',
+    hint: 'carichi 65-80% 1RM, 6-12 ripetizioni, volume elevato, recuperi 60-90 secondi',
+  },
   { value: 'condizionamento', labelKey: 'goalAthleticConditioning' },
   { value: 'prevenzione', labelKey: 'goalInjuryPrevention' },
   { value: 'rtp', label: 'Return to Play' },
 ];
 
-const WEEKS_OPTIONS = [
-  { value: '2', label: '2 settimane' },
-  { value: '4', label: '4 settimane' },
-  { value: '6', label: '6 settimane' },
-  { value: '8', label: '8 settimane' },
-  { value: '12', label: '12 settimane' },
-];
+const WEEKS_VALUES = [2, 4, 6, 8, 12];
 
-export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: AIGenerateModalProps) {
+export function AIGenerateModal({
+  isOpen,
+  onClose,
+  athletes,
+  teams = [],
+  defaultTeamId,
+  onPlanGenerated,
+}: AIGenerateModalProps) {
   const t = useTranslations('ai');
+  const apiError = useApiError();
+  const locale = useLocale();
+  const tCommon = useTranslations('common');
   const [athleteId, setAthleteId] = useState('');
+  const [teamId, setTeamId] = useState('');
+  const [planName, setPlanName] = useState('');
   const [phase, setPhase] = useState('pre-season');
   const [goal, setGoal] = useState('forza-massimale');
   const [weeks, setWeeks] = useState('4');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  // Lun/Mer/Ven: il pattern piu' comune, gia' visibile e modificabile
+  // con un click. Vuoto avrebbe lasciato la scelta all'AI senza dirlo.
+  const [trainingDays, setTrainingDays] = useState<number[]>([1, 3, 5]);
+  const [weeksMismatch, setWeeksMismatch] = useState<{ asked: number; got: number } | null>(null);
   const [notes, setNotes] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -96,29 +153,72 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // La squadra della dashboard e' il punto di partenza, non un vincolo:
+  // se il coach ne ha gia' scelta un'altra qui, non gliela sovrascrivo.
+  useEffect(() => {
+    if (isOpen) setTeamId((prev) => prev || defaultTeamId || '');
+  }, [isOpen, defaultTeamId]);
+
   const selectedAthlete = athletes.find((a) => a.id === athleteId);
+  const isTeamPlan = !athleteId;
+  const selectedTeam = teams.find((tm) => tm.id === teamId);
+  // Un piano di squadra senza squadra non comparirebbe nell'elenco filtrato,
+  // e soprattutto l'AI non saprebbe per che eta' sta programmando.
+  const missingTeam = isTeamPlan && !teamId && teams.length > 0;
 
   const buildPrompt = useCallback(() => {
     const athleteInfo = selectedAthlete
       ? `per ${selectedAthlete.firstName} ${selectedAthlete.lastName} (${selectedAthlete.position})`
-      : 'per il team';
+      : selectedTeam
+        ? `per il gruppo squadra "${selectedTeam.name}"`
+        : 'per il team';
 
     const phaseLabel = PHASE_OPTIONS.find((p) => p.value === phase)?.label || phase;
     const goalEntry = GOAL_OPTIONS.find((g) => g.value === goal);
     const goalLabel = goalEntry?.label ?? (goalEntry?.labelKey ? t(goalEntry.labelKey) : goal);
+    const goalHint = goalEntry?.hint ? ` (${goalEntry.hint})` : '';
 
-    let prompt = `Genera un piano di allenamento ${athleteInfo} di ${weeks} settimane.\n`;
+    const n = Number(weeks) || 4;
+
+    let prompt = `Genera un piano di allenamento ${athleteInfo} di ESATTAMENTE ${n} settimane.\n`;
     prompt += `Fase stagionale: ${phaseLabel}.\n`;
-    prompt += `Obiettivo principale: ${goalLabel}.\n`;
+    prompt += `Obiettivo principale: ${goalLabel}${goalHint}.\n`;
     prompt += `Il piano deve includere sessioni dettagliate con esercizi, serie, ripetizioni, intensita' e recupero.\n`;
-    prompt += `Struttura ogni settimana con 3-4 sessioni.\n`;
+    if (trainingDays.length > 0) {
+      const names = weekdayNames(trainingDays, locale);
+      prompt += `Ogni settimana ha ESATTAMENTE ${names.length} sessioni, una per ciascuno di questi giorni: ${names.join(', ')}.\n`;
+      prompt += `Elenca le sessioni nello stesso ordine dei giorni e ricorda il giorno nel titolo o nelle note della sessione.\n`;
+      prompt += `Distribuisci il carico tenendo conto del recupero fra un giorno e l'altro.\n`;
+    } else {
+      prompt += `Struttura ogni settimana con 3-4 sessioni.\n`;
+    }
+    prompt += `L'array "weeks" deve contenere ${n} oggetti, con "weekNumber" da 1 a ${n}.\n`;
+    prompt += `I carichi devono progredire di settimana in settimana.\n`;
 
-    if (notes.trim()) {
-      prompt += `\nNote aggiuntive del coach: ${notes.trim()}`;
+    // Il nome del gruppo porta con se' l'eta' ("Under 14", "Prima Squadra"):
+    // senza dirlo, l'AI scrive lo stesso piano per un ragazzino e un senior.
+    if (!selectedAthlete && selectedTeam) {
+      prompt += `Destinatari: gruppo squadra "${selectedTeam.name}"`;
+      if (selectedTeam.description?.trim()) {
+        prompt += ` (${selectedTeam.description.trim()})`;
+      }
+      prompt += `.\n`;
+      prompt += `Adatta volumi, carichi, complessita' tecnica e densita' del lavoro all'eta' e al livello di maturazione di questo gruppo: un Under 14 e un Under 18 non si allenano allo stesso modo.\n`;
     }
 
+    if (planName.trim()) {
+      prompt += `Il piano si chiama "${planName.trim()}": usa esattamente questo testo come "planName".\n`;
+    }
+
+    if (notes.trim()) {
+      prompt += `\nNote aggiuntive del coach: ${notes.trim()}\n`;
+    }
+
+    // Ripetuto in chiusura: e' la posizione che il modello segue meglio.
+    prompt += `\nRICORDA: il piano deve avere ${n} settimane complete, non una sola.`;
+
     return prompt;
-  }, [selectedAthlete, phase, goal, weeks, notes]);
+  }, [selectedAthlete, selectedTeam, planName, phase, goal, weeks, trainingDays, notes, t, locale]);
 
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
@@ -126,6 +226,7 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
     setStructuredPlan(null);
     setRawContent('');
     setSources([]);
+    setWeeksMismatch(null);
 
     try {
       const res = await apiFetch<{ success: boolean; data: { content: string; structured_plan?: AIStructuredPlan; sources: Source[] } }>('/ai/generate', {
@@ -135,6 +236,7 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
           athlete_id: athleteId || undefined,
           context_type: 'plan',
           top_k: 5,
+          expected_weeks: Number(weeks) || 4,
         }),
       });
       const payload = res.data ?? (res as unknown as { content: string; structured_plan?: AIStructuredPlan; sources: Source[] });
@@ -143,9 +245,20 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
 
       if (payload.structured_plan) {
         setStructuredPlan(payload.structured_plan);
+        // Se il coach non ha dato un nome, quello proposto dall'AI riempie il
+        // campo: resta modificabile prima di salvare.
+        setPlanName((prev) => prev.trim() || payload.structured_plan?.planName || '');
+        // Se l'AI non rispetta la durata chiesta va detto, non scoperto dopo
+        const asked = Number(weeks) || 4;
+        const got = payload.structured_plan.weeks?.length ?? 0;
+        if (got > 0 && got !== asked) {
+          setWeeksMismatch({ asked, got });
+        } else {
+          setWeeksMismatch(null);
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
+      setError(apiError(err, 'Errore sconosciuto'));
     } finally {
       setIsGenerating(false);
     }
@@ -159,15 +272,24 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
 
   const handleAccept = useCallback(() => {
     if (onPlanGenerated && structuredPlan) {
-      onPlanGenerated(structuredPlan, athleteId || undefined);
+      const named = planName.trim()
+        ? { ...structuredPlan, planName: planName.trim() }
+        : structuredPlan;
+      onPlanGenerated(named, {
+        athleteId: athleteId || undefined,
+        teamId: teamId || undefined,
+        startDate: startDate || undefined,
+        trainingDays,
+      });
     }
     onClose();
-  }, [structuredPlan, athleteId, onPlanGenerated, onClose]);
+  }, [structuredPlan, athleteId, teamId, planName, startDate, trainingDays, onPlanGenerated, onClose]);
 
   const handleReset = () => {
     setStructuredPlan(null);
     setRawContent('');
     setSources([]);
+    setWeeksMismatch(null);
     setError(null);
   };
 
@@ -177,7 +299,7 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
     <Modal
       open={isOpen}
       onClose={onClose}
-      title="Genera Piano con AI"
+      title={t('generateModalTitle')}
       size="lg"
     >
       <div className="space-y-4">
@@ -187,13 +309,17 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
             <div className="rounded-lg border border-teal-200 bg-teal-50 p-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-teal-600" />
-                <p className="text-sm font-medium text-teal-800">Generazione AI</p>
+                <p className="text-sm font-medium text-teal-800">{t('generationBannerTitle')}</p>
               </div>
-              <p className="mt-1 text-xs text-teal-600">
-                L&apos;AI generera&apos; un piano strutturato con settimane e sessioni,
-                pronto per essere aggiunto direttamente ai tuoi allenamenti.
-              </p>
+              <p className="mt-1 text-xs text-teal-600">{t('generationBannerBody')}</p>
             </div>
+
+            <Input
+              label={t('planNameLabel')}
+              value={planName}
+              onChange={(e) => setPlanName(e.target.value)}
+              placeholder={t('planNamePlaceholder')}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <Select
@@ -216,6 +342,24 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
               />
             </div>
 
+            {/* Solo per i piani di squadra: e' li' che serve sapere quale */}
+            {isTeamPlan && (
+              <div>
+                <Select
+                  label={`${t('teamLabel')} *`}
+                  value={teamId}
+                  onChange={(e) => setTeamId(e.target.value)}
+                  options={[
+                    { value: '', label: t('teamPlaceholder') },
+                    ...teams.map((tm) => ({ value: tm.id, label: tm.name })),
+                  ]}
+                />
+                <p className={`mt-1 text-xs ${missingTeam ? 'text-amber-600' : 'text-slate-400 dark:text-slate-500'}`}>
+                  {missingTeam ? t('teamRequired') : t('teamHint')}
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label={t('goalLabel')}
@@ -227,21 +371,40 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
                 }))}
               />
               <Select
-                label={t('durationLabel')}
+                label={`${t('durationLabel')} *`}
                 value={weeks}
                 onChange={(e) => setWeeks(e.target.value)}
-                options={WEEKS_OPTIONS}
+                options={WEEKS_VALUES.map((n) => ({ value: String(n), label: t('nWeeks', { n }) }))}
               />
             </div>
 
+            <Input
+              label={`${t('startDateLabel')} *`}
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              hint={trainingDays.length > 0 ? t('startDateHint') : undefined}
+            />
+
+            <WeekdayPicker
+              label={t('trainingDaysLabel')}
+              value={trainingDays}
+              onChange={setTrainingDays}
+              hint={
+                trainingDays.length > 0
+                  ? t('trainingDaysCount', { n: trainingDays.length })
+                  : t('trainingDaysEmpty')
+              }
+            />
+
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Note aggiuntive (opzionale)
+                {t('notesOptionalLabel')}
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Es. Atleta reduce da distorsione caviglia dx, evitare salti..."
+                placeholder={t('notesPlaceholder')}
                 rows={2}
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 dark:text-slate-500 focus:border-teal-300 focus:outline-none focus:ring-1 focus:ring-teal-300"
               />
@@ -258,15 +421,15 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
                 onClick={onClose}
                 className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900"
               >
-                Annulla
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isGenerating || missingTeam}
                 className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
               >
                 <Sparkles className="h-4 w-4" />
-                Genera Piano
+                {t('generateAction')}
               </button>
             </div>
           </>
@@ -276,28 +439,43 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
         {isGenerating && (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-            <p className="mt-3 text-sm font-medium text-slate-700">Generazione in corso...</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">L&apos;AI sta creando il piano strutturato</p>
+            <p className="mt-3 text-sm font-medium text-slate-700">{t('generatingTitle')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{t('generatingBody')}</p>
           </div>
         )}
 
         {/* Generated content — structured view */}
         {hasContent && !isGenerating && (
           <>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-700">
-                {structuredPlan ? structuredPlan.planName : 'Piano generato'}
-              </p>
-              <div className="flex items-center gap-2">
+            <div className="flex items-end justify-between gap-3">
+              {structuredPlan ? (
+                <div className="flex-1">
+                  <Input
+                    label={t('planNameLabel')}
+                    value={planName}
+                    onChange={(e) => setPlanName(e.target.value)}
+                    placeholder={structuredPlan.planName}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm font-semibold text-slate-700">{t('generatedPlan')}</p>
+              )}
+              <div className="flex items-center gap-2 pb-1">
                 <button
                   onClick={handleCopy}
                   className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-700 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900"
                 >
                   {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                  {copied ? 'Copiato' : 'Copia'}
+                  {copied ? tCommon('copied') : tCommon('copy')}
                 </button>
               </div>
             </div>
+
+            {weeksMismatch && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                {t('weeksMismatch', { asked: weeksMismatch.asked, got: weeksMismatch.got })}
+              </div>
+            )}
 
             {structuredPlan && (
               <p className="text-sm text-slate-600 dark:text-slate-400">{structuredPlan.description}</p>
@@ -374,7 +552,7 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
             {sources.length > 0 && (
               <div className="rounded-lg border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-                  Fonti dalla knowledge base ({sources.length})
+                  {t('sourcesFromKb', { n: sources.length })}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {sources.map((s) => (
@@ -400,21 +578,21 @@ export function AIGenerateModal({ isOpen, onClose, athletes, onPlanGenerated }: 
                 onClick={handleReset}
                 className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900"
               >
-                Rigenera
+                {t('regenerate')}
               </button>
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
                   className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900"
                 >
-                  Chiudi
+                  {tCommon('close')}
                 </button>
                 <button
                   onClick={handleAccept}
                   disabled={!structuredPlan}
                   className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
                 >
-                  Usa questo piano
+                  {t('usePlan')}
                 </button>
               </div>
             </div>

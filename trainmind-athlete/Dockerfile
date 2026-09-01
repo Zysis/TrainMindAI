@@ -5,7 +5,12 @@
 # Stage 1: Builder
 FROM node:20-alpine AS builder
 
-RUN npm install -g pnpm
+# Versione bloccata, la stessa di `packageManager` in package.json.
+# Senza il numero, npm installa l'ultima pnpm: la 10 verifica la propria
+# identita' contro il lockfile e con un lock v9 fallisce con
+# ERR_PNPM_PNPM_ENGINE_IDENTITY_UNVERIFIABLE. Un build riproducibile non
+# puo' dipendere da cosa e' stato pubblicato su npm stamattina.
+RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 

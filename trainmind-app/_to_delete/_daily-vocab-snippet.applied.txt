@@ -1,0 +1,57 @@
+
+// ── Vocabolario clinico del report giornaliero ──────────
+//
+// Elenchi VOLUTAMENTE separati da quelli della scheda Infortuni: il foglio di
+// fine giornata parla la lingua del fisioterapista a bordo campo
+// ("infiammazione alla fascia plantare"), la scheda Infortuni quella della
+// cartella clinica. Sono due vocabolari, e vanno tenuti d'occhio: se un
+// giorno divergono al punto da confondere, la strada e' unificarli, non
+// aggiungerne un terzo.
+//
+// I codici stanno qui, in un posto solo, cosi' API e web non possono
+// divergere; le etichette vivono negli i18n dei due lati.
+export const DailyNextTraining_CODES = ['available', 'partial', 'unavailable'] as const;
+export type DailyNextTraining = (typeof DailyNextTraining_CODES)[number];
+export const DailyInjuryType_CODES = ['inflammation', 'tendinopathy', 'periostitis', 'bone_edema', 'contracture', 'strain', 'tear', 'sprain', 'contusion', 'overload', 'other'] as const;
+export type DailyInjuryType = (typeof DailyInjuryType_CODES)[number];
+export const DailyBodyPart_CODES = ['plantar_fascia', 'achilles', 'tibia', 'ankle', 'foot', 'calf', 'knee', 'patellar_tendon', 'quadriceps', 'hamstring', 'adductor', 'hip', 'lumbar', 'dorsal', 'cervical', 'shoulder', 'elbow', 'wrist', 'hand', 'other'] as const;
+export type DailyBodyPart = (typeof DailyBodyPart_CODES)[number];
+export const DailySide_CODES = ['left', 'right', 'bilateral'] as const;
+export type DailySide = (typeof DailySide_CODES)[number];
+export const DailyClinicalStatus_CODES = ['mild', 'stationary', 'improving', 'worsening', 'persistent', 'resolved'] as const;
+export type DailyClinicalStatus = (typeof DailyClinicalStatus_CODES)[number];
+export const DailyTaping_CODES = ['taping', 'kinesio', 'brace', 'bandage', 'insole'] as const;
+export type DailyTaping = (typeof DailyTaping_CODES)[number];
+export const DailyTreatment_CODES = ['assessment', 'physio', 'medical_check', 'imaging', 'specialist', 'rest', 'therapy'] as const;
+export type DailyTreatment = (typeof DailyTreatment_CODES)[number];
+export const DailyTrainingType_CODES = ['full', 'partial', 'individual', 'gym_only', 'rehab', 'rest'] as const;
+export type DailyTrainingType = (typeof DailyTrainingType_CODES)[number];
+export const DailyForecast_CODES = ['next_session', 'days_2_3', 'week_1', 'weeks_2_3', 'month_plus', 'to_define'] as const;
+export type DailyForecast = (typeof DailyForecast_CODES)[number];
+
+/** I campi clinici di una riga giocatore. Tutti facoltativi: il foglio si
+ *  compila per eccezione, la maggior parte delle righe resta vuota. */
+export interface DailyClinicalFields {
+  nextTraining: DailyNextTraining | null;
+  injuryType: DailyInjuryType | null;
+  bodyPart: DailyBodyPart | null;
+  side: DailySide | null;
+  clinicalStatus: DailyClinicalStatus | null;
+  taping: DailyTaping | null;
+  treatment: DailyTreatment | null;
+  trainingType: DailyTrainingType | null;
+  forecast: DailyForecast | null;
+}
+
+/** Carico recente dell'atleta, mostrato accanto allo stato come supporto alla
+ *  decisione. Non lo determina: l'ACWR e' un indicatore di rischio, non un
+ *  verdetto di disponibilita'. */
+export interface DailyAthleteLoad {
+  /** RPE medio della giornata, null se non registrato. */
+  rpeToday: number | null;
+  /** Carico sRPE della giornata. */
+  loadToday: number | null;
+  /** Acuto 7 giorni / cronico 21 giorni diviso 3. null se non calcolabile. */
+  acwr: number | null;
+  acwrZone: 'low' | 'optimal' | 'high' | 'danger' | null;
+}

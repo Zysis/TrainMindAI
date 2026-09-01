@@ -4,6 +4,14 @@ export const createTeamSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().max(500).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  // Logo come data URL immagine. Il tetto sta sotto il bodyLimit di Fastify
+  // (1 MiB): il client ridimensiona a 256px, quindi qui si arriva molto sotto.
+  logoUrl: z
+    .string()
+    .regex(/^data:image\/(png|jpeg|webp);base64,/, 'Formato immagine non valido')
+    .max(700_000, 'Immagine troppo grande')
+    .nullable()
+    .optional(),
 });
 
 export const updateTeamSchema = createTeamSchema.partial();

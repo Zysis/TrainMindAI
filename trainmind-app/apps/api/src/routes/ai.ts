@@ -469,9 +469,21 @@ export async function aiRoutes(app: FastifyInstance) {
       if ((msg === 'AI_SERVICE_DOWN' || msg === 'AI_SERVICE_TIMEOUT') && isOpenAIFallbackAvailable()) {
         app.log.info('AI service down — using OpenAI direct fallback for /ai/generate');
         try {
+          // Il tetto di token va con la lunghezza del piano: 4096 bastano per
+          // due settimane, non per dodici, e una risposta tagliata a meta'
+          // non e' JSON valido.
+          const expectedWeeks = parsed.data.expected_weeks ?? 4;
           const fallbackData = await openAIGenerate(parsed.data.prompt, {
             model: generateModel,
+            max_tokens: Math.min(16000, Math.max(4096, expectedWeeks * 1400)),
           });
+          const producedWeeks = fallbackData.structured_plan?.weeks?.length ?? 0;
+          if (producedWeeks > 0 && producedWeeks !== expectedWeeks) {
+            app.log.warn(
+              { expectedWeeks, producedWeeks },
+              'AI generate: numero di settimane diverso da quello richiesto',
+            );
+          }
           void recordAiUsage(app, {
             organizationId,
             userId,
@@ -484,6 +496,20 @@ export async function aiRoutes(app: FastifyInstance) {
           return reply.send({ success: true, data: fallbackData });
         } catch (fbErr) {
           app.log.error(fbErr, 'OpenAI fallback error');
+          // Il troncamento non e' un problema di chiave: dirlo cosi' manda
+          // l'utente a controllare la cosa sbagliata.
+          const fbMsg = fbErr instanceof Error ? fbErr.message : String(fbErr);
+          if (fbMsg === 'AI_RESPONSE_TRUNCATED') {
+            return reply.status(503).send({
+              success: false,
+              error: {
+                code: 'AI_RESPONSE_TRUNCATED',
+                message:
+                  'Il piano generato e\' stato troncato: e\' troppo lungo per una sola risposta. Riprova, oppure chiedi meno settimane e unisci i blocchi.',
+                retryable: true,
+              },
+            });
+          }
           return reply.status(503).send({
             success: false,
             error: {

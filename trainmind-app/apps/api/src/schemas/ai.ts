@@ -73,6 +73,9 @@ export const aiGenerateSchema = z.object({
   context_type: z.enum(['plan', 'session', 'exercise']).default('plan'),
   namespace: z.string().optional(),
   top_k: z.number().min(1).max(50).optional().default(5),
+  // Quante settimane deve avere il piano. Serve come vincolo verificabile:
+  // dentro la sola prosa del prompt il modello lo ignorava e ne produceva una.
+  expected_weeks: z.number().int().min(1).max(24).optional(),
 });
 
 export type AIGenerateInput = z.infer<typeof aiGenerateSchema>;

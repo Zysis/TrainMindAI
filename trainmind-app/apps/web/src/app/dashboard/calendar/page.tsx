@@ -21,10 +21,15 @@ import {
   ClipboardCheck,
   ExternalLink,
   Layers,
+  Ban,
+  RotateCcw,
+  CalendarClock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useToast } from '@/components/ui/toast';
 import { useTeam } from '@/hooks/use-team';
 
@@ -41,9 +46,15 @@ interface CalendarEvent {
   color: string | null;
   isSession?: boolean;
   sessionId?: string;
+  /** Stato del foglio presenze collegato: null = mai aperto, quindi pianificato */
+  sheetStatus?: string | null;
   athleteId?: string | null;
   athleteName?: string | null;
   status?: string;
+  /** Solo sugli eventi 'match'. */
+  opponent?: string | null;
+  isHome?: boolean | null;
+  venue?: string | null;
   aiModified?: boolean;
   teamId?: string | null;
   teamName?: string | null;
@@ -91,10 +102,69 @@ const CREATABLE_TYPES = ['gym', 'basket', 'individual', 'shooting', 'match', 're
  *  Le sessioni della programmazione (`isSession`) lo hanno comunque. */
 const ATTENDANCE_TYPES = new Set(['gym', 'basket', 'individual', 'shooting', 'rehab']);
 
-/** true se l'evento merita il pulsante 'Presenze' */
-function hasAttendance(ev: { type: string; isSession?: boolean; sessionId?: string }): boolean {
-  if (ev.isSession) return Boolean(ev.sessionId);
+/** true se l'evento merita il pulsante del foglio.
+ *  Una sessione annullata resta visibile in calendario ma non si allena: il
+ *  foglio presenze la riaprirebbe di fatto, quindi il pulsante sparisce. */
+function hasAttendance(ev: { type: string; isSession?: boolean; sessionId?: string; status?: string }): boolean {
+  if (ev.isSession) return Boolean(ev.sessionId) && ev.status !== 'CANCELLED';
   return ATTENDANCE_TYPES.has(ev.type);
+}
+
+/** Solo il pallino: nella lista lo stato non deve sembrare cliccabile.
+ *  L'etichetta resta nel tooltip e per intero nel pannello di dettaglio. */
+function StatusDotOnly({ status }: { status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' }) {
+  const t = useTranslations('calendar');
+  const dot =
+    status === 'COMPLETED' ? 'bg-green-500' : status === 'IN_PROGRESS' ? 'bg-teal-500' : 'bg-blue-500';
+  const label =
+    status === 'COMPLETED'
+      ? t('statusCompletedShort')
+      : status === 'IN_PROGRESS'
+        ? t('statusInProgress')
+        : t('statusPlannedShort');
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={`h-2 w-2 flex-shrink-0 rounded-full ${dot}`}
+    />
+  );
+}
+
+function TrainingStatusBadge({ status }: { status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' }) {
+  const t = useTranslations('calendar');
+  const tone =
+    status === 'COMPLETED'
+      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+      : status === 'IN_PROGRESS'
+        ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
+        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+  const dot =
+    status === 'COMPLETED' ? 'bg-green-500' : status === 'IN_PROGRESS' ? 'bg-teal-500' : 'bg-blue-500';
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${tone}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      {status === 'COMPLETED'
+        ? t('statusCompletedShort')
+        : status === 'IN_PROGRESS'
+          ? t('statusInProgress')
+          : t('statusPlannedShort')}
+    </span>
+  );
+}
+
+/** Stato di un allenamento per l'occhio: blu pianificato, verde completato.
+ *  Le sessioni della programmazione hanno uno stato proprio; gli eventi creati
+ *  a mano lo prendono dal foglio presenze collegato. */
+function trainingStatus(ev: {
+  isSession?: boolean;
+  status?: string;
+  sheetStatus?: string | null;
+}): 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' {
+  const raw = ev.isSession ? ev.status : ev.sheetStatus;
+  if (raw === 'COMPLETED') return 'COMPLETED';
+  if (raw === 'IN_PROGRESS') return 'IN_PROGRESS';
+  return 'PLANNED';
 }
 
 /** Ordine delle fasi del protocollo Return To Play, come nell'API */
@@ -183,6 +253,7 @@ function useEventTypeConfig(t: ReturnType<typeof useTranslations>) {
 
 export default function CalendarPage() {
   const t = useTranslations('calendar');
+  const apiError = useApiError();
   const { toast } = useToast();
   const router = useRouter();
   const { selectedTeamId } = useTeam();
@@ -202,6 +273,14 @@ export default function CalendarPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState(false);
+  // Le sessioni della programmazione non si cancellano (regola SESSION_IN_PLAN):
+  // si annullano, cosi' il mesociclo resta integro e la seduta saltata resta
+  // visibile come tale. La conferma serve solo per l'annullamento, non per il
+  // ripristino, che non distrugge niente.
+  const [cancelTarget, setCancelTarget] = useState<CalendarEvent | null>(null);
+  const [cancellingSession, setCancellingSession] = useState(false);
   // Periodization context
   const [weekContexts, setWeekContexts] = useState<WeekContext[]>([]);
   // Drag-and-drop state
@@ -283,13 +362,58 @@ export default function CalendarPage() {
   // ─── Actions ────────────────────────────────────────────
 
   const deleteEvent = async (id: string) => {
+    setDeletingEvent(true);
     try {
       await apiFetch(`/calendar/events/${id}`, { method: 'DELETE' });
       setEvents((prev) => prev.filter((e) => e.id !== id));
       setSelectedEvent(null);
+      setDeleteTarget(null);
       toast('success', t('eventDeleted'));
-    } catch {
-      toast('error', t('eventDeleteError'));
+    } catch (err) {
+      // Il server rifiuta gli allenamenti gia' completati e spiega perche':
+      // il suo messaggio e' piu' utile di una frase fissa.
+      toast('error', apiError(err, t('eventDeleteError')));
+    } finally {
+      setDeletingEvent(false);
+    }
+  };
+
+  // Annulla / ripristina una sessione del piano. `PUT /training/sessions/:id`
+  // rifiuta con 409 SESSION_ALREADY_COMPLETED se la seduta e' gia' stata svolta.
+  const setSessionStatus = async (event: CalendarEvent, status: 'CANCELLED' | 'PLANNED') => {
+    if (!event.sessionId) return;
+    setCancellingSession(true);
+    try {
+      await apiFetch(`/training/sessions/${event.sessionId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+      const patched = { ...event, status, color: status === 'CANCELLED' ? '#94a3b8' : '#3b82f6' };
+      setEvents((prev) => prev.map((e) => (e.id === event.id ? patched : e)));
+      setSelectedEvent((prev) => (prev && prev.id === event.id ? patched : prev));
+      setCancelTarget(null);
+      toast('success', status === 'CANCELLED' ? t('sessionCancelled') : t('sessionRestored'));
+    } catch (err) {
+      toast('error', apiError(err, t('sessionCancelError')));
+    } finally {
+      setCancellingSession(false);
+    }
+  };
+
+  // Spostamento esplicito: il drag-and-drop sul mese fa la stessa cosa, ma non
+  // e' scopribile e non serve se il giorno di destinazione e' in un altro mese.
+  const rescheduleSession = async (event: CalendarEvent, dateStr: string) => {
+    if (!event.sessionId || !dateStr) return;
+    try {
+      await apiFetch(`/training/sessions/${event.sessionId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ date: dateStr }),
+      });
+      toast('success', t('eventRescheduled'));
+      setSelectedEvent(null);
+      await fetchEvents();
+    } catch (err) {
+      toast('error', apiError(err, t('eventRescheduleError')));
     }
   };
 
@@ -606,13 +730,17 @@ export default function CalendarPage() {
                             onDragEnd={handleDragEnd}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (ev.isSession && ev.sessionId) {
-                                router.push(`/dashboard/sessions/${ev.sessionId}`);
+                              if (hasAttendance(ev)) {
+                                // Allenamento: si va dove si lavora, cioe' il foglio
+                                const id = ev.isSession ? ev.sessionId! : ev.id;
+                                router.push(
+                                  `/dashboard/field-training/${id}${ev.isSession ? '?source=session' : ''}`,
+                                );
                               } else {
                                 setSelectedEvent(ev);
                               }
                             }}
-                            title={ev.isSession ? t('clickToOpenSession') : t('dragToReschedule')}
+                            title={hasAttendance(ev) ? t('clickToOpenSheet') : t('dragToReschedule')}
                             className={`flex w-full items-center gap-1 truncate rounded px-1 py-0.5 text-left text-2xs font-medium border cursor-grab active:cursor-grabbing ${cfg.bg} ${cfg.color} ${
                               isDragging ? 'opacity-40 scale-95' : ''
                             } transition-all`}
@@ -651,6 +779,29 @@ export default function CalendarPage() {
           </div>
         </div>
 
+        {/* Conferma cancellazione evento */}
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title={t('deleteEvent')}
+          message={t('deleteEventConfirm', { name: deleteTarget?.title ?? '' })}
+          detail={t('deleteEventDetail')}
+          busy={deletingEvent}
+          onConfirm={() => deleteTarget && deleteEvent(deleteTarget.id)}
+          onClose={() => setDeleteTarget(null)}
+        />
+
+        {/* Conferma annullamento sessione pianificata */}
+        <ConfirmDialog
+          open={!!cancelTarget}
+          title={t('cancelSession')}
+          message={t('cancelSessionConfirm', { name: cancelTarget?.title ?? '' })}
+          detail={t('cancelSessionDetail')}
+          confirmLabel={t('cancelSession')}
+          busy={cancellingSession}
+          onConfirm={() => cancelTarget && setSessionStatus(cancelTarget, 'CANCELLED')}
+          onClose={() => setCancelTarget(null)}
+        />
+
         {/* Side Panel — Day Detail or Event Detail */}
         <div className="w-80 flex-shrink-0">
           {selectedEvent ? (
@@ -658,6 +809,9 @@ export default function CalendarPage() {
               event={selectedEvent}
               onClose={() => setSelectedEvent(null)}
               onDelete={deleteEvent}
+              onCancelSession={(ev) => setCancelTarget(ev)}
+              onRestoreSession={(ev) => setSessionStatus(ev, 'PLANNED')}
+              onRescheduleSession={rescheduleSession}
               onNavigateToSession={(sessionId) => router.push(`/dashboard/sessions/${sessionId}`)}
               onOpenFieldTimers={(id, fromPlan) =>
                 router.push(`/dashboard/field-training/${id}${fromPlan ? '?source=session' : ''}`)
@@ -669,8 +823,10 @@ export default function CalendarPage() {
               date={selectedDay}
               events={eventsByDay.get(selectedDay.getDate()) || []}
               onSelectEvent={setSelectedEvent}
+              onDeleteEvent={(ev) => setDeleteTarget(ev)}
+              onCancelSession={(ev) => setCancelTarget(ev)}
+              onRestoreSession={(ev) => setSessionStatus(ev, 'PLANNED')}
               onCreateEvent={() => setShowCreateModal(true)}
-              onNavigateToSession={(sessionId) => router.push(`/dashboard/sessions/${sessionId}`)}
               onOpenFieldTimers={(id, fromPlan) =>
                 router.push(`/dashboard/field-training/${id}${fromPlan ? '?source=session' : ''}`)
               }
@@ -703,8 +859,10 @@ function DayDetail({
   date,
   events,
   onSelectEvent,
+  onDeleteEvent,
+  onCancelSession,
+  onRestoreSession,
   onCreateEvent,
-  onNavigateToSession,
   onOpenFieldTimers,
   onOpenGameTracking,
   periodizationContexts,
@@ -712,8 +870,10 @@ function DayDetail({
   date: Date;
   events: CalendarEvent[];
   onSelectEvent: (e: CalendarEvent) => void;
+  onDeleteEvent: (e: CalendarEvent) => void;
+  onCancelSession: (e: CalendarEvent) => void;
+  onRestoreSession: (e: CalendarEvent) => void;
   onCreateEvent: () => void;
-  onNavigateToSession?: (sessionId: string) => void;
   onOpenFieldTimers?: (id: string, fromPlan?: boolean) => void;
   onOpenGameTracking?: (eventId: string) => void;
   periodizationContexts: WeekContext[];
@@ -792,16 +952,42 @@ function DayDetail({
             {events.map((ev) => {
               const cfg = eventTypeConfig[ev.type] || eventTypeConfig.other;
               return (
+                <div key={ev.id} className="group relative flex items-start rounded-lg transition-colors hover:bg-slate-50 dark:hover:bg-slate-700">
+                {/* Gli eventi creati a mano si eliminano da qui: cliccando la
+                    striscia nel calendario si va al foglio, e li' non c'e'
+                    nessun posto sensato per un cestino. Le sessioni della
+                    programmazione non si cancellano (regola SESSION_IN_PLAN):
+                    si annullano, e l'annullamento si disfa. */}
+                {!ev.isSession && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteEvent(ev); }}
+                    title={t('deleteEvent')}
+                    className="absolute right-2 top-2 z-10 rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {ev.isSession && ev.status === 'CANCELLED' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRestoreSession(ev); }}
+                    title={t('restoreSession')}
+                    className="absolute right-2 top-2 z-10 rounded p-1.5 text-slate-400 transition-colors hover:bg-teal-50 hover:text-teal-600"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {ev.isSession && ev.status !== 'CANCELLED' && ev.status !== 'COMPLETED' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onCancelSession(ev); }}
+                    title={t('cancelSession')}
+                    className="absolute right-2 top-2 z-10 rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+                  >
+                    <Ban className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button
-                  key={ev.id}
-                  onClick={() => {
-                    if (ev.isSession && ev.sessionId && onNavigateToSession) {
-                      onNavigateToSession(ev.sessionId);
-                    } else {
-                      onSelectEvent(ev);
-                    }
-                  }}
-                  className="flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 dark:bg-slate-900"
+                  onClick={() => onSelectEvent(ev)}
+                  className="flex w-full items-start gap-3 rounded-lg p-3 text-left"
                 >
                   <div className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${cfg.bg}`}>
                     <cfg.icon className={`h-4 w-4 ${cfg.color}`} />
@@ -816,26 +1002,22 @@ function DayDetail({
                           {ev.teamName.replace(/^(Under|U)\s*/i, 'U').split(' ')[0]}
                         </span>
                       )}
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{ev.title}</p>
+                      {hasAttendance(ev) && <StatusDotOnly status={trainingStatus(ev)} />}
+                      <p className={`text-sm font-medium truncate ${
+                        ev.status === 'CANCELLED'
+                          ? 'text-slate-400 line-through dark:text-slate-500'
+                          : 'text-slate-900 dark:text-white'
+                      }`}>{ev.title}</p>
+                      {ev.status === 'CANCELLED' && (
+                        <span className="flex-shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-2xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                          {t('sessionStatusCancelled')}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       {ev.allDay ? t('allDay') : `${formatTime(ev.startTime)} - ${formatTime(ev.endTime)}`}
                     </p>
-                    {ev.isSession && ev.status && (
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${
-                          ev.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                          ev.status === 'IN_PROGRESS' ? 'bg-teal-100 text-teal-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${statusColors[ev.status]}`} />
-                          {ev.status === 'COMPLETED' ? t('statusCompleted') : ev.status === 'IN_PROGRESS' ? t('statusInProgress') : t('statusPlanned')}
-                        </span>
-                        <span className="text-2xs text-teal-500 flex items-center gap-0.5">
-                          <ExternalLink className="h-3 w-3" /> {t('open')}
-                        </span>
-                      </div>
-                    )}
+
                     {hasAttendance(ev) && onOpenFieldTimers && (
                       <button
                         onClick={(e) => {
@@ -845,7 +1027,7 @@ function DayDetail({
                         className="mt-1 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-2xs font-medium text-orange-700 hover:bg-orange-200 transition-colors"
                       >
                         <ClipboardCheck className="h-3 w-3" />
-                        {ev.type === 'basket' && !ev.isSession ? t('exercisesShort') : t('attendanceShort')}
+                        {t('attendanceAndExercises')}
                       </button>
                     )}
                     {ev.type === 'match' && !ev.isSession && onOpenGameTracking && (
@@ -858,6 +1040,7 @@ function DayDetail({
                     )}
                   </div>
                 </button>
+                </div>
               );
             })}
           </div>
@@ -882,6 +1065,9 @@ function EventDetail({
   event,
   onClose,
   onDelete,
+  onCancelSession,
+  onRestoreSession,
+  onRescheduleSession,
   onNavigateToSession,
   onOpenFieldTimers,
   onOpenGameTracking,
@@ -889,11 +1075,15 @@ function EventDetail({
   event: CalendarEvent;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onCancelSession?: (e: CalendarEvent) => void;
+  onRestoreSession?: (e: CalendarEvent) => void;
+  onRescheduleSession?: (e: CalendarEvent, date: string) => void;
   onNavigateToSession?: (sessionId: string) => void;
   onOpenFieldTimers?: (id: string, fromPlan?: boolean) => void;
   onOpenGameTracking?: (eventId: string) => void;
 }) {
   const t = useTranslations('calendar');
+  const apiError = useApiError();
   const tInjuries = useTranslations('injuries');
   const locale = useLocale();
   const router = useRouter();
@@ -904,6 +1094,8 @@ function EventDetail({
   // ─── Rehab: protocollo RTP dell'atleta collegato ───────
   const [rtp, setRtp] = useState<RtpProtocolInfo | null>(null);
   const [advancing, setAdvancing] = useState(false);
+  const [showMove, setShowMove] = useState(false);
+  const [moveDate, setMoveDate] = useState('');
 
   useEffect(() => {
     if (event.type !== 'rehab' || !event.athleteId) {
@@ -939,7 +1131,7 @@ function EventDetail({
     } catch (err) {
       // 422 quando i criteri della fase corrente non sono soddisfatti:
       // il messaggio dell'API dice quanti ne mancano.
-      toast('error', err instanceof Error ? err.message : tInjuries('advancePhase'));
+      toast('error', apiError(err, tInjuries('advancePhase')));
     } finally {
       setAdvancing(false);
     }
@@ -957,7 +1149,27 @@ function EventDetail({
         </button>
       </div>
       <div className="space-y-4 p-4">
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white">{event.title}</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">{event.title}</h3>
+          {hasAttendance(event) && <TrainingStatusBadge status={trainingStatus(event)} />}
+        </div>
+
+        {event.type === 'match' && (event.opponent || event.venue || event.isHome != null) && (
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-900/20">
+            {event.opponent && (
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                {event.isHome === false
+                  ? `${event.opponent} vs ${event.teamName ?? ''}`.trim()
+                  : `${event.teamName ?? ''} vs ${event.opponent}`.trim()}
+              </p>
+            )}
+            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+              {event.isHome != null && (event.isHome ? t('gtHome') : t('gtAway'))}
+              {event.isHome != null && event.venue ? ' · ' : ''}
+              {event.venue}
+            </p>
+          </div>
+        )}
 
         {event.description && (
           <p className="text-sm text-slate-600 dark:text-slate-400">{event.description}</p>
@@ -982,15 +1194,23 @@ function EventDetail({
           <div className={`rounded-lg border p-3 ${
             event.status === 'COMPLETED' ? 'border-green-200 bg-green-50' :
             event.status === 'IN_PROGRESS' ? 'border-teal-200 bg-teal-50' :
+            event.status === 'CANCELLED' ? 'border-slate-200 bg-slate-50' :
             'border-blue-200 bg-blue-50'
           }`}>
             <p className="text-xs font-medium text-slate-700">{t('trainingSession')}</p>
             <p className={`mt-0.5 text-sm font-semibold ${
               event.status === 'COMPLETED' ? 'text-green-700' :
-              event.status === 'IN_PROGRESS' ? 'text-teal-700' : 'text-blue-700'
+              event.status === 'IN_PROGRESS' ? 'text-teal-700' :
+              event.status === 'CANCELLED' ? 'text-slate-500' : 'text-blue-700'
             }`}>
-              {event.status === 'COMPLETED' ? t('sessionStatusCompleted') : event.status === 'IN_PROGRESS' ? t('sessionStatusInProgress') : t('sessionStatusPlanned')}
+              {event.status === 'COMPLETED' ? t('sessionStatusCompleted')
+                : event.status === 'IN_PROGRESS' ? t('sessionStatusInProgress')
+                : event.status === 'CANCELLED' ? t('sessionStatusCancelled')
+                : t('sessionStatusPlanned')}
             </p>
+            {event.status === 'CANCELLED' && (
+              <p className="mt-1 text-2xs text-slate-500">{t('sessionCancelledHint')}</p>
+            )}
           </div>
         )}
 
@@ -1003,11 +1223,8 @@ function EventDetail({
             }
             className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-orange-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
           >
-            {event.type === 'basket' && !event.isSession ? (
-              <><Dribbble className="h-4 w-4" />{t('fieldSession')}</>
-            ) : (
-              <><ClipboardCheck className="h-4 w-4" />{t('attendanceSheet')}</>
-            )}
+            <ClipboardCheck className="h-4 w-4" />
+            {t('attendanceAndExercises')}
           </button>
         )}
 
@@ -1068,6 +1285,69 @@ function EventDetail({
             {t('deleteEvent')}
           </button>
         )}
+
+        {/* Sessione della programmazione: non si elimina (buchereebbe il
+            mesociclo), si sposta o si annulla. Entrambe reversibili. */}
+        {event.isSession && event.sessionId && event.status !== 'COMPLETED' && (
+          <div className="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-3">
+            {onRescheduleSession && (
+              showMove ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={moveDate}
+                    onChange={(e) => setMoveDate(e.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-900 px-2 py-1.5 text-xs text-slate-700 dark:text-slate-200"
+                  />
+                  <button
+                    onClick={() => onRescheduleSession(event, moveDate)}
+                    disabled={!moveDate}
+                    className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {t('moveSessionConfirm')}
+                  </button>
+                  <button
+                    onClick={() => setShowMove(false)}
+                    className="rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t('cancelAction')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    const d = new Date(event.startTime);
+                    setMoveDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+                    setShowMove(true);
+                  }}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {t('moveSession')}
+                </button>
+              )
+            )}
+            {event.status === 'CANCELLED'
+              ? onRestoreSession && (
+                  <button
+                    onClick={() => onRestoreSession(event)}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-200 py-2 text-xs font-medium text-teal-700 transition-colors hover:bg-teal-50"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {t('restoreSession')}
+                  </button>
+                )
+              : onCancelSession && (
+                  <button
+                    onClick={() => onCancelSession(event)}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-200 py-2 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50"
+                  >
+                    <Ban className="h-3.5 w-3.5" />
+                    {t('cancelSession')}
+                  </button>
+                )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1100,6 +1380,10 @@ function CreateEventModal({
   const [endTimeVal, setEndTimeVal] = useState('10:00');
   const [allDay, setAllDay] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Partita: avversario, campo, e casa/trasferta a tre stati ('' = non detto).
+  const [opponent, setOpponent] = useState('');
+  const [venue, setVenue] = useState('');
+  const [homeAway, setHomeAway] = useState<'' | 'home' | 'away'>('');
 
   // Gli eventi Rehab si agganciano a un atleta con protocollo RTP attivo
   useEffect(() => {
@@ -1126,6 +1410,11 @@ function CreateEventModal({
           allDay,
           teamId: teamId || undefined,
           athleteId: type === 'rehab' && athleteId ? athleteId : undefined,
+          ...(type === 'match' ? {
+            opponent: opponent.trim() || null,
+            venue: venue.trim() || null,
+            isHome: homeAway === '' ? null : homeAway === 'home',
+          } : {}),
         }),
       });
       onCreated();
@@ -1209,6 +1498,44 @@ function CreateEventModal({
               {rtpList.length === 0 && (
                 <p className="mt-1 text-2xs text-slate-400">{t('noActiveRtp')}</p>
               )}
+            </div>
+          )}
+
+          {/* Dettagli partita: compaiono solo sul tipo 'match'. */}
+          {type === 'match' && (
+            <div className="space-y-3 rounded-lg border border-purple-200 bg-purple-50/50 p-3 dark:border-purple-800 dark:bg-purple-900/20">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t('opponentLabel')}</label>
+                <input
+                  value={opponent}
+                  onChange={(e) => setOpponent(e.target.value)}
+                  placeholder={t('opponentPlaceholder')}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-900 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t('homeAwayLabel')}</label>
+                  <select
+                    value={homeAway}
+                    onChange={(e) => setHomeAway(e.target.value as '' | 'home' | 'away')}
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-900 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                  >
+                    <option value="">{t('homeAwayUnset')}</option>
+                    <option value="home">{t('home')}</option>
+                    <option value="away">{t('away')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t('venueLabel')}</label>
+                  <input
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
+                    placeholder={t('venuePlaceholder')}
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-900 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
           )}
 

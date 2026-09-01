@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useAuth } from '@/hooks/use-auth';
 import { AuthShell } from '@/components/auth/auth-shell';
 
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const apiError = useApiError();
   const { login, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +33,7 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('loginError'));
+      setError(apiError(err, t('loginError')));
     } finally {
       setIsSubmitting(false);
     }

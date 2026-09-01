@@ -40,9 +40,11 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { LoadCurveChart } from '@/components/periodization/load-curve-chart';
 import { useTeam } from '@/hooks/use-team';
 
@@ -175,6 +177,22 @@ const INTENSITY_OPTION_DEFS: { value: string; labelKey: string }[] = [
 
 // ─── Helpers ─────────────────────────────────────────────
 
+/** Inizio e fine di un mesociclo, dedotti dalla data del piano e dalle
+ *  settimane dei mesocicli che lo precedono. Le date non sono salvate: la
+ *  periodizzazione e' una sequenza, quindi si calcolano. */
+function mesoDateRange(
+  planStart: string,
+  mesocycles: Array<{ durationWeeks: number }>,
+  index: number,
+): { start: Date; end: Date } {
+  const weeksBefore = mesocycles.slice(0, index).reduce((sum, m) => sum + (m.durationWeeks || 0), 0);
+  const start = new Date(planStart);
+  start.setDate(start.getDate() + weeksBefore * 7);
+  const end = new Date(start);
+  end.setDate(end.getDate() + (mesocycles[index]?.durationWeeks || 0) * 7 - 1);
+  return { start, end };
+}
+
 function fmtDate(iso: string, locale: string): string {
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
@@ -254,11 +272,14 @@ interface SortableMesoCardProps {
   onUnlink: () => void;
   onAddSessionToMicro: (mc: Microcycle) => void;
   onNavigateToSessionDetail: (sessionId: string) => void;
+  /** Inizio e fine dedotti dalla posizione nel piano */
+  dateRange: { start: Date; end: Date };
 }
 
-function SortableMesoCard({ meso: m, isExpanded, onToggle, onEdit, onDelete, onEditMicrocycle, onImportSession, onCreateSession, onNavigateToSession, onUnlink, onAddSessionToMicro, onNavigateToSessionDetail }: SortableMesoCardProps) {
+function SortableMesoCard({ meso: m, dateRange, isExpanded, onToggle, onEdit, onDelete, onEditMicrocycle, onImportSession, onCreateSession, onNavigateToSession, onUnlink, onAddSessionToMicro, onNavigateToSessionDetail }: SortableMesoCardProps) {
   const tCommon = useTranslations('common');
   const tPer = useTranslations('periodization');
+  const locale = useLocale();
   const PHASE_LABELS = useMemo<Record<string, string>>(() => {
     const r: Record<string, string> = {};
     for (const [k, key] of Object.entries(PHASE_LABEL_KEYS)) r[k] = tPer(key);
@@ -295,10 +316,13 @@ function SortableMesoCard({ meso: m, isExpanded, onToggle, onEdit, onDelete, onE
             <GripVertical className="h-4 w-4" />
           </button>
           <div className="h-3 w-3 rounded-full" style={{ backgroundColor: m.color || '#94a3b8' }} />
-          <button onClick={onToggle} className="flex items-center gap-2">
+          <button onClick={onToggle} className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-slate-900 dark:text-white">{m.name}</span>
             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PHASE_COLORS[m.phase] || 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}>
               {PHASE_LABELS[m.phase] || m.phase}
+            </span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              {fmtDate(dateRange.start.toISOString(), locale)} → {fmtDate(dateRange.end.toISOString(), locale)}
             </span>
           </button>
         </div>
@@ -448,7 +472,32 @@ function SortableMesoCard({ meso: m, isExpanded, onToggle, onEdit, onDelete, onE
 
 export default function PeriodizationPage() {
   const t = useTranslations('periodization');
+  const apiError = useApiError();
   const tCommon = useTranslations('common');
+
+  // Tre azioni distruttive in questa pagina, un solo dialog: lo stato porta
+  // con se' i testi e la funzione da eseguire.
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    message: string;
+    detail?: string;
+    confirmLabel?: string;
+    tone?: 'danger' | 'default';
+    run: () => Promise<void>;
+  } | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+
+
+  async function runConfirm() {
+    if (!confirmState) return;
+    setConfirmBusy(true);
+    try {
+      await confirmState.run();
+      setConfirmState(null);
+    } finally {
+      setConfirmBusy(false);
+    }
+  }
   const locale = useLocale();
   const { toast } = useToast();
   const router = useRouter();
@@ -491,6 +540,17 @@ export default function PeriodizationPage() {
 
   // Create form
   const [createForm, setCreateForm] = useState<CreateForm>({ name: '', description: '', type: 'BLOCK', startDate: '', endDate: '', totalWeeks: 8, teamId: '' });
+  // Niente si crea senza squadra: un piano scollegato sparisce da ogni elenco
+  // filtrato e sembra non essere mai stato creato.
+  const templateReady = Boolean(createForm.startDate && createForm.teamId);
+  const blankReady = Boolean(
+    createForm.name && createForm.startDate && createForm.teamId &&
+    (createForm.endDate || createForm.totalWeeks > 0),
+  );
+  // 'chronological' = dalla piu' vecchia alla piu' recente, per leggere la stagione
+  const [sortMode, setSortMode] = useState<'chronological' | 'recent'>('chronological');
+  // '' = tutte le squadre. Segue quella globale finche' non la cambi qui.
+  const [filterTeamId, setFilterTeamId] = useState<string>(selectedTeamId || '');
 
   // Mesocycle form
   const [mesoForm, setMesoForm] = useState<MesoForm>(EMPTY_MESO_FORM);
@@ -571,7 +631,7 @@ export default function PeriodizationPage() {
       setExpandedMeso(new Set(res.data.plan.mesocycles.map((m) => m.id)));
       toast('success', t('mesocyclesUpdated'));
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('saveMesocyclesError'));
+      toast('error', apiError(err, t('saveMesocyclesError')));
       // Refetch to be safe
       openPlan(plan.id);
     } finally {
@@ -602,7 +662,7 @@ export default function PeriodizationPage() {
       });
       toast('success', t('orderUpdated'));
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('reorderError'));
+      toast('error', apiError(err, t('reorderError')));
       // Rollback — refetch
       openPlan(selectedPlan.id);
     }
@@ -698,13 +758,18 @@ export default function PeriodizationPage() {
     await bulkSaveMesocycles(selectedPlan, currentMesos);
   }
 
-  async function deleteMeso(mesoIndex: number) {
+  function deleteMeso(mesoIndex: number) {
     if (!selectedPlan) return;
-    const m = selectedPlan.mesocycles[mesoIndex];
-    if (!confirm(t('deleteMesoConfirm', { name: m.name }))) return;
-
-    const currentMesos = selectedPlan.mesocycles.filter((_, i) => i !== mesoIndex);
-    await bulkSaveMesocycles(selectedPlan, currentMesos);
+    const plan = selectedPlan;
+    const m = plan.mesocycles[mesoIndex];
+    setConfirmState({
+      title: t('deleteMesocycle'),
+      message: t('deleteMesoConfirm', { name: m.name }),
+      detail: t('deleteMesoDetail'),
+      run: async () => {
+        await bulkSaveMesocycles(plan, plan.mesocycles.filter((_, i) => i !== mesoIndex));
+      },
+    });
   }
 
   // ── Microcycle edit handlers ──
@@ -727,7 +792,7 @@ export default function PeriodizationPage() {
       return;
     }
     if (microForm.sessionsCount < 1 || microForm.sessionsCount > 14) {
-      toast('error', 'Le sessioni devono essere tra 1 e 14');
+      toast('error', t('sessionsCountRange'));
       return;
     }
 
@@ -759,7 +824,9 @@ export default function PeriodizationPage() {
   // ── Fetch ──
   const fetchPlans = useCallback(async () => {
     try {
-      const params = selectedTeamId ? `?teamId=${selectedTeamId}` : '';
+      const query = new URLSearchParams({ sort: sortMode });
+      if (filterTeamId) query.set('teamId', filterTeamId);
+      const params = `?${query}`;
       const [plansRes, templatesRes] = await Promise.all([
         apiFetch<{ success: boolean; data: { plans: Plan[] } }>(`/periodization/plans${params}`),
         apiFetch<{ success: boolean; data: { templates: Template[] } }>('/periodization/templates'),
@@ -767,11 +834,14 @@ export default function PeriodizationPage() {
       setPlans(plansRes.data.plans);
       setTemplates(templatesRes.data.templates);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     } finally {
       setLoading(false);
     }
-  }, [toast, selectedTeamId]);
+  }, [toast, filterTeamId, sortMode]);
+
+  // Se cambi squadra dalla barra laterale, il filtro di pagina la segue
+  useEffect(() => { setFilterTeamId(selectedTeamId || ''); }, [selectedTeamId]);
 
   useEffect(() => { fetchPlans(); }, [fetchPlans]);
 
@@ -788,7 +858,7 @@ export default function PeriodizationPage() {
         setSimResult(res.data.plan.simulations[0].results);
       }
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     } finally {
       setLoadingDetail(false);
     }
@@ -796,11 +866,14 @@ export default function PeriodizationPage() {
 
   // ── Create from template ──
   async function createFromTemplate(templateId: string) {
-    const startDate = createForm.startDate || new Date().toISOString().slice(0, 10);
+    if (!createForm.startDate || !createForm.teamId) {
+      toast('error', t('templateNeedsDateAndTeam'));
+      return;
+    }
     try {
       const res = await apiFetch<{ success: boolean; data: { plan: PlanDetail } }>('/periodization/plans/from-template', {
         method: 'POST',
-        body: JSON.stringify({ templateId, startDate }),
+        body: JSON.stringify({ templateId, startDate: createForm.startDate, teamId: createForm.teamId }),
       });
       toast('success', t('planCreatedFromTemplate'));
       setShowTemplateModal(false);
@@ -808,7 +881,7 @@ export default function PeriodizationPage() {
       setSelectedPlan(res.data.plan);
       setExpandedMeso(new Set(res.data.plan.mesocycles.map((m) => m.id)));
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     }
   }
 
@@ -818,6 +891,12 @@ export default function PeriodizationPage() {
       toast('error', t('fillNameStartWeeks'));
       return;
     }
+    // Senza squadra il piano non compare in nessun elenco filtrato: sembra
+    // che non sia stato creato.
+    if (!createForm.teamId) {
+      toast('error', t('teamRequiredHint'));
+      return;
+    }
     // Ensure endDate is computed if missing
     if (!createForm.endDate && createForm.startDate && createForm.totalWeeks > 0) {
       const d = new Date(createForm.startDate);
@@ -825,7 +904,7 @@ export default function PeriodizationPage() {
       createForm.endDate = d.toISOString().split('T')[0];
     }
     try {
-      const payload = { ...createForm, mesocycles: [], teamId: createForm.teamId || undefined };
+      const payload = { ...createForm, mesocycles: [], teamId: createForm.teamId };
       const res = await apiFetch<{ success: boolean; data: { plan: PlanDetail } }>('/periodization/plans', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -835,11 +914,22 @@ export default function PeriodizationPage() {
       fetchPlans();
       setSelectedPlan(res.data.plan);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     }
   }
 
   // ── Delete plan ──
+  // Prima il cestino cancellava al primo click, senza chiedere nulla: e'
+  // l'azione piu' distruttiva della pagina, si porta via tutti i mesocicli.
+  function askDeletePlan(id: string, name: string) {
+    setConfirmState({
+      title: t('deletePlanTitle'),
+      message: t('deletePlanConfirm', { name }),
+      detail: t('deletePlanDetail'),
+      run: () => deletePlan(id),
+    });
+  }
+
   async function deletePlan(id: string) {
     try {
       await apiFetch(`/periodization/plans/${id}`, { method: 'DELETE' });
@@ -847,7 +937,7 @@ export default function PeriodizationPage() {
       if (selectedPlan?.id === id) setSelectedPlan(null);
       fetchPlans();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('deleteError'));
+      toast('error', apiError(err, t('deleteError')));
     }
   }
 
@@ -870,7 +960,7 @@ export default function PeriodizationPage() {
       setShowSimModal(false);
       toast('success', t('simulationCompleted'));
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('simulationError'));
+      toast('error', apiError(err, t('simulationError')));
     } finally {
       setSimulating(false);
     }
@@ -909,7 +999,7 @@ export default function PeriodizationPage() {
         router.push(`/dashboard/training/${res.data.trainingPlan.id}`);
       }, 500);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('generateTrainingError'));
+      toast('error', apiError(err, t('generateTrainingError')));
     } finally {
       setGeneratingTraining(false);
     }
@@ -951,15 +1041,25 @@ export default function PeriodizationPage() {
       // Refresh plan detail
       openPlan(selectedPlan.id);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('linkError'));
+      toast('error', apiError(err, t('linkError')));
     } finally {
       setLinkingPlan(null);
     }
   }
 
-  async function unlinkMesocycle(mesocycleId: string, mesoName: string) {
+  function askUnlinkMesocycle(mesocycleId: string, mesoName: string) {
+    setConfirmState({
+      title: t('unlink'),
+      message: t('unlinkConfirm', { name: mesoName }),
+      detail: t('unlinkDetail'),
+      confirmLabel: t('unlink'),
+      tone: 'default',
+      run: () => unlinkMesocycle(mesocycleId),
+    });
+  }
+
+  async function unlinkMesocycle(mesocycleId: string) {
     if (!selectedPlan) return;
-    if (!confirm(`Scollegare tutti i mesocicli collegati da "${mesoName}"?`)) return;
     try {
       const res = await apiFetch<{ success: boolean; data: { weeksUnlinked: number } }>(
         `/periodization/plans/${selectedPlan.id}/unlink-training`,
@@ -972,7 +1072,7 @@ export default function PeriodizationPage() {
       // Refresh
       openPlan(selectedPlan.id);
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('unlinkError'));
+      toast('error', apiError(err, t('unlinkError')));
     }
   }
 
@@ -1005,8 +1105,9 @@ export default function PeriodizationPage() {
           { method: 'POST' },
         );
         setAddSessionWeekId(res.data.weekId);
-      } catch {
-        toast('error', t('weekCreationError'));
+      } catch (err) {
+        // Il messaggio dell'API dice molto piu' di "Errore creazione settimana"
+        toast('error', apiError(err, t('weekCreationError')));
         setShowAddSessionModal(false);
         return;
       }
@@ -1142,7 +1243,9 @@ export default function PeriodizationPage() {
           <div className="card">
             <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{t('mesocycleTimeline')}</h3>
             <div className="flex gap-1 overflow-x-auto">
-              {selectedPlan.mesocycles.map((m: Mesocycle) => (
+              {selectedPlan.mesocycles.map((m: Mesocycle, i: number) => {
+                const range = mesoDateRange(selectedPlan.startDate, selectedPlan.mesocycles, i);
+                return (
                 <div
                   key={m.id}
                   className="flex flex-col items-center rounded-lg px-3 py-2 text-xs"
@@ -1154,8 +1257,12 @@ export default function PeriodizationPage() {
                 >
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{m.name}</span>
                   <span className="text-slate-500 dark:text-slate-400">{m.durationWeeks}w · {m.targetLoadPercent}%</span>
+                  <span className="mt-0.5 whitespace-nowrap text-2xs text-slate-400 dark:text-slate-500">
+                    {fmtDate(range.start.toISOString(), locale)} → {fmtDate(range.end.toISOString(), locale)}
+                  </span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1169,6 +1276,7 @@ export default function PeriodizationPage() {
                   <SortableMesoCard
                     key={m.id}
                     meso={m}
+                    dateRange={mesoDateRange(selectedPlan.startDate, selectedPlan.mesocycles, idx)}
                     isExpanded={expandedMeso.has(m.id)}
                     onToggle={() => toggleMeso(m.id)}
                     onEdit={() => openEditMeso(idx)}
@@ -1185,7 +1293,7 @@ export default function PeriodizationPage() {
                       router.push(`/dashboard/training?create=1&${params.toString()}`);
                     }}
                     onNavigateToSession={(planId) => router.push(`/dashboard/training/${planId}`)}
-                    onUnlink={() => unlinkMesocycle(m.id, m.name)}
+                    onUnlink={() => askUnlinkMesocycle(m.id, m.name)}
                     onAddSessionToMicro={(mc) => openAddSessionToMicro(mc)}
                     onNavigateToSessionDetail={(sessionId) => router.push(`/dashboard/sessions/${sessionId}`)}
                   />
@@ -1500,7 +1608,7 @@ export default function PeriodizationPage() {
                         ) : (
                           <Upload className="h-3.5 w-3.5" />
                         )}
-                        Collega
+                        {t('linkBtn')}
                       </button>
                     </div>
                   );
@@ -1579,39 +1687,39 @@ export default function PeriodizationPage() {
                   </div>
                 ) : (
                   <div className="max-h-[350px] space-y-2 overflow-y-auto">
-                    {filteredSessionTemplates.map((t) => (
+                    {filteredSessionTemplates.map((tpl) => (
                       <div
-                        key={t.id}
+                        key={tpl.id}
                         className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{t.title}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{tpl.title}</p>
                           <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                            <span>{t.duration} min</span>
-                            <span>{t._count.sessionExercises} esercizi</span>
+                            <span>{tpl.duration} min</span>
+                            <span>{tpl._count.sessionExercises} {tCommon('exercises')}</span>
                           </div>
-                          {t.sessionExercises.length > 0 && (
+                          {tpl.sessionExercises.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
-                              {t.sessionExercises.slice(0, 4).map((se, i) => (
+                              {tpl.sessionExercises.slice(0, 4).map((se, i) => (
                                 <span key={i} className="rounded bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-xs text-slate-600 dark:text-slate-400">
                                   {se.exercise.name}
                                 </span>
                               ))}
-                              {t._count.sessionExercises > 4 && (
+                              {tpl._count.sessionExercises > 4 && (
                                 <span className="rounded bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-xs text-slate-400 dark:text-slate-500">
-                                  +{t._count.sessionExercises - 4}
+                                  +{tpl._count.sessionExercises - 4}
                                 </span>
                               )}
                             </div>
                           )}
                         </div>
                         <button
-                          onClick={() => importSessionTemplate(t.id)}
+                          onClick={() => importSessionTemplate(tpl.id)}
                           disabled={importingSessionTemplate || !sessionForm.date}
                           className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
                         >
                           <Upload className="h-3.5 w-3.5" />
-                          Importa
+                          {t('importBtn')}
                         </button>
                       </div>
                     ))}
@@ -1682,6 +1790,47 @@ export default function PeriodizationPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('filterTeam')}
+          </span>
+          <select
+            value={filterTeamId}
+            onChange={(e) => setFilterTeamId(e.target.value)}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-700 dark:text-slate-200"
+          >
+            <option value="">{t('allTeams')}</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>{team.name}</option>
+            ))}
+          </select>
+        </label>
+
+        {plans.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('sortLabel')}
+          </span>
+          <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
+            {(['chronological', 'recent'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setSortMode(mode)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  sortMode === mode
+                    ? 'bg-teal-700 text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {mode === 'chronological' ? t('sortChronological') : t('sortRecent')}
+              </button>
+            ))}
+          </div>
+        </div>
+        )}
+      </div>
+
       {plans.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-16">
           <Calendar className="mb-3 h-10 w-10 text-slate-300" />
@@ -1701,7 +1850,7 @@ export default function PeriodizationPage() {
                   <p className="text-xs text-slate-400 dark:text-slate-500">{fmtDate(p.startDate, locale)} → {fmtDate(p.endDate, locale)}</p>
                 </div>
                 <button
-                  onClick={(e: React.MouseEvent) => { e.stopPropagation(); deletePlan(p.id); }}
+                  onClick={(e: React.MouseEvent) => { e.stopPropagation(); askDeletePlan(p.id, p.name); }}
                   className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -1725,13 +1874,23 @@ export default function PeriodizationPage() {
       {/* Template picker modal */}
       <Modal open={showTemplateModal} onClose={() => setShowTemplateModal(false)} title={t('chooseTemplate')} size="lg">
         <div className="space-y-2">
-          <Input label={t('startDateLabel')} type="date" value={createForm.startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateForm((f: CreateForm) => ({ ...f, startDate: e.target.value }))} />
+          <Input label={`${t('startDateLabel')} *`} type="date" value={createForm.startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateForm((f: CreateForm) => ({ ...f, startDate: e.target.value }))} />
+          <Select
+            label={`${t('teamLabel')} *`}
+            options={[{ value: '', label: t('selectTeamPlaceholder') }, ...teams.map((tm) => ({ value: tm.id, label: tm.name }))]}
+            value={createForm.teamId}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateForm((f: CreateForm) => ({ ...f, teamId: e.target.value }))}
+          />
+          {!templateReady && (
+            <p className="pt-1 text-xs text-amber-600">{t('templateNeedsDateAndTeam')}</p>
+          )}
           <div className="mt-4 space-y-3">
             {templates.map((t: Template) => (
               <button
                 key={t.id}
                 onClick={() => createFromTemplate(t.id)}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-4 text-left hover:border-teal-300 hover:bg-teal-50"
+                disabled={!templateReady}
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-4 text-left hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-transparent"
               >
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">{t.name}</p>
@@ -1758,15 +1917,15 @@ export default function PeriodizationPage() {
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('newBlankPlan')} size="md" footer={
         <>
           <button onClick={() => setShowCreateModal(false)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700">{tCommon('cancel')}</button>
-          <button onClick={createBlank} className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">{tCommon('create')}</button>
+          <button onClick={createBlank} disabled={!blankReady} className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">{tCommon('create')}</button>
         </>
       }>
         <div className="space-y-4">
-          <Input label={t('planName')} placeholder={t('planNamePlaceholder')} value={createForm.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateForm((f: CreateForm) => ({ ...f, name: e.target.value }))} />
+          <Input label={`${t('planName')} *`} placeholder={t('planNamePlaceholder')} value={createForm.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateForm((f: CreateForm) => ({ ...f, name: e.target.value }))} />
           <Input label={t('descriptionOptional')} placeholder={t('descriptionPlaceholderOpt')} value={createForm.description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateForm((f: CreateForm) => ({ ...f, description: e.target.value }))} />
           <Select label={t('typeLabel')} options={TYPE_OPTIONS} value={createForm.type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateForm((f: CreateForm) => ({ ...f, type: e.target.value }))} />
           <div className="grid grid-cols-3 gap-4">
-            <Input label={t('startDateLabel')} type="date" value={createForm.startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            <Input label={`${t('startDateLabel')} *`} type="date" value={createForm.startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const startDate = e.target.value;
               let endDate = createForm.endDate;
               let totalWeeks = createForm.totalWeeks;
@@ -1792,7 +1951,7 @@ export default function PeriodizationPage() {
                 setCreateForm((f: CreateForm) => ({ ...f, totalWeeks: weeks, endDate }));
               }}
             />
-            <Input label={t('endDateLabel')} type="date" value={createForm.endDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            <Input label={`${t('endDateLabel')} *`} type="date" value={createForm.endDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const endDate = e.target.value;
               let totalWeeks = createForm.totalWeeks;
               if (createForm.startDate && endDate) {
@@ -1817,13 +1976,28 @@ export default function PeriodizationPage() {
             </p>
           )}
           <Select
-            label={t('teamLabel')}
-            options={[{ value: '', label: t('noTeam') }, ...teams.map((tm) => ({ value: tm.id, label: tm.name }))]}
+            label={`${t('teamLabel')} *`}
+            options={[{ value: '', label: t('selectTeamPlaceholder') }, ...teams.map((tm) => ({ value: tm.id, label: tm.name }))]}
             value={createForm.teamId}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateForm((f: CreateForm) => ({ ...f, teamId: e.target.value }))}
           />
+          {!createForm.teamId && (
+            <p className="text-xs text-amber-600">{t('teamRequiredHint')}</p>
+          )}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ''}
+        message={confirmState?.message ?? ''}
+        detail={confirmState?.detail}
+        confirmLabel={confirmState?.confirmLabel}
+        tone={confirmState?.tone ?? 'danger'}
+        busy={confirmBusy}
+        onConfirm={runConfirm}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

@@ -130,7 +130,65 @@
       "voci": [],
       "avvisi": [],
       "origine": "pdf"
+    },
+    {
+      "hash": "ae952737030f5525",
+      "file": "ionos/Fattura_2026-08-16_109994167317_V112969652.pdf",
+      "fornitore": "ionos",
+      "fornitore_nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "numero": "109994167317",
+      "data": "2026-08-16",
+      "descrizione": "IONOS VPS Linux L+",
+      "contratto": "112969652",
+      "periodo_da": "2026-08-14",
+      "periodo_a": "2026-09-13",
+      "sconto_a": "2026-10-13",
+      "valuta": "EUR",
+      "cambio": 1.0,
+      "cambio_fonte": "n/a",
+      "netto": 21.26,
+      "iva": 4.68,
+      "iva_percento": 22.0,
+      "totale": 25.94,
+      "netto_eur": 21.26,
+      "iva_eur": 4.68,
+      "totale_eur": 25.94,
+      "voci": [
+        {
+          "n": 1,
+          "descrizione": "Tariﬀa base",
+          "netto": 18.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 2,
+          "descrizione": "Sconto",
+          "netto": -13.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 3,
+          "descrizione": "IP addizionale",
+          "netto": 0.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 4,
+          "descrizione": "IONOS Cloud",
+          "netto": 16.26,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 5,
+          "descrizione": "IP addizionale",
+          "netto": 0.0,
+          "iva_percento": 22.0
+        }
+      ],
+      "avvisi": [],
+      "origine": "pdf"
     }
   ],
-  "ultimo_import": "2026-08-09T13:45:19"
+  "ultimo_import": "2026-09-01T09:22:47"
 }

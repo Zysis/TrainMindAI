@@ -252,7 +252,7 @@ export function TeamOverview({ teamId }: TeamOverviewProps) {
                 <th className="pb-3 text-center font-medium text-slate-500 dark:text-slate-400">ACWR</th>
                 <th className="pb-3 text-center font-medium text-slate-500 dark:text-slate-400">{t('zone')}</th>
                 <th className="pb-3 text-center font-medium text-slate-500 dark:text-slate-400">{t('sessions7d')}</th>
-                <th className="pb-3 text-center font-medium text-slate-500 dark:text-slate-400">Carico acuto</th>
+                <th className="pb-3 text-center font-medium text-slate-500 dark:text-slate-400">{t('acuteLoad')}</th>
               </tr>
             </thead>
             <tbody>

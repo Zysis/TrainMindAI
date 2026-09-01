@@ -418,8 +418,23 @@ export async function notificationRoutes(app: FastifyInstance) {
       for (const a of eventAthletes) athleteNameById.set(a.id, `${a.lastName} ${a.firstName}`);
     }
 
+    // Stato dell'allenamento: un evento di calendario non ce l'ha, ce l'ha il
+    // foglio presenze collegato. IN_PROGRESS = foglio aperto, COMPLETED = seduta
+    // chiusa con "Completa sessione". Senza foglio, l'evento e' solo pianificato.
+    const sheetStatusByEvent = new Map<string, string>();
+    if (rawEvents.length > 0) {
+      const sheets = await app.prisma.fieldTrainingSession.findMany({
+        where: { calendarEventId: { in: rawEvents.map((e) => e.id) } },
+        select: { calendarEventId: true, status: true },
+      });
+      for (const sheet of sheets) {
+        if (sheet.calendarEventId) sheetStatusByEvent.set(sheet.calendarEventId, sheet.status);
+      }
+    }
+
     const events = rawEvents.map((e) => ({
       id: e.id,
+      sheetStatus: sheetStatusByEvent.get(e.id) ?? null,
       title: e.title,
       description: e.description,
       startTime: e.startTime,
@@ -432,6 +447,9 @@ export async function notificationRoutes(app: FastifyInstance) {
       teamColor: e.team?.color ?? null,
       athleteId: e.athleteId ?? null,
       athleteName: e.athleteId ? athleteNameById.get(e.athleteId) ?? null : null,
+      opponent: e.opponent ?? null,
+      isHome: e.isHome ?? null,
+      venue: e.venue ?? null,
     }));
 
     // Also fetch training sessions in the range for auto-display
@@ -469,7 +487,12 @@ export async function notificationRoutes(app: FastifyInstance) {
       // Tipo dedicato: le sessioni dei piani non sono eventi creati a mano e
       // non devono ereditare l'etichetta di una delle categorie scelte dall'utente.
       type: 'session',
-      color: s.status === 'COMPLETED' ? '#22c55e' : s.status === 'IN_PROGRESS' ? '#0d9488' : '#3b82f6',
+      // Le annullate restano in calendario (servono a spiegare un buco nel
+      // carico settimanale) ma in grigio, cosi' non si confondono con le attive.
+      color: s.status === 'COMPLETED' ? '#22c55e'
+        : s.status === 'IN_PROGRESS' ? '#0d9488'
+        : s.status === 'CANCELLED' ? '#94a3b8'
+        : '#3b82f6',
       isSession: true,
       sessionId: s.id,
       status: s.status,
@@ -498,6 +521,12 @@ export async function notificationRoutes(app: FastifyInstance) {
       color: z.string().optional(),
       athleteId: z.string().optional(),
       teamId: z.string().optional(),
+      // Dettagli partita. Accettati per qualunque tipo e poi azzerati sotto:
+      // validare "solo se type === match" complicherebbe lo schema per
+      // proteggere da un caso che l'interfaccia gia' non produce.
+      opponent: z.string().max(100).nullish(),
+      isHome: z.boolean().nullish(),
+      venue: z.string().max(120).nullish(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -508,11 +537,17 @@ export async function notificationRoutes(app: FastifyInstance) {
       });
     }
 
+    const isMatch = parsed.data.type === 'match';
     const event = await app.prisma.calendarEvent.create({
       data: {
         ...parsed.data,
         startTime: new Date(parsed.data.startTime),
         endTime: new Date(parsed.data.endTime),
+        // Un allenamento non ha un avversario: se il tipo cambia in corsa nel
+        // modulo, i campi partita compilati prima non devono restare appesi.
+        opponent: isMatch ? parsed.data.opponent ?? null : null,
+        isHome: isMatch ? parsed.data.isHome ?? null : null,
+        venue: isMatch ? parsed.data.venue ?? null : null,
         userId: request.user.userId,
       },
     });
@@ -531,6 +566,9 @@ export async function notificationRoutes(app: FastifyInstance) {
       allDay: z.boolean().optional(),
       type: z.string().optional(),
       color: z.string().optional(),
+      opponent: z.string().max(100).nullish(),
+      isHome: z.boolean().nullish(),
+      venue: z.string().max(120).nullish(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -553,9 +591,39 @@ export async function notificationRoutes(app: FastifyInstance) {
   // ─── DELETE /calendar/events/:id — Delete event ────────────
   app.delete<{ Params: { id: string } }>('/calendar/events/:id', async (request, reply) => {
     const { id } = request.params;
-    await app.prisma.calendarEvent.deleteMany({
+
+    const event = await app.prisma.calendarEvent.findFirst({
       where: { id, userId: request.user.userId },
+      select: {
+        id: true,
+        title: true,
+        fieldTrainingSession: { select: { status: true } },
+      },
     });
+    if (!event) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Evento non trovato' },
+      });
+    }
+
+    // Il foglio presenze e' in cascata sull'evento, ma le righe di carico per
+    // singolo atleta create al "Completa sessione" NON lo sono: hanno il loro
+    // athleteId e nessun legame col foglio. Cancellare un allenamento gia'
+    // completato porterebbe via il documento (chi c'era, gli RPE, i cronometri)
+    // lasciando il carico dentro ACWR, report e storico dell'atleta. Dati che
+    // non tornano piu' a nessuno, senza un solo messaggio d'errore.
+    if (event.fieldTrainingSession?.status === 'COMPLETED') {
+      return reply.status(409).send({
+        success: false,
+        error: {
+          code: 'EVENT_ALREADY_COMPLETED',
+          message: 'Questo allenamento e\' gia\' stato completato: il carico registrato resterebbe negli analytics senza il foglio che lo spiega. Annullalo invece di eliminarlo.',
+        },
+      });
+    }
+
+    await app.prisma.calendarEvent.delete({ where: { id } });
     return reply.send({ success: true });
   });
 }

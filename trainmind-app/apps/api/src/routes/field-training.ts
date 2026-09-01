@@ -54,6 +54,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
       let effectiveTeamId: string | null = teamId || null;
       let defaultDuration: number | null = null;
+      let presetExercises: Array<Record<string, unknown>> = [];
+      let soloAthleteId: string | null = null;
 
       if (calendarEventId) {
         const calendarEvent = await app.prisma.calendarEvent.findFirst({
@@ -71,13 +73,50 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         // Sessione della programmazione: la squadra si risale dal piano
         const trainingSession = await app.prisma.trainingSession.findFirst({
           where: { id: trainingSessionId, organizationId },
-          include: { week: { select: { trainingPlan: { select: { teamId: true } } } } },
+          include: {
+            week: {
+              select: {
+                trainingPlan: {
+                  select: {
+                    teamId: true,
+                    // I piani generati da una periodizzazione non sempre hanno
+                    // una squadra propria: quella vera sta sulla periodizzazione.
+                    periodizationPlan: { select: { teamId: true } },
+                  },
+                },
+              },
+            },
+            sessionExercises: {
+              orderBy: { orderIndex: 'asc' },
+              select: { id: true, sets: true, exercise: { select: { name: true } } },
+            },
+          },
         });
         if (!trainingSession) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Sessione non trovata (id: ${trainingSessionId})` } });
         }
-        effectiveTeamId = effectiveTeamId || trainingSession.week?.trainingPlan?.teamId || null;
+        const plan = trainingSession.week?.trainingPlan;
+        effectiveTeamId =
+          effectiveTeamId || plan?.teamId || plan?.periodizationPlan?.teamId || null;
         defaultDuration = trainingSession.duration || null;
+        // Sessione individuale: la "rosa" e' quel solo atleta.
+        soloAthleteId = trainingSession.athleteId || null;
+
+        // Il foglio nasce con gli esercizi della scheda gia' in tabella: chi e'
+        // in palestra deve solo far partire i cronometri. Restano modificabili.
+        presetExercises = trainingSession.sessionExercises.map((se, i) => ({
+          id: `plan_${se.id}`,
+          name: se.exercise?.name || `Esercizio ${i + 1}`,
+          isWarmup: false,
+          players: 0,
+          courts: 0,
+          sets: se.sets ?? 0,
+          activityMs: 0,
+          pauseMs: 0,
+          breakMs: 0,
+          state: 'idle',
+          breakRunning: false,
+        }));
       }
 
       // Load athletes from team if available
@@ -88,6 +127,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           select: { athleteId: true },
         });
         athleteIds = teamAthletes.map((at) => at.athleteId);
+      } else if (soloAthleteId) {
+        athleteIds = [soloAthleteId];
       }
 
       // Create session + entries for each athlete
@@ -98,6 +139,9 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
             calendarEventId: calendarEventId || null,
             trainingSessionId: trainingSessionId || null,
             durationMinutes: defaultDuration,
+            ...(presetExercises.length > 0
+              ? { exercises: presetExercises as unknown as Prisma.InputJsonValue }
+              : {}),
             teamId: effectiveTeamId || null,
             organizationId,
             entries: {
@@ -146,6 +190,116 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
     }
   });
 
+  // ─── Riparazione di un foglio nato vuoto ────────────────
+  // Un foglio creato quando il piano non aveva ancora una squadra resta senza
+  // rosa, e uno creato prima del precaricamento resta senza esercizi. Invece di
+  // costringere a rifarlo, lo completiamo alla prima riapertura. Non tocchiamo
+  // mai un foglio gia' chiuso ne' dati che l'utente ha inserito.
+  async function backfillSheet(sheetId: string, organizationId: string): Promise<boolean> {
+    const sheet = await app.prisma.fieldTrainingSession.findFirst({
+      where: { id: sheetId, organizationId },
+      select: {
+        id: true,
+        status: true,
+        teamId: true,
+        exercises: true,
+        trainingSessionId: true,
+        _count: { select: { entries: true } },
+      },
+    });
+    if (!sheet || sheet.status === 'COMPLETED') return false;
+
+    let changed = false;
+
+    // ── rosa ──
+    if (sheet._count.entries === 0) {
+      let teamId = sheet.teamId;
+      let soloAthleteId: string | null = null;
+
+      if (!teamId && sheet.trainingSessionId) {
+        const planSession = await app.prisma.trainingSession.findUnique({
+          where: { id: sheet.trainingSessionId },
+          select: {
+            athleteId: true,
+            week: {
+              select: {
+                trainingPlan: {
+                  select: { teamId: true, periodizationPlan: { select: { teamId: true } } },
+                },
+              },
+            },
+          },
+        });
+        const plan = planSession?.week?.trainingPlan;
+        teamId = plan?.teamId || plan?.periodizationPlan?.teamId || null;
+        soloAthleteId = planSession?.athleteId || null;
+      }
+
+      let athleteIds: string[] = [];
+      if (teamId) {
+        const teamAthletes = await app.prisma.athleteTeam.findMany({
+          where: { teamId },
+          select: { athleteId: true },
+        });
+        athleteIds = teamAthletes.map((at) => at.athleteId);
+      } else if (soloAthleteId) {
+        athleteIds = [soloAthleteId];
+      }
+
+      if (athleteIds.length > 0) {
+        await app.prisma.fieldTrainingEntry.createMany({
+          data: athleteIds.map((athleteId) => ({
+            fieldTrainingSessionId: sheet.id,
+            athleteId,
+            totalActiveMs: 0,
+            laps: [],
+          })),
+          skipDuplicates: true,
+        });
+        if (teamId && !sheet.teamId) {
+          await app.prisma.fieldTrainingSession.update({
+            where: { id: sheet.id },
+            data: { teamId },
+          });
+        }
+        changed = true;
+      }
+    }
+
+    // ── esercizi della scheda ──
+    const stored = Array.isArray(sheet.exercises) ? sheet.exercises : [];
+    if (stored.length === 0 && sheet.trainingSessionId) {
+      const planned = await app.prisma.sessionExercise.findMany({
+        where: { trainingSessionId: sheet.trainingSessionId },
+        orderBy: { orderIndex: 'asc' },
+        select: { id: true, sets: true, exercise: { select: { name: true } } },
+      });
+      if (planned.length > 0) {
+        await app.prisma.fieldTrainingSession.update({
+          where: { id: sheet.id },
+          data: {
+            exercises: planned.map((se, i) => ({
+              id: `plan_${se.id}`,
+              name: se.exercise?.name || `Esercizio ${i + 1}`,
+              isWarmup: false,
+              players: 0,
+              courts: 0,
+              sets: se.sets ?? 0,
+              activityMs: 0,
+              pauseMs: 0,
+              breakMs: 0,
+              state: 'idle',
+              breakRunning: false,
+            })) as unknown as Prisma.InputJsonValue,
+          },
+        });
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
   // ─── GET /field-training/by-event/:eventId ──────────────
   app.get<{ Params: { eventId: string } }>(
     '/field-training/by-event/:eventId',
@@ -167,6 +321,23 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
         if (!session || session.organizationId !== request.user.organizationId) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
+        }
+
+        // Foglio nato vuoto? Prova a completarlo, poi rileggilo.
+        if (await backfillSheet(session.id, request.user.organizationId)) {
+          const repaired = await app.prisma.fieldTrainingSession.findUnique({
+            where: { id: session.id },
+            include: {
+              entries: {
+                include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
+                orderBy: { athlete: { lastName: 'asc' } },
+              },
+              team: { select: { id: true, name: true, color: true } },
+              calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+              trainingSession: { select: { id: true, title: true, date: true, duration: true } },
+            },
+          });
+          if (repaired) return reply.send({ success: true, data: { session: repaired } });
         }
 
         return reply.send({ success: true, data: { session } });
@@ -199,6 +370,23 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
         if (!session || session.organizationId !== request.user.organizationId) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
+        }
+
+        // Foglio nato vuoto? Prova a completarlo, poi rileggilo.
+        if (await backfillSheet(session.id, request.user.organizationId)) {
+          const repaired = await app.prisma.fieldTrainingSession.findUnique({
+            where: { id: session.id },
+            include: {
+              entries: {
+                include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
+                orderBy: { athlete: { lastName: 'asc' } },
+              },
+              team: { select: { id: true, name: true, color: true } },
+              calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+              trainingSession: { select: { id: true, title: true, date: true, duration: true } },
+            },
+          });
+          if (repaired) return reply.send({ success: true, data: { session: repaired } });
         }
 
         return reply.send({ success: true, data: { session } });

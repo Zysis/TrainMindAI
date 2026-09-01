@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePWA } from '@/hooks/use-pwa';
 
 interface InstallPromptEvent extends Event {
@@ -16,6 +17,7 @@ interface InstallPromptEvent extends Event {
  * - iOS install instructions
  */
 export function PWARegister() {
+  const t = useTranslations('pwa');
   const pwa = usePWA();
   const [installPromptEvent, setInstallPromptEvent] =
     useState<InstallPromptEvent | null>(null);
@@ -158,7 +160,7 @@ export function PWARegister() {
                     <span className="font-bold text-teal-600 flex-shrink-0">
                       3.
                     </span>
-                    <span>Tocca "Aggiungi" in alto a destra</span>
+                    <span>{t('iosStep3')}</span>
                   </li>
                 </ol>
               </div>

@@ -1,0 +1,23 @@
+Cosa resta da provare a fondo
+
+
+
+
+
+il report giornaliero su una giornata con due squadre diverse;
+
+
+
+il report partita su una gara con supplementari;
+
+
+
+l'ACWR del box rischio dopo tre settimane piene di dati veri (finora verificato su casi costruiti a mano);
+
+
+
+i menu clinici del foglio "Fine giornata" con un infortunio aperto vero;
+
+
+
+le tre lingue su una sessione di lavoro reale, non a campione.

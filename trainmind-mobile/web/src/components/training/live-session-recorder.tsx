@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Play, ChevronLeft, ChevronRight, Check,
   Dumbbell, Clock, Trophy,
@@ -88,6 +89,7 @@ export function LiveSessionRecorder({
   onCancel,
 }: LiveSessionRecorderProps) {
   const { toast } = useToast();
+  const t = useTranslations('liveSession');
 
   // Current exercise index for swipe navigation
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -220,7 +222,7 @@ export function LiveSessionRecorder({
           setSessionNotes(data.sessionNotes || '');
           setCurrentIdx(data.currentIdx || 0);
           setIsRecording(true);
-          toast('success', 'Sessione recuperata dall\'autosalvataggio');
+          toast('success', t('recoveredFromAutosave'));
         }
       }
     } catch {
@@ -360,9 +362,9 @@ export function LiveSessionRecorder({
           payload,
           method: 'POST',
         });
-        cleanupAndComplete('Sessione salvata offline — sarà sincronizzata');
+        cleanupAndComplete(t('savedOffline'));
       } catch {
-        toast('error', 'Impossibile salvare offline');
+        toast('error', t('offlineSaveFailed'));
       } finally {
         setSaving(false);
       }
@@ -386,9 +388,9 @@ export function LiveSessionRecorder({
           method: 'POST',
         });
         drainQueue(); // fire-and-forget retry
-        cleanupAndComplete('Salvataggio in coda — riprova automaticamente');
+        cleanupAndComplete(t('queued'));
       } catch {
-        toast('error', 'Errore nel salvataggio della sessione');
+        toast('error', t('saveError'));
       }
     } finally {
       setSaving(false);
@@ -406,9 +408,9 @@ export function LiveSessionRecorder({
         <div className="rounded-2xl bg-teal-50 p-6 mb-6">
           <Dumbbell className="h-12 w-12 text-teal-600" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Registra Sessione</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{exercises.length} esercizi in programma</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mb-6">Il timer partira' automaticamente</p>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('recordSession')}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t('plannedExercises', { n: exercises.length })}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-6">{t('timerAutoStart')}</p>
         <button
           onClick={startRecording}
           className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-8 py-3 text-base font-semibold text-white hover:bg-teal-800 transition-colors"
@@ -433,7 +435,7 @@ export function LiveSessionRecorder({
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Riepilogo Sessione</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('sessionSummary')}</h2>
           <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
             <Clock className="mr-1 inline h-4 w-4" />
             {formatElapsed(elapsedSeconds)}
@@ -458,7 +460,7 @@ export function LiveSessionRecorder({
 
         {/* RPE */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">RPE Sessione (1-10)</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('sessionRpeLabel')}</label>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
               <button
@@ -478,11 +480,11 @@ export function LiveSessionRecorder({
 
         {/* Notes */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Note sessione</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('sessionNotesLabel')}</label>
           <textarea
             value={sessionNotes}
             onChange={(e) => setSessionNotes(e.target.value)}
-            placeholder="Come e' andata la sessione?"
+            placeholder={t('sessionNotesPlaceholder')}
             className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             rows={3}
           />
@@ -691,7 +693,7 @@ export function LiveSessionRecorder({
               type="text"
               value={currentLog.notes}
               onChange={(e) => updateExerciseNotes(currentExercise.id, e.target.value)}
-              placeholder="Note per questo esercizio..."
+              placeholder={t('exerciseNotesPlaceholder')}
               className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>

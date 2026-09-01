@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Modal } from '@/components/ui/modal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { Exercise } from '@/types';
 
 interface DeleteExerciseModalProps {
@@ -11,40 +11,31 @@ interface DeleteExerciseModalProps {
   deleting: boolean;
 }
 
+/**
+ * Conferma della cancellazione di un esercizio.
+ *
+ * Prima il messaggio conteneva `<strong>{name}</strong>` e veniva reso con
+ * `dangerouslySetInnerHTML`. Due problemi in uno:
+ *  - next-intl legge `<strong>` come tag rich-text e pretende `t.rich(...)`
+ *    con la funzione corrispondente; con `t()` semplice solleva un errore e
+ *    stampa il percorso della chiave — da qui "exercises.deleteConfirm" a video;
+ *  - il nome dell'esercizio lo scrive l'utente, e finiva dentro l'HTML della
+ *    pagina senza nessun filtro.
+ * Il grassetto non valeva né l'uno né l'altro: ora il testo e' piano.
+ */
 export function DeleteExerciseModal({ exercise, onClose, onConfirm, deleting }: DeleteExerciseModalProps) {
   const t = useTranslations('exercises');
-  const tCommon = useTranslations('common');
 
   return (
-    <Modal
+    <ConfirmDialog
       open={!!exercise}
-      onClose={onClose}
       title={t('deleteExercise')}
-      size="sm"
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={deleting}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            {deleting ? t('deleting') : tCommon('delete')}
-          </button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <p className="text-sm text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: t('deleteConfirm', { name: exercise?.name || '' }) }} />
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {t('deleteWarning')}
-        </p>
-      </div>
-    </Modal>
+      message={t('deleteConfirm', { name: exercise?.name ?? '' })}
+      detail={t('deleteWarning')}
+      busy={deleting}
+      busyLabel={t('deleting')}
+      onConfirm={onConfirm}
+      onClose={onClose}
+    />
   );
 }

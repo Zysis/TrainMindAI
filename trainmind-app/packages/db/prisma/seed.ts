@@ -113,16 +113,16 @@ async function main() {
 
   // ─── Athletes (10) ─────────────────────────────────
   const athletesData = [
-    { firstName: 'Luca', lastName: 'Bianchi', dateOfBirth: new Date('2000-03-15'), position: 'Point Guard', jerseyNumber: 1, height: 185, weight: 78 },
-    { firstName: 'Alessandro', lastName: 'Conti', dateOfBirth: new Date('1999-07-22'), position: 'Shooting Guard', jerseyNumber: 5, height: 192, weight: 84 },
-    { firstName: 'Davide', lastName: 'Marino', dateOfBirth: new Date('2001-11-08'), position: 'Small Forward', jerseyNumber: 7, height: 198, weight: 90 },
-    { firstName: 'Matteo', lastName: 'Ferrari', dateOfBirth: new Date('2000-01-30'), position: 'Power Forward', jerseyNumber: 11, height: 203, weight: 98 },
-    { firstName: 'Andrea', lastName: 'Romano', dateOfBirth: new Date('1998-09-12'), position: 'Center', jerseyNumber: 15, height: 208, weight: 105 },
-    { firstName: 'Marco', lastName: 'Esposito', dateOfBirth: new Date('2002-05-20'), position: 'Point Guard', jerseyNumber: 3, height: 182, weight: 75 },
-    { firstName: 'Federico', lastName: 'Colombo', dateOfBirth: new Date('2001-02-14'), position: 'Shooting Guard', jerseyNumber: 8, height: 190, weight: 82 },
-    { firstName: 'Gabriele', lastName: 'Ricci', dateOfBirth: new Date('1999-10-03'), position: 'Small Forward', jerseyNumber: 10, height: 196, weight: 88 },
-    { firstName: 'Simone', lastName: 'Moretti', dateOfBirth: new Date('2000-08-28'), position: 'Power Forward', jerseyNumber: 14, height: 201, weight: 95 },
-    { firstName: 'Lorenzo', lastName: 'Barbieri', dateOfBirth: new Date('2003-01-11'), position: 'Center', jerseyNumber: 20, height: 210, weight: 108 },
+    { firstName: 'Luca', lastName: 'Bianchi', dateOfBirth: new Date('2000-03-15'), position: 'PG', jerseyNumber: 1, height: 185, weight: 78 },
+    { firstName: 'Alessandro', lastName: 'Conti', dateOfBirth: new Date('1999-07-22'), position: 'SG', jerseyNumber: 5, height: 192, weight: 84 },
+    { firstName: 'Davide', lastName: 'Marino', dateOfBirth: new Date('2001-11-08'), position: 'SF', jerseyNumber: 7, height: 198, weight: 90 },
+    { firstName: 'Matteo', lastName: 'Ferrari', dateOfBirth: new Date('2000-01-30'), position: 'PF', jerseyNumber: 11, height: 203, weight: 98 },
+    { firstName: 'Andrea', lastName: 'Romano', dateOfBirth: new Date('1998-09-12'), position: 'C', jerseyNumber: 15, height: 208, weight: 105 },
+    { firstName: 'Marco', lastName: 'Esposito', dateOfBirth: new Date('2002-05-20'), position: 'PG', jerseyNumber: 3, height: 182, weight: 75 },
+    { firstName: 'Federico', lastName: 'Colombo', dateOfBirth: new Date('2001-02-14'), position: 'SG', jerseyNumber: 8, height: 190, weight: 82 },
+    { firstName: 'Gabriele', lastName: 'Ricci', dateOfBirth: new Date('1999-10-03'), position: 'SF', jerseyNumber: 10, height: 196, weight: 88 },
+    { firstName: 'Simone', lastName: 'Moretti', dateOfBirth: new Date('2000-08-28'), position: 'PF', jerseyNumber: 14, height: 201, weight: 95 },
+    { firstName: 'Lorenzo', lastName: 'Barbieri', dateOfBirth: new Date('2003-01-11'), position: 'C', jerseyNumber: 20, height: 210, weight: 108 },
   ];
 
   const athletes = [];

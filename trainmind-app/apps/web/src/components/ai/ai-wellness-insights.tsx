@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Sparkles, Loader2, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 interface Source {
@@ -20,6 +21,7 @@ interface AIWellnessInsightsProps {
 
 export function AIWellnessInsights({ athleteId, athleteName }: AIWellnessInsightsProps) {
   const t = useTranslations('ai');
+  const apiError = useApiError();
   const DAYS_OPTIONS = [
     { value: 7, label: t('daysOption', { n: 7 }) },
     { value: 14, label: t('daysOption', { n: 14 }) },
@@ -53,7 +55,7 @@ export function AIWellnessInsights({ athleteId, athleteName }: AIWellnessInsight
       setSources(payload.sources || []);
       setHasGenerated(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('unknownError'));
+      setError(apiError(err, t('unknownError')));
     } finally {
       setIsLoading(false);
     }

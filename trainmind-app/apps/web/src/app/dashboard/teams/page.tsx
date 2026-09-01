@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Plus, Users, Search, Edit2, Trash2, UserPlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { PhotoPicker } from '@/components/ui/photo-picker';
+import { AthleteDirectory } from '@/components/athletes/athlete-directory';
 import { useTeam } from '@/hooks/use-team';
-import { POSITION_OPTIONS } from '@/lib/constants/positions';
+import { POSITION_OPTIONS, positionShort } from '@/lib/constants/positions';
 import type { Team, TeamDetail } from '@/types';
 
 const PRESET_COLORS = [
@@ -22,6 +24,7 @@ const PRESET_COLORS = [
 export default function TeamsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const apiError = useApiError();
   const { refreshTeams, selectedTeamId, selectTeam } = useTeam();
   const t = useTranslations('teams');
   const tCommon = useTranslations('common');
@@ -33,8 +36,16 @@ export default function TeamsPage() {
   // Create/Edit modal
   const [showModal, setShowModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', color: '#3b82f6' });
+  const [form, setForm] = useState<{
+    name: string;
+    description: string;
+    color: string;
+    logoUrl: string | null;
+  }>({ name: '', description: '', color: '#3b82f6', logoUrl: null });
   const [saving, setSaving] = useState(false);
+  // Cambia a ogni movimento di rosa: la lista in fondo la osserva e si ricarica
+  const [rosterVersion, setRosterVersion] = useState(0);
+  const bumpRoster = useCallback(() => setRosterVersion((v) => v + 1), []);
 
   // Team detail
   const [selectedTeam, setSelectedTeam] = useState<TeamDetail | null>(null);
@@ -50,7 +61,7 @@ export default function TeamsPage() {
   const [showCreateAthlete, setShowCreateAthlete] = useState(false);
   const [creatingAthlete, setCreatingAthlete] = useState(false);
   const [athleteForm, setAthleteForm] = useState({
-    firstName: '', lastName: '', dateOfBirth: '', position: 'Point Guard',
+    firstName: '', lastName: '', dateOfBirth: '', position: 'PG',
     jerseyNumber: '', team: '', photoUrl: null as string | null,
   });
 
@@ -87,13 +98,18 @@ export default function TeamsPage() {
 
   const openCreate = () => {
     setEditingTeam(null);
-    setForm({ name: '', description: '', color: '#3b82f6' });
+    setForm({ name: '', description: '', color: '#3b82f6', logoUrl: null });
     setShowModal(true);
   };
 
   const openEdit = (team: Team) => {
     setEditingTeam(team);
-    setForm({ name: team.name, description: team.description || '', color: team.color || '#3b82f6' });
+    setForm({
+      name: team.name,
+      description: team.description || '',
+      color: team.color || '#3b82f6',
+      logoUrl: team.logoUrl || null,
+    });
     setShowModal(true);
   };
 
@@ -105,6 +121,8 @@ export default function TeamsPage() {
         name: form.name,
         description: form.description || undefined,
         color: form.color,
+        // null cancella il logo, undefined lo lascerebbe com'era
+        logoUrl: form.logoUrl,
       };
 
       if (editingTeam) {
@@ -117,12 +135,13 @@ export default function TeamsPage() {
 
       setShowModal(false);
       loadTeams();
+      bumpRoster();
       refreshTeams();
       if (selectedTeam && editingTeam?.id === selectedTeam.id) {
         loadTeamDetail(selectedTeam.id);
       }
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('saveError'));
+      toast('error', apiError(err, t('saveError')));
     } finally {
       setSaving(false);
     }
@@ -136,9 +155,10 @@ export default function TeamsPage() {
       if (selectedTeam?.id === team.id) setSelectedTeam(null);
       if (selectedTeamId === team.id) selectTeam(null);
       loadTeams();
+      bumpRoster();
       refreshTeams();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('deleteError'));
+      toast('error', apiError(err, t('deleteError')));
     }
   };
 
@@ -167,9 +187,10 @@ export default function TeamsPage() {
       setShowAddAthlete(false);
       loadTeamDetail(selectedTeam.id);
       loadTeams();
+      bumpRoster();
       refreshTeams();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     } finally {
       setAddingAthletes(false);
     }
@@ -182,9 +203,10 @@ export default function TeamsPage() {
       toast('success', t('athleteRemoved'));
       loadTeamDetail(selectedTeam.id);
       loadTeams();
+      bumpRoster();
       refreshTeams();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : tCommon('error'));
+      toast('error', apiError(err, tCommon('error')));
     }
   };
 
@@ -219,9 +241,10 @@ export default function TeamsPage() {
       setShowCreateAthlete(false);
       loadTeamDetail(selectedTeam.id);
       loadTeams();
+      bumpRoster();
       refreshTeams();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('createError'));
+      toast('error', apiError(err, t('createError')));
     } finally {
       setCreatingAthlete(false);
     }
@@ -276,10 +299,14 @@ export default function TeamsPage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-white font-bold text-sm"
-                    style={{ backgroundColor: team.color || '#64748b' }}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg text-white font-bold text-sm"
+                    style={{ backgroundColor: team.logoUrl ? undefined : team.color || '#64748b' }}
                   >
-                    {team.name.charAt(0).toUpperCase()}
+                    {team.logoUrl ? (
+                      <img src={team.logoUrl} alt="" className="h-full w-full object-contain" />
+                    ) : (
+                      team.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-900 dark:text-white truncate">{team.name}</h3>
@@ -318,10 +345,14 @@ export default function TeamsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-12 w-12 items-center justify-center rounded-xl text-white font-bold text-lg"
-                    style={{ backgroundColor: selectedTeam.color || '#64748b' }}
+                    className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl text-white font-bold text-lg"
+                    style={{ backgroundColor: selectedTeam.logoUrl ? undefined : selectedTeam.color || '#64748b' }}
                   >
-                    {selectedTeam.name.charAt(0).toUpperCase()}
+                    {selectedTeam.logoUrl ? (
+                      <img src={selectedTeam.logoUrl} alt="" className="h-full w-full object-contain" />
+                    ) : (
+                      selectedTeam.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedTeam.name}</h2>
@@ -374,7 +405,7 @@ export default function TeamsPage() {
                           >
                             {athlete.firstName} {athlete.lastName}
                           </button>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{athlete.position}{athlete.jerseyNumber !== null ? ` · #${athlete.jerseyNumber}` : ''}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{positionShort(athlete.position)}{athlete.jerseyNumber !== null ? ` · #${athlete.jerseyNumber}` : ''}</p>
                         </div>
                         <button
                           onClick={() => handleRemoveAthlete(athlete.id)}
@@ -398,6 +429,11 @@ export default function TeamsPage() {
         </div>
       </div>
 
+      {/* ─── Tutti gli atleti ──────────────────────────────── */}
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+        <AthleteDirectory refreshKey={rosterVersion} onChanged={() => { void loadTeams(); refreshTeams(); }} />
+      </div>
+
       {/* Create/Edit Team Modal */}
       <Modal
         open={showModal}
@@ -415,6 +451,19 @@ export default function TeamsPage() {
         }
       >
         <form onSubmit={handleSave} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <PhotoPicker
+              value={form.logoUrl}
+              onChange={(logoUrl) => setForm({ ...form, logoUrl })}
+              size={72}
+              fit="contain"
+              shape="square"
+            />
+            <div className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-slate-700 dark:text-slate-300">{t('logoLabel')}</p>
+              <p className="mt-0.5">{t('logoHint')}</p>
+            </div>
+          </div>
           <Input label={t('teamName')} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('teamNamePlaceholder')} />
           <Input label={t('descriptionLabel')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t('descriptionPlaceholder')} />
           <div>
@@ -471,7 +520,7 @@ export default function TeamsPage() {
                 />
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{a.firstName} {a.lastName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{a.position}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{positionShort(a.position)}</p>
                 </div>
               </label>
             ))

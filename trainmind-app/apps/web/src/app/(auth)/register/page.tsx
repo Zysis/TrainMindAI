@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocaleStore } from '@/lib/i18n/store';
 import { AuthShell } from '@/components/auth/auth-shell';
@@ -41,6 +42,7 @@ function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
   const t = useTranslations('auth');
+  const apiError = useApiError();
   const { register, isAuthenticated } = useAuth();
   const locale = useLocaleStore((s) => s.locale);
 
@@ -113,7 +115,7 @@ function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('registerError'));
+      setError(apiError(err, t('registerError')));
     } finally {
       setIsSubmitting(false);
     }

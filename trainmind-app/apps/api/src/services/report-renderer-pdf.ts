@@ -551,3 +551,30 @@ export async function renderReportPdf(report: ReportData): Promise<Buffer> {
 export function buildReportHtml(report: ReportData): string {
   return buildHtml(report);
 }
+
+/**
+ * Stampa un HTML gia' pronto. Serve ai report che hanno un impaginato loro
+ * (il giornaliero) e che non passano da `buildHtml`: riusano lo stesso Chrome,
+ * la stessa gestione della connessione caduta e la stessa chiusura pulita,
+ * invece di aprirne un secondo.
+ */
+export async function renderHtmlToPdf(
+  html: string,
+  options?: { margin?: { top: string; right: string; bottom: string; left: string }; landscape?: boolean },
+): Promise<Buffer> {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBytes = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      landscape: options?.landscape ?? false,
+      margin: options?.margin ?? { top: '12mm', right: '10mm', bottom: '14mm', left: '10mm' },
+      displayHeaderFooter: false,
+    });
+    return Buffer.from(pdfBytes);
+  } finally {
+    await page.close().catch(() => {});
+  }
+}

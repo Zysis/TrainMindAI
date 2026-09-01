@@ -1,5 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import {
+  normalizeTrainingDays,
+  planFirstTrainingDate,
+  sessionDateInWeek,
+} from '@trainmind/utils';
+import {
   createTrainingPlanSchema,
   updateTrainingPlanSchema,
   trainingPlanQuerySchema,
@@ -132,7 +137,8 @@ export async function trainingRoutes(app: FastifyInstance) {
     }
 
     const { organizationId, userId } = request.user;
-    const { weeks: weekCount, ...planData } = parsed.data;
+    const { weeks: weekCount, trainingDays: rawDays, ...planData } = parsed.data;
+    const trainingDays = normalizeTrainingDays(rawDays);
 
     // Validate athlete belongs to same org (if provided)
     if (planData.athleteId) {
@@ -156,6 +162,7 @@ export async function trainingRoutes(app: FastifyInstance) {
         endDate: new Date(planData.endDate),
         athleteId: planData.athleteId,
         teamId: planData.teamId || null,
+        trainingDays,
         organizationId,
         createdById: userId,
         weeks: {
@@ -183,6 +190,8 @@ export async function trainingRoutes(app: FastifyInstance) {
       description: string;
       athleteId?: string;
       teamId?: string;
+      startDate?: string;
+      trainingDays?: number[];
       weeks: Array<{
         weekNumber: number;
         notes?: string;
@@ -212,8 +221,19 @@ export async function trainingRoutes(app: FastifyInstance) {
 
     const { organizationId, userId } = request.user;
     const weekCount = body.weeks.length;
-    const startDate = new Date();
-    const endDate = new Date();
+
+    // La regola dei giorni sta in @trainmind/utils, con i suoi test: serve
+    // identica anche alla pagina del mesociclo, e due copie divergerebbero.
+    const trainingDays = normalizeTrainingDays(body.trainingDays);
+
+    // Prima si usava `new Date()`: il piano nasceva sempre da oggi, qualunque
+    // data avesse in mente il preparatore.
+    const requestedStart = body.startDate ? new Date(`${body.startDate}T00:00:00`) : new Date();
+    const startDate = Number.isNaN(requestedStart.getTime()) ? new Date() : requestedStart;
+    startDate.setHours(0, 0, 0, 0);
+
+    const planStart = planFirstTrainingDate(startDate, trainingDays);
+    const endDate = new Date(planStart);
     endDate.setDate(endDate.getDate() + weekCount * 7);
 
     // La squadra va assegnata come nella creazione manuale: la lista dei piani
@@ -235,14 +255,20 @@ export async function trainingRoutes(app: FastifyInstance) {
     }
 
     try {
+      // Un piano di 12 settimane × 4 sessioni × 5 esercizi sono centinaia di
+      // scritture sequenziali: il default di 5 secondi delle transazioni
+      // interattive di Prisma non basta e la transazione viene annullata a
+      // meta' con un errore generico.
       const result = await app.prisma.$transaction(async (tx) => {
         // 1. Create the plan with weeks
         const plan = await tx.trainingPlan.create({
           data: {
             name: body.planName,
             description: body.description || null,
-            startDate,
+            startDate: planStart,
             endDate,
+            trainingDays,
+            aiGenerated: true,
             athleteId: body.athleteId || null,
             teamId,
             organizationId,
@@ -322,8 +348,7 @@ export async function trainingRoutes(app: FastifyInstance) {
 
           for (let si = 0; si < aiWeek.sessions.length; si++) {
             const aiSession = aiWeek.sessions[si];
-            const sessionDate = new Date(startDate);
-            sessionDate.setDate(sessionDate.getDate() + (aiWeek.weekNumber - 1) * 7 + si);
+            const sessionDate = sessionDateInWeek(startDate, trainingDays, aiWeek.weekNumber, si);
 
             const session = await tx.trainingSession.create({
               data: {
@@ -360,7 +385,7 @@ export async function trainingRoutes(app: FastifyInstance) {
         }
 
         return plan;
-      });
+      }, { maxWait: 20000, timeout: 120000 });
 
       // Fetch the full plan with all includes
       const fullPlan = await app.prisma.trainingPlan.findUnique({
@@ -375,9 +400,18 @@ export async function trainingRoutes(app: FastifyInstance) {
       return reply.status(201).send({ success: true, data: fullPlan });
     } catch (err) {
       app.log.error(err, 'Error creating AI plan');
+      // Il motivo va a schermo: un messaggio fisso costringe a leggere i log
+      // del server per capire se manca una colonna, se e' scaduta la
+      // transazione o se il piano dell'AI e' malformato.
+      const detail = err instanceof Error ? err.message.split('\n').filter(Boolean).slice(-2).join(' ').trim() : '';
       return reply.status(500).send({
         success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Errore nella creazione del piano AI' },
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: detail
+            ? `Errore nella creazione del piano AI: ${detail}`
+            : 'Errore nella creazione del piano AI',
+        },
       });
     }
   });
@@ -420,7 +454,10 @@ export async function trainingRoutes(app: FastifyInstance) {
     const { id } = request.params;
     const { organizationId } = request.user;
 
-    const existing = await app.prisma.trainingPlan.findFirst({ where: { id, organizationId } });
+    const existing = await app.prisma.trainingPlan.findFirst({
+      where: { id, organizationId },
+      include: { periodizationPlan: { select: { id: true, name: true } } },
+    });
     if (!existing) {
       return reply.status(404).send({
         success: false,
@@ -428,8 +465,59 @@ export async function trainingRoutes(app: FastifyInstance) {
       });
     }
 
-    await app.prisma.trainingPlan.delete({ where: { id } });
-    return reply.send({ success: true, data: { message: 'Piano eliminato' } });
+    // Un mesociclo dentro una periodizzazione non si cancella da qui: si toglie
+    // prima dalla programmazione, altrimenti la periodizzazione resta con un
+    // buco che nessuna schermata racconta.
+    if (existing.periodizationPlan) {
+      return reply.status(409).send({
+        success: false,
+        error: {
+          code: 'PLAN_IN_PERIODIZATION',
+          message: `Questo mesociclo fa parte della periodizzazione "${existing.periodizationPlan.name}". Scollegalo da li' prima di eliminarlo.`,
+          details: { periodizationPlanId: existing.periodizationPlan.id },
+        },
+      });
+    }
+
+    // Le settimane sono in cascata sul piano e le sessioni in cascata sulle
+    // settimane: senza staccarle prima, cancellare il mesociclo porterebbe via
+    // anche tutto il lavoro pianificato e svolto.
+    const sessions = await app.prisma.trainingSession.findMany({
+      where: { week: { trainingPlanId: id } },
+      select: { id: true, status: true },
+    });
+    const reusable = sessions.filter((x) => x.status === 'PLANNED').map((x) => x.id);
+    const historical = sessions.filter((x) => x.status !== 'PLANNED').map((x) => x.id);
+
+    await app.prisma.$transaction(async (tx) => {
+      // Le sessioni mai svolte diventano template riutilizzabili: le ritrovi
+      // nella scheda "Sessioni".
+      if (reusable.length > 0) {
+        await tx.trainingSession.updateMany({
+          where: { id: { in: reusable } },
+          data: { weekId: null, isTemplate: true, date: null },
+        });
+      }
+      // Quelle svolte NON diventano template: ogni query di analytics filtra
+      // `isTemplate: false`, quindi marcarle cancellerebbe il carico dallo
+      // storico, da ACWR e dai report. Restano com'erano, solo senza settimana.
+      if (historical.length > 0) {
+        await tx.trainingSession.updateMany({
+          where: { id: { in: historical } },
+          data: { weekId: null },
+        });
+      }
+      await tx.trainingPlan.delete({ where: { id } });
+    });
+
+    return reply.send({
+      success: true,
+      data: {
+        message: 'Piano eliminato',
+        sessionsKeptAsTemplates: reusable.length,
+        sessionsKeptAsHistory: historical.length,
+      },
+    });
   });
 
   // ═══════════════════════════════════════════════════════════
@@ -478,7 +566,7 @@ export async function trainingRoutes(app: FastifyInstance) {
   // default → list only instances (sessions inside mesocycles with dates)
   app.get('/training/sessions', async (request, reply) => {
     const { organizationId } = request.user;
-    const { search, status, teamId, from, to, limit, page, templates } = request.query as Record<string, string | undefined>;
+    const { search, status, teamId, from, to, limit, page, templates, sort } = request.query as Record<string, string | undefined>;
 
     const take = Math.min(parseInt(limit || '50'), 200);
     const skip = ((parseInt(page || '1') - 1) * take);
@@ -503,7 +591,9 @@ export async function trainingRoutes(app: FastifyInstance) {
             },
             _count: { select: { sessionExercises: true } },
           },
-          orderBy: { updatedAt: 'desc' },
+          // 'chronological' = dal piu' vecchio, per vedere come si e' costruita
+          // la libreria nel tempo. Altrimenti le ultime modificate in cima.
+          orderBy: sort === 'chronological' ? { createdAt: 'asc' } : { updatedAt: 'desc' },
           take,
           skip,
         }),
@@ -848,6 +938,18 @@ export async function trainingRoutes(app: FastifyInstance) {
       });
     }
 
+    // Annullare una seduta gia' svolta non ha senso: i carichi per atleta sono
+    // gia' scritti e sparirebbero dai report senza lasciare traccia del perche'.
+    if (parsed.data.status === 'CANCELLED' && existing.status === 'COMPLETED') {
+      return reply.status(409).send({
+        success: false,
+        error: {
+          code: 'SESSION_ALREADY_COMPLETED',
+          message: 'Questa sessione e\' gia\' stata completata: non puoi annullarla.',
+        },
+      });
+    }
+
     const data: Record<string, unknown> = { ...parsed.data };
     if (data.date) data.date = new Date(data.date as string);
 
@@ -864,6 +966,7 @@ export async function trainingRoutes(app: FastifyInstance) {
 
     const existing = await app.prisma.trainingSession.findFirst({
       where: { id, OR: [{ organizationId }, { week: { trainingPlan: { organizationId } } }] },
+      include: { week: { select: { weekNumber: true, trainingPlan: { select: { id: true, name: true } } } } },
     });
     if (!existing) {
       return reply.status(404).send({
@@ -872,8 +975,60 @@ export async function trainingRoutes(app: FastifyInstance) {
       });
     }
 
+    // Una sessione dentro un mesociclo non si cancella: si toglie dalla
+    // settimana (POST /training/sessions/:id/detach) e resta come template.
+    if (existing.week) {
+      return reply.status(409).send({
+        success: false,
+        error: {
+          code: 'SESSION_IN_PLAN',
+          message: `Questa sessione fa parte del mesociclo "${existing.week.trainingPlan.name}" (settimana ${existing.week.weekNumber}). Toglila dalla settimana prima di eliminarla.`,
+          details: { trainingPlanId: existing.week.trainingPlan.id },
+        },
+      });
+    }
+
     await app.prisma.trainingSession.delete({ where: { id } });
     return reply.send({ success: true, data: { message: 'Sessione eliminata' } });
+  });
+
+  // ─── POST /training/sessions/:id/detach — Togli dalla settimana ──
+  // Sostituisce la cancellazione dentro un mesociclo: la sessione esce dalla
+  // settimana senza sparire. Se non e' mai stata svolta diventa un template
+  // riutilizzabile; se ha uno storico resta una sessione svolta, perche'
+  // marcarla template la toglierebbe da analytics e report.
+  app.post<{ Params: { id: string } }>('/training/sessions/:id/detach', {
+    preHandler: [requireMinRole('TRAINER')],
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { organizationId } = request.user;
+
+    const existing = await app.prisma.trainingSession.findFirst({
+      where: { id, OR: [{ organizationId }, { week: { trainingPlan: { organizationId } } }] },
+      select: { id: true, status: true, weekId: true },
+    });
+    if (!existing) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Sessione non trovata' },
+      });
+    }
+    if (!existing.weekId) {
+      return reply.status(409).send({
+        success: false,
+        error: { code: 'SESSION_NOT_IN_PLAN', message: 'Questa sessione non e\' dentro nessun mesociclo.' },
+      });
+    }
+
+    const becomesTemplate = existing.status === 'PLANNED';
+    await app.prisma.trainingSession.update({
+      where: { id },
+      data: becomesTemplate
+        ? { weekId: null, isTemplate: true, date: null }
+        : { weekId: null },
+    });
+
+    return reply.send({ success: true, data: { becomesTemplate } });
   });
 
   // ═══════════════════════════════════════════════════════════

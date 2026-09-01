@@ -16,6 +16,7 @@ import {
   Brain,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useToast } from '@/components/ui/toast';
 import { AdaptationDiffCard, type AdaptationData } from '@/components/adaptations/adaptation-diff-card';
 
@@ -61,6 +62,7 @@ interface Adaptation {
 
 export default function AdaptationsPage() {
   const t = useTranslations('adaptations');
+  const apiError = useApiError();
   const locale = useLocale();
   const { toast } = useToast();
   const [adaptations, setAdaptations] = useState<Adaptation[]>([]);
@@ -139,8 +141,7 @@ export default function AdaptationsPage() {
       toast('success', 'Proposta generata');
       fetchAdaptations();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Errore generazione proposta';
-      toast('error', message);
+      toast('error', apiError(err, t('generateProposalError')));
     }
     setGenerating(false);
   };
@@ -251,7 +252,7 @@ export default function AdaptationsPage() {
               onChange={(e) => setGenTeamId(e.target.value)}
               className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
             >
-              <option value="">Seleziona squadra...</option>
+              <option value="">{t('selectTeam')}</option>
               {teams.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
@@ -262,7 +263,7 @@ export default function AdaptationsPage() {
               onChange={(e) => setGenAthleteId(e.target.value)}
               className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
             >
-              <option value="">Seleziona atleta...</option>
+              <option value="">{t('selectAthlete')}</option>
               {athletes.map((a) => (
                 <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
               ))}
@@ -313,7 +314,7 @@ export default function AdaptationsPage() {
           onChange={(e) => setAthleteFilter(e.target.value)}
           className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:border-teal-500 focus:outline-none"
         >
-          <option value="">Tutti gli atleti</option>
+          <option value="">{t('allAthletes')}</option>
           {athletes.map((a) => (
             <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
           ))}
@@ -329,8 +330,8 @@ export default function AdaptationsPage() {
         ) : adaptations.length === 0 ? (
           <div className="flex h-48 flex-col items-center justify-center gap-2">
             <Sparkles className="h-10 w-10 text-slate-200" />
-            <p className="text-sm text-slate-400 dark:text-slate-500">Nessun adattamento trovato</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Genera una nuova proposta sopra</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t('noAdaptations')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{t('noAdaptationsHint')}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

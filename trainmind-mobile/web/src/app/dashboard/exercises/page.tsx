@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Search, Plus, Dumbbell, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import { EXERCISE_CATEGORIES } from '@/lib/constants';
@@ -37,6 +38,7 @@ const categoryColors: Record<string, 'teal' | 'info' | 'warning' | 'danger' | 's
 
 export default function ExercisesPage() {
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('exercises');
   const tCommon = useTranslations('common');
   // Localized category labels (DB values stay in IT -- display layer only)
@@ -74,7 +76,7 @@ export default function ExercisesPage() {
       toast('success', t('importedExercises', { created: res.data.created, skipped: res.data.skipped }));
       loadExercises();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('importError'));
+      toast('error', apiError(err, t('importError')));
     } finally {
       setSeeding(false);
     }
@@ -162,7 +164,7 @@ export default function ExercisesPage() {
       closeModal();
       loadExercises();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('saveError'));
+      toast('error', apiError(err, t('saveError')));
     } finally {
       setSaving(false);
     }
@@ -178,7 +180,7 @@ export default function ExercisesPage() {
       setDeleteTarget(null);
       loadExercises();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('deleteError'));
+      toast('error', apiError(err, t('deleteError')));
     } finally {
       setDeleting(false);
     }

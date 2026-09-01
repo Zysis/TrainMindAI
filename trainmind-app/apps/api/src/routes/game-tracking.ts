@@ -48,6 +48,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
             orderBy: { athlete: { lastName: 'asc' } },
           },
           team: { select: { id: true, name: true, color: true } },
+          calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
         },
       });
       if (existing) {
@@ -98,6 +99,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
               orderBy: { athlete: { lastName: 'asc' } },
             },
             team: { select: { id: true, name: true, color: true } },
+            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
         });
       } catch (createErr) {
@@ -110,6 +112,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
               orderBy: { athlete: { lastName: 'asc' } },
             },
             team: { select: { id: true, name: true, color: true } },
+            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
         });
         if (raceSession) {
@@ -140,7 +143,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
               orderBy: { athlete: { lastName: 'asc' } },
             },
             team: { select: { id: true, name: true, color: true } },
-            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+            calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
         });
 
@@ -170,7 +173,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
             orderBy: { athlete: { lastName: 'asc' } },
           },
           team: { select: { id: true, name: true, color: true } },
-          calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
+          calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
         },
       });
 
@@ -195,8 +198,16 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
           inMs: z.number(),
           outMs: z.number().nullable(),
           durationMs: z.number().int().min(0),
+          // Quante volte il cronometro si e' fermato mentre il giocatore era in
+          // campo. Facoltativo: le partite salvate prima non ce l'hanno.
+          breaks: z.number().int().min(0).optional(),
         })),
         onCourt: z.boolean(),
+        // RPE post-partita del singolo. null = non ancora raccolto.
+        rpe: z.number().int().min(1).max(10).nullable().optional(),
+        // Aspettativa 0-5 per la seduta successiva, compilata nel report.
+        readiness: z.number().int().min(0).max(5).nullable().optional(),
+        readinessNote: z.string().max(500).nullable().optional(),
       });
       const parsed = z.array(entrySchema).safeParse(request.body);
       if (!parsed.success) {
@@ -223,6 +234,11 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
               totalPlayingMs: entry.totalPlayingMs,
               stints: entry.stints as unknown as Prisma.InputJsonValue,
               onCourt: entry.onCourt,
+              rpe: entry.rpe ?? null,
+              // `undefined` lascia il valore com'e': il foglio di campo salva
+              // le entries senza conoscere la readiness, e non deve azzerarla.
+              readiness: entry.readiness === undefined ? undefined : entry.readiness,
+              readinessNote: entry.readinessNote === undefined ? undefined : entry.readinessNote,
             },
             create: {
               gameSessionId: session.id,
@@ -230,6 +246,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
               totalPlayingMs: entry.totalPlayingMs,
               stints: entry.stints as unknown as Prisma.InputJsonValue,
               onCourt: entry.onCourt,
+              rpe: entry.rpe ?? null,
             },
           }),
         ),
@@ -337,6 +354,43 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
   );
 
   // ─── PUT /game/:id/complete ────────────────────────────
+  // ─── PUT /game/:id/match-info ──────────────────────────
+  // Risultato e competizione. Endpoint a se' e non parte di /complete perche'
+  // un punteggio si corregge anche dopo, e riaprire una partita completata
+  // solo per sistemare un tabellone sbagliato sarebbe assurdo.
+  app.put<{ Params: { id: string } }>(
+    '/game/:id/match-info',
+    auth,
+    async (request, reply) => {
+      const schema = z.object({
+        homeScore: z.number().int().min(0).max(300).nullable().optional(),
+        awayScore: z.number().int().min(0).max(300).nullable().optional(),
+        competition: z.string().max(100).nullable().optional(),
+      });
+      const parsed = schema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Dati non validi' } });
+      }
+      const existing = await app.prisma.gameSession.findFirst({
+        where: { id: request.params.id, organizationId: request.user.organizationId },
+        select: { id: true },
+      });
+      if (!existing) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione partita non trovata' } });
+      }
+      const updated = await app.prisma.gameSession.update({
+        where: { id: existing.id },
+        data: {
+          homeScore: parsed.data.homeScore ?? null,
+          awayScore: parsed.data.awayScore ?? null,
+          competition: parsed.data.competition?.trim() || null,
+        },
+        select: { id: true, homeScore: true, awayScore: true, competition: true },
+      });
+      return reply.send({ success: true, data: updated });
+    },
+  );
+
   app.put<{ Params: { id: string } }>(
     '/game/:id/complete',
     auth,
@@ -359,26 +413,38 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
 
-      // Create TrainingSessions for analytics (like field training)
+      // Una TrainingSession per giocatore, come per l'allenamento sul campo.
+      // Con l'RPE del singolo la riga porta anche il carico (sRPE = RPE x
+      // minuti); senza, resta la riga dei soli minuti — meglio di niente, e
+      // inventare un RPE falserebbe il carico.
       const createdSessions: string[] = [];
+      let withoutRpe = 0;
       for (const entry of session.entries) {
         if (entry.totalPlayingMs <= 0) continue;
 
         const durationMinutes = Math.round(entry.totalPlayingMs / 60000);
         if (durationMinutes < 1) continue;
 
-        const stintsArray = (entry.stints as Array<{ quarter: number; durationMs: number }>) || [];
-        const stintsText = stintsArray.map((s) =>
-          `Q${s.quarter}: ${Math.round(s.durationMs / 60000)} min`
-        ).join(', ');
+        const stintsArray = (entry.stints as Array<{ quarter: number; durationMs: number; breaks?: number }>) || [];
+        const stintsText = stintsArray.map((s) => {
+          const br = s.breaks ?? 0;
+          return `Q${s.quarter}: ${Math.round(s.durationMs / 60000)} min${br > 0 ? ` (${br} interruzioni)` : ''}`;
+        }).join(', ');
+
+        const rpe = entry.rpe ?? null;
+        if (!rpe) withoutRpe++;
+        const loadNote = rpe
+          ? ` Carico ${rpe * durationMinutes} (RPE ${rpe} x ${durationMinutes} min).`
+          : ' RPE non raccolto: nessun carico calcolato.';
 
         const ts = await app.prisma.trainingSession.create({
           data: {
             title: `${session.calendarEvent?.title || 'Partita'} — ${entry.athlete.firstName} ${entry.athlete.lastName}`,
             date: session.calendarEvent?.startTime || session.startedAt,
             duration: durationMinutes,
+            rpe,
             status: 'COMPLETED',
-            notes: `Minuti partita: ${durationMinutes} min. ${stintsArray.length} stint. ${stintsText}`,
+            notes: `Minuti partita: ${durationMinutes} min. ${stintsArray.length} stint. ${stintsText}.${loadNote}`,
             athleteId: entry.athleteId,
             organizationId,
           },
@@ -391,6 +457,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
         data: {
           completed: true,
           trainingSessions: createdSessions.length,
+          withoutRpe,
           sessionIds: createdSessions,
         },
       });

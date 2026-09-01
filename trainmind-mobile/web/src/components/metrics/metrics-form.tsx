@@ -128,7 +128,47 @@ const metricTypeDefs: MetricTypeDef[] = [
   { key: 'ybt_left', labelKey: 'mt_ybt_left', unit: 'cm', descKey: 'mtDesc_ybt_left', min: 40, max: 120, step: 0.5, higherIsBetter: true, category: 'functional' },
   { key: 'ybt_right', labelKey: 'mt_ybt_right', unit: 'cm', descKey: 'mtDesc_ybt_right', min: 40, max: 120, step: 0.5, higherIsBetter: true, category: 'functional' },
   { key: 'fms_total', labelKey: 'mt_fms_total', unit: 'pt', descKey: 'mtDesc_fms_total', min: 0, max: 21, step: 1, higherIsBetter: true, category: 'functional' },
+
+  // ── FMS, i sette sotto-test ──
+  // Ognuno vale 0-3: 0 dolore durante il test, 1 non esegue il pattern,
+  // 2 lo esegue con compensi, 3 pattern pulito. I bilaterali sono registrati
+  // separati destra/sinistra: l'asimmetria e' spesso il dato piu' utile, e un
+  // totale da solo la nasconde.
+  { key: 'fms_deep_squat', labelKey: 'mt_fms_deep_squat', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_hurdle_step_l', labelKey: 'mt_fms_hurdle_step_l', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_hurdle_step_r', labelKey: 'mt_fms_hurdle_step_r', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_inline_lunge_l', labelKey: 'mt_fms_inline_lunge_l', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_inline_lunge_r', labelKey: 'mt_fms_inline_lunge_r', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_shoulder_mobility_l', labelKey: 'mt_fms_shoulder_mobility_l', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_shoulder_mobility_r', labelKey: 'mt_fms_shoulder_mobility_r', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_aslr_l', labelKey: 'mt_fms_aslr_l', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_aslr_r', labelKey: 'mt_fms_aslr_r', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_trunk_stability', labelKey: 'mt_fms_trunk_stability', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_rotary_stability_l', labelKey: 'mt_fms_rotary_stability_l', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
+  { key: 'fms_rotary_stability_r', labelKey: 'mt_fms_rotary_stability_r', unit: 'pt', descKey: 'mtDesc_fms_sub', min: 0, max: 3, step: 1, higherIsBetter: true, category: 'functional' },
 ];
+
+/**
+ * I sette test del Functional Movement Screen, nell'ordine del protocollo.
+ *
+ * Sul totale i bilaterali contano con il **lato peggiore**: e' la regola FMS,
+ * e serve a non premiare chi compensa da una parte sola. I due lati restano
+ * comunque salvati separati, cosi' l'asimmetria resta leggibile nello storico.
+ */
+export const FMS_TESTS: Array<{ key: string; labelKey: string; bilateral: boolean }> = [
+  { key: 'deep_squat', labelKey: 'fmsDeepSquat', bilateral: false },
+  { key: 'hurdle_step', labelKey: 'fmsHurdleStep', bilateral: true },
+  { key: 'inline_lunge', labelKey: 'fmsInlineLunge', bilateral: true },
+  { key: 'shoulder_mobility', labelKey: 'fmsShoulderMobility', bilateral: true },
+  { key: 'aslr', labelKey: 'fmsAslr', bilateral: true },
+  { key: 'trunk_stability', labelKey: 'fmsTrunkStability', bilateral: false },
+  { key: 'rotary_stability', labelKey: 'fmsRotaryStability', bilateral: true },
+];
+
+/** Chiavi metrica dei lati di un test: uno solo se non bilaterale. */
+export function fmsSideKeys(t: { key: string; bilateral: boolean }): string[] {
+  return t.bilateral ? [`fms_${t.key}_l`, `fms_${t.key}_r`] : [`fms_${t.key}`];
+}
 
 // Helpers — build localized lookup tables
 type MetricsTranslator = (key: string, values?: Record<string, string | number>) => string;
@@ -217,6 +257,25 @@ export function MetricsForm({ open, onClose, onSaved, preselectedAthleteId, filt
 
   const currentMetricType = metricTypes.find((m) => m.key === selectedType)!;
   const is1RM = selectedType.startsWith('1rm_');
+  const isFms = selectedType === 'fms_total';
+
+  // Punteggi dei sotto-test FMS, per chiave metrica (`fms_hurdle_step_l`, ...).
+  const [fmsScores, setFmsScores] = useState<Record<string, number | ''>>({});
+
+  const fmsComplete = FMS_TESTS.every((x) =>
+    fmsSideKeys(x).every((k) => fmsScores[k] !== undefined && fmsScores[k] !== ''),
+  );
+
+  // Sul totale i bilaterali contano con il lato peggiore: regola del protocollo.
+  const fmsTotal = FMS_TESTS.reduce((sum, x) => {
+    const vals = fmsSideKeys(x).map((k) => Number(fmsScores[k]));
+    if (vals.some((v) => Number.isNaN(v))) return sum;
+    return sum + Math.min(...vals);
+  }, 0);
+
+  // Un solo 0 vuol dire dolore durante il test: il totale non e' interpretabile
+  // finche' non si indaga, e va detto invece che lasciarlo passare come numero.
+  const fmsHasPain = Object.values(fmsScores).some((v) => v === 0);
 
   // Load athletes
   useEffect(() => {
@@ -252,12 +311,59 @@ export function MetricsForm({ open, onClose, onSaved, preselectedAthleteId, filt
     loadHistory();
   }, [open, athleteId, selectedType]);
 
+  // Salva i dodici sotto-test piu' il totale, tutti con la stessa data.
+  const handleSaveFms = async () => {
+    if (!athleteId) {
+      toast('error', t('selectAthlete'));
+      return;
+    }
+    if (!fmsComplete) {
+      toast('error', t('fmsIncomplete'));
+      return;
+    }
+    setSaving(true);
+    try {
+      const rows = [
+        ...Object.entries(fmsScores).map(([type, v]) => ({ type, value: Number(v) })),
+        { type: 'fms_total', value: fmsTotal },
+      ];
+      for (const row of rows) {
+        await apiFetch('/metrics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            athleteId,
+            date,
+            type: row.type,
+            value: row.value,
+            unit: 'pt',
+            notes: notes || undefined,
+          }),
+        });
+      }
+      toast('success', t('fmsSaved', { total: fmsTotal }));
+      onSaved?.();
+      setFmsScores({});
+      setNotes('');
+      const res = await apiFetch<{ data: Metric[] }>(
+        `/metrics?athleteId=${athleteId}&type=fms_total&limit=10`,
+      );
+      setHistory(res.data || []);
+    } catch {
+      toast('error', t('saveError'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!athleteId) {
       toast('error', t('selectAthlete'));
       return;
     }
-    if (value === '' || value <= 0) {
+    // Il controllo era `value <= 0`: rifiutava lo 0 (che nell'FMS significa
+    // dolore) e i valori negativi legittimi come il sit and reach.
+    if (value === '' || Number(value) < currentMetricType.min || Number(value) > currentMetricType.max) {
       toast('error', t('invalidValue'));
       return;
     }
@@ -381,7 +487,56 @@ export function MetricsForm({ open, onClose, onSaved, preselectedAthleteId, filt
               )}
             </div>
 
-            {showCalculator && is1RM ? (
+            {isFms ? (
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 space-y-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('fmsHint')}</p>
+
+                {FMS_TESTS.map((x) => (
+                  <div key={x.key} className="flex items-center justify-between gap-3">
+                    <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{t(x.labelKey)}</span>
+                    <div className="flex items-center gap-2">
+                      {fmsSideKeys(x).map((mk, i) => (
+                        <div key={mk} className="flex items-center gap-1">
+                          {x.bilateral && (
+                            <span className="w-3 text-2xs font-semibold text-slate-400 dark:text-slate-500">
+                              {i === 0 ? t('fmsLeft') : t('fmsRight')}
+                            </span>
+                          )}
+                          <select
+                            value={fmsScores[mk] ?? ''}
+                            onChange={(e) =>
+                              setFmsScores((prev) => ({
+                                ...prev,
+                                [mk]: e.target.value === '' ? '' : Number(e.target.value),
+                              }))
+                            }
+                            className={`w-14 rounded border px-2 py-1 text-center text-sm ${
+                              fmsScores[mk] === 0
+                                ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                                : 'border-slate-200 dark:border-slate-700 dark:bg-slate-800'
+                            }`}
+                          >
+                            <option value="">—</option>
+                            {[0, 1, 2, 3].map((n) => (
+                              <option key={n} value={n}>{n}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('fmsTotalLabel')}</span>
+                  <span className="text-lg font-bold text-teal-700 dark:text-teal-300">
+                    {fmsComplete ? `${fmsTotal} / 21` : '— / 21'}
+                  </span>
+                </div>
+                {!fmsComplete && <p className="text-xs text-amber-600">{t('fmsIncomplete')}</p>}
+                {fmsHasPain && <p className="text-xs text-red-600">{t('fmsPainWarning')}</p>}
+              </div>
+            ) : showCalculator && is1RM ? (
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50 dark:bg-slate-900">
                 <p className="text-xs text-slate-500 dark:text-slate-400">{t('epleyHint')}</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -434,7 +589,7 @@ export function MetricsForm({ open, onClose, onSaved, preselectedAthleteId, filt
             )}
 
             {/* Variation badge */}
-            {variation !== null && (
+            {!isFms && variation !== null && (
               <div className="mt-2 flex items-center justify-center gap-1.5">
                 {Math.abs(variation) < 0.5 ? (
                   <Minus className="h-4 w-4 text-slate-400 dark:text-slate-500" />
@@ -517,8 +672,8 @@ export function MetricsForm({ open, onClose, onSaved, preselectedAthleteId, filt
               {tCommon('close')}
             </button>
             <button
-              onClick={handleSave}
-              disabled={saving || !athleteId || value === ''}
+              onClick={isFms ? handleSaveFms : handleSave}
+              disabled={saving || !athleteId || (isFms ? !fmsComplete : value === '')}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
             >
               {saving ? (

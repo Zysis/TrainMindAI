@@ -102,12 +102,20 @@ export async function exerciseRoutes(app: FastifyInstance) {
 
     await findOrgEntity(app, 'exercise', id, organizationId);
 
-    // Check if exercise is used in any session
+    // Un esercizio usato in una sessione non si cancella: la sessione perderebbe
+    // una riga della scheda. Il messaggio dice quante sono, cosi' si sa dove
+    // andare a toglierlo.
     const usedCount = await app.prisma.sessionExercise.count({ where: { exerciseId: id } });
     if (usedCount > 0) {
       return sendError(
         reply,
-        new AppError(409, 'EXERCISE_IN_USE', `This exercise is used in ${usedCount} sessions. Remove it from sessions before deleting.`),
+        new AppError(
+          409,
+          'EXERCISE_IN_USE',
+          usedCount === 1
+            ? 'Questo esercizio e\' usato in 1 sessione. Toglilo dalla sessione prima di eliminarlo.'
+            : `Questo esercizio e\' usato in ${usedCount} sessioni. Toglilo dalle sessioni prima di eliminarlo.`,
+        ),
       );
     }
 

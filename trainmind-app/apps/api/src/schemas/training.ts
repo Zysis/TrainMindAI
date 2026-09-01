@@ -9,6 +9,9 @@ export const createTrainingPlanSchema = z.object({
   athleteId: z.string().min(1).optional(),
   teamId: z.string().optional(),
   weeks: z.number().int().min(1).max(52).default(4),
+  // Giorni di allenamento in numerazione ISO (1 = lunedi', 7 = domenica).
+  // Vuoto = nessun pattern: le settimane restano libere.
+  trainingDays: z.array(z.number().int().min(1).max(7)).max(7).optional(),
 });
 
 export const updateTrainingPlanSchema = z.object({
@@ -64,7 +67,9 @@ export const addSessionExerciseSchema = z.object({
   orderIndex: z.number().int().min(0).default(0),
   sets: z.number().int().min(1).max(20).optional(),
   reps: z.string().max(20).optional(), // e.g. "8-12"
-  weight: z.number().positive().optional(),
+  // nullable: svuotare il campo su un esercizio a corpo libero significa
+  // "BW puro", e deve poter cancellare un sovraccarico messo prima.
+  weight: z.number().positive().nullable().optional(),
   duration: z.number().int().positive().optional(), // seconds
   restTime: z.number().int().min(0).max(600).optional(), // seconds
   notes: z.string().max(500).optional(),

@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+  toISODateLocal,
+  normalizeTrainingDays,
+  planAnchorMonday,
+  trainingDayDate,
+  weekTrainingDates,
+  sessionDateInWeek,
+  planFirstTrainingDate,
   formatDate,
   toISODate,
   calculateAge,
@@ -283,5 +290,138 @@ describe('sleep', () => {
   it('returns a Promise', () => {
     const result = sleep(1);
     expect(result).toBeInstanceOf(Promise);
+  });
+});
+
+
+// ============================================
+// Giorni di allenamento
+// ============================================
+
+const iso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dow = (d: Date) => (d.getDay() === 0 ? 7 : d.getDay());
+
+describe('giorni di allenamento del mesociclo', () => {
+  // 2026: 28 agosto e' un venerdi', 31 agosto un lunedi'.
+  const ven28 = new Date(2026, 7, 28);
+  const lun31 = new Date(2026, 7, 31);
+  const mer2set = new Date(2026, 8, 2);
+  const dom30 = new Date(2026, 7, 30);
+  const LMV = [1, 3, 5];
+
+  describe('normalizeTrainingDays', () => {
+    it('ordina, deduplica e scarta i valori fuori scala', () => {
+      expect(normalizeTrainingDays([5, 1, 5, 3])).toEqual([1, 3, 5]);
+      expect(normalizeTrainingDays([0, 8, -2, 3.5, 4])).toEqual([4]);
+      expect(normalizeTrainingDays(null)).toEqual([]);
+      expect(normalizeTrainingDays(undefined)).toEqual([]);
+    });
+  });
+
+  describe('planAnchorMonday', () => {
+    it('inizio di lunedi\': resta quella settimana', () => {
+      expect(iso(planAnchorMonday(lun31, LMV))).toBe('2026-08-31');
+    });
+
+    it('inizio di venerdi\' con lunedi\' fra i giorni: slitta alla settimana dopo', () => {
+      // altrimenti il lunedi\' della settimana 1 cadrebbe il 24, prima dell'inizio
+      expect(iso(planAnchorMonday(ven28, LMV))).toBe('2026-08-31');
+    });
+
+    it('inizio di venerdi\' con soli ven/sab: nessuno slittamento', () => {
+      expect(iso(planAnchorMonday(ven28, [5, 6]))).toBe('2026-08-24');
+    });
+
+    it('la domenica vale 7, non 0', () => {
+      expect(iso(planAnchorMonday(dom30, [2, 4]))).toBe('2026-08-31');
+    });
+  });
+
+  describe('nessuna sessione prima della data di inizio', () => {
+    const casi: Array<[string, Date, number[]]> = [
+      ['ven 28, L-M-V', ven28, LMV],
+      ['lun 31, L-M-V', lun31, LMV],
+      ['ven 28, V-S', ven28, [5, 6]],
+      ['mer 2 set, L-M', mer2set, [1, 2]],
+      ['dom 30, M-G', dom30, [2, 4]],
+      ['ven 28, solo domenica', ven28, [7]],
+    ];
+    it.each(casi)('%s', (_label, start, days) => {
+      for (let w = 1; w <= 4; w++) {
+        for (const { date } of weekTrainingDates(start, days, w)) {
+          expect(date.getTime()).toBeGreaterThanOrEqual(
+            new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime(),
+          );
+        }
+      }
+    });
+  });
+
+  describe('trainingDayDate', () => {
+    it('cade sempre sul giorno della settimana chiesto', () => {
+      for (const d of [1, 2, 3, 4, 5, 6, 7]) {
+        expect(dow(trainingDayDate(ven28, LMV, 3, d))).toBe(d);
+      }
+    });
+
+    it('ogni settimana e\' sette giorni dopo la precedente', () => {
+      const w1 = trainingDayDate(lun31, LMV, 1, 3);
+      const w2 = trainingDayDate(lun31, LMV, 2, 3);
+      expect((w2.getTime() - w1.getTime()) / 86400000).toBe(7);
+    });
+  });
+
+  describe('weekTrainingDates', () => {
+    it('restituisce i giorni in ordine con le date giuste', () => {
+      expect(weekTrainingDates(ven28, LMV, 1).map((x) => iso(x.date)))
+        .toEqual(['2026-08-31', '2026-09-02', '2026-09-04']);
+      expect(weekTrainingDates(ven28, LMV, 2).map((x) => iso(x.date)))
+        .toEqual(['2026-09-07', '2026-09-09', '2026-09-11']);
+    });
+  });
+
+  describe('sessionDateInWeek', () => {
+    it('la sessione i-esima cade sull\'i-esimo giorno scelto', () => {
+      expect(iso(sessionDateInWeek(ven28, LMV, 1, 0))).toBe('2026-08-31');
+      expect(iso(sessionDateInWeek(ven28, LMV, 1, 1))).toBe('2026-09-02');
+      expect(iso(sessionDateInWeek(ven28, LMV, 1, 2))).toBe('2026-09-04');
+    });
+
+    it('le sessioni in eccesso proseguono nei giorni successivi', () => {
+      // l'AI ne ha scritte 4 su 3 giorni dichiarati
+      expect(iso(sessionDateInWeek(ven28, LMV, 1, 3))).toBe('2026-09-05');
+    });
+
+    it('senza giorni dichiarati resta il vecchio comportamento consecutivo', () => {
+      expect(iso(sessionDateInWeek(lun31, [], 1, 0))).toBe('2026-08-31');
+      expect(iso(sessionDateInWeek(lun31, [], 1, 2))).toBe('2026-09-02');
+      expect(iso(sessionDateInWeek(lun31, [], 2, 0))).toBe('2026-09-07');
+    });
+  });
+
+  describe('toISODateLocal', () => {
+    it('non slitta al giorno prima come farebbe toISOString', () => {
+      // 31 agosto 2026, mezzanotte locale
+      expect(toISODateLocal(new Date(2026, 7, 31))).toBe('2026-08-31');
+      expect(toISODateLocal(new Date(2026, 0, 1))).toBe('2026-01-01');
+      expect(toISODateLocal(new Date(2026, 11, 31, 23, 59))).toBe('2026-12-31');
+    });
+
+    it('e\' coerente con le date dei giorni di allenamento', () => {
+      expect(weekTrainingDates(ven28, LMV, 1).map((x) => toISODateLocal(x.date)))
+        .toEqual(['2026-08-31', '2026-09-02', '2026-09-04']);
+    });
+  });
+
+  describe('planFirstTrainingDate', () => {
+    it('e\' il primo giorno scelto della settimana 1', () => {
+      expect(iso(planFirstTrainingDate(ven28, LMV))).toBe('2026-08-31');
+      expect(iso(planFirstTrainingDate(ven28, [5, 6]))).toBe('2026-08-28');
+    });
+
+    it('senza giorni scelti coincide con la data di inizio', () => {
+      expect(iso(planFirstTrainingDate(mer2set, []))).toBe('2026-09-02');
+    });
   });
 });

@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FileText, Download, Eye, Loader2, CalendarClock } from 'lucide-react';
+import { FileText, Download, Eye, Loader2, CalendarClock, ClipboardList, Trophy } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { getAccessToken } from '@/lib/auth/api';
 import { API_BASE_URL, API_PREFIX } from '@/lib/constants';
 import { useTeam } from '@/hooks/use-team';
@@ -59,6 +60,7 @@ async function readApiError(res: Response): Promise<string> {
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
+  const apiError = useApiError();
 
   const AUDIENCE_OPTIONS = [
     { value: 'STAFF', label: t('audienceStaff') },
@@ -124,7 +126,7 @@ export default function ReportsPage() {
       setRawJson(res.data.report);
       toast('success', t('toastPreviewGenerated'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('toastUnknownError');
+      const message = apiError(err, t('toastUnknownError'));
       toast('error', `${t('toastError')}: ${message}`);
     } finally {
       setLoading(false);
@@ -175,7 +177,7 @@ export default function ReportsPage() {
 
       toast('success', t('toastDownloaded', { format }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('toastDownloadError');
+      const message = apiError(err, t('toastDownloadError'));
       toast('error', `${t('toastError')} ${format}: ${message}`);
     } finally {
       setDownloading(null);
@@ -189,13 +191,29 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('title')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle')}</p>
         </div>
-        <Link
-          href="/dashboard/reports/schedules"
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-        >
-          <CalendarClock className="h-4 w-4" />
-          {t('schedules')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/reports/game"
+            className="inline-flex items-center gap-2 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/30 px-4 py-2.5 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50"
+          >
+            <Trophy className="h-4 w-4" />
+            {t('gameReport')}
+          </Link>
+          <Link
+            href="/dashboard/reports/daily"
+            className="inline-flex items-center gap-2 rounded-lg border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/30 px-4 py-2.5 text-sm font-semibold text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/50"
+          >
+            <ClipboardList className="h-4 w-4" />
+            {t('dailyReport')}
+          </Link>
+          <Link
+            href="/dashboard/reports/schedules"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            <CalendarClock className="h-4 w-4" />
+            {t('schedules')}
+          </Link>
+        </div>
       </div>
 
       {/* ─── Form ─────────────────────────────────────── */}

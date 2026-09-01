@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/toast';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { getAccessToken } from '@/lib/auth/api';
 import { API_BASE_URL, API_PREFIX } from '@/lib/constants';
 import { useTeam } from '@/hooks/use-team';
@@ -59,6 +60,7 @@ async function readApiError(res: Response): Promise<string> {
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
+  const apiError = useApiError();
 
   const AUDIENCE_OPTIONS = [
     { value: 'STAFF', label: t('audienceStaff') },
@@ -124,7 +126,7 @@ export default function ReportsPage() {
       setRawJson(res.data.report);
       toast('success', t('toastPreviewGenerated'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('toastUnknownError');
+      const message = apiError(err, t('toastUnknownError'));
       toast('error', `${t('toastError')}: ${message}`);
     } finally {
       setLoading(false);
@@ -175,7 +177,7 @@ export default function ReportsPage() {
 
       toast('success', t('toastDownloaded', { format }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('toastDownloadError');
+      const message = apiError(err, t('toastDownloadError'));
       toast('error', `${t('toastError')} ${format}: ${message}`);
     } finally {
       setDownloading(null);

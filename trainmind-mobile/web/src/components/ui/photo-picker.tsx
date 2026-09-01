@@ -8,19 +8,40 @@ interface PhotoPickerProps {
   onChange: (dataUrl: string | null) => void;
   label?: string;
   size?: number; // px, default 80
+  /** 'cover' ritaglia al centro (foto persona), 'contain' inscrive tutto (logo) */
+  fit?: 'cover' | 'contain';
+  /** 'circle' per le persone, 'square' per i loghi */
+  shape?: 'circle' | 'square';
 }
 
 /**
  * Resizes an image file to a square avatar (max 200×200)
  * and returns a base64 data URL (JPEG, quality 0.85).
  */
-function resizeImage(file: File, maxSize = 200): Promise<string> {
+function resizeImage(
+  file: File,
+  maxSize = 200,
+  fit: 'cover' | 'contain' = 'cover',
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        if (fit === 'contain') {
+          // Il logo ci entra tutto, su sfondo trasparente. PNG, non JPEG:
+          // un logo con trasparenza su fondo bianco stona nelle card scure.
+          const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+          return;
+        }
+
         // Crop to square from center
         const side = Math.min(img.width, img.height);
         const sx = (img.width - side) / 2;
@@ -28,7 +49,6 @@ function resizeImage(file: File, maxSize = 200): Promise<string> {
         const outSize = Math.min(side, maxSize);
         canvas.width = outSize;
         canvas.height = outSize;
-        const ctx = canvas.getContext('2d')!;
         ctx.drawImage(img, sx, sy, side, side, 0, 0, outSize, outSize);
         resolve(canvas.toDataURL('image/jpeg', 0.85));
       };
@@ -40,14 +60,22 @@ function resizeImage(file: File, maxSize = 200): Promise<string> {
   });
 }
 
-export function PhotoPicker({ value, onChange, label, size = 80 }: PhotoPickerProps) {
+export function PhotoPicker({
+  value,
+  onChange,
+  label,
+  size = 80,
+  fit = 'cover',
+  shape = 'circle',
+}: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const round = shape === 'circle' ? 'rounded-full' : 'rounded-xl';
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
     try {
-      const dataUrl = await resizeImage(file);
+      const dataUrl = await resizeImage(file, fit === 'contain' ? 256 : 200, fit);
       onChange(dataUrl);
     } catch (err) {
       console.error('Photo resize error:', err);
@@ -72,7 +100,7 @@ export function PhotoPicker({ value, onChange, label, size = 80 }: PhotoPickerPr
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
       )}
       <div
-        className={`relative cursor-pointer rounded-full border-2 border-dashed transition-colors ${
+        className={`relative cursor-pointer ${round} border-2 border-dashed transition-colors ${
           dragging
             ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
             : 'border-slate-300 dark:border-slate-600 hover:border-teal-400'
@@ -88,7 +116,7 @@ export function PhotoPicker({ value, onChange, label, size = 80 }: PhotoPickerPr
             <img
               src={value}
               alt="Photo"
-              className="h-full w-full rounded-full object-cover"
+              className={`h-full w-full ${round} ${fit === 'contain' ? 'object-contain p-1' : 'object-cover'}`}
             />
             <button
               type="button"

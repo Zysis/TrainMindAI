@@ -1,18 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Calendar, Clock, Users, Plus, ChevronDown, ChevronRight,
-  Dumbbell, Trash2, CheckCircle2, Circle, PlayCircle, XCircle, Layers, Upload, Loader2, Search, Sparkles,
+  Dumbbell, CheckCircle2, Circle, PlayCircle, XCircle, Layers, Upload, Loader2, Search, Sparkles, Unlink,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useWeekdays } from '@/components/ui/weekday-picker';
+import { weekTrainingDates, toISODateLocal } from '@trainmind/utils';
 import { useToast } from '@/components/ui/toast';
 
 interface TrainingSession {
@@ -56,6 +60,7 @@ interface Plan {
   athlete: { id: string; firstName: string; lastName: string; position: string; photoUrl: string | null } | null;
   createdBy: { id: string; firstName: string; lastName: string };
   periodizationPlan: { id: string; name: string; type: string } | null;
+  trainingDays?: number[];
   weeks: Week[];
 }
 
@@ -80,10 +85,14 @@ export default function TrainingPlanDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('training');
   const tCommon = useTranslations('common');
+  const [detachTarget, setDetachTarget] = useState<{ id: string; title: string } | null>(null);
+  const [detaching, setDetaching] = useState(false);
   const tExercises = useTranslations('exercises');
   const locale = useLocale();
+  const weekdays = useWeekdays();
   const planId = params.id as string;
   const statusConfig = useMemo(
     () => Object.fromEntries(
@@ -110,8 +119,40 @@ export default function TrainingPlanDetailPage() {
   const [templateSearch, setTemplateSearch] = useState('');
   const [importingTemplate, setImportingTemplate] = useState(false);
 
-  const openAddSession = async (weekId: string) => {
+  // Gli slot dei giorni dichiarati per una settimana, con la data reale e
+  // l'indicazione se una sessione c'e' gia'. Le date vengono da @trainmind/utils,
+  // le stesse che usa l'API per datare le sessioni generate dall'AI.
+  const daySlots = useCallback(
+    (weekNumber: number) => {
+      const days = plan?.trainingDays ?? [];
+      if (!plan || days.length === 0) return [];
+
+      const week = plan.weeks.find((w) => w.weekNumber === weekNumber);
+      const taken = new Set(
+        (week?.trainingSessions ?? [])
+          .filter((x) => x.date)
+          .map((x) => toISODateLocal(new Date(x.date as string))),
+      );
+
+      return weekTrainingDates(new Date(plan.startDate), days, weekNumber).map(({ iso, date }) => {
+        const value = toISODateLocal(date);
+        return {
+          iso,
+          value,
+          taken: taken.has(value),
+          initial: weekdays.find((d) => d.iso === iso)?.initial ?? '',
+          label: date.toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
+        };
+      });
+    },
+    [plan, locale, weekdays],
+  );
+
+  const openAddSession = async (weekId: string, presetDate?: string) => {
     setShowAddSession(weekId);
+    // Aprendo dallo slot di un giorno la data e' gia' quella giusta: il default
+    // era "oggi", che per un mesociclo che parte fra due settimane e' sbagliato.
+    if (presetDate) setSessionForm((f) => ({ ...f, date: presetDate }));
     setAddSessionTab('import');
     setTemplateSearch('');
     setLoadingTemplates(true);
@@ -214,13 +255,21 @@ export default function TrainingPlanDetailPage() {
     }
   };
 
-  const handleDeleteSession = async (sessionId: string) => {
+  const handleDetachSession = async () => {
+    if (!detachTarget) return;
+    setDetaching(true);
     try {
-      await apiFetch(`/training/sessions/${sessionId}`, { method: 'DELETE' });
-      toast('success', t('sessionDeleted'));
+      const res = await apiFetch<{ success: boolean; data: { becomesTemplate: boolean } }>(
+        `/training/sessions/${detachTarget.id}/detach`,
+        { method: 'POST' },
+      );
+      toast('success', res.data?.becomesTemplate ? t('sessionDetachedTemplate') : t('sessionDetached'));
+      setDetachTarget(null);
       loadPlan();
-    } catch {
-      toast('error', t('sessionDeleteError'));
+    } catch (err) {
+      toast('error', apiError(err, t('sessionDetachError')));
+    } finally {
+      setDetaching(false);
     }
   };
 
@@ -426,16 +475,43 @@ export default function TrainingPlanDetailPage() {
                                 </button>
                               )}
                               <button
-                                onClick={() => handleDeleteSession(session.id)}
-                                className="rounded p-1.5 text-slate-400 dark:text-slate-500 hover:bg-red-50 hover:text-red-600"
-                                title={t('deleteSession')}
+                                onClick={() => setDetachTarget({ id: session.id, title: session.title })}
+                                className="rounded p-1.5 text-slate-400 dark:text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                                title={t('detachSession')}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Unlink className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {/* Slot dei giorni dichiarati: giorni gia' fissati, resta
+                      solo da attaccarci la sessione. Senza giorni dichiarati
+                      la settimana resta libera come prima. */}
+                  {daySlots(week.weekNumber).length > 0 && (
+                    <div className="border-t border-slate-100 dark:border-slate-700 px-5 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {daySlots(week.weekNumber).map((slot) => (
+                          <button
+                            key={slot.iso}
+                            onClick={() => openAddSession(week.id, slot.value)}
+                            disabled={slot.taken}
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              slot.taken
+                                ? 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-300 cursor-default'
+                                : 'border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-700'
+                            }`}
+                            title={slot.taken ? t('daySlotTaken') : t('daySlotFree')}
+                          >
+                            {!slot.taken && <Plus className="h-3 w-3" />}
+                            <span className="font-semibold">{slot.initial}</span>
+                            <span className="font-normal">{slot.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -617,6 +693,18 @@ export default function TrainingPlanDetailPage() {
           )}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!detachTarget}
+        title={t('detachSession')}
+        message={t('detachSessionConfirm', { name: detachTarget?.title ?? '' })}
+        detail={t('detachSessionDetail')}
+        confirmLabel={t('detachSessionAction')}
+        tone="default"
+        busy={detaching}
+        onConfirm={handleDetachSession}
+        onClose={() => setDetachTarget(null)}
+      />
     </div>
   );
 }

@@ -5,13 +5,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   ArrowLeft, Edit2, Dumbbell, Heart, Activity,
-  AlertTriangle, Calendar, TrendingUp, TrendingDown, Minus, Sparkles,
+  AlertTriangle, TrendingUp, TrendingDown, Minus, Sparkles,
   ChevronDown, ChevronUp, Ruler, Zap, Timer, Wind, StretchHorizontal, ClipboardList,
   Mail, Copy, Check, ExternalLink,
+  Archive,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { AthleteTrainingTab } from '@/components/athletes/athlete-training-tab';
+import { AthleteInjuriesTab } from '@/components/athletes/athlete-injuries-tab';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -22,7 +28,7 @@ import { calculateAge } from '@trainmind/utils';
 import { AIWellnessInsights } from '@/components/ai/ai-wellness-insights';
 import { MetricsForm, useMetricTypes, useMetricCategories } from '@/components/metrics';
 import { WellnessForm } from '@/components/wellness';
-import { POSITION_OPTIONS } from '@/lib/constants/positions';
+import { POSITION_OPTIONS, positionShort, positionName } from '@/lib/constants/positions';
 import type { AthleteDetail } from '@/types';
 
 type Tab = 'panoramica' | 'schede' | 'metriche' | 'infortuni';
@@ -31,6 +37,7 @@ export default function AthleteProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations('athletes');
+  const apiError = useApiError();
   const locale = useLocale();
   const [athlete, setAthlete] = useState<AthleteDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +83,7 @@ export default function AthleteProfilePage() {
       setInviteResult(res.data);
       toast('success', t('inviteSent'));
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('inviteError'));
+      toast('error', apiError(err, t('inviteError')));
     } finally {
       setInviting(false);
     }
@@ -119,12 +126,66 @@ export default function AthleteProfilePage() {
     setShowMetricsForm(true);
   };
 
+  // ─── Archiviazione ed eliminazione ──────────────────────
+  const [archiving, setArchiving] = useState(false);
+
+  const handleArchive = async () => {
+    if (!athlete) return;
+    const name = `${athlete.firstName} ${athlete.lastName}`;
+    if (!confirm(t('archiveConfirm', { name }))) return;
+    setArchiving(true);
+    try {
+      const res = await apiFetch<{ data: { teamsLeft: number } }>(`/athletes/${athlete.id}`, {
+        method: 'DELETE',
+      });
+      toast('success', t('archivedMsg', { name, count: res.data?.teamsLeft ?? 0 }));
+      router.push('/dashboard/teams');
+    } catch (err) {
+      toast('error', apiError(err, t('archiveError')));
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!athlete) return;
+    setArchiving(true);
+    try {
+      await apiFetch(`/athletes/${athlete.id}/restore`, { method: 'POST', body: JSON.stringify({}) });
+      toast('success', t('restoredMsg'));
+      loadAthlete();
+    } catch (err) {
+      toast('error', apiError(err, t('restoreError')));
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const handleErase = async () => {
+    if (!athlete) return;
+    const name = `${athlete.firstName} ${athlete.lastName}`;
+    if (!confirm(t('eraseConfirm', { name }))) return;
+    setArchiving(true);
+    try {
+      await apiFetch(`/gdpr/erase-athlete/${athlete.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'Eliminazione richiesta dalla scheda atleta' }),
+      });
+      toast('success', t('erasedMsg'));
+      router.push('/dashboard/teams');
+    } catch (err) {
+      toast('error', apiError(err, t('eraseError')));
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   const loadAthlete = async () => {
     try {
       const res = await apiFetch<{ data: AthleteDetail }>(`/athletes/${id}`);
       setAthlete(res.data);
     } catch {
-      router.push('/dashboard/athletes');
+      router.push('/dashboard/teams');
     } finally {
       setLoading(false);
     }
@@ -172,7 +233,7 @@ export default function AthleteProfilePage() {
       setShowEditModal(false);
       loadAthlete();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('updateError'));
+      toast('error', apiError(err, t('updateError')));
     } finally {
       setSaving(false);
     }
@@ -208,7 +269,7 @@ export default function AthleteProfilePage() {
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <button onClick={() => router.push('/dashboard/athletes')}
+      <button onClick={() => router.push('/dashboard/teams')}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300">
         <ArrowLeft className="h-4 w-4" /> {t('backToList')}
       </button>
@@ -228,7 +289,7 @@ export default function AthleteProfilePage() {
               </Badge>
             </div>
             <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
-              <span>{athlete.position}</span>
+              <span title={positionName(athlete.position)}>{positionShort(athlete.position)}</span>
               <span>{t('yearsOld', { age })}</span>
               {athlete.height && <span>{athlete.height} cm</span>}
               {athlete.weight && <span>{athlete.weight} kg</span>}
@@ -236,7 +297,35 @@ export default function AthleteProfilePage() {
               {athlete.team && <span>{athlete.team}</span>}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {athlete.isActive ? (
+              <button
+                onClick={handleArchive}
+                disabled={archiving}
+                title={t('archiveHint')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                <Archive className="h-4 w-4" /> {t('archive')}
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleRestore}
+                  disabled={archiving}
+                  className="inline-flex items-center gap-2 rounded-lg border border-teal-600 px-3 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:border-teal-500 dark:hover:bg-teal-950 disabled:opacity-50"
+                >
+                  <RotateCcw className="h-4 w-4" /> {t('restore')}
+                </button>
+                <button
+                  onClick={handleErase}
+                  disabled={archiving}
+                  title={t('eraseHint')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950 disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" /> {t('eraseForever')}
+                </button>
+              </>
+            )}
             <button
               onClick={openInviteModal}
               className="inline-flex items-center gap-2 rounded-lg border border-teal-600 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:border-teal-500 dark:hover:bg-teal-950"
@@ -350,14 +439,7 @@ export default function AthleteProfilePage() {
         </div>
       )}
 
-      {activeTab === 'schede' && (
-        <div className="card flex h-48 items-center justify-center">
-          <div className="text-center">
-            <Calendar className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-400 dark:text-slate-500">Le schede allenamento saranno disponibili nello Sprint 2</p>
-          </div>
-        </div>
-      )}
+      {activeTab === 'schede' && <AthleteTrainingTab athleteId={athlete.id} />}
 
       {activeTab === 'metriche' && (
         <MetricsTabContent
@@ -374,14 +456,7 @@ export default function AthleteProfilePage() {
         />
       )}
 
-      {activeTab === 'infortuni' && (
-        <div className="card">
-          <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">Storico Infortuni</h3>
-          <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            {athlete._count.injuries === 0 ? 'Nessun infortunio registrato' : 'Storico completo disponibile nello Sprint 2'}
-          </p>
-        </div>
-      )}
+      {activeTab === 'infortuni' && <AthleteInjuriesTab athleteId={athlete.id} />}
       {/* Forms */}
       <MetricsForm
         open={showMetricsForm}
@@ -654,7 +729,7 @@ function AthletePhysicalProfile({
                   </div>
                 </div>
               ) : (
-                <span className="text-xs text-slate-300 dark:text-slate-600">Non misurato</span>
+                <span className="text-xs text-slate-300 dark:text-slate-600">{tAthletes('notMeasured')}</span>
               )}
             </div>
           );

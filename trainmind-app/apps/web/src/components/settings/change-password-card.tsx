@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { changePassword } from '@/lib/auth/api';
 
 /** Stesse regole del backend (passwordField in schemas/auth.ts). */
@@ -16,6 +17,7 @@ const RULES = [
 export function ChangePasswordCard() {
   const router = useRouter();
   const t = useTranslations('settings.password');
+  const apiError = useApiError();
   const [isOpen, setIsOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -52,7 +54,7 @@ export function ChangePasswordCard() {
       // Il backend ha invalidato la sessione: rimandiamo al login.
       setTimeout(() => router.push('/login'), 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('genericError'));
+      setError(apiError(err, t('genericError')));
     } finally {
       setIsSubmitting(false);
     }

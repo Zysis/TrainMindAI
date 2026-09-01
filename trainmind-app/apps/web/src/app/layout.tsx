@@ -71,9 +71,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <ToastProvider>{children}</ToastProvider>
               <CookieBanner />
             </AuthProvider>
+            {/* Dentro I18nProvider: registra il service worker e mostra il
+                banner di installazione, che ora e' tradotto. Fuori di qui
+                `useTranslations` non trova il contesto e la pagina esplode. */}
+            <PWARegister />
           </I18nProvider>
         </ThemeProvider>
-        <PWARegister />
       </body>
     </html>
   );

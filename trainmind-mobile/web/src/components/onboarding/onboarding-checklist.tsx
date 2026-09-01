@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   CheckCircle2,
@@ -22,7 +23,7 @@ interface ChecklistItem {
 // ─── Items ───────────────────────────────────────────────
 
 const ITEMS: ChecklistItem[] = [
-  { id: 'add_athlete', label: 'Aggiungi il primo atleta', href: '/dashboard/athletes' },
+  { id: 'add_athlete', label: 'Aggiungi il primo atleta', href: '/dashboard/teams' },
   { id: 'create_plan', label: 'Crea una scheda con l\u2019AI', href: '/dashboard/chat' },
   { id: 'log_session', label: 'Registra una sessione', href: '/dashboard/training' },
   { id: 'fill_wellness', label: 'Compila il wellness', href: '/dashboard/wellness' },
@@ -57,6 +58,7 @@ function saveState(state: ChecklistState) {
 // ─── Component ───────────────────────────────────────────
 
 export function OnboardingChecklist() {
+  const t = useTranslations('onboarding');
   const [state, setState] = useState<ChecklistState>({ completed: [] });
   const [expanded, setExpanded] = useState(true);
   const [dismissed, setDismissed] = useState(true); // start hidden to avoid flash
@@ -116,7 +118,7 @@ export function OnboardingChecklist() {
             <Rocket className="h-5 w-5 text-teal-700" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Per iniziare</h3>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('gettingStarted')}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {completedCount}/{total} completati
             </p>
@@ -167,8 +169,8 @@ export function OnboardingChecklist() {
           <button
             onClick={dismiss}
             className="rounded p-1 text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 hover:text-slate-600 dark:text-slate-400"
-            aria-label="Non mostrare pi\u00f9"
-            title="Non mostrare pi\u00f9"
+            aria-label={t('dontShowAgain')}
+            title={t('dontShowAgain')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -215,7 +217,7 @@ export function OnboardingChecklist() {
               onClick={dismiss}
               className="text-xs text-slate-400 dark:text-slate-500 transition-colors hover:text-slate-600 dark:text-slate-400"
             >
-              Non mostrare pi\u00f9
+              {t('dontShowAgain')}
             </button>
           </div>
         </div>

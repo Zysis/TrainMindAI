@@ -5,12 +5,15 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   ArrowLeft, Edit2, Dumbbell, Heart, Activity,
-  AlertTriangle, Calendar, TrendingUp, TrendingDown, Minus, Sparkles,
+  AlertTriangle, TrendingUp, TrendingDown, Minus, Sparkles,
   ChevronDown, ChevronUp, Ruler, Zap, Timer, Wind, StretchHorizontal, ClipboardList,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { AthleteTrainingTab } from '@/components/athletes/athlete-training-tab';
+import { AthleteInjuriesTab } from '@/components/athletes/athlete-injuries-tab';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -20,9 +23,8 @@ import { PhotoPicker } from '@/components/ui/photo-picker';
 import { calculateAge } from '@trainmind/utils';
 import { AIWellnessInsights } from '@/components/ai/ai-wellness-insights';
 import { MetricsForm, useMetricTypes, useMetricCategories } from '@/components/metrics';
-import type { MetricType } from '@/components/metrics';
 import { WellnessForm } from '@/components/wellness';
-import { POSITION_OPTIONS } from '@/lib/constants/positions';
+import { POSITION_OPTIONS, positionShort, positionName } from '@/lib/constants/positions';
 import type { AthleteDetail } from '@/types';
 
 type Tab = 'panoramica' | 'schede' | 'metriche' | 'infortuni';
@@ -31,6 +33,7 @@ export default function AthleteProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations('athletes');
+  const apiError = useApiError();
   const locale = useLocale();
   const [athlete, setAthlete] = useState<AthleteDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +78,7 @@ export default function AthleteProfilePage() {
       const res = await apiFetch<{ data: AthleteDetail }>(`/athletes/${id}`);
       setAthlete(res.data);
     } catch {
-      router.push('/dashboard/athletes');
+      router.push('/dashboard/teams');
     } finally {
       setLoading(false);
     }
@@ -123,7 +126,7 @@ export default function AthleteProfilePage() {
       setShowEditModal(false);
       loadAthlete();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('updateError'));
+      toast('error', apiError(err, t('updateError')));
     } finally {
       setSaving(false);
     }
@@ -159,7 +162,7 @@ export default function AthleteProfilePage() {
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <button onClick={() => router.push('/dashboard/athletes')}
+      <button onClick={() => router.push('/dashboard/teams')}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300">
         <ArrowLeft className="h-4 w-4" /> {t('backToList')}
       </button>
@@ -179,7 +182,7 @@ export default function AthleteProfilePage() {
               </Badge>
             </div>
             <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
-              <span>{athlete.position}</span>
+              <span title={positionName(athlete.position)}>{positionShort(athlete.position)}</span>
               <span>{t('yearsOld', { age })}</span>
               {athlete.height && <span>{athlete.height} cm</span>}
               {athlete.weight && <span>{athlete.weight} kg</span>}
@@ -295,14 +298,7 @@ export default function AthleteProfilePage() {
         </div>
       )}
 
-      {activeTab === 'schede' && (
-        <div className="card flex h-48 items-center justify-center">
-          <div className="text-center">
-            <Calendar className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-400 dark:text-slate-500">Le schede allenamento saranno disponibili nello Sprint 2</p>
-          </div>
-        </div>
-      )}
+      {activeTab === 'schede' && <AthleteTrainingTab athleteId={athlete.id} />}
 
       {activeTab === 'metriche' && (
         <MetricsTabContent
@@ -319,14 +315,7 @@ export default function AthleteProfilePage() {
         />
       )}
 
-      {activeTab === 'infortuni' && (
-        <div className="card">
-          <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">Storico Infortuni</h3>
-          <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            {athlete._count.injuries === 0 ? 'Nessun infortunio registrato' : 'Storico completo disponibile nello Sprint 2'}
-          </p>
-        </div>
-      )}
+      {activeTab === 'infortuni' && <AthleteInjuriesTab athleteId={athlete.id} />}
       {/* Forms */}
       <MetricsForm
         open={showMetricsForm}
@@ -506,7 +495,7 @@ function AthletePhysicalProfile({
                   </div>
                 </div>
               ) : (
-                <span className="text-xs text-slate-300 dark:text-slate-600">Non misurato</span>
+                <span className="text-xs text-slate-300 dark:text-slate-600">{tAthletes('notMeasured')}</span>
               )}
             </div>
           );

@@ -114,6 +114,7 @@ model Organization {
   trainingSessions       TrainingSession[]
   fieldTrainingSessions  FieldTrainingSession[]
   gameSessions           GameSession[]
+  dailyReports           DailyReport[]
   athleteInvites         AthleteInvite[]
   aiUsageLogs            AiUsageLog[]
 
@@ -176,6 +177,7 @@ model User {
   sentInvites         AthleteInvite[]    @relation("InviteSender")
   consentRecords      ConsentRecord[]
   auditLogs           AuditLog[]
+  dailyReports        DailyReport[]
 
   // Soft-delete: quando l'utente richiede la cancellazione GDPR, i dati
   // personali vengono anonimizzati e deletedAt viene valorizzato.
@@ -238,6 +240,7 @@ model Team {
   name           String   // es. "Under 16", "Prima Squadra"
   description    String?
   color          String?  // hex color for UI
+  logoUrl        String?  // logo/foto della squadra, data URL come photoUrl dell'atleta
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -249,6 +252,7 @@ model Team {
   calendarEvents        CalendarEvent[]
   fieldTrainingSessions FieldTrainingSession[]
   gameSessions          GameSession[]
+  dailyReports          DailyReport[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -300,6 +304,7 @@ model Athlete {
   planAdaptations       PlanAdaptation[]
   fieldTrainingEntries  FieldTrainingEntry[]
   gamePlayerEntries     GamePlayerEntry[]
+  dailyReportEntries    DailyReportEntry[]
   athleteInvites        AthleteInvite[]
 
   @@index([organizationId])
@@ -317,6 +322,13 @@ model TrainingPlan {
   organizationId      String
   createdById         String
   periodizationPlanId String?
+  // Giorni della settimana in cui si allena, in numerazione ISO (1 = lunedi',
+  // 7 = domenica). Definisce quante sessioni ha una settimana e in che giorni
+  // cadono; vuoto = nessun pattern dichiarato.
+  trainingDays        Int[]
+  // true se il mesociclo e' uscito da "Genera con AI": serve a distinguerlo
+  // a colpo d'occhio da quelli scritti a mano.
+  aiGenerated         Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -324,7 +336,11 @@ model TrainingPlan {
   team               Team?              @relation(fields: [teamId], references: [id])
   organization       Organization       @relation(fields: [organizationId], references: [id])
   createdBy          User               @relation(fields: [createdById], references: [id])
-  periodizationPlan  PeriodizationPlan? @relation(fields: [periodizationPlanId], references: [id])
+  // SetNull esplicito: e' gia' il default di Prisma per una relazione
+  // opzionale, ma scritto qui nessuno lo trasforma in Cascade per
+  // simmetria con Mesocycle e Simulation. Cancellare una periodizzazione
+  // non deve portarsi via i mesocicli con dentro sessioni ed esercizi.
+  periodizationPlan  PeriodizationPlan? @relation(fields: [periodizationPlanId], references: [id], onDelete: SetNull)
   weeks              Week[]
 
   @@index([organizationId])
@@ -622,6 +638,18 @@ model CalendarEvent {
   athleteId   String?
   sessionId   String?
   teamId      String?
+
+  // ── Solo per gli eventi di tipo 'match' ──────────────────────────────
+  /// Nome della squadra avversaria, testo libero: non e' un'anagrafica, e
+  /// chiedere di censire ogni avversario prima di segnare una partita a
+  /// calendario sarebbe un attrito che nessuno accetterebbe.
+  opponent    String?
+  /// true in casa, false in trasferta. Null sugli eventi non-partita e su
+  /// quelli creati prima di questo campo: distingue "non lo so" da "trasferta".
+  isHome      Boolean?
+  /// Palazzetto o campo di gioco.
+  venue       String?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -952,6 +980,17 @@ model GameSession {
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
   notes           String?
+
+  // ── Risultato: nasce quando la partita finisce ───────────────────────
+  // Punteggio della squadra di CASA e della squadra OSPITE, nell'ordine in
+  // cui si leggono sul tabellone. Chi delle due siamo noi lo dice `isHome`
+  // sull'evento di calendario: salvare "nostro/loro" renderebbe il punteggio
+  // illeggibile senza andare a prendere un campo su un'altra tabella.
+  homeScore       Int?
+  awayScore       Int?
+  // Competizione, testo libero: "3a BBL", "Coppa Italia", "Amichevole".
+  competition     String?
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -970,8 +1009,17 @@ model GamePlayerEntry {
   gameSessionId String
   athleteId     String
   totalPlayingMs Int   @default(0)
-  stints        Json   @default("[]") // Array of { quarter, inMs, outMs, durationMs }
+  stints        Json   @default("[]") // Array of { quarter, inMs, outMs, durationMs, breaks? }
   onCourt       Boolean @default(false)
+  // RPE post-partita del singolo giocatore (1-10). Null = non raccolto: la
+  // riga di carico nasce comunque, ma con i soli minuti.
+  rpe           Int?
+  // Aspettativa di allenamento per la seduta successiva, scala 0-5 come sul
+  // report giornaliero. Vive qui e non sul report del giorno dopo: il foglio
+  // della partita deve restare leggibile da solo, anche fra sei mesi e anche
+  // se il giornaliero di quel lunedi' non e' mai stato compilato.
+  readiness     Int?
+  readinessNote String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -1052,4 +1100,84 @@ model AiUsageLog {
   @@index([organizationId, operation])
   @@index([createdAt])
   @@map("ai_usage_logs")
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// DAILY REPORT — il foglio di fine giornata dello staff
+// ═══════════════════════════════════════════════════════════
+
+/// Un report per squadra e per giorno. Le attivita' e le note nascono
+/// precompilate da calendario, fogli di campo e infortuni, ma restano tutte
+/// modificabili: il documento e' firmato dal preparatore, non dall'app.
+model DailyReport {
+  id             String   @id @default(cuid())
+  organizationId String
+  teamId         String
+  /// Giorno del report. Senza ora: il report e' della giornata, non di un istante.
+  date           DateTime @db.Date
+  /// [{ label, minutes }] — Video 30', Strength 30', Basket 60'...
+  activities     Json     @default("[]")
+  /// Blocco libero in fondo: "TEAM LINES FOR TOMORROW".
+  teamLines      String?
+  /// Chi lo ha compilato l'ultima volta. Null se l'utente e' stato cancellato.
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  team         Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy    User?              @relation(fields: [createdById], references: [id])
+  entries      DailyReportEntry[]
+
+  @@unique([teamId, date])
+  @@index([organizationId, date])
+  @@map("daily_reports")
+}
+
+/// Riga giocatore del report. `date` e' denormalizzata dalla testata apposta:
+/// lo storico di disponibilita' di un atleta e' cosi' una query sola su questa
+/// tabella, senza join con daily_reports.
+model DailyReportEntry {
+  id            String   @id @default(cuid())
+  dailyReportId String
+  athleteId     String
+  date          DateTime @db.Date
+  /// 0 Out · 1 Rehab · 2 No contact · 3 Carico ridotto · 4 Con sostituzioni · 5 Completo
+  status        Int
+  note          String?
+  orderIndex    Int      @default(0)
+
+  // ── Colonne cliniche del foglio di fine giornata ──────────────────────
+  // Codici, non testo: le etichette vivono negli i18n. Tutte facoltative,
+  // il foglio si compila per eccezione e la maggior parte delle righe resta
+  // vuota. Stringhe e non enum Postgres: sono liste di lavoro che il fisio
+  // vorra' ritoccare, e ogni ritocco di un enum e' una migrazione.
+  /// available | partial | unavailable
+  nextTraining   String?
+  /// inflammation | tendinopathy | periostitis | bone_edema | ...
+  injuryType     String?
+  /// plantar_fascia | achilles | tibia | ankle | ...
+  bodyPart       String?
+  /// left | right | bilateral
+  side           String?
+  /// mild | stationary | improving | worsening | persistent | resolved
+  clinicalStatus String?
+  /// taping | kinesio | brace | bandage | insole
+  taping         String?
+  /// assessment | physio | medical_check | imaging | specialist | rest | therapy
+  treatment      String?
+  /// full | partial | individual | gym_only | rehab | rest
+  trainingType   String?
+  /// next_session | days_2_3 | week_1 | weeks_2_3 | month_plus | to_define
+  forecast       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  athlete     Athlete     @relation(fields: [athleteId], references: [id])
+
+  @@unique([dailyReportId, athleteId])
+  @@index([athleteId, date])
+  @@map("daily_report_entries")
 }

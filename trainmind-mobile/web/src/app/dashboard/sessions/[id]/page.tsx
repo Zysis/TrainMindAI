@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Calendar, Clock, Dumbbell, Plus, Trash2,
-  CheckCircle2, Search, X, Play, Video, Sparkles,
+  CheckCircle2, Search, X, Video, Sparkles,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { isBodyweightCategory } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import { LiveSessionRecorder } from '@/components/training';
@@ -114,7 +115,7 @@ export default function SessionDetailPage() {
       const res = await apiFetch<{ success: boolean; data: Session }>(`/training/sessions/${sessionId}`);
       setSession(res.data);
     } catch {
-      toast('error', 'Sessione non trovata');
+      toast('error', t('sessionNotFound'));
       router.push('/dashboard/sessions');
     } finally {
       setLoading(false);
@@ -148,10 +149,10 @@ export default function SessionDetailPage() {
           restTime: 90,
         }),
       });
-      toast('success', 'Esercizio aggiunto');
+      toast('success', t('exerciseAdded'));
       loadSession();
     } catch {
-      toast('error', 'Errore nell\'aggiunta');
+      toast('error', t('exerciseAddError'));
     } finally {
       setAdding(false);
     }
@@ -160,10 +161,10 @@ export default function SessionDetailPage() {
   const handleRemoveExercise = async (seId: string) => {
     try {
       await apiFetch(`/training/session-exercises/${seId}`, { method: 'DELETE' });
-      toast('success', 'Esercizio rimosso');
+      toast('success', t('exerciseRemoved'));
       loadSession();
     } catch {
-      toast('error', 'Errore nella rimozione');
+      toast('error', t('exerciseRemoveError'));
     }
   };
 
@@ -176,7 +177,7 @@ export default function SessionDetailPage() {
       });
       loadSession();
     } catch {
-      toast('error', 'Errore nell\'aggiornamento');
+      toast('error', t('updateError'));
     }
   };
 
@@ -187,10 +188,10 @@ export default function SessionDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'COMPLETED' }),
       });
-      toast('success', 'Sessione completata!');
+      toast('success', t('sessionCompleted'));
       loadSession();
     } catch {
-      toast('error', 'Errore nel completamento');
+      toast('error', t('sessionCompleteError'));
     }
   };
 
@@ -316,15 +317,6 @@ export default function SessionDetailPage() {
           </div>
 
           <div className="flex gap-2">
-            {canRecord && session.sessionExercises.length > 0 && (
-              <button
-                onClick={() => setRecordingMode(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                <Play className="h-4 w-4" />
-                Registra
-              </button>
-            )}
             {!isTemplate && session.status === 'PLANNED' && (
               <button
                 onClick={handleCompleteSession}
@@ -354,8 +346,8 @@ export default function SessionDetailPage() {
         {session.sessionExercises.length === 0 ? (
           <div className="card flex flex-col items-center justify-center py-12">
             <Dumbbell className="mb-3 h-10 w-10 text-slate-300" />
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Nessun esercizio aggiunto</p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Aggiungi esercizi dalla libreria per creare la scheda</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('noExercisesAdded')}</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{t('noExercisesHint')}</p>
             <button
               onClick={() => { setShowAddExercise(true); setLibrarySearch(''); }}
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
@@ -423,17 +415,43 @@ export default function SessionDetailPage() {
                           }}
                         />
                       </div>
+                      {/* Sul corpo libero il carico di base e' l'atleta: il campo
+                          diventa il sovraccarico, e vuoto vuol dire BW puro. */}
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Kg</label>
+                        {isBodyweightCategory(se.exercise.category) ? (
+                          <>
+                            <span
+                              className="rounded bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 text-2xs font-bold tracking-wide text-slate-600 dark:text-slate-300"
+                              title={t('bodyweightHint')}
+                            >
+                              {t('bodyweight')}
+                            </span>
+                            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                              {t('extraLoadLabel')}
+                            </label>
+                          </>
+                        ) : (
+                          <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            {t('loadLabel')}
+                          </label>
+                        )}
                         <input
                           type="number"
                           defaultValue={se.weight ?? ''}
+                          placeholder={isBodyweightCategory(se.exercise.category) ? '0' : ''}
                           className="w-16 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm"
                           onBlur={(e) => {
-                            const v = parseFloat(e.target.value);
-                            if (!isNaN(v) && v !== se.weight) handleUpdateExercise(se.id, { weight: v });
+                            // Svuotare il campo deve poter togliere un sovraccarico
+                            // messo prima: col solo isNaN restava per sempre.
+                            const raw = e.target.value.trim();
+                            const v = raw === '' ? null : parseFloat(raw);
+                            if (v !== null && (isNaN(v) || v <= 0)) return;
+                            if (v !== se.weight) handleUpdateExercise(se.id, { weight: v });
                           }}
                         />
+                        {isBodyweightCategory(se.exercise.category) && (
+                          <span className="text-xs text-slate-400 dark:text-slate-500">kg</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Recupero</label>
@@ -470,7 +488,7 @@ export default function SessionDetailPage() {
       {showAddExercise && (
         <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white dark:bg-slate-800 shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-5 py-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Aggiungi Esercizio</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('addExerciseTitle')}</h2>
             <button
               onClick={() => setShowAddExercise(false)}
               className="rounded p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
@@ -486,7 +504,7 @@ export default function SessionDetailPage() {
                 type="text"
                 value={librarySearch}
                 onChange={(e) => setLibrarySearch(e.target.value)}
-                placeholder="Cerca esercizi..."
+                placeholder={t('searchExercisesPlaceholder')}
                 className="input-field w-full pl-10"
                 autoFocus
               />

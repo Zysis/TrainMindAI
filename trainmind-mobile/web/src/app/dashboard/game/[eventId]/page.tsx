@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useToast } from '@/components/ui/toast';
 
 // ─── Types ──────────────────────────────────────────────
@@ -92,6 +93,7 @@ export default function GameTrackingPage() {
   const router = useRouter();
   const eventId = params?.eventId as string;
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('calendar');
 
   const [session, setSession] = useState<GameSession | null>(null);
@@ -146,7 +148,7 @@ export default function GameTrackingPage() {
           setError(res.error?.message || t('gtSessionStartError'));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('gtNetworkError'));
+        setError(apiError(err, t('gtNetworkError')));
       } finally {
         setLoading(false);
       }

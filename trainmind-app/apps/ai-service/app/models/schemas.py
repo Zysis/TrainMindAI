@@ -54,6 +54,15 @@ class GenerateRequest(BaseModel):
         description="Namespace ChromaDB da cui recuperare il contesto (fallback se context_type non mappato)",
     )
     top_k: int = Field(5, ge=1, le=50, description="Numero di documenti da recuperare")
+    expected_weeks: Optional[int] = Field(
+        None,
+        ge=1,
+        le=24,
+        description=(
+            "Numero di settimane richieste per un piano. Serve a dimensionare "
+            "max_tokens: senza, i piani lunghi vengono troncati."
+        ),
+    )
     model: Optional[str] = Field(
         None,
         description="Override del modello. Passato da apps/api in base all'operazione.",

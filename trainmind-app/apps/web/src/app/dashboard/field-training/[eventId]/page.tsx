@@ -15,10 +15,15 @@ import {
   Save,
   ClipboardCheck,
   Gauge,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -67,8 +72,12 @@ interface StoredExercise {
   id: string;
   name: string;
   isWarmup: boolean;
+  /** Campo: giocatori impiegati nell'esercizio */
   players: number;
+  /** Campo: numero di campi usati */
   courts: number;
+  /** Palestra: serie previste. Prende il posto di players/courts nel layout gym. */
+  sets: number;
   activityMs: number;
   pauseMs: number;
   breakMs: number;
@@ -130,6 +139,25 @@ function formatMsRound(ms: number): string {
   return `${sign}${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+/** Legge un tempo scritto a mano. Accetta `h:mm:ss`, `mm:ss` e cifre nude
+ *  (interpretate come minuti). Restituisce null se non si capisce. */
+function parseTime(input: string): number | null {
+  const text = input.trim().replace(',', ':').replace(/\s+/g, '');
+  if (!text) return 0;
+  if (!/^\d{1,3}(:\d{1,2}){0,2}$/.test(text)) return null;
+
+  const parts = text.split(':').map((n) => Number(n));
+  if (parts.some((n) => !Number.isFinite(n))) return null;
+
+  let totalSec: number;
+  if (parts.length === 1) totalSec = parts[0] * 60;            // "45" = 45 minuti
+  else if (parts.length === 2) totalSec = parts[0] * 60 + parts[1];
+  else totalSec = parts[0] * 3600 + parts[1] * 60 + parts[2];
+
+  if (totalSec < 0 || totalSec > 24 * 3600) return null;
+  return Math.round(totalSec * 1000);
+}
+
 function uid(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -146,13 +174,37 @@ function normalizeRpe(value: unknown): number | null {
   return i >= 1 && i <= 10 ? i : null;
 }
 
-/** Tipi di evento che hanno anche la tabella esercizi coi cronometri */
-const EXERCISE_TYPES = new Set(['basket']);
+/** Dove si ricorda quali pannelli sono chiusi */
+const PANELS_KEY = 'trainmind.fieldTraining.panels';
+
+// Ogni allenamento ha ormai lo stesso foglio: rosa coi semafori, RPE per
+// atleta e tabella esercizi cronometrata. Cambia solo come si leggono i tre
+// cronometri di ogni riga:
+//
+//   layout "campo"    attività / pause / break        → effettivo per giocatore
+//   layout "palestra" lavoro / recupero serie / recupero fra esercizi
+//
+/** Tipi il cui foglio usa le colonne da palestra. `session` sono le sedute
+ *  della programmazione, che nascono con gli esercizi della scheda dentro. */
+const GYM_LAYOUT_TYPES = new Set(['gym', 'session']);
+
+/** Nome della tipologia per il titolo. Stesse chiavi del menu del Calendario. */
+const TYPE_LABEL_KEYS: Record<string, string> = {
+  gym: 'typeGym',
+  basket: 'typeBasket',
+  individual: 'typeIndividual',
+  shooting: 'typeShooting',
+  rehab: 'typeRehab',
+  session: 'typeSession',
+};
 
 // ─── Exercise math ──────────────────────────────────────
 // Attività e Pause sono due cronometri separati: Start avvia l'attività,
 // il secondo tocco ferma l'attività e avvia la pausa.
-// Netto = Attività − Pause (formula richiesta, può risultare negativa).
+//
+// Il cronometro misura direttamente il tempo di lavoro, quindi il tempo netto
+// dell'esercizio E' il tempo attività: nessuna sottrazione delle pause.
+// Il tempo totale della seduta è invece attività + pause + break.
 
 function liveActivity(ex: Exercise, now: number): number {
   return ex.activityMs + (ex.state === 'running' && ex.segmentStart != null ? now - ex.segmentStart : 0);
@@ -166,13 +218,9 @@ function liveBreak(ex: Exercise, now: number): number {
   return ex.breakMs + (ex.breakRunning && ex.breakStart != null ? now - ex.breakStart : 0);
 }
 
-function netMs(ex: Exercise, now: number): number {
-  return liveActivity(ex, now) - livePause(ex, now);
-}
-
 function effectiveMs(ex: Exercise, now: number, available: number): number {
   if (available <= 0) return 0;
-  return netMs(ex, now) * (ex.players / available);
+  return liveActivity(ex, now) * (ex.players / available);
 }
 
 function intensityMs(ex: Exercise, now: number, available: number): number {
@@ -187,6 +235,7 @@ function freezeExercise(ex: Exercise, now: number): StoredExercise {
     isWarmup: ex.isWarmup,
     players: ex.players,
     courts: ex.courts,
+    sets: ex.sets,
     activityMs: Math.max(0, Math.round(liveActivity(ex, now))),
     pauseMs: Math.max(0, Math.round(livePause(ex, now))),
     breakMs: Math.max(0, Math.round(liveBreak(ex, now))),
@@ -202,7 +251,9 @@ export default function FieldTrainingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('calendar');
+  const locale = useLocale();
   // La stessa pagina serve sia gli eventi di calendario sia le sessioni della
   // programmazione: `?source=session` dice quale delle due cose e' l'id.
   const routeId = params.eventId as string;
@@ -211,6 +262,11 @@ export default function FieldTrainingPage() {
   const [session, setSession] = useState<FieldSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+
+  // Cancellazione dell'allenamento programmato (solo eventi di calendario non
+  // ancora completati: l'API rifiuta il resto con EVENT_ALREADY_COMPLETED).
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Roster + semafori
   const [roster, setRoster] = useState<RosterPlayer[]>([]);
@@ -222,6 +278,36 @@ export default function FieldTrainingPage() {
   // Carico: durata effettiva della seduta e RPE di sessione (fallback)
   const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
   const [sessionRpe, setSessionRpe] = useState<number | null>(null);
+
+  // Pannelli richiudibili. Partono aperti e restano come li lasci: chi lavora
+  // a bordo campo tiene la rosa chiusa per avere i cronometri a schermo pieno.
+  const [playersOpen, setPlayersOpen] = useState(true);
+  const [exercisesOpen, setExercisesOpen] = useState(true);
+
+  // La preferenza si legge dopo il mount, altrimenti server e client
+  // renderizzerebbero due cose diverse.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PANELS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { players?: unknown; exercises?: unknown };
+      if (typeof saved.players === 'boolean') setPlayersOpen(saved.players);
+      if (typeof saved.exercises === 'boolean') setExercisesOpen(saved.exercises);
+    } catch {
+      // storage non disponibile: restano aperti entrambi
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        PANELS_KEY,
+        JSON.stringify({ players: playersOpen, exercises: exercisesOpen }),
+      );
+    } catch {
+      // niente da fare: la preferenza vale solo per questa visita
+    }
+  }, [playersOpen, exercisesOpen]);
 
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [, setTick] = useState(0); // forza il re-render dei cronometri
@@ -257,7 +343,7 @@ export default function FieldTrainingPage() {
         setSession(res.data.session);
         hydrate(res.data.session);
       } catch (err) {
-        toast('error', err instanceof Error ? err.message : t('ftSessionStartError'));
+        toast('error', apiError(err, t('ftSessionStartError')));
         initRef.current = false; // consente il retry
       }
     }
@@ -319,6 +405,7 @@ export default function FieldTrainingPage() {
           isWarmup: Boolean(e.isWarmup),
           players: Number(e.players) || 0,
           courts: Number(e.courts) || 0,
+          sets: Number(e.sets) || 0,
           activityMs: Number(e.activityMs) || 0,
           pauseMs: Number(e.pauseMs) || 0,
           breakMs: Number(e.breakMs) || 0,
@@ -391,6 +478,7 @@ export default function FieldTrainingPage() {
         isWarmup: false,
         players: 0,
         courts: 1,
+        sets: 0,
         activityMs: 0,
         pauseMs: 0,
         breakMs: 0,
@@ -518,7 +606,7 @@ export default function FieldTrainingPage() {
       await persist();
       if (showToast) toast('success', t('gtDataSaved'));
     } catch (err) {
-      if (showToast) toast('error', err instanceof Error ? err.message : t('gtSaveError'));
+      if (showToast) toast('error', apiError(err, t('gtSaveError')));
     } finally {
       if (showToast) setSaving(false);
     }
@@ -550,9 +638,24 @@ export default function FieldTrainingPage() {
       }
       router.push('/dashboard/calendar');
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('gtCompletionError'));
+      toast('error', apiError(err, t('gtCompletionError')));
     }
     setCompleting(false);
+  };
+
+  // ─── Delete event ───────────────────────────────────────
+
+  const deleteEvent = async () => {
+    setDeleting(true);
+    try {
+      await apiFetch(`/calendar/events/${routeId}`, { method: 'DELETE' });
+      toast('success', t('ftEventDeleted'));
+      router.push('/dashboard/calendar');
+    } catch (err) {
+      toast('error', apiError(err, t('ftEventDeleteError')));
+      setDeleting(false);
+      setShowDelete(false);
+    }
   };
 
   // ─── Render ─────────────────────────────────────────────
@@ -583,11 +686,20 @@ export default function FieldTrainingPage() {
   const now = Date.now();
 
   const eventType = session.calendarEvent?.type || (fromPlan ? 'session' : 'basket');
-  // La tabella esercizi resta solo sull'allenamento basket (e sulle sedute
-  // vecchie che l'hanno gia' compilata): sugli altri tipi serve solo il carico.
-  const showExercises = EXERCISE_TYPES.has(eventType) || exercises.length > 0;
+  const gymLayout = GYM_LAYOUT_TYPES.has(eventType);
   const sessionTitle =
     session.calendarEvent?.title || session.trainingSession?.title || t('ftFieldTraining');
+
+  // Titolo: tipologia + giorno dell'allenamento. La data e' quella dell'evento
+  // (o della seduta pianificata); se mancassero entrambe resta l'apertura del foglio.
+  const sessionDate =
+    session.calendarEvent?.startTime || session.trainingSession?.date || session.startedAt;
+  const typeLabel = TYPE_LABEL_KEYS[eventType] ? t(TYPE_LABEL_KEYS[eventType]) : t('ftAttendance');
+  const pageTitle = `${typeLabel} ${new Date(sessionDate).toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })}`;
 
   // Carico = RPE x durata effettiva. Chi non ha un RPE proprio usa quello di sessione.
   const rpeOf = (p: RosterPlayer) => (p.status === 'PRESENT' ? p.rpe ?? sessionRpe : null);
@@ -610,7 +722,9 @@ export default function FieldTrainingPage() {
   const totalActivity = exercises.reduce((sum, ex) => sum + liveActivity(ex, now), 0);
   const totalPlayed = exercises.reduce((sum, ex) => sum + (ex.isWarmup ? 0 : liveActivity(ex, now)), 0);
   const totalPauses = exercises.reduce((sum, ex) => sum + livePause(ex, now), 0);
-  const totalNet = exercises.reduce((sum, ex) => sum + netMs(ex, now), 0);
+  const totalBreaks = exercises.reduce((sum, ex) => sum + liveBreak(ex, now), 0);
+  // Durata reale della seduta: quanto è passato dall'inizio alla fine
+  const totalTime = totalActivity + totalPauses + totalBreaks;
   const totalEffective = exercises.reduce((sum, ex) => sum + effectiveMs(ex, now, available), 0);
   const density = totalPlayed > 0 ? totalEffective / totalPlayed : 0;
 
@@ -631,7 +745,7 @@ export default function FieldTrainingPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               <ClipboardCheck className="mr-2 inline h-6 w-6 text-orange-600" />
-              {showExercises ? t('title') : t('ftAttendance')}
+              {pageTitle}
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {sessionTitle}
@@ -676,6 +790,15 @@ export default function FieldTrainingPage() {
               </button>
             </>
           )}
+          {!isCompleted && !fromPlan && (
+            <button
+              onClick={() => setShowDelete(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-900 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t('ftDeleteEvent')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -694,25 +817,20 @@ export default function FieldTrainingPage() {
           </div>
         </div>
 
-        {showExercises ? (
-          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            <StatTile label={t('ftTotalTime')} value={formatMs(totalActivity)} />
-            <StatTile label={t('ftTotalPlayed')} value={formatMs(totalPlayed)} />
-            <StatTile label={t('ftTotalPauses')} value={formatMs(totalPauses)} />
-            <StatTile label={t('ftTotalNet')} value={formatMs(totalNet)} />
-            <StatTile label={t('ftEffectivePerPlayer')} value={formatMsRound(totalEffective)} highlight />
-            <StatTile label={t('ftDensity')} value={`${(density * 100).toFixed(1)}%`} highlight />
+        {gymLayout ? (
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label={t('ftTotalTime')} value={formatMs(totalTime)} highlight />
+            <StatTile label={t('ftTotalWork')} value={formatMs(totalActivity)} highlight />
+            <StatTile label={t('ftTotalSetRest')} value={formatMs(totalPauses)} />
+            <StatTile label={t('ftTotalExerciseRest')} value={formatMs(totalBreaks)} />
           </div>
         ) : (
-          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label={t('ftPresentCount')} value={String(available)} />
-            <StatTile label={t('ftAvgRpe')} value={avgRpe ? avgRpe.toFixed(1) : '—'} />
-            <StatTile label={t('ftTotalLoad')} value={totalLoad ? String(Math.round(totalLoad)) : '—'} highlight />
-            <StatTile
-              label={t('ftAvgLoad')}
-              value={loadedPlayers.length ? String(Math.round(totalLoad / loadedPlayers.length)) : '—'}
-              highlight
-            />
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+            <StatTile label={t('ftTotalTime')} value={formatMs(totalTime)} />
+            <StatTile label={t('ftTotalPlayed')} value={formatMs(totalPlayed)} />
+            <StatTile label={t('ftTotalPauses')} value={formatMs(totalPauses)} />
+            <StatTile label={t('ftEffectivePerPlayer')} value={formatMsRound(totalEffective)} highlight />
+            <StatTile label={t('ftDensity')} value={`${(density * 100).toFixed(1)}%`} highlight />
           </div>
         )}
       </div>
@@ -752,6 +870,20 @@ export default function FieldTrainingPage() {
               className="mt-1 w-28 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm tabular-nums text-slate-900 dark:text-white outline-none focus:border-teal-500 disabled:opacity-60"
             />
           </div>
+          <div className="flex items-end gap-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('ftAvgRpe')}</p>
+              <p className="mt-1 font-mono text-lg font-bold tabular-nums text-slate-900 dark:text-white">
+                {avgRpe ? avgRpe.toFixed(1) : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('ftTotalLoad')}</p>
+              <p className="mt-1 font-mono text-lg font-bold tabular-nums text-teal-700 dark:text-teal-300">
+                {totalLoad ? Math.round(totalLoad) : '—'}
+              </p>
+            </div>
+          </div>
           <p className="flex-1 min-w-[16rem] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
             <Gauge className="mr-1 inline h-3.5 w-3.5" />
             {t('ftLoadFormula')}
@@ -761,9 +893,15 @@ export default function FieldTrainingPage() {
 
       {/* ─── Giocatori + semaforo ──────────────────────────── */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div className={`flex flex-wrap items-center justify-between gap-2 px-4 py-3 ${
+          playersOpen ? 'border-b border-slate-200 dark:border-slate-700' : ''
+        }`}>
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('ftPlayers')}</h2>
+            <PanelToggle
+              open={playersOpen}
+              onToggle={() => setPlayersOpen((v) => !v)}
+              label={t('ftPlayers')}
+            />
             <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="inline-flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-green-500" />{available}
@@ -781,7 +919,7 @@ export default function FieldTrainingPage() {
               </span>
             )}
           </div>
-          {!isCompleted && (
+          {!isCompleted && playersOpen && (
             <button
               onClick={addGuest}
               className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-600"
@@ -792,7 +930,7 @@ export default function FieldTrainingPage() {
           )}
         </div>
 
-        {roster.length === 0 && guests.length === 0 ? (
+        {!playersOpen ? null : roster.length === 0 && guests.length === 0 ? (
           <div className="flex h-32 flex-col items-center justify-center gap-3">
             <Users className="h-8 w-8 text-slate-300 dark:text-slate-600" />
             <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftNoPlayers')}</p>
@@ -835,12 +973,24 @@ export default function FieldTrainingPage() {
         )}
       </div>
 
-      {/* ─── Esercizi (solo allenamento basket) ─────────────── */}
-      {showExercises && (
+      {/* ─── Esercizi ──────────────────────────────────────── */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('ftExercises')}</h2>
-          {!isCompleted && (
+        <div className={`flex items-center justify-between px-4 py-3 ${
+          exercisesOpen ? 'border-b border-slate-200 dark:border-slate-700' : ''
+        }`}>
+          <div className="flex items-center gap-3">
+            <PanelToggle
+              open={exercisesOpen}
+              onToggle={() => setExercisesOpen((v) => !v)}
+              label={t('ftExercises')}
+            />
+            {!exercisesOpen && exercises.length > 0 && (
+              <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                {exercises.length}
+              </span>
+            )}
+          </div>
+          {!isCompleted && exercisesOpen && (
             <button
               onClick={addExercise}
               className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-teal-400 hover:text-teal-600"
@@ -851,7 +1001,7 @@ export default function FieldTrainingPage() {
           )}
         </div>
 
-        {exercises.length === 0 ? (
+        {!exercisesOpen ? null : exercises.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-3">
             <Timer className="h-10 w-10 text-slate-300 dark:text-slate-600" />
             <p className="text-sm text-slate-400 dark:text-slate-500">{t('ftNoExercises')}</p>
@@ -863,17 +1013,32 @@ export default function FieldTrainingPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse">
+            <table className={`w-full border-collapse ${gymLayout ? 'min-w-[640px]' : 'min-w-[900px]'}`}>
               <thead className="bg-slate-100 dark:bg-slate-900">
                 <tr>
-                  <th className={`${headCell} text-left`}>{t('ftActivity')}</th>
-                  <th className={`${headCell} text-center`}>{t('ftPlayersUsed')}</th>
-                  <th className={`${headCell} text-center`}>{t('ftCourts')}</th>
-                  <th className={`${headCell} text-right`}>{t('ftActivityTime')}</th>
-                  <th className={`${headCell} text-right`}>{t('ftPauses')}</th>
-                  <th className={`${headCell} text-right`}>{t('ftNet')}</th>
-                  <th className={`${headCell} text-right`}>{t('ftEffective')}</th>
-                  <th className={`${headCell} text-right`}>{t('ftMetabolicIntensity')}</th>
+                  <th className={`${headCell} text-left`}>
+                    {gymLayout ? t('ftExercise') : t('ftActivity')}
+                  </th>
+                  {gymLayout ? (
+                    <th className={`${headCell} text-center`}>{t('ftSets')}</th>
+                  ) : (
+                    <>
+                      <th className={`${headCell} text-center`}>{t('ftPlayersUsed')}</th>
+                      <th className={`${headCell} text-center`}>{t('ftCourts')}</th>
+                    </>
+                  )}
+                  <th className={`${headCell} text-right`}>
+                    {gymLayout ? t('ftWorkTime') : t('ftActivityTime')}
+                  </th>
+                  <th className={`${headCell} text-right`}>
+                    {gymLayout ? t('ftSetRest') : t('ftPauses')}
+                  </th>
+                  {!gymLayout && (
+                    <>
+                      <th className={`${headCell} text-right`}>{t('ftEffective')}</th>
+                      <th className={`${headCell} text-right`}>{t('ftMetabolicIntensity')}</th>
+                    </>
+                  )}
                   <th className={`${headCell} text-right`} />
                 </tr>
               </thead>
@@ -885,8 +1050,14 @@ export default function FieldTrainingPage() {
                     idx={idx}
                     now={now}
                     available={available}
+                    gymLayout={gymLayout}
                     isCompleted={isCompleted}
-                    showBreakRow={ex.breakRunning || ex.breakMs > 0}
+                    showBreakRow={
+                      ex.breakRunning ||
+                      ex.breakMs > 0 ||
+                      liveActivity(ex, now) > 0 ||
+                      livePause(ex, now) > 0
+                    }
                     cellNum={cellNum}
                     onPatch={(patch) => patchExercise(ex.id, patch)}
                     onToggle={() => toggleExercise(ex.id)}
@@ -902,14 +1073,17 @@ export default function FieldTrainingPage() {
                     {t('ftTotals')}
                   </td>
                   <td />
-                  <td />
+                  {!gymLayout && <td />}
                   <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalActivity)}</td>
                   <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalPauses)}</td>
-                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>{formatMs(totalNet)}</td>
-                  <td className={`${cellNum} font-bold text-teal-700 dark:text-teal-300`}>{formatMsRound(totalEffective)}</td>
-                  <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>
-                    {formatMsRound(exercises.reduce((s, ex) => s + intensityMs(ex, now, available), 0))}
-                  </td>
+                  {!gymLayout && (
+                    <>
+                      <td className={`${cellNum} font-bold text-teal-700 dark:text-teal-300`}>{formatMsRound(totalEffective)}</td>
+                      <td className={`${cellNum} font-bold text-slate-900 dark:text-white`}>
+                        {formatMsRound(exercises.reduce((s, ex) => s + intensityMs(ex, now, available), 0))}
+                      </td>
+                    </>
+                  )}
                   <td />
                 </tr>
               </tfoot>
@@ -917,8 +1091,47 @@ export default function FieldTrainingPage() {
           </div>
         )}
       </div>
-      )}
+
+      <ConfirmDialog
+        open={showDelete}
+        title={t('ftDeleteEvent')}
+        message={t('ftDeleteEventConfirm', { name: sessionTitle })}
+        detail={t('ftDeleteEventDetail')}
+        busy={deleting}
+        onConfirm={deleteEvent}
+        onClose={() => setShowDelete(false)}
+      />
     </div>
+  );
+}
+
+// ─── Intestazione richiudibile ──────────────────────────
+// Titolo e chevron sono un solo bersaglio: il pulsante e' il titolo stesso,
+// cosi' non ci sono due zone cliccabili che fanno la stessa cosa.
+
+function PanelToggle({
+  open,
+  onToggle,
+  label,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="-ml-1 inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors hover:text-teal-700 dark:hover:text-teal-300"
+    >
+      {open ? (
+        <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+      ) : (
+        <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+      )}
+      {label}
+    </button>
   );
 }
 
@@ -1139,6 +1352,61 @@ function StatusDot({
   );
 }
 
+// ─── Cella tempo, cronometrata ma correggibile a mano ───
+// Mentre non la stai scrivendo mostra il valore vivo, che continua a scorrere.
+// Appena ci scrivi dentro il testo e' tuo finche' non confermi: senza questo,
+// il tick da 200 ms cancellerebbe quello che stai digitando.
+
+function TimeCell({
+  liveMs,
+  disabled,
+  className,
+  onCommit,
+}: {
+  liveMs: number;
+  disabled?: boolean;
+  className: string;
+  onCommit: (targetMs: number) => void;
+}) {
+  const t = useTranslations('calendar');
+  const [draft, setDraft] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+
+  const commit = () => {
+    if (draft == null) return;
+    const parsed = parseTime(draft);
+    if (parsed == null) {
+      setInvalid(true);
+      return; // resta in modifica: il valore scritto non si perde
+    }
+    onCommit(parsed);
+    setInvalid(false);
+    setDraft(null);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      disabled={disabled}
+      title={t('ftTimeEditHint')}
+      value={draft ?? formatMs(liveMs)}
+      onFocus={(e) => { setDraft(formatMs(liveMs)); e.currentTarget.select(); }}
+      onChange={(e) => { setDraft(e.target.value); setInvalid(false); }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+        if (e.key === 'Escape') { setDraft(null); setInvalid(false); e.currentTarget.blur(); }
+      }}
+      className={`w-24 rounded-md border bg-transparent px-1 py-0.5 text-right font-mono text-sm tabular-nums outline-none transition-colors disabled:opacity-60 ${
+        invalid
+          ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+          : 'border-transparent hover:border-slate-300 focus:border-teal-500 dark:hover:border-slate-600'
+      } ${className}`}
+    />
+  );
+}
+
 // ─── Riga esercizio + riga break ────────────────────────
 
 function ExerciseRows({
@@ -1146,6 +1414,7 @@ function ExerciseRows({
   idx,
   now,
   available,
+  gymLayout,
   isCompleted,
   showBreakRow,
   cellNum,
@@ -1159,6 +1428,7 @@ function ExerciseRows({
   idx: number;
   now: number;
   available: number;
+  gymLayout: boolean;
   isCompleted: boolean;
   showBreakRow: boolean;
   cellNum: string;
@@ -1171,7 +1441,6 @@ function ExerciseRows({
   const t = useTranslations('calendar');
   const activity = liveActivity(ex, now);
   const pause = livePause(ex, now);
-  const net = netMs(ex, now);
   const effective = effectiveMs(ex, now, available);
   const intensity = intensityMs(ex, now, available);
   const running = ex.state === 'running';
@@ -1210,6 +1479,20 @@ function ExerciseRows({
             {paused && <span className="h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-amber-500" />}
           </div>
         </td>
+        {gymLayout ? (
+        <td className="px-2 py-2 text-center">
+          <input
+            type="number"
+            min={0}
+            max={99}
+            value={ex.sets}
+            disabled={isCompleted}
+            onChange={(e) => onPatch({ sets: Number.parseInt(e.target.value, 10) || 0 })}
+            className={numInput}
+          />
+        </td>
+        ) : (
+        <>
         <td className="px-2 py-2 text-center">
           <input
             type="number"
@@ -1232,15 +1515,38 @@ function ExerciseRows({
             className={numInput}
           />
         </td>
-        <td className={`${cellNum} ${running ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-900 dark:text-white'}`}>
-          {formatMs(activity)}
+        </>
+        )}
+        <td className="px-2 py-2 text-right">
+          <TimeCell
+            liveMs={activity}
+            disabled={isCompleted}
+            className={running ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-900 dark:text-white'}
+            onCommit={(target) => {
+              // Se il cronometro gira, il segmento in corso va scontato:
+              // cosi' il totale a schermo diventa esattamente quello scritto.
+              const inFlight = running && ex.segmentStart != null ? now - ex.segmentStart : 0;
+              onPatch({ activityMs: Math.max(0, target - inFlight) });
+            }}
+          />
         </td>
-        <td className={`${cellNum} ${paused ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-600 dark:text-slate-400'}`}>
-          {formatMs(pause)}
+        <td className="px-2 py-2 text-right">
+          <TimeCell
+            liveMs={pause}
+            disabled={isCompleted}
+            className={paused ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-600 dark:text-slate-400'}
+            onCommit={(target) => {
+              const inFlight = paused && ex.segmentStart != null ? now - ex.segmentStart : 0;
+              onPatch({ pauseMs: Math.max(0, target - inFlight) });
+            }}
+          />
         </td>
-        <td className={`${cellNum} ${net < 0 ? 'text-red-600' : 'text-slate-900 dark:text-white'}`}>{formatMs(net)}</td>
-        <td className={`${cellNum} text-teal-700 dark:text-teal-300 font-semibold`}>{formatMsRound(effective)}</td>
-        <td className={`${cellNum} text-slate-900 dark:text-white`}>{formatMsRound(intensity)}</td>
+        {!gymLayout && (
+          <>
+            <td className={`${cellNum} text-teal-700 dark:text-teal-300 font-semibold`}>{formatMsRound(effective)}</td>
+            <td className={`${cellNum} text-slate-900 dark:text-white`}>{formatMsRound(intensity)}</td>
+          </>
+        )}
         <td className="px-2 py-2">
           {!isCompleted && (
             <div className="flex items-center justify-end gap-1.5">
@@ -1277,13 +1583,21 @@ function ExerciseRows({
 
       {showBreakRow && (
         <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-          <td colSpan={3} className="px-2 py-1.5 pl-9 text-xs font-medium italic text-slate-500 dark:text-slate-400">
-            {t('ftBreak')}
+          <td colSpan={gymLayout ? 2 : 3} className="px-2 py-1.5 pl-9 text-xs font-medium italic text-slate-500 dark:text-slate-400">
+            {gymLayout ? t('ftExerciseRest') : t('ftBreak')}
           </td>
-          <td className={`${cellNum} ${ex.breakRunning ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
-            {formatMs(liveBreak(ex, now))}
+          <td className="px-2 py-1.5 text-right">
+            <TimeCell
+              liveMs={liveBreak(ex, now)}
+              disabled={isCompleted}
+              className={ex.breakRunning ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400'}
+              onCommit={(target) => {
+                const inFlight = ex.breakRunning && ex.breakStart != null ? now - ex.breakStart : 0;
+                onPatch({ breakMs: Math.max(0, target - inFlight) });
+              }}
+            />
           </td>
-          <td colSpan={4} />
+          <td colSpan={gymLayout ? 1 : 3} />
           <td className="px-2 py-1.5">
             {!isCompleted && ex.breakRunning && (
               <div className="flex justify-end">

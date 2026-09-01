@@ -20,6 +20,12 @@ import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/lib/auth/fetch';
+import {
+  PHASE_LABEL_KEYS, PHASE_SHORT_KEYS, PHASE_COLORS, PHASE_ORDER,
+  SEVERITY_LABEL_KEYS, SEVERITY_COLORS,
+  INJURY_TYPE_DEFS, LEGACY_TYPE_DEFS, INJURY_ONSET_DEFS, BODY_LOCATION_DEFS,
+} from '@/lib/constants/injuries';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useTranslations, useLocale } from 'next-intl';
 
 // ─── Types ───────────────────────────────────────────────
@@ -92,85 +98,6 @@ interface Athlete {
 
 // ─── Constants ───────────────────────────────────────────
 
-const PHASE_LABEL_KEYS: Record<string, string> = {
-  PHASE_1: 'phase1Label',
-  PHASE_2: 'phase2Label',
-  PHASE_3: 'phase3Label',
-  PHASE_4: 'phase4Label',
-  PHASE_5: 'phase5Label',
-  CLEARED: 'clearedLabel',
-};
-
-const PHASE_SHORT_KEYS: Record<string, string> = {
-  PHASE_1: 'phase1Short',
-  PHASE_2: 'phase2Short',
-  PHASE_3: 'phase3Short',
-  PHASE_4: 'phase4Short',
-  PHASE_5: 'phase5Short',
-  CLEARED: 'clearedShort',
-};
-
-const PHASE_COLORS: Record<string, string> = {
-  PHASE_1: 'bg-red-100 text-red-700 border-red-200',
-  PHASE_2: 'bg-orange-100 text-orange-700 border-orange-200',
-  PHASE_3: 'bg-amber-100 text-amber-700 border-amber-200',
-  PHASE_4: 'bg-blue-100 text-blue-700 border-blue-200',
-  PHASE_5: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  CLEARED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-};
-
-const PHASE_ORDER = ['PHASE_1', 'PHASE_2', 'PHASE_3', 'PHASE_4', 'PHASE_5', 'CLEARED'];
-
-const SEVERITY_LABEL_KEYS = ['', 'severityMild', 'severityMinor', 'severityModerate', 'severitySevere', 'severityVerySevere'];
-const SEVERITY_COLORS = ['', 'text-green-600', 'text-yellow-600', 'text-orange-600', 'text-red-600', 'text-red-800'];
-
-const INJURY_TYPE_DEFS: { value: string; labelKey: string }[] = [
-  { value: 'muscular', labelKey: 'typeMuscular' },
-  { value: 'tendon', labelKey: 'typeTendon' },
-  { value: 'ligament', labelKey: 'typeLigament' },
-  { value: 'bone', labelKey: 'typeBone' },
-  { value: 'joint', labelKey: 'typeJoint' },
-];
-
-/** Tipi non più selezionabili: restano per leggere gli infortuni storici */
-const LEGACY_TYPE_DEFS: { value: string; labelKey: string }[] = [
-  { value: 'contusion', labelKey: 'typeContusion' },
-  { value: 'overuse', labelKey: 'typeOveruse' },
-  { value: 'other', labelKey: 'typeOther' },
-];
-
-const INJURY_ONSET_DEFS: { value: string; labelKey: string }[] = [
-  { value: 'contusive', labelKey: 'onsetContusive' },
-  { value: 'overuse', labelKey: 'onsetOveruse' },
-  { value: 'traumatic', labelKey: 'onsetTraumatic' },
-  { value: 'non_traumatic', labelKey: 'onsetNonTraumatic' },
-];
-
-const BODY_LOCATION_DEFS: { value: string; labelKey: string }[] = [
-  { value: 'ankle_l', labelKey: 'locAnkleL' },
-  { value: 'ankle_r', labelKey: 'locAnkleR' },
-  { value: 'knee_l', labelKey: 'locKneeL' },
-  { value: 'knee_r', labelKey: 'locKneeR' },
-  { value: 'hamstring_l', labelKey: 'locHamstringL' },
-  { value: 'hamstring_r', labelKey: 'locHamstringR' },
-  { value: 'quadriceps_l', labelKey: 'locQuadL' },
-  { value: 'quadriceps_r', labelKey: 'locQuadR' },
-  { value: 'calf_l', labelKey: 'locCalfL' },
-  { value: 'calf_r', labelKey: 'locCalfR' },
-  { value: 'groin', labelKey: 'locGroin' },
-  { value: 'hip_l', labelKey: 'locHipL' },
-  { value: 'hip_r', labelKey: 'locHipR' },
-  { value: 'back_lower', labelKey: 'locBackLower' },
-  { value: 'back_upper', labelKey: 'locBackUpper' },
-  { value: 'shoulder_l', labelKey: 'locShoulderL' },
-  { value: 'shoulder_r', labelKey: 'locShoulderR' },
-  { value: 'wrist_l', labelKey: 'locWristL' },
-  { value: 'wrist_r', labelKey: 'locWristR' },
-  { value: 'finger', labelKey: 'locFinger' },
-  { value: 'foot_l', labelKey: 'locFootL' },
-  { value: 'foot_r', labelKey: 'locFootR' },
-  { value: 'other', labelKey: 'locOther' },
-];
 
 interface InjuryForm {
   athleteId: string;
@@ -197,6 +124,7 @@ function daysBetween(from: string, to?: string) {
 
 export default function InjuriesRTPPage() {
   const { toast } = useToast();
+  const apiError = useApiError();
   const t = useTranslations('injuries');
   const tCommon = useTranslations('common');
   const locale = useLocale();
@@ -274,7 +202,7 @@ export default function InjuriesRTPPage() {
       const res = await apiFetch<{ success: boolean; data: { protocols: RTPProtocolSummary[] } }>('/rtp');
       setProtocols(res.data.protocols);
     } catch (err: unknown) {
-      toast('error', err instanceof Error ? err.message : t('loadError'));
+      toast('error', apiError(err, t('loadError')));
     } finally {
       setLoading(false);
     }
@@ -302,7 +230,7 @@ export default function InjuriesRTPPage() {
       setRtpDetail(res.data.protocol);
       setTab('detail');
     } catch (err: unknown) {
-      toast('error', err instanceof Error ? err.message : t('loadError'));
+      toast('error', apiError(err, t('loadError')));
     } finally {
       setLoadingDetail(false);
     }
@@ -342,7 +270,7 @@ export default function InjuriesRTPPage() {
       setTab('detail');
       fetchProtocols();
     } catch (err: unknown) {
-      toast('error', err instanceof Error ? err.message : t('createError'));
+      toast('error', apiError(err, t('createError')));
     }
   }
 
@@ -358,7 +286,7 @@ export default function InjuriesRTPPage() {
       const res = await apiFetch<{ success: boolean; data: { protocol: RTPDetail } }>(`/rtp/${rtpDetail.id}`);
       setRtpDetail(res.data.protocol);
     } catch (err: unknown) {
-      toast('error', err instanceof Error ? err.message : t('updateError'));
+      toast('error', apiError(err, t('updateError')));
     }
   }
 
@@ -374,7 +302,7 @@ export default function InjuriesRTPPage() {
       );
       setAiSuggestion(res.data);
     } catch (err: unknown) {
-      toast('error', err instanceof Error ? err.message : t('aiSuggestError'));
+      toast('error', apiError(err, t('aiSuggestError')));
       setShowAiPanel(false);
     } finally {
       setLoadingAI(false);
@@ -410,7 +338,7 @@ export default function InjuriesRTPPage() {
       if (err instanceof Error && err.message.includes('criteri non soddisfatti')) {
         toast('error', err.message);
       } else {
-        toast('error', err instanceof Error ? err.message : t('advanceError'));
+        toast('error', apiError(err, t('advanceError')));
       }
     } finally {
       setAdvancing(false);
@@ -711,7 +639,7 @@ export default function InjuriesRTPPage() {
         <div className="card flex flex-col items-center justify-center py-16">
           <Shield className="mb-3 h-10 w-10 text-slate-300 dark:text-slate-600" />
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('noActiveRtp')}</p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Registra un infortunio per avviare un protocollo</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{t('noActiveRtpHint')}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

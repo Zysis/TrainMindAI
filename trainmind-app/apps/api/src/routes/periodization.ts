@@ -398,9 +398,9 @@ export async function periodizationRoutes(app: FastifyInstance) {
 
   // ─── POST /periodization/plans/from-template ──────────
   app.post('/periodization/plans/from-template', auth, async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body as { templateId?: string; startDate?: string };
+    const body = request.body as { templateId?: string; startDate?: string; teamId?: string };
     if (!body.templateId || !body.startDate) {
-      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'templateId and startDate required' } });
+      return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'templateId e startDate sono obbligatori' } });
     }
 
     const template = BASKETBALL_TEMPLATES.find((t) => t.id === body.templateId);
@@ -409,6 +409,24 @@ export async function periodizationRoutes(app: FastifyInstance) {
     }
 
     const { organizationId, userId } = request.user;
+
+    // Prima questa route non accettava nemmeno la squadra: ogni piano creato da
+    // un template nasceva scollegato, e non compariva piu' negli elenchi
+    // filtrati per squadra.
+    let teamId: string | null = null;
+    if (body.teamId) {
+      const team = await app.prisma.team.findFirst({
+        where: { id: body.teamId, organizationId },
+        select: { id: true },
+      });
+      if (!team) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Squadra non trovata nella tua organizzazione' },
+        });
+      }
+      teamId = team.id;
+    }
     const start = new Date(body.startDate);
     const end = new Date(start);
     end.setDate(end.getDate() + template.totalWeeks * 7);
@@ -417,6 +435,7 @@ export async function periodizationRoutes(app: FastifyInstance) {
       data: {
         organizationId,
         createdById: userId,
+        teamId,
         name: template.name,
         description: template.description,
         type: template.type,
@@ -457,14 +476,22 @@ export async function periodizationRoutes(app: FastifyInstance) {
   // ─── GET /periodization/plans ─────────────────────────
   app.get('/periodization/plans', auth, async (request: FastifyRequest, reply: FastifyReply) => {
     const { organizationId } = request.user;
-    const { teamId } = (request.query as Record<string, string | undefined>);
+    const { teamId, sort } = (request.query as Record<string, string | undefined>);
 
     const where: Record<string, unknown> = { organizationId, isTemplate: false };
     if (teamId) where.teamId = teamId;
 
+    // Cronologico per difetto: il quadro temporale del lavoro si legge dalle
+    // date, non dall'ordine in cui i piani sono stati inseriti. `createdAt` fa
+    // da spareggio fra due piani che iniziano lo stesso giorno.
+    const orderBy =
+      sort === 'recent'
+        ? [{ createdAt: 'desc' as const }]
+        : [{ startDate: 'asc' as const }, { createdAt: 'asc' as const }];
+
     const plans = await app.prisma.periodizationPlan.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include: {
         createdBy: { select: { id: true, firstName: true, lastName: true } },
         team: { select: { id: true, name: true, color: true } },
@@ -870,7 +897,7 @@ export async function periodizationRoutes(app: FastifyInstance) {
 
       // Phase labels for session titles
       const phaseLabels: Record<string, string> = {
-        PREPARATION: 'Preparazione',
+        PREPARATION: 'Generale',
         SPECIFIC: 'Specifica',
         COMPETITION: 'Competizione',
         TRANSITION: 'Transizione',
@@ -939,6 +966,9 @@ export async function periodizationRoutes(app: FastifyInstance) {
             startDate,
             endDate,
             athleteId: athleteId || null,
+            // La squadra si eredita dalla periodizzazione: senza, le sessioni
+            // generate non hanno rosa e il foglio presenze nasce vuoto.
+            teamId: periPlan.teamId || null,
             organizationId,
             createdById: userId,
             periodizationPlanId: periPlan.id,
@@ -1155,7 +1185,7 @@ export async function periodizationRoutes(app: FastifyInstance) {
         include: {
           mesocycle: {
             include: {
-              periodizationPlan: { select: { id: true, name: true, organizationId: true, startDate: true } },
+              periodizationPlan: { select: { id: true, name: true, organizationId: true, startDate: true, teamId: true } },
               microcycles: { orderBy: { weekNumber: 'asc' }, select: { id: true, weekNumber: true } },
             },
           },
@@ -1205,6 +1235,8 @@ export async function periodizationRoutes(app: FastifyInstance) {
             description: `Piano generato per il mesociclo "${meso.name}"`,
             startDate,
             endDate,
+            // Vedi sopra: la rosa del foglio presenze dipende da questa riga.
+            teamId: periPlan.teamId || null,
             organizationId,
             createdById: userId,
             periodizationPlanId: periPlan.id,

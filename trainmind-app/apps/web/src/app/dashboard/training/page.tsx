@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Dumbbell, Plus, Calendar, BookOpen, Users, Clock, ChevronRight, Search, Sparkles, Trash2 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { AIGenerateModal } from '@/components/ai/ai-generate-modal';
+import { WeekdayPicker } from '@/components/ui/weekday-picker';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTeam } from '@/hooks/use-team';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -31,6 +34,8 @@ interface TrainingPlan {
   athlete: Athlete | null;
   createdBy: { id: string; firstName: string; lastName: string };
   _count: { weeks: number };
+  trainingDays?: number[];
+  aiGenerated?: boolean;
   createdAt: string;
 }
 
@@ -55,18 +60,26 @@ function getPlanStatus(start: string, end: string, t: (key: string) => string): 
 
 export default function TrainingPage() {
   const [plans, setPlans] = useState<TrainingPlan[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPlans, setTotalPlans] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState('');
+  const [sortMode, setSortMode] = useState<'chronological' | 'recent'>('chronological');
   const [showAIGenerate, setShowAIGenerate] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
+  const apiError = useApiError();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedTeamId, teams } = useTeam();
+  const [filterTeamId, setFilterTeamId] = useState<string>(selectedTeamId || '');
   const t = useTranslations('training');
+  const tPer = useTranslations('periodization');
   const tCommon = useTranslations('common');
   const locale = useLocale();
 
@@ -77,7 +90,9 @@ export default function TrainingPage() {
     athleteId: '',
     weeks: '4',
     teamId: '',
+    trainingDays: [] as number[],
   });
+
 
   // Auto-calc endDate from startDate + weeks
   const calcEndDate = (start: string, weeks: string) => {
@@ -87,20 +102,35 @@ export default function TrainingPage() {
     return d.toISOString().split('T')[0];
   };
   const computedEndDate = calcEndDate(form.startDate, form.weeks);
+  // Un mesociclo di squadra senza squadra non compare negli elenchi
+  // filtrati: sembra non essere stato creato. Per i piani individuali
+  // la squadra resta facoltativa.
+  const needsTeam = !form.athleteId && !form.teamId;
+  const createReady = Boolean(form.name && form.startDate && computedEndDate && !needsTeam);
 
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ page: String(page), limit: '12' });
       if (search) params.set('search', search);
-      if (selectedTeamId) params.set('teamId', selectedTeamId);
+      if (filterTeamId) params.set('teamId', filterTeamId);
+      // Cronologico per difetto: la lista serve a leggere il lavoro nel tempo.
+      if (sortMode === 'chronological') {
+        params.set('sortBy', 'startDate');
+        params.set('sortOrder', 'asc');
+      } else {
+        params.set('sortBy', 'createdAt');
+        params.set('sortOrder', 'desc');
+      }
       const res = await apiFetch<ApiResponse<TrainingPlan[]>>(`/training/plans?${params}`);
       setPlans(res.data);
+      setTotalPlans(res.meta?.total ?? res.data.length);
+      setTotalPages(res.meta?.totalPages ?? 1);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, filterTeamId, sortMode]);
 
   const loadAthletes = async () => {
     try {
@@ -111,10 +141,24 @@ export default function TrainingPage() {
     }
   };
 
+  // Un solo effetto per la lista: pagina, ricerca, squadra e ordinamento
+  // finiscono tutti nelle dipendenze di loadPlans. Il ritardo serve solo
+  // mentre si digita nella ricerca.
   useEffect(() => {
-    loadPlans();
-    loadAthletes();
-  }, [selectedTeamId]);
+    const timer = setTimeout(loadPlans, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [loadPlans, search]);
+
+  useEffect(() => { loadAthletes(); }, []);
+
+  // Cambiando ricerca, ordinamento o squadra si riparte dalla prima pagina:
+  // restare alla quinta pagina di un elenco diverso non vuol dire niente.
+  useEffect(() => {
+    setPage(1);
+  }, [filterTeamId, sortMode, search]);
+
+  // Il filtro di pagina segue la squadra scelta nella barra laterale
+  useEffect(() => { setFilterTeamId(selectedTeamId || ''); }, [selectedTeamId]);
 
   // Auto-open create modal when coming from periodization
   useEffect(() => {
@@ -133,14 +177,13 @@ export default function TrainingPage() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    const timer = setTimeout(loadPlans, 300);
-    return () => clearTimeout(timer);
-  }, [search, selectedTeamId]);
-
   const handleCreate = async () => {
     if (!form.name || !form.startDate || !computedEndDate) {
       toast('error', t('fillRequiredFields'));
+      return;
+    }
+    if (needsTeam) {
+      toast('error', t('teamRequiredHint'));
       return;
     }
     setCreating(true);
@@ -156,11 +199,12 @@ export default function TrainingPage() {
           athleteId: form.athleteId || undefined,
           teamId: form.teamId || undefined,
           weeks: parseInt(form.weeks) || 4,
+          trainingDays: form.trainingDays,
         }),
       });
       toast('success', t('mesocycleCreated'));
       setShowCreate(false);
-      setForm({ name: '', description: '', startDate: new Date().toISOString().split('T')[0], athleteId: '', weeks: '4', teamId: '' });
+      setForm({ name: '', description: '', startDate: new Date().toISOString().split('T')[0], athleteId: '', weeks: '4', teamId: '', trainingDays: [] as number[] });
       loadPlans();
     } catch {
       toast('error', t('mesocycleCreateError'));
@@ -169,15 +213,28 @@ export default function TrainingPage() {
     }
   };
 
-  const handleDelete = async (planId: string, planName: string) => {
-    if (!confirm(t('deleteMesocycleConfirm', { name: planName }))) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { id: planId, name: planName } = deleteTarget;
     setDeleting(planId);
     try {
-      await apiFetch(`/training/plans/${planId}`, { method: 'DELETE' });
-      toast('success', t('mesocycleDeleted', { name: planName }));
+      const res = await apiFetch<{ data?: { sessionsKeptAsTemplates?: number } }>(
+        `/training/plans/${planId}`,
+        { method: 'DELETE' },
+      );
+      // Le sessioni non svolte sopravvivono come template: se non lo dico,
+      // l'utente pensa di averle perse e le riscrive da capo.
+      const kept = res.data?.sessionsKeptAsTemplates ?? 0;
+      toast(
+        'success',
+        kept > 0
+          ? t('mesocycleDeletedKept', { name: planName, templates: kept })
+          : t('mesocycleDeleted', { name: planName }),
+      );
+      setDeleteTarget(null);
       loadPlans();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('deleteError'));
+      toast('error', apiError(err, t('deleteError')));
     } finally {
       setDeleting(null);
     }
@@ -187,7 +244,12 @@ export default function TrainingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('title')}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {t('title')}
+            {totalPlans > 0 && (
+              <span className="ml-2 text-base font-normal text-slate-400 dark:text-slate-500">({totalPlans})</span>
+            )}
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -219,6 +281,31 @@ export default function TrainingPage() {
             placeholder={t('searchMesocycles')}
             className="input-field w-full pl-10"
           />
+        </div>
+        <select
+          value={filterTeamId}
+          onChange={(e) => setFilterTeamId(e.target.value)}
+          className="flex-shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200"
+        >
+          <option value="">{tPer('allTeams')}</option>
+          {teams.map((team) => (
+            <option key={team.id} value={team.id}>{team.name}</option>
+          ))}
+        </select>
+        <div className="flex flex-shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
+          {(['chronological', 'recent'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setSortMode(mode)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                sortMode === mode
+                  ? 'bg-teal-700 text-white'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              {mode === 'chronological' ? tPer('sortChronological') : tPer('sortRecent')}
+            </button>
+          ))}
         </div>
         <Link
           href="/dashboard/exercises"
@@ -265,6 +352,12 @@ export default function TrainingPage() {
                         {plan.name}
                       </h3>
                       <Badge variant={status.variant}>{status.label}</Badge>
+                      {plan.aiGenerated && (
+                        <Badge variant="teal" className="inline-flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          {t('aiGeneratedBadge')}
+                        </Badge>
+                      )}
                     </div>
                     {plan.description && (
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{plan.description}</p>
@@ -272,7 +365,7 @@ export default function TrainingPage() {
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(plan.id, plan.name); }}
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: plan.id, name: plan.name }); }}
                       disabled={isDeleting}
                       className="rounded-lg p-1.5 text-slate-300 dark:text-slate-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
                       title={t('deletePlan')}
@@ -307,10 +400,29 @@ export default function TrainingPage() {
                       {t('teamMesocycle')}
                     </span>
                   )}
+                  {plan.trainingDays && plan.trainingDays.length > 0 && (
+                    <WeekdayPicker value={plan.trainingDays} readOnly />
+                  )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`h-8 w-8 rounded-lg text-sm font-medium ${
+                p === page ? 'bg-teal-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
         </div>
       )}
 
@@ -326,11 +438,11 @@ export default function TrainingPage() {
               onClick={() => setShowCreate(false)}
               className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
             >
-              Annulla
+              {tCommon('cancel')}
             </button>
             <button
               onClick={handleCreate}
-              disabled={creating}
+              disabled={creating || !createReady}
               className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
             >
               {creating ? t('creating') : t('createMesocycle')}
@@ -340,10 +452,10 @@ export default function TrainingPage() {
       >
         <div className="space-y-4">
           <Input
-            label="Nome del mesociclo *"
+            label={`${t('mesocycleNameLabel')} *`}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="es. Preparazione Pre-Stagione"
+            placeholder={t('mesocycleNamePlaceholder')}
           />
           <Input
             label={tCommon('description')}
@@ -353,69 +465,98 @@ export default function TrainingPage() {
           />
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Data inizio *"
+              label={`${t('startDateLabel')} *`}
               type="date"
               value={form.startDate}
               onChange={(e) => setForm({ ...form, startDate: e.target.value })}
             />
             <Select
-              label="Numero settimane *"
+              label={`${t('weeksCountLabel')} *`}
               value={form.weeks}
               onChange={(e) => setForm({ ...form, weeks: e.target.value })}
-              options={[
-                { value: '2', label: '2 settimane' },
-                { value: '3', label: '3 settimane' },
-                { value: '4', label: '4 settimane' },
-                { value: '6', label: '6 settimane' },
-                { value: '8', label: '8 settimane' },
-                { value: '12', label: '12 settimane' },
-              ]}
+              options={[2, 3, 4, 6, 8, 12].map((n) => ({
+                value: String(n),
+                label: t('nWeeks', { n }),
+              }))}
             />
           </div>
           {computedEndDate && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Data fine calcolata: <span className="font-medium text-slate-700 dark:text-slate-300">{formatDate(computedEndDate, locale)}</span>
+              {t('computedEndDate')}: <span className="font-medium text-slate-700 dark:text-slate-300">{formatDate(computedEndDate, locale)}</span>
             </p>
           )}
+          <WeekdayPicker
+            label={t('trainingDaysOptionalLabel')}
+            value={form.trainingDays ?? []}
+            onChange={(days) => setForm({ ...form, trainingDays: days })}
+            hint={
+              (form.trainingDays ?? []).length > 0
+                ? t('trainingDaysSlotsHint', { n: (form.trainingDays ?? []).length })
+                : t('trainingDaysFreeHint')
+            }
+          />
           <Select
-            label="Atleta (opzionale)"
+            label={t('athleteOptionalLabel')}
             value={form.athleteId}
             onChange={(e) => setForm({ ...form, athleteId: e.target.value })}
             options={[
-              { value: '', label: 'Mesociclo di squadra' },
+              { value: '', label: t('teamMesocycleOption') },
               ...athletes.map((a) => ({
                 value: a.id,
                 label: `${a.firstName} ${a.lastName} (${a.position})`,
               })),
             ]}
           />
-          <Select
-            label={t('team')}
-            value={form.teamId}
-            onChange={(e) => setForm({ ...form, teamId: e.target.value })}
-            options={[
-              { value: '', label: 'Nessuna squadra' },
-              ...teams.map((t) => ({ value: t.id, label: t.name })),
-            ]}
-          />
+          <div>
+            <Select
+              label={form.athleteId ? t('team') : `${t('team')} *`}
+              value={form.teamId}
+              onChange={(e) => setForm({ ...form, teamId: e.target.value })}
+              options={[
+                { value: '', label: form.athleteId ? t('noTeamOption') : t('selectTeamPlaceholder') },
+                ...teams.map((tm) => ({ value: tm.id, label: tm.name })),
+              ]}
+            />
+            {needsTeam && (
+              <p className="mt-1 text-xs text-amber-600">{t('teamRequiredHint')}</p>
+            )}
+          </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t('deletePlan')}
+        message={t('deleteMesocycleConfirm', { name: deleteTarget?.name ?? '' })}
+        detail={t('deleteMesocycleDetail')}
+        busy={!!deleting}
+        onConfirm={handleDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
 
       {/* AI Generate Modal */}
       <AIGenerateModal
         isOpen={showAIGenerate}
         onClose={() => setShowAIGenerate(false)}
         athletes={athletes}
-        onPlanGenerated={async (plan, selectedAthleteId) => {
+        teams={teams}
+        defaultTeamId={selectedTeamId}
+        onPlanGenerated={async (plan, options) => {
           try {
             await apiFetch('/training/plans/from-ai', {
               method: 'POST',
               body: JSON.stringify({
                 ...plan,
-                athleteId: selectedAthleteId || undefined,
+                athleteId: options.athleteId || undefined,
+                // Data di inizio e giorni scelti nella finestra: senza, le
+                // sessioni finivano su giorni consecutivi a partire da oggi.
+                startDate: options.startDate,
+                trainingDays: options.trainingDays,
                 // Senza squadra il piano non compare nell'elenco appena
                 // l'utente ne ha una selezionata: la lista filtra per teamId.
-                teamId: selectedTeamId || undefined,
+                // La squadra scelta nella finestra vince su quella della
+                // dashboard: e' quella per cui il piano e' stato scritto.
+                teamId: options.teamId || selectedTeamId || undefined,
               }),
             });
 
@@ -423,7 +564,9 @@ export default function TrainingPage() {
             loadPlans();
           } catch (err) {
             console.error('Error creating AI plan:', err);
-            toast('error', 'Errore nella creazione del piano strutturato.');
+            // Il messaggio del server dice cosa e' andato storto: sostituirlo
+            // con una frase fissa obbliga ad aprire i log per ogni errore.
+            toast('error', apiError(err, 'Errore nella creazione del piano strutturato.'));
           }
         }}
       />

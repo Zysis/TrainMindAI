@@ -54,6 +54,19 @@ export const EXERCISE_CATEGORIES = [
   'Basket-Specifico',
 ] as const;
 
+/**
+ * Categorie in cui il carico di base e' il peso corporeo dell'atleta.
+ *
+ * Per queste il campo "Kg" non e' il carico: e' il **sovraccarico** aggiunto al
+ * corpo libero. Scriverci 0 o lasciarlo vuoto significa BW puro, non "nessun
+ * carico". Cambia l'etichetta, non il dato: resta `sessionExercise.weight`.
+ */
+export const BODYWEIGHT_CATEGORIES = new Set<string>(['Pliometria']);
+
+export function isBodyweightCategory(category?: string | null): boolean {
+  return !!category && BODYWEIGHT_CATEGORIES.has(category);
+}
+
 export const WELLNESS_FIELDS = [
   { key: 'sleepHours', label: 'Ore Sonno', min: 0, max: 14, unit: 'h' },
   { key: 'sleepQuality', label: 'Qualita Sonno', min: 1, max: 5 },

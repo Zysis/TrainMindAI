@@ -23,6 +23,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import { useToast } from '@/components/ui/toast';
 
 // ─── Types ──────────────────────────────────────────────
@@ -131,6 +132,7 @@ const RULE_PRESET_DEFS = [
 
 export default function AlertsPage() {
   const t = useTranslations('alerts');
+  const apiError = useApiError();
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const { toast } = useToast();
@@ -274,7 +276,7 @@ export default function AlertsPage() {
       toast('success', t('checkSummary', { checked: res.data.checked, triggered: res.data.triggered }));
       fetchNotifications();
     } catch (err) {
-      toast('error', err instanceof Error ? err.message : t('checkError'));
+      toast('error', apiError(err, t('checkError')));
     }
     setCheckingAlerts(false);
   };

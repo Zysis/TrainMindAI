@@ -118,3 +118,122 @@ export function clamp(value: number, min: number, max: number): number {
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// ============================================
+// Giorni di allenamento di un mesociclo
+// ============================================
+//
+// Numerazione ISO: 1 = lunedi', 7 = domenica. La stessa che sta nella colonna
+// `training_plans.trainingDays` e nel WeekdayPicker.
+//
+// Questa regola serve in due posti — l'API che data le sessioni generate
+// dall'AI e la pagina del mesociclo che disegna gli slot dei giorni — e vive
+// qui perche' due copie finirebbero per divergere.
+
+/** Lunedi' della settimana 1 del piano. */
+export function planAnchorMonday(startDate: Date, trainingDays: number[] = []): Date {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const isoDay = start.getDay() === 0 ? 7 : start.getDay();
+  const monday = new Date(start);
+  monday.setDate(monday.getDate() - (isoDay - 1));
+
+  // Se il primo giorno scelto cadrebbe prima della data di inizio, il piano
+  // parte dalla settimana dopo: nessuna sessione datata nel passato.
+  const days = normalizeTrainingDays(trainingDays);
+  if (days.length > 0 && days[0] < isoDay) {
+    monday.setDate(monday.getDate() + 7);
+  }
+  return monday;
+}
+
+/** Ripulisce da valori fuori scala e duplicati, e ordina. */
+export function normalizeTrainingDays(days: number[] | null | undefined): number[] {
+  if (!days) return [];
+  return Array.from(
+    new Set(days.filter((d) => Number.isInteger(d) && d >= 1 && d <= 7)),
+  ).sort((a, b) => a - b);
+}
+
+/** Data del giorno `dayIso` nella settimana `weekNumber` (1-based). */
+export function trainingDayDate(
+  startDate: Date,
+  trainingDays: number[],
+  weekNumber: number,
+  dayIso: number,
+): Date {
+  const d = planAnchorMonday(startDate, trainingDays);
+  d.setDate(d.getDate() + (weekNumber - 1) * 7 + (dayIso - 1));
+  return d;
+}
+
+/** Tutti i giorni di allenamento di una settimana, in ordine. */
+export function weekTrainingDates(
+  startDate: Date,
+  trainingDays: number[],
+  weekNumber: number,
+): Array<{ iso: number; date: Date }> {
+  return normalizeTrainingDays(trainingDays).map((iso) => ({
+    iso,
+    date: trainingDayDate(startDate, trainingDays, weekNumber, iso),
+  }));
+}
+
+/**
+ * Data della sessione numero `sessionIndex` (0-based) della settimana.
+ *
+ * Con i giorni dichiarati la sessione i-esima cade sull'i-esimo giorno scelto;
+ * se ce ne sono piu' dei giorni (l'AI ne ha scritte in eccesso) le successive
+ * proseguono nei giorni seguenti. Senza giorni dichiarati restano in giorni
+ * consecutivi a partire dalla data di inizio, com'era prima.
+ */
+export function sessionDateInWeek(
+  startDate: Date,
+  trainingDays: number[],
+  weekNumber: number,
+  sessionIndex: number,
+): Date {
+  const days = normalizeTrainingDays(trainingDays);
+  if (days.length === 0) {
+    const d = new Date(startDate);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + (weekNumber - 1) * 7 + sessionIndex);
+    return d;
+  }
+
+  const offset =
+    sessionIndex < days.length
+      ? days[sessionIndex] - 1
+      : days[days.length - 1] - 1 + (sessionIndex - days.length + 1);
+
+  const d = planAnchorMonday(startDate, days);
+  d.setDate(d.getDate() + (weekNumber - 1) * 7 + offset);
+  return d;
+}
+
+/**
+ * Data in formato YYYY-MM-DD leggendo i componenti **locali**.
+ *
+ * `toISODate` passa da `toISOString()`, che converte in UTC: una data locale a
+ * mezzanotte in Italia (UTC+2) diventa le 22:00 del giorno prima, e la stringa
+ * esce sbagliata di un giorno. Per i giorni di allenamento serve il giorno di
+ * calendario che l'utente vede, non quello di Greenwich.
+ */
+export function toISODateLocal(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Prima data utile del piano: il primo giorno di allenamento della settimana 1. */
+export function planFirstTrainingDate(startDate: Date, trainingDays: number[]): Date {
+  const days = normalizeTrainingDays(trainingDays);
+  if (days.length === 0) {
+    const d = new Date(startDate);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  return trainingDayDate(startDate, days, 1, days[0]);
+}

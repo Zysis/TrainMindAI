@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
+import { useApiError } from '@/lib/i18n/api-error';
 import {
   Check,
   Zap,
@@ -121,6 +122,7 @@ function statusColor(status: string): string {
 
 export default function BillingPage() {
   const t = useTranslations('billing');
+  const apiError = useApiError();
   const locale = useLocale();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,7 +139,7 @@ export default function BillingPage() {
       const res = await apiFetch<{ data: { subscription: Subscription } }>('/billing/subscription');
       setSubscription(res.data.subscription);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('loadError');
+      const message = apiError(err, t('loadError'));
       setError(message);
     } finally {
       setLoading(false);
@@ -159,7 +161,7 @@ export default function BillingPage() {
       });
       window.location.href = res.data.url;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('checkoutError');
+      const message = apiError(err, t('checkoutError'));
       setError(message);
       setCheckoutLoading(null);
     }
@@ -175,7 +177,7 @@ export default function BillingPage() {
       });
       window.location.href = res.data.url;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('portalError');
+      const message = apiError(err, t('portalError'));
       setError(message);
       setPortalLoading(false);
     }

@@ -395,9 +395,15 @@ Struttura ESATTA richiesta:
 }
 
 REGOLE:
+- NUMERO DI SETTIMANE: l'esempio qui sopra mostra UNA settimana solo per far
+  vedere la forma, NON la quantita'. Se l'utente chiede N settimane, l'array
+  "weeks" deve contenere ESATTAMENTE N oggetti, con "weekNumber" da 1 a N.
+  Non fermarti alla prima e non riassumere le altre a parole.
+- Ogni settimana ha contenuti propri: i carichi progrediscono, l'ultima
+  settimana di un blocco lungo e' di scarico.
 - Ogni sessione DEVE avere un array "exercises" con esercizi strutturati
 - Ogni esercizio richiede: "name", "category", "sets" (numero), "reps" (stringa, es. "8-12" o "30sec"), "restSeconds" (numero, secondi)
-- "category" va scelta fra: Forza, Potenza, Pliometria, Velocita, Agilita, Core, Propriocezione, Prevenzione, Flessibilita, Resistenza, Riabilitazione
+- "category" va scelta fra: Forza, Potenza, Pliometria, Velocita, Agilita, Core, Propriocezione, Prevenzione, Flessibilita, Mobilita, Release, Condizionamento-Metabolico, Riabilitazione
 - Campi facoltativi dell'esercizio: "intensity", "notes"
 - Ogni settimana deve avere 3-4 sessioni
 - "duration" è in minuti

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/i18n/api-error';
 import { resetPassword, verifyResetToken } from '@/lib/auth/api';
 import { AuthShell } from '@/components/auth/auth-shell';
 
@@ -17,6 +18,7 @@ const RULES = [
 function ResetPasswordForm() {
   const router = useRouter();
   const t = useTranslations('auth');
+  const apiError = useApiError();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
 
@@ -41,7 +43,7 @@ function ResetPasswordForm() {
         setStatus('valid');
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : t('reset.invalidToken'));
+        setError(apiError(err, t('reset.invalidToken')));
         setStatus('invalid');
       });
   }, [token, t]);
@@ -65,7 +67,7 @@ function ResetPasswordForm() {
       // Piccola pausa per far leggere la conferma, poi al login.
       setTimeout(() => router.push('/login'), 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('reset.error'));
+      setError(apiError(err, t('reset.error')));
     } finally {
       setIsSubmitting(false);
     }

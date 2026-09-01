@@ -25,6 +25,8 @@ import { billingRoutes } from './routes/billing.js';
 import { teamRoutes } from './routes/teams.js';
 import { fieldTrainingRoutes } from './routes/field-training.js';
 import { gameTrackingRoutes } from './routes/game-tracking.js';
+import { dailyReportRoutes } from './routes/daily-report.js';
+import { gameReportRoutes } from './routes/game-report.js';
 import { athleteRoutes as athleteAppRoutes } from './routes/athlete.js';
 import { startReportSchedulerWorker } from './services/report-scheduler-worker.js';
 import { startRetentionWorker } from './services/retention-worker.js';
@@ -104,6 +106,26 @@ export async function buildApp() {
 
   await app.register(sensible);
 
+  // ─── Corpo JSON vuoto ─────────────────────────────────
+  // Alcune rotte sono azioni senza parametri (POST .../ensure-week, .../run):
+  // i client mandano comunque "Content-Type: application/json" e il parser di
+  // default risponde 400 FST_ERR_CTP_EMPTY_JSON_BODY, che in interfaccia
+  // arrivava come un errore generico e incomprensibile. Un corpo vuoto qui
+  // vale come oggetto vuoto.
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (_req, body: string, done) => {
+      if (!body || body.trim() === '') return done(null, {});
+      try {
+        done(null, JSON.parse(body));
+      } catch (err) {
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        done(err as Error, undefined);
+      }
+    },
+  );
+
   // ─── Plugins ──────────────────────────────────────────
   await app.register(prismaPlugin);
   await app.register(authPlugin);
@@ -133,6 +155,8 @@ export async function buildApp() {
   await app.register(teamRoutes, { prefix: '/api/v1' });
   await app.register(fieldTrainingRoutes, { prefix: '/api/v1' });
   await app.register(gameTrackingRoutes, { prefix: '/api/v1' });
+  await app.register(dailyReportRoutes, { prefix: '/api/v1' });
+  await app.register(gameReportRoutes, { prefix: '/api/v1' });
   await app.register(athleteAppRoutes, { prefix: '/api/v1' });
 
   // ─── Background workers ───────────────────────────────

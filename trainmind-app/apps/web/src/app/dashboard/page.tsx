@@ -7,6 +7,10 @@ import {
   Clock,
   CheckCircle2,
   Loader2,
+  TrendingUp,
+  TrendingDown,
+  HeartPulse,
+  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
@@ -17,11 +21,33 @@ import { useTeam } from '@/hooks/use-team';
 import { OnboardingChecklist } from '@/components/onboarding/onboarding-checklist';
 import { WellnessBar } from '@/components/dashboard/wellness-bar';
 import { KpiGrid } from '@/components/dashboard/kpi-grid';
-import { AiQuickActions } from '@/components/dashboard/ai-quick-actions';
 
 // ─── Types ───────────────────────────────────────────────
 
+/** Una riga della lista rischio. L'ACWR e' il criterio, il wellness la conferma. */
+interface RiskAthlete {
+  athleteId: string;
+  athlete: string;
+  acwr: number;
+  acwrZone: 'low' | 'optimal' | 'high' | 'danger';
+  acuteLoad: number;
+  chronicLoad: number;
+  weeklyDeltaPct: number | null;
+  wellnessRecent: number | null;
+  wellnessBaseline: number | null;
+  wellnessDrop: boolean;
+  reasons: string[];
+  level: 'danger' | 'warning';
+}
+
 interface DashboardData {
+  risk: {
+    athletes: RiskAthlete[];
+    wellnessOnlyDrops: number;
+    notAssessable: number;
+    insufficientHistory: number;
+    assessed: number;
+  };
   kpis: {
     totalAthletes: number;
     activeAthletes: number;
@@ -41,7 +67,6 @@ interface DashboardData {
       avgStress: number;
       totalLogs: number;
     } | null;
-    atRisk: Array<{ athlete: string; fatigue: number; soreness: number; mood: number }>;
     recentLogs: Array<{
       fatigue: number;
       soreness: number;
@@ -125,6 +150,7 @@ export default function DashboardPage() {
   const kpis = data?.kpis;
   const wellness = data?.wellness;
   const injuries = data?.injuries;
+  const risk = data?.risk;
 
   return (
     <div className="space-y-6">
@@ -142,11 +168,96 @@ export default function DashboardPage() {
       {/* KPI Grids */}
       <KpiGrid kpis={kpis} injuries={injuries} t={t} />
 
-      {/* Main content grid */}
+      {/* Contenuto principale. La scheda rischio prende due terzi: e' l'unica
+          che porta numeri da leggere, le altre due stanno in colonna. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
+        {/* ─── Atleti a rischio: ACWR primario, wellness a conferma ─── */}
+        {/* Colonna flex con altezza massima: intestazione e nota restano
+            ferme, scorre solo l'elenco. Con una rosa intera in allarme la
+            pagina diventerebbe altrimenti lunga il triplo del resto. */}
+        <div className="card flex flex-col lg:col-span-2 lg:max-h-[32rem]">
+          <div className="mb-1 flex flex-shrink-0 items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('atRiskAthletes')}</h2>
+            <Badge variant={risk?.athletes.length ? 'danger' : 'success'}>
+              {risk?.athletes.length ?? 0}
+            </Badge>
+          </div>
+          <p className="mb-3 flex-shrink-0 text-xs text-slate-400 dark:text-slate-500">{t('riskMethod')}</p>
+
+          {risk?.athletes.length ? (
+            <div className="-mr-2 flex-1 space-y-2.5 overflow-y-auto pr-2">
+              {risk.athletes.map((a) => (
+                <div
+                  key={a.athleteId}
+                  className={`rounded-lg border p-3 ${
+                    a.level === 'danger'
+                      ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/25'
+                      : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/25'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{a.athlete}</span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {a.reasons.map((r) => (
+                        <Badge key={r} variant={r === 'ACWR_SPIKE' ? 'danger' : r === 'WELLNESS_DROP' ? 'info' : 'warning'}>
+                          {t(`reason_${r}`)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1">
+                      {a.acwr > 1.3 ? <TrendingUp className="h-3.5 w-3.5 text-red-500" /> : <TrendingDown className="h-3.5 w-3.5 text-sky-500" />}
+                      <strong className="font-mono text-sm tabular-nums">{a.acwr}</strong>
+                      <span className="text-slate-400">{t('acwrShort')}</span>
+                    </span>
+                    <span className="tabular-nums">
+                      {t('acuteVsChronic')}: <strong className="font-mono">{a.acuteLoad}</strong> / <strong className="font-mono">{a.chronicLoad}</strong>
+                    </span>
+                    {a.weeklyDeltaPct != null && (
+                      <span className={`tabular-nums ${a.weeklyDeltaPct > 0 ? 'text-red-600 dark:text-red-400' : 'text-sky-600 dark:text-sky-400'}`}>
+                        {t('vsPrevWeek')}: {a.weeklyDeltaPct > 0 ? '+' : ''}{a.weeklyDeltaPct}%
+                      </span>
+                    )}
+                    {a.wellnessRecent != null && (
+                      <span className={`inline-flex items-center gap-1 tabular-nums ${a.wellnessDrop ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                        <HeartPulse className="h-3.5 w-3.5" />
+                        {a.wellnessRecent}
+                        {a.wellnessBaseline != null && <span className="text-slate-400">/ {a.wellnessBaseline}</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center py-10">
+              <CheckCircle2 className="mb-2 h-9 w-9 text-emerald-400" />
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t('noAtRisk')}</p>
+            </div>
+          )}
+
+          {/* Quello che il criterio esclude, detto invece che nascosto. */}
+          {(risk?.wellnessOnlyDrops || risk?.notAssessable) ? (
+            <div className="mt-3 flex flex-shrink-0 items-start gap-2 border-t border-slate-100 pt-3 text-2xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <p>
+                {risk.wellnessOnlyDrops > 0 && t('wellnessOnlyNote', { count: risk.wellnessOnlyDrops })}
+                {risk.wellnessOnlyDrops > 0 && risk.notAssessable > 0 && ' '}
+                {risk.notAssessable > 0 && t('notAssessableNote', { count: risk.notAssessable })}
+                {risk.insufficientHistory > 0 && ` ${t('insufficientHistoryNote', { count: risk.insufficientHistory })}`}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Colonna di destra: wellness e rientri */}
+        <div className="space-y-6">
+
         {/* Wellness Trend Card */}
-        <div className="card lg:col-span-1">
+        <div className="card">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('wellness7d')}</h2>
             <Link href="/dashboard/wellness" className="flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-600">
@@ -167,37 +278,8 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* At-Risk Athletes */}
-        <div className="card lg:col-span-1">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('atRiskAthletes')}</h2>
-            <Badge variant={wellness?.atRisk.length ? 'danger' : 'success'}>
-              {wellness?.atRisk.length ?? 0}
-            </Badge>
-          </div>
-          {wellness?.atRisk.length ? (
-            <div className="space-y-3">
-              {wellness.atRisk.map((a, i: number) => (
-                <div key={i} className="flex items-center justify-between rounded-lg border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3">
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{a.athlete}</span>
-                  <div className="flex gap-2">
-                    {a.fatigue <= 2 && <Badge variant="danger">{t('fatShort')}: {a.fatigue}</Badge>}
-                    {a.soreness <= 2 && <Badge variant="danger">{t('sorShort')}: {a.soreness}</Badge>}
-                    {a.mood <= 2 && <Badge variant="warning">{t('moodShort')}: {a.mood}</Badge>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center py-8">
-              <CheckCircle2 className="mb-2 h-8 w-8 text-emerald-400" />
-              <p className="text-sm text-slate-400 dark:text-slate-500">{t('noAtRisk')}</p>
-            </div>
-          )}
-        </div>
-
         {/* Active RTP Protocols */}
-        <div className="card lg:col-span-1">
+        <div className="card">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('returnToPlay')}</h2>
             <Link href="/dashboard/injuries" className="flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-600">
@@ -205,7 +287,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           {injuries?.activeRTP.length ? (
-            <div className="space-y-3">
+            <div className="-mr-2 max-h-64 space-y-3 overflow-y-auto pr-2">
               {injuries.activeRTP.map((rtp) => (
                 <Link
                   key={rtp.id}
@@ -234,6 +316,8 @@ export default function DashboardPage() {
               <p className="text-sm text-slate-400 dark:text-slate-500">{t('noActiveProtocol')}</p>
             </div>
           )}
+        </div>
+
         </div>
       </div>
 
@@ -283,8 +367,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* AI Quick Actions */}
-      <AiQuickActions t={t} />
     </div>
   );
 }

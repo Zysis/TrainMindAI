@@ -1,0 +1,67 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { ApiError } from '@/lib/auth/fetch';
+
+/**
+ * Traduce l'errore di una chiamata API.
+ *
+ * I messaggi del backend sono scritti in italiano dentro il codice: mostrarli
+ * cosi' com'e' significa avere un'app inglese che a ogni errore parla italiano.
+ * Qui si traduce per **codice**, che e' stabile e non dipende dalla lingua del
+ * server; il messaggio del server resta come ultima risorsa per i codici non
+ * previsti — meglio una frase in italiano che nessuna spiegazione.
+ *
+ * L'elenco e' esplicito e non si interroga `t.has`: cosi' non dipende dalla
+ * versione di next-intl, e si vede a colpo d'occhio cosa e' tradotto.
+ *
+ * I codici generici `NOT_FOUND` e `VALIDATION_ERROR` sono volutamente **fuori**:
+ * lato server dicono cose molto diverse fra loro ("Piano non trovato",
+ * "Atleta non trovato", "Formato data: YYYY-MM-DD") e una traduzione unica
+ * perderebbe proprio l'informazione utile. Per quelli passa il messaggio del
+ * server, che e' specifico.
+ */
+const TRANSLATED_CODES = new Set([
+  'SESSION_EXPIRED',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'INVALID_CREDENTIALS',
+  'RATE_LIMIT_EXCEEDED',
+  'CONFLICT',
+  'INTERNAL',
+  'UNKNOWN',
+  // cancellazioni bloccate
+  'PLAN_IN_PERIODIZATION',
+  'SESSION_IN_PLAN',
+  'SESSION_NOT_IN_PLAN',
+  'EVENT_ALREADY_COMPLETED',
+  'EXERCISE_IN_USE',
+  // AI
+  'AI_SERVICE_DOWN',
+  'AI_SERVICE_TIMEOUT',
+  'AI_SERVICE_UNAVAILABLE',
+  'AI_SERVICE_ERROR',
+  'AI_FALLBACK_ERROR',
+  'AI_RESPONSE_TRUNCATED',
+  'EMPTY_PLAN',
+]);
+
+export function useApiError() {
+  const t = useTranslations('apiErrors');
+
+  /**
+   * @param fallback testo gia' tradotto da usare se l'errore non dice nulla di
+   *                 utile. E' quello che i chiamanti mostravano prima.
+   */
+  return (err: unknown, fallback?: string): string => {
+    if (err instanceof ApiError) {
+      if (TRANSLATED_CODES.has(err.code)) {
+        const details = (err.details ?? {}) as Record<string, string | number>;
+        return t(err.code, details);
+      }
+      if (err.message) return err.message;
+    }
+    if (err instanceof Error && err.message) return err.message;
+    return fallback ?? t('generic');
+  };
+}

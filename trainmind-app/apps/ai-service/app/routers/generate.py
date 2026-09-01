@@ -287,7 +287,13 @@ async def generate_content(request: GenerateRequest) -> GenerateResponse:
             temperature=0.6,  # Leggermente piu' deterministico per piani strutturati
             # I piani in JSON sono più verbosi del markdown equivalente: con un
             # tetto troppo basso la risposta viene troncata e il JSON non chiude.
-            max_tokens=4096 if wants_plan else 3000,
+            # Il costo cresce con le settimane richieste, quindi il tetto pure:
+            # 4096 bastavano per una settimana, non per dodici.
+            max_tokens=(
+                min(16000, max(4096, (request.expected_weeks or 4) * 1400))
+                if wants_plan
+                else 3000
+            ),
             json_mode=wants_plan,
         )
         response_content = llm_result.content
