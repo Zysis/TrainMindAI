@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -40,7 +41,16 @@ const RISK_COLORS: Record<string, string> = {
   very_high: '#991b1b',
 };
 
+const RISK_LABEL_KEYS: Record<string, string> = {
+  low: 'riskLow',
+  moderate: 'riskModerate',
+  high: 'riskHigh',
+  very_high: 'riskVeryHigh',
+};
+
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string; payload?: WeeklyPoint }>; label?: string }) {
+  const t = useTranslations('periodization');
+  const tAnalytics = useTranslations('analyticsExt');
   if (!active || !payload?.length) return null;
   const point = payload[0]?.payload as WeeklyPoint | undefined;
   return (
@@ -59,7 +69,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
       {point && (
         <div className="mt-2 flex items-center gap-1">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: RISK_COLORS[point.riskLevel] }} />
-          <span className="text-slate-500 dark:text-slate-400">Rischio: {point.riskLevel === 'very_high' ? 'molto alto' : point.riskLevel === 'high' ? 'alto' : point.riskLevel === 'moderate' ? 'moderato' : 'basso'}</span>
+          <span className="text-slate-500 dark:text-slate-400">{tAnalytics('risk')}: {t(RISK_LABEL_KEYS[point.riskLevel] ?? 'riskLow')}</span>
         </div>
       )}
     </div>
@@ -67,10 +77,12 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export function LoadCurveChart({ data, mode }: LoadCurveChartProps) {
+  const t = useTranslations('periodization');
+  const tAnalytics = useTranslations('analyticsExt');
   if (data.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
-        Esegui una simulazione per visualizzare le curve
+        {t('runSimulationHint')}
       </div>
     );
   }
@@ -100,9 +112,9 @@ export function LoadCurveChart({ data, mode }: LoadCurveChartProps) {
           {riskAreas.map((ra, i) => (
             <ReferenceArea key={i} x1={`S${ra.x1}`} x2={`S${ra.x2}`} fill={ra.level === 'very_high' ? '#fee2e2' : '#fef3c7'} fillOpacity={0.5} />
           ))}
-          <Bar dataKey="plannedLoad" name="Carico pianificato" fill="#99f6e4" radius={[4, 4, 0, 0]} />
-          <Line type="monotone" dataKey="acuteLoad" name="Carico acuto" stroke="#f59e0b" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="chronicLoad" name="Carico cronico" stroke="#6366f1" strokeWidth={2} dot={false} />
+          <Bar dataKey="plannedLoad" name={t('plannedLoad')} fill="#99f6e4" radius={[4, 4, 0, 0]} />
+          <Line type="monotone" dataKey="acuteLoad" name={tAnalytics('acuteLoad')} stroke="#f59e0b" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="chronicLoad" name={tAnalytics('chronicLoad')} stroke="#6366f1" strokeWidth={2} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     );
@@ -137,7 +149,7 @@ export function LoadCurveChart({ data, mode }: LoadCurveChartProps) {
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <Line type="monotone" dataKey="fitness" name="Fitness" stroke="#10b981" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="fatigue" name="Fatica" stroke="#ef4444" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="fatigue" name={t('fatigue')} stroke="#ef4444" strokeWidth={2} dot={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );

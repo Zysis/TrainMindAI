@@ -94,12 +94,7 @@
       "saving": "Saving...",
       "cancel": "Cancel",
       "genericError": "Error while changing the password"
-    },
-    "currentPlan": "Current plan",
-    "planUltraDesc": "You are on the top plan — no limits, priority support included.",
-    "planUpgradeDesc": "Unlock more teams, athletes and advanced features by moving up a plan.",
-    "planTop": "Top plan",
-    "upgradePlan": "Upgrade plan"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -838,9 +833,7 @@
     "bodyweight": "BW",
     "bodyweightHint": "Bodyweight: the athlete is the base load. The field next to it is the added load, empty = bodyweight only.",
     "extraLoadLabel": "Extra load",
-    "loadLabel": "Kg",
-    "weekLabel": "Week {n}",
-    "aiModified": "Modified by AI"
+    "loadLabel": "Kg"
   },
   "sessions": {
     "title": "Sessions",
@@ -921,8 +914,7 @@
     "bodyweight": "BW",
     "bodyweightHint": "Bodyweight: the athlete is the base load. The field next to it is the added load, empty = bodyweight only.",
     "extraLoadLabel": "Extra load",
-    "loadLabel": "Kg",
-    "weekLabel": "Week {n}"
+    "loadLabel": "Kg"
   },
   "exercises": {
     "title": "Exercise Library",
@@ -1464,17 +1456,7 @@
     "noAdaptationsHint": "Generate a new proposal above",
     "exerciseComparison": "Exercise comparison",
     "exerciseColumn": "Exercise",
-    "generateProposalError": "Could not generate the proposal",
-    "zoneLow": "Low",
-    "zoneOptimal": "Optimal",
-    "zoneHigh": "High",
-    "zoneCritical": "Critical",
-    "severityWarning": "Warning",
-    "severityInfo": "Info",
-    "wellnessGood": "Good",
-    "wellnessMedium": "Average",
-    "wellnessLow": "Low",
-    "targetValue": "Target {value}"
+    "generateProposalError": "Could not generate the proposal"
   },
   "chat": {
     "title": "AI Chat",
@@ -1486,16 +1468,7 @@
     "sendTitle": "Send message (Enter)",
     "newChat": "New chat",
     "chatPlaceholder": "Ask something about training...",
-    "footerHint": "Powered by GPT-4o and the TrainMind knowledge base. Shift+Enter for newline.",
-    "greeting": "Hi! I am your AI assistant for basketball strength and conditioning. I can help you with training session programming, athlete data analysis, recovery protocols and much more. How can I help you?",
-    "suggestion1": "How do I program strength work in preseason?",
-    "suggestion2": "Ankle injury prevention protocol for basketball",
-    "suggestion3": "Difference between undulating and linear periodization",
-    "suggestion4": "Plyometric exercises to improve the jump",
-    "serviceUnreachable": "The AI service is not reachable right now. Please try again in a moment.",
-    "serviceError": "AI service error ({status})",
-    "noResponse": "No response received.",
-    "genericError": "Sorry, something went wrong. Please try again."
+    "footerHint": "Powered by GPT-4o and the TrainMind knowledge base. Shift+Enter for newline."
   },
   "periodization": {
     "title": "Periodization",
@@ -1665,14 +1638,7 @@
     "sessionsCountRange": "Sessions must be between 1 and 14",
     "selectTeamPlaceholder": "Select a team…",
     "teamRequiredHint": "The team is required: without it the plan does not show up in filtered lists.",
-    "templateNeedsDateAndTeam": "Choose the start date and the team first.",
-    "plannedLoad": "Planned load",
-    "fatigue": "Fatigue",
-    "runSimulationHint": "Run a simulation to display the curves",
-    "riskLow": "low",
-    "riskModerate": "moderate",
-    "riskHigh": "high",
-    "riskVeryHigh": "very high"
+    "templateNeedsDateAndTeam": "Choose the start date and the team first."
   },
   "billing": {
     "title": "Subscription",
@@ -1709,18 +1675,7 @@
     "featureAllProfessional": "Everything in Professional",
     "featurePrioritySupport": "Priority support",
     "feature2Athletes": "2 athletes",
-    "featureLimitedReports": "Limited reports",
-    "upgrade": "Upgrade",
-    "downgrade": "Downgrade",
-    "feature1Team": "1 team",
-    "featureWellness": "Wellness monitoring",
-    "featureCalendar": "Training calendar",
-    "feature3Teams": "Up to 3 teams",
-    "featureAICoach": "AI Coach",
-    "featureRTP": "Injuries and RTP protocols",
-    "featureAnalytics": "Advanced analytics",
-    "featureUnlimitedTeams": "Unlimited teams",
-    "featureApiAccess": "API access"
+    "featureLimitedReports": "Limited reports"
   },
   "topbar": {
     "search": "Search athletes, exercises, sessions...",
@@ -1872,10 +1827,7 @@
     "tourReportsDesc": "Generate automated reports and analytics",
     "tourReadyTitle": "All set!",
     "tourReadyDesc": "Start by adding your first athlete",
-    "gettingStarted": "Getting started",
-    "completedOf": "{done}/{total} completed",
-    "markComplete": "Mark as complete",
-    "markIncomplete": "Mark as incomplete"
+    "gettingStarted": "Getting started"
   },
   "offline": {
     "offlineMessage": "Offline mode — changes will be synced when the network is restored",
@@ -2109,8 +2061,7 @@
     "heatmapTitle": "Wellness Heatmap",
     "heatmapFormula": "Score = the five wellness items (sleep, fatigue, soreness, stress, mood) added up, each from 1 to 5 where 5 is the best condition, divided by 25 and multiplied by 100. It therefore ranges from 20% (all items at 1) to 100% (all at 5). Hover a cell to see the arithmetic.",
     "noWellnessData": "No wellness data available",
-    "scoreLabel": "Score:",
-    "teamAverage": "Team average"
+    "scoreLabel": "Score:"
   },
   "ai": {
     "generateTitle": "Generate Plan with AI",
@@ -2165,14 +2116,7 @@
     "usePlan": "Use this plan",
     "nWeeks": "{n} weeks",
     "weeksMismatch": "You asked for {asked} weeks, the AI produced {got}. You can regenerate, or add the plan as it is and finish it by hand.",
-    "coachAnalyzing": "The AI Coach is analysing...",
-    "askCoach": "Ask the AI Coach",
-    "suggestedQuestions": "Suggested questions:",
-    "newQuestion": "New question",
-    "coachQuestion1": "Which exercises do you recommend to prevent knee injuries?",
-    "coachQuestion2": "How should I structure a strength progression for basketball?",
-    "coachQuestion3": "What are the best alternatives to the back squat?",
-    "coachQuestion4": "How do I integrate plyometric work into the weekly program?"
+    "coachAnalyzing": "The AI Coach is analysing..."
   },
   "liveSession": {
     "recoveredFromAutosave": "Session recovered from autosave",
@@ -2187,27 +2131,7 @@
     "sessionRpeLabel": "Session RPE (1-10)",
     "sessionNotesLabel": "Session notes",
     "sessionNotesPlaceholder": "How did the session go?",
-    "exerciseNotesPlaceholder": "Notes for this exercise...",
-    "startRecording": "Start Recording",
-    "sessionSaved": "Session saved successfully!",
-    "setsCompleted": "Sets completed",
-    "completion": "Completion",
-    "volumeKg": "Volume (kg)",
-    "backToExercises": "Back to exercises",
-    "saving": "Saving...",
-    "saveSession": "Save Session",
-    "setsUnit": "sets",
-    "finish": "Finish",
-    "targetSets": "Target: {n} sets",
-    "addSet": "Add set",
-    "removeLastSet": "Remove last",
-    "endSession": "End session",
-    "rest": "Rest",
-    "disableSound": "Mute sound",
-    "enableSound": "Unmute sound",
-    "reset": "Reset",
-    "pause": "Pause",
-    "start": "Start"
+    "exerciseNotesPlaceholder": "Notes for this exercise..."
   },
   "apiErrors": {
     "generic": "Something went wrong.",

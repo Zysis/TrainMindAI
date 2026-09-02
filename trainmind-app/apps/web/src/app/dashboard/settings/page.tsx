@@ -43,7 +43,7 @@ export default function SettingsPage() {
                   <div>
                     <div className="mb-1 flex items-center gap-2">
                       <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Piano corrente
+                        {t('currentPlan')}
                       </span>
                       <span
                         className="rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-amber-500"
@@ -55,9 +55,7 @@ export default function SettingsPage() {
                       {planName}
                     </h2>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {isUltra
-                        ? 'Sei sul piano top — nessun limite, supporto prioritario incluso.'
-                        : 'Sblocca più squadre, atleti e funzionalità avanzate passando al piano superiore.'}
+                      {isUltra ? t('planUltraDesc') : t('planUpgradeDesc')}
                     </p>
                   </div>
                 </div>
@@ -65,14 +63,14 @@ export default function SettingsPage() {
                 {isUltra ? (
                   <div className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Piano top
+                    {t('planTop')}
                   </div>
                 ) : (
                   <Link
                     href="/dashboard/billing"
                     className="group inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/20 transition hover:shadow-xl hover:shadow-amber-500/30"
                   >
-                    Aggiorna piano
+                    {t('upgradePlan')}
                     <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </Link>
                 )}

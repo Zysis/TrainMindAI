@@ -1,41 +1,106 @@
+/**
+ * Infortuni e protocolli RTP.
+ *
+ * I criteri di rientro non sono piu' una lista unica hardcoded: arrivano dalla
+ * libreria dei protocolli (rotte in `rtp-templates.ts`), scelta per zona del
+ * corpo, tipo di infortunio e severita'. Una spalla e un ginocchio non hanno
+ * gli stessi criteri, ed e' il punto di tutto questo.
+ *
+ * All'avvio, fasi e criteri vengono *copiati* sul protocollo dell'atleta: se
+ * il template cambia a meta' stagione, chi e' gia' in cura non si ritrova le
+ * regole cambiate sotto i piedi.
+ */
+
 import type { FastifyInstance } from 'fastify';
 import { requireMinRole } from '../middleware/rbac.js';
+import { rtpBaseZone, rtpRegionOf } from '@trainmind/types';
+import { pickRtpTemplate, rtpEstimatedReturn } from '@trainmind/utils';
 
-// ─── Default clearance criteria per RTP phase (basketball-specific) ──
-const DEFAULT_CRITERIA: Record<string, string[]> = {
-  PHASE_1: [
-    'Dolore a riposo < 2/10 VAS',
-    'Range of Motion passivo recuperato > 70%',
-    'Nessun segno di infiammazione acuta',
-  ],
-  PHASE_2: [
-    'Dolore durante ADL < 2/10 VAS',
-    'ROM attivo completo e simmetrico',
-    'Forza isometrica > 70% lato sano',
-    'Corsa rettilinea senza dolore',
-  ],
-  PHASE_3: [
-    'Corsa con cambi di direzione senza dolore',
-    'Forza concentrica/eccentrica > 80% lato sano',
-    'Hop test LSI > 80%',
-    'Drill basket non-contatto completati',
-  ],
-  PHASE_4: [
-    'Allenamento con contatto limitato senza dolore',
-    'Forza > 90% lato sano',
-    'Hop test LSI > 90%',
-    'Y-Balance test simmetrico',
-    'Completamento drill sport-specifici al 100% intensità',
-  ],
-  PHASE_5: [
-    'Allenamento completo con squadra (2+ sessioni)',
-    'Nessun versamento post-allenamento',
-    'Questionario psicologico RTP positivo',
-    'Clearance medica firmata',
-  ],
+type PhaseName = 'PHASE_1' | 'PHASE_2' | 'PHASE_3' | 'PHASE_4' | 'PHASE_5' | 'PHASE_6';
+
+const PHASE_BY_ORDER: PhaseName[] = ['PHASE_1', 'PHASE_2', 'PHASE_3', 'PHASE_4', 'PHASE_5', 'PHASE_6'];
+
+/**
+ * Protocollo storico, per i due casi in cui la libreria non risponde: un
+ * database dove il seed non e' ancora passato, o un template che non copre la
+ * combinazione. Meglio cinque fasi generiche che un protocollo vuoto.
+ */
+const FALLBACK_PHASES = [
+  { order: 1, name: 'Controllo dolore', goal: null as string | null, minDays: null as number | null, typicalDays: 10 as number | null,
+    criteria: ['Dolore a riposo entro 2/10', 'Range of Motion passivo recuperato oltre il 70%', 'Nessun segno di infiammazione acuta'] },
+  { order: 2, name: 'Mobilita\' e forza base', goal: null, minDays: null, typicalDays: 14,
+    criteria: ['Dolore nelle attivita\' quotidiane entro 2/10', 'ROM attivo completo e simmetrico', 'Forza isometrica oltre il 70% del controlaterale', 'Corsa rettilinea senza dolore'] },
+  { order: 3, name: 'Sport-specifico', goal: null, minDays: null, typicalDays: 21,
+    criteria: ['Corsa con cambi di direzione senza dolore', 'Forza concentrica/eccentrica oltre l\'80% del controlaterale', 'Hop test LSI oltre l\'80%', 'Drill basket non-contatto completati'] },
+  { order: 4, name: 'Allenamento completo', goal: null, minDays: null, typicalDays: 14,
+    criteria: ['Allenamento con contatto limitato senza dolore', 'Forza oltre il 90% del controlaterale', 'Hop test LSI oltre il 90%', 'Drill sport-specifici al 100% di intensita\''] },
+  { order: 5, name: 'Return to competition', goal: null, minDays: null, typicalDays: 10,
+    criteria: ['Allenamento completo con la squadra (2+ sessioni)', 'Nessun versamento post-allenamento', 'Questionario psicologico RTP positivo', 'Clearance medica firmata'] },
+];
+
+/** Ordine delle fasi del singolo protocollo, con CLEARED in coda. */
+function phaseSequence(phases: Array<{ phase: string; order: number }>): string[] {
+  const ordered = [...phases].sort((a, b) => a.order - b.order).map((p) => p.phase);
+  if (!ordered.length) return [...PHASE_BY_ORDER.slice(0, 5), 'CLEARED'];
+  return [...ordered, 'CLEARED'];
+}
+
+const PROTOCOL_INCLUDE = {
+  injury: true,
+  // Il `code` del template di sistema e' la chiave con cui il frontend traduce
+  // fasi e criteri: le righe copiate nel protocollo restano in italiano.
+  template: { select: { code: true } },
+  athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
+  phases: { orderBy: { order: 'asc' as const } },
+  criteria: { orderBy: [{ phase: 'asc' as const }, { order: 'asc' as const }, { createdAt: 'asc' as const }] },
+  phaseLogs: {
+    orderBy: { createdAt: 'desc' as const },
+    include: { changedBy: { select: { firstName: true, lastName: true } } },
+  },
 };
 
 export async function injuryRoutes(app: FastifyInstance) {
+  /**
+   * Il protocollo da usare per questo infortunio.
+   *
+   * Se il client Prisma non conosce ancora i template (deploy senza
+   * `db:generate`) si torna null e il chiamante usa il protocollo storico:
+   * meglio un RTP generico che un errore in faccia al medico.
+   */
+  async function resolveTemplate(
+    organizationId: string,
+    injury: { location: string; type: string; severity: number },
+    templateId?: string,
+  ) {
+    const client = app.prisma as unknown as Record<string, unknown>;
+    if (!client.rTPTemplate) return null;
+
+    const include = {
+      phases: {
+        orderBy: { order: 'asc' as const },
+        include: { criteria: { orderBy: { order: 'asc' as const } } },
+      },
+    };
+    const visible = { OR: [{ organizationId: null }, { organizationId }] };
+
+    if (templateId) {
+      return app.prisma.rTPTemplate.findFirst({ where: { id: templateId, ...visible }, include });
+    }
+
+    const candidates = await app.prisma.rTPTemplate.findMany({
+      where: { ...visible, isActive: true },
+      include,
+    });
+    if (!candidates.length) return null;
+
+    return pickRtpTemplate(candidates, {
+      zone: rtpBaseZone(injury.location),
+      region: rtpRegionOf(injury.location),
+      injuryType: injury.type,
+      severity: injury.severity,
+    });
+  }
+
   // ─── LIST injuries for an athlete ──────────────────────
   app.get('/athletes/:athleteId/injuries', {
     preHandler: [app.authenticate],
@@ -150,13 +215,18 @@ export async function injuryRoutes(app: FastifyInstance) {
   });
 
   // ─── CREATE RTP Protocol for an injury ─────────────────
+  //
+  // Il protocollo si sceglie da solo in base a zona, tipo e severita';
+  // `templateId` serve solo quando il medico ne vuole un altro. Fasi e criteri
+  // vengono copiati: da qui in avanti il protocollo dell'atleta e' suo.
   app.post('/injuries/:injuryId/rtp', {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
     const { injuryId } = request.params as { injuryId: string };
-    const body = request.body as {
+    const body = (request.body ?? {}) as {
       targetDate?: string;
       notes?: string;
+      templateId?: string;
       autoCreateCriteria?: boolean;
     };
 
@@ -166,7 +236,34 @@ export async function injuryRoutes(app: FastifyInstance) {
     });
     if (!injury) return reply.notFound('Infortunio non trovato');
 
-    // Update injury status to RECOVERING
+    const withCriteria = body.autoCreateCriteria !== false;
+    const template = withCriteria
+      ? await resolveTemplate(request.user.organizationId, injury, body.templateId)
+      : null;
+    if (body.templateId && !template) return reply.notFound('Protocollo non trovato');
+
+    const phases = template
+      ? template.phases.map((p) => ({
+          order: p.order,
+          name: p.name,
+          goal: p.goal,
+          minDays: p.minDays,
+          typicalDays: p.typicalDays,
+          criteria: p.criteria,
+        }))
+      : withCriteria
+        ? FALLBACK_PHASES.map((p) => ({
+            ...p,
+            criteria: p.criteria.map((description, i) => ({
+              order: i + 1, description, testCode: null, comparator: null,
+              targetValue: null, unit: null, mandatory: true,
+            })),
+          }))
+        : [];
+
+    const startDate = new Date();
+    const estimated = phases.length ? rtpEstimatedReturn(startDate, phases) : null;
+
     await app.prisma.injury.update({
       where: { id: injuryId },
       data: { status: 'RECOVERING' },
@@ -176,51 +273,53 @@ export async function injuryRoutes(app: FastifyInstance) {
       data: {
         injuryId,
         athleteId: injury.athleteId,
-        startDate: new Date(),
-        targetDate: body.targetDate ? new Date(body.targetDate) : null,
+        startDate,
+        // La data scritta a mano vince sempre sulla stima del protocollo.
+        targetDate: body.targetDate ? new Date(body.targetDate) : estimated,
         notes: body.notes,
+        templateId: template?.id ?? null,
+        templateName: template?.name ?? null,
+        phases: {
+          create: phases.map((ph) => ({
+            phase: PHASE_BY_ORDER[ph.order - 1],
+            order: ph.order,
+            name: ph.name,
+            goal: ph.goal ?? null,
+            minDays: ph.minDays ?? null,
+            typicalDays: ph.typicalDays ?? null,
+            startedAt: ph.order === 1 ? startDate : null,
+          })),
+        },
+        criteria: {
+          create: phases.flatMap((ph) =>
+            ph.criteria.map((c) => ({
+              phase: PHASE_BY_ORDER[ph.order - 1],
+              order: c.order,
+              description: c.description,
+              testCode: c.testCode ?? null,
+              comparator: c.comparator ?? null,
+              targetValue: c.targetValue ?? null,
+              unit: c.unit ?? null,
+              mandatory: c.mandatory,
+            })),
+          ),
+        },
       },
     });
 
-    // Auto-create default clearance criteria for all phases
-    if (body.autoCreateCriteria !== false) {
-      const criteriaData: Array<{
-        rtpProtocolId: string;
-        phase: 'PHASE_1' | 'PHASE_2' | 'PHASE_3' | 'PHASE_4' | 'PHASE_5';
-        description: string;
-      }> = [];
-      for (const [phase, descriptions] of Object.entries(DEFAULT_CRITERIA)) {
-        for (const description of descriptions) {
-          criteriaData.push({
-            rtpProtocolId: protocol.id,
-            phase: phase as 'PHASE_1' | 'PHASE_2' | 'PHASE_3' | 'PHASE_4' | 'PHASE_5',
-            description,
-          });
-        }
-      }
-      await app.prisma.clearanceCriteria.createMany({ data: criteriaData });
-    }
-
-    // Log initial phase
     await app.prisma.rTPPhaseLog.create({
       data: {
         rtpProtocolId: protocol.id,
         fromPhase: 'PHASE_1',
         toPhase: 'PHASE_1',
         changedById: request.user.id,
-        reason: 'Protocollo RTP avviato',
+        reason: template ? `Protocollo RTP avviato — ${template.name}` : 'Protocollo RTP avviato',
       },
     });
 
-    // Refetch with relations
     const full = await app.prisma.rTPProtocol.findUnique({
       where: { id: protocol.id },
-      include: {
-        injury: true,
-        athlete: { select: { id: true, firstName: true, lastName: true } },
-        criteria: { orderBy: [{ phase: 'asc' }, { createdAt: 'asc' }] },
-        phaseLogs: { orderBy: { createdAt: 'desc' }, include: { changedBy: { select: { firstName: true, lastName: true } } } },
-      },
+      include: PROTOCOL_INCLUDE,
     });
 
     return reply.status(201).send({ success: true, data: { protocol: full } });
@@ -234,15 +333,7 @@ export async function injuryRoutes(app: FastifyInstance) {
 
     const protocol = await app.prisma.rTPProtocol.findFirst({
       where: { id, athlete: { organizationId: request.user.organizationId } },
-      include: {
-        injury: true,
-        athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
-        criteria: { orderBy: [{ phase: 'asc' }, { createdAt: 'asc' }] },
-        phaseLogs: {
-          orderBy: { createdAt: 'desc' },
-          include: { changedBy: { select: { firstName: true, lastName: true } } },
-        },
-      },
+      include: PROTOCOL_INCLUDE,
     });
     if (!protocol) return reply.notFound('Protocollo RTP non trovato');
 
@@ -259,8 +350,10 @@ export async function injuryRoutes(app: FastifyInstance) {
         currentPhase: { not: 'CLEARED' },
       },
       include: {
-        injury: { select: { type: true, location: true, severity: true } },
+        injury: { select: { type: true, location: true, severity: true, dateOccurred: true } },
         athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
+        phases: { orderBy: { order: 'asc' }, select: { phase: true, order: true, name: true } },
+        template: { select: { code: true } },
         _count: { select: { criteria: true, phaseLogs: true } },
       },
       orderBy: { updatedAt: 'desc' },
@@ -270,6 +363,11 @@ export async function injuryRoutes(app: FastifyInstance) {
   });
 
   // ─── ADVANCE / REVERT RTP phase ───────────────────────
+  //
+  // L'ordine delle fasi e' quello del protocollo, non piu' una costante: un
+  // protocollo puo' averne 3 come 6. A bloccare l'avanzamento sono solo i
+  // criteri obbligatori; quelli facoltativi vengono riportati come avvisi,
+  // perche' "consigliato" e "necessario" non sono la stessa cosa.
   app.post('/rtp/:id/advance', {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
@@ -278,77 +376,101 @@ export async function injuryRoutes(app: FastifyInstance) {
 
     const protocol = await app.prisma.rTPProtocol.findFirst({
       where: { id, athlete: { organizationId: request.user.organizationId } },
-      include: { criteria: true },
+      include: { criteria: true, phases: { orderBy: { order: 'asc' } } },
     });
     if (!protocol) return reply.notFound('Protocollo RTP non trovato');
 
-    const PHASE_ORDER = ['PHASE_1', 'PHASE_2', 'PHASE_3', 'PHASE_4', 'PHASE_5', 'CLEARED'];
-    const currentIdx = PHASE_ORDER.indexOf(protocol.currentPhase);
-    const targetIdx = PHASE_ORDER.indexOf(body.targetPhase);
-    if (targetIdx < 0) return reply.badRequest('Fase non valida');
+    const sequence = phaseSequence(protocol.phases);
+    const currentIdx = sequence.indexOf(protocol.currentPhase);
+    const targetIdx = sequence.indexOf(body.targetPhase);
+    if (targetIdx < 0) return reply.badRequest('Fase non valida per questo protocollo');
 
-    // If advancing (not reverting), check clearance criteria
-    if (targetIdx > currentIdx && !body.force) {
-      const unmetCriteria = protocol.criteria.filter(
-        (c) => c.phase === protocol.currentPhase && !c.isMet
-      );
-      if (unmetCriteria.length > 0) {
-        return reply.status(422).send({
-          success: false,
-          error: {
-            code: 'CRITERIA_NOT_MET',
-            message: `${unmetCriteria.length} criteri non soddisfatti per la fase corrente`,
-            unmetCriteria: unmetCriteria.map((c) => ({ id: c.id, description: c.description })),
-          },
+    const advancing = targetIdx > currentIdx;
+    const openCriteria = protocol.criteria.filter((c) => c.phase === protocol.currentPhase && !c.isMet);
+    const blocking = openCriteria.filter((c) => c.mandatory);
+    const advisory = openCriteria.filter((c) => !c.mandatory);
+
+    if (advancing && !body.force && blocking.length > 0) {
+      return reply.status(422).send({
+        success: false,
+        error: {
+          code: 'CRITERIA_NOT_MET',
+          message: `${blocking.length} criteri obbligatori non soddisfatti per la fase corrente`,
+          unmetCriteria: blocking.map((c) => ({ id: c.id, description: c.description })),
+          advisoryCriteria: advisory.map((c) => ({ id: c.id, description: c.description })),
+        },
+      });
+    }
+
+    const now = new Date();
+    await app.prisma.rTPProtocol.update({
+      where: { id },
+      data: { currentPhase: body.targetPhase as never },
+    });
+
+    // Timbri sulle fasi: quella lasciata si chiude, quella in cui si entra si
+    // apre. Tornando indietro si riapre la fase di destinazione e si annulla
+    // la chiusura di quelle successive, altrimenti lo storico direbbe che una
+    // fase e' stata completata due volte.
+    const entered = protocol.phases.find((ph) => ph.phase === body.targetPhase);
+    if (advancing) {
+      const left = protocol.phases.find((ph) => ph.phase === protocol.currentPhase);
+      if (left && !left.completedAt) {
+        await app.prisma.rTPProtocolPhase.update({ where: { id: left.id }, data: { completedAt: now } });
+      }
+      if (entered && !entered.startedAt) {
+        await app.prisma.rTPProtocolPhase.update({ where: { id: entered.id }, data: { startedAt: now } });
+      }
+    } else if (targetIdx < currentIdx) {
+      const reopened = protocol.phases.filter((ph) => sequence.indexOf(ph.phase) >= targetIdx);
+      if (reopened.length) {
+        await app.prisma.rTPProtocolPhase.updateMany({
+          where: { id: { in: reopened.map((ph) => ph.id) } },
+          data: { completedAt: null },
         });
       }
     }
 
-    // Update phase
-    await app.prisma.rTPProtocol.update({
-      where: { id },
-      data: { currentPhase: body.targetPhase as any },
-    });
-
-    // Log transition
     await app.prisma.rTPPhaseLog.create({
       data: {
         rtpProtocolId: id,
         fromPhase: protocol.currentPhase,
-        toPhase: body.targetPhase as any,
+        toPhase: body.targetPhase as never,
         changedById: request.user.id,
         reason: body.reason,
       },
     });
 
-    // If cleared, resolve injury
     if (body.targetPhase === 'CLEARED') {
       await app.prisma.injury.update({
         where: { id: protocol.injuryId },
-        data: { status: 'RESOLVED', dateResolved: new Date() },
+        data: { status: 'RESOLVED', dateResolved: now },
+      });
+    } else if (protocol.currentPhase === 'CLEARED') {
+      // Si torna indietro da un rientro gia' dato: l'infortunio riapre.
+      await app.prisma.injury.update({
+        where: { id: protocol.injuryId },
+        data: { status: 'RECOVERING', dateResolved: null },
       });
     }
 
-    // Refetch
     const updated = await app.prisma.rTPProtocol.findUnique({
       where: { id },
-      include: {
-        injury: true,
-        athlete: { select: { id: true, firstName: true, lastName: true } },
-        criteria: { orderBy: [{ phase: 'asc' }, { createdAt: 'asc' }] },
-        phaseLogs: { orderBy: { createdAt: 'desc' }, include: { changedBy: { select: { firstName: true, lastName: true } } } },
-      },
+      include: PROTOCOL_INCLUDE,
     });
 
-    return { success: true, data: { protocol: updated } };
+    return { success: true, data: { protocol: updated, forced: Boolean(body.force && blocking.length) } };
   });
 
   // ─── TOGGLE clearance criterion ────────────────────────
+  // `measuredValue` accompagna la spunta: la soglia non spunta il criterio da
+  // sola (a decidere resta il medico) ma il valore misurato resta scritto
+  // accanto, cosi' fra sei mesi si sa su cosa era stata presa la decisione.
   app.patch('/rtp/criteria/:criterionId', {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
     const { criterionId } = request.params as { criterionId: string };
-    const body = request.body as { isMet: boolean; notes?: string };
+    const body = request.body as { isMet?: boolean; notes?: string; measuredValue?: number | null };
 
     const criterion = await app.prisma.clearanceCriteria.findFirst({
       where: {
@@ -358,13 +480,15 @@ export async function injuryRoutes(app: FastifyInstance) {
     });
     if (!criterion) return reply.notFound('Criterio non trovato');
 
+    const isMet = body.isMet ?? criterion.isMet;
     const updated = await app.prisma.clearanceCriteria.update({
       where: { id: criterionId },
       data: {
-        isMet: body.isMet,
-        metAt: body.isMet ? new Date() : null,
-        metById: body.isMet ? request.user.id : null,
+        isMet,
+        metAt: isMet ? criterion.metAt ?? new Date() : null,
+        metById: isMet ? criterion.metById ?? request.user.id : null,
         ...(body.notes !== undefined && { notes: body.notes }),
+        ...(body.measuredValue !== undefined && { measuredValue: body.measuredValue }),
       },
     });
 
@@ -376,21 +500,68 @@ export async function injuryRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as { phase: string; description: string };
+    const body = request.body as {
+      phase: string;
+      description: string;
+      testCode?: string | null;
+      comparator?: string | null;
+      targetValue?: number | null;
+      unit?: string | null;
+      mandatory?: boolean;
+    };
 
     const protocol = await app.prisma.rTPProtocol.findFirst({
       where: { id, athlete: { organizationId: request.user.organizationId } },
+      include: { phases: { orderBy: { order: 'asc' } } },
     });
     if (!protocol) return reply.notFound('Protocollo RTP non trovato');
+    if (!body.description?.trim()) return reply.badRequest('La descrizione del criterio e\' obbligatoria');
+    if (!phaseSequence(protocol.phases).includes(body.phase)) {
+      return reply.badRequest('Fase non valida per questo protocollo');
+    }
+
+    const last = await app.prisma.clearanceCriteria.findFirst({
+      where: { rtpProtocolId: id, phase: body.phase as never },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    });
 
     const criterion = await app.prisma.clearanceCriteria.create({
       data: {
         rtpProtocolId: id,
-        phase: body.phase as any,
-        description: body.description,
+        phase: body.phase as never,
+        order: (last?.order ?? 0) + 1,
+        description: body.description.trim(),
+        testCode: body.testCode ?? null,
+        comparator: body.comparator ?? null,
+        targetValue: body.targetValue ?? null,
+        unit: body.unit ?? null,
+        mandatory: body.mandatory ?? true,
       },
     });
 
     return reply.status(201).send({ success: true, data: { criterion } });
+  });
+
+  // ─── DELETE clearance criterion ────────────────────────
+  // Un criterio aggiunto per sbaglio bloccherebbe il passaggio di fase per
+  // sempre: senza questa rotta l'unica uscita sarebbe spuntarlo per finta.
+  app.delete('/rtp/criteria/:criterionId', {
+    preHandler: [app.authenticate, requireMinRole('MEDICAL')],
+  }, async (request, reply) => {
+    const { criterionId } = request.params as { criterionId: string };
+
+    const criterion = await app.prisma.clearanceCriteria.findFirst({
+      where: {
+        id: criterionId,
+        rtpProtocol: { athlete: { organizationId: request.user.organizationId } },
+      },
+      select: { id: true },
+    });
+    if (!criterion) return reply.notFound('Criterio non trovato');
+
+    await app.prisma.clearanceCriteria.delete({ where: { id: criterionId } });
+
+    return { success: true, data: { deleted: true } };
   });
 }

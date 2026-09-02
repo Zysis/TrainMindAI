@@ -63,11 +63,11 @@ interface LibraryExercise {
   muscleGroups: string[];
 }
 
-const statusLabels: Record<string, string> = {
-  PLANNED: 'Pianificata',
-  IN_PROGRESS: 'In corso',
-  COMPLETED: 'Completata',
-  CANCELLED: 'Annullata',
+const statusLabelKeys: Record<string, string> = {
+  PLANNED: 'planned',
+  IN_PROGRESS: 'inProgress',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
 };
 
 const statusVariants: Record<string, 'default' | 'teal' | 'success' | 'danger'> = {
@@ -230,7 +230,7 @@ export default function SessionDetailPage() {
               className="mb-1 inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-teal-700"
             >
               <ArrowLeft className="h-4 w-4" />
-              Torna alla scheda
+              {t('backToSheet')}
             </button>
             <h1 className="text-lg font-bold text-slate-900 dark:text-white">{session.title}</h1>
           </div>
@@ -266,7 +266,7 @@ export default function SessionDetailPage() {
             className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-teal-700"
           >
             <ArrowLeft className="h-4 w-4" />
-            Torna alla libreria sessioni
+            {t('backToSessionLibrary')}
           </Link>
         ) : session.week && (
           <Link
@@ -274,7 +274,7 @@ export default function SessionDetailPage() {
             className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-teal-700"
           >
             <ArrowLeft className="h-4 w-4" />
-            {session.week.trainingPlan.name} — Settimana {session.week.weekNumber}
+            {session.week.trainingPlan.name} — {t('weekLabel', { n: session.week.weekNumber })}
           </Link>
         )}
 
@@ -283,14 +283,14 @@ export default function SessionDetailPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{session.title}</h1>
               {isTemplate ? (
-                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">Template</span>
+                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">{t('template')}</span>
               ) : (
-                <Badge variant={statusVariants[session.status]}>{statusLabels[session.status]}</Badge>
+                <Badge variant={statusVariants[session.status]}>{t(statusLabelKeys[session.status])}</Badge>
               )}
               {session.aiModified && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
                   <Sparkles className="h-3 w-3" />
-                  Modificata da AI
+                  {t('aiModified')}
                 </span>
               )}
             </div>
@@ -303,7 +303,7 @@ export default function SessionDetailPage() {
               )}
               {session.duration && (
                 <span className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" /> {session.duration} minuti
+                  <Clock className="h-4 w-4" /> {session.duration} {t('minutesUnit')}
                 </span>
               )}
               {session.rpe && <span>RPE: {session.rpe}/10</span>}
@@ -323,7 +323,7 @@ export default function SessionDetailPage() {
                 className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                Completa
+                {t('completeBtn')}
               </button>
             )}
             <button
@@ -331,7 +331,7 @@ export default function SessionDetailPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
             >
               <Plus className="h-4 w-4" />
-              Aggiungi Esercizio
+              {t('addExercise')}
             </button>
           </div>
         </div>
@@ -340,7 +340,7 @@ export default function SessionDetailPage() {
       {/* Exercise list */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Esercizi ({session.sessionExercises.length})
+          {t('exercisesCountLabel', { count: session.sessionExercises.length })}
         </h2>
 
         {session.sessionExercises.length === 0 ? (
@@ -353,7 +353,7 @@ export default function SessionDetailPage() {
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
             >
               <Plus className="h-4 w-4" />
-              Aggiungi esercizio
+              {t('addExerciseLower')}
             </button>
           </div>
         ) : (
@@ -392,7 +392,7 @@ export default function SessionDetailPage() {
                     {/* Editable params */}
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Serie</label>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('setsLabel')}</label>
                         <input
                           type="number"
                           defaultValue={se.sets ?? ''}
@@ -404,7 +404,7 @@ export default function SessionDetailPage() {
                         />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Reps</label>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('repsLabel')}</label>
                         <input
                           type="text"
                           defaultValue={se.reps ?? ''}
@@ -454,7 +454,7 @@ export default function SessionDetailPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Recupero</label>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('recoveryLabel')}</label>
                         <input
                           type="number"
                           defaultValue={se.restTime ?? ''}
@@ -514,7 +514,7 @@ export default function SessionDetailPage() {
           <div className="flex-1 overflow-y-auto">
             {filteredLibrary.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-                Nessun esercizio trovato
+                {t('noExercisesFound')}
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -535,7 +535,7 @@ export default function SessionDetailPage() {
                         <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{ex.muscleGroups.join(', ')}</p>
                       </div>
                       {isAdded ? (
-                        <span className="text-xs font-medium text-green-600">Aggiunto</span>
+                        <span className="text-xs font-medium text-green-600">{t('addedLabel')}</span>
                       ) : (
                         <button
                           onClick={() => handleAddExercise(ex.id)}

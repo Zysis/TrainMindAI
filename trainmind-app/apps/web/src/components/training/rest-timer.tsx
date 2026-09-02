@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Timer, Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 
 interface RestTimerProps {
@@ -13,6 +14,7 @@ interface RestTimerProps {
 }
 
 export function RestTimer({ defaultSeconds = 90, onComplete, compact = false }: RestTimerProps) {
+  const t = useTranslations('liveSession');
   const [seconds, setSeconds] = useState(defaultSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -123,12 +125,12 @@ export function RestTimer({ defaultSeconds = 90, onComplete, compact = false }: 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Timer className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-          <span className="text-sm font-medium text-slate-700">Recupero</span>
+          <span className="text-sm font-medium text-slate-700">{t('rest')}</span>
         </div>
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className="rounded p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400"
-          title={soundEnabled ? 'Disattiva suono' : 'Attiva suono'}
+          title={soundEnabled ? t('disableSound') : t('enableSound')}
         >
           {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </button>
@@ -160,7 +162,7 @@ export function RestTimer({ defaultSeconds = 90, onComplete, compact = false }: 
         <button
           onClick={() => reset()}
           className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 hover:text-slate-600 dark:text-slate-400"
-          title="Reset"
+          title={t('reset')}
         >
           <RotateCcw className="h-5 w-5" />
         </button>
@@ -173,9 +175,9 @@ export function RestTimer({ defaultSeconds = 90, onComplete, compact = false }: 
           }`}
         >
           {isRunning ? (
-            <span className="flex items-center gap-2"><Pause className="h-4 w-4" /> Pausa</span>
+            <span className="flex items-center gap-2"><Pause className="h-4 w-4" /> {t('pause')}</span>
           ) : (
-            <span className="flex items-center gap-2"><Play className="h-4 w-4" /> Avvia</span>
+            <span className="flex items-center gap-2"><Play className="h-4 w-4" /> {t('start')}</span>
           )}
         </button>
       </div>

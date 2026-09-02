@@ -208,9 +208,9 @@ const T = {
     'hero.title.1': 'Train more,',
     'hero.title.2': 'decide better.',
     'hero.subtitle':
-      'TrainMind is the platform you use every day to plan training, read load, follow your athletes and generate reports. Built by coaches, for basketball strength coaches.',
+      'TrainMind is the platform you use every day to plan sessions, track load, stay on top of your athletes and generate reports. Built by strength and conditioning coaches, for basketball.',
     'hero.cta.secondary': 'See the platform',
-    'hero.live.title': 'Squad · Today',
+    'hero.live.title': 'Team · Today',
     'hero.live.load': 'Load distribution (ACWR)',
     'hero.live.zoneOk': 'optimal',
     'hero.live.zoneHi': 'high',
@@ -227,13 +227,13 @@ const T = {
     'features.h2.1': 'Everything your staff needs,',
     'features.h2.2': 'on a single platform.',
     'features.sub':
-      'From athlete management to periodization, TrainMind covers the entire athletic prep workflow.',
+      'From athlete management to periodization, TrainMind covers the entire strength and conditioning workflow.',
 
     'features.analytics.label': 'Analytics',
     'features.analytics.title': 'Real-time load monitoring',
     'features.analytics.desc':
       'sRPE, ACWR, wellness score and interactive charts. Automatic alerts when an athlete enters the risk zone.',
-    'features.analytics.chartTitle': 'ACWR — Squad',
+    'features.analytics.chartTitle': 'ACWR — Team',
     'features.analytics.chartRange': 'Last 14 days',
     'features.analytics.alerts': '3 alerts',
     // Iniziali dei giorni, da lunedi' a domenica
@@ -242,8 +242,8 @@ const T = {
     'features.ai.label': 'Your personal assistant',
     'features.ai.title': 'An assistant always by your side',
     'features.ai.desc':
-      'Suggestions on periodization, exercises and RTP protocols, based on your squad’s real data.',
-    'features.ai.chatUser': 'Is Peter still fit for Tuesday?',
+      'Suggestions on periodization, exercises and RTP protocols, based on your team’s real data.',
+    'features.ai.chatUser': 'Is Peter still cleared for Tuesday?',
     'features.ai.chatAI': 'Not recommended. ACWR 1.42 — I suggest a 2-day deload.',
 
     'features.period.title': 'Periodization',
@@ -281,7 +281,7 @@ const T = {
     'pricing.equivalent': 'equivalent to {price}/month',
 
     'plan.starter.name': 'Starter',
-    'plan.starter.tagline': 'For those starting out and wanting the basics.',
+    'plan.starter.tagline': 'For anyone starting out who just wants the basics.',
     'plan.starter.cta': 'Sign up',
     'plan.starter.feat.1': '1 team (12 athletes)',
     'plan.starter.feat.2': 'Basic reports',
@@ -289,7 +289,7 @@ const T = {
     'plan.starter.feat.4': 'Calendar',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'For coaches who mean business.',
+    'plan.pro.tagline': 'For strength coaches who mean business.',
     'plan.pro.cta': 'Sign up',
     'plan.pro.feat.1': '3 teams (12 athletes per team)',
     'plan.pro.feat.2': 'Advanced reports',
@@ -306,14 +306,14 @@ const T = {
     'plan.ultra.feat.3': 'API access',
     'plan.ultra.feat.4': 'Priority support',
 
-    'cta.h2': 'Ready to transform your athletic preparation?',
+    'cta.h2': 'Ready to transform your strength and conditioning?',
     'cta.sub':
       'Join the strength coaches who use TrainMind to make better decisions, faster.',
     'cta.button': 'Create an account',
 
     'cta.kick': 'Get started',
     'footer.copyright': 'All rights reserved.',
-    'footer.tagline': 'The platform for basketball strength coaches. Plan sessions, monitor load and keep all your data with you.',
+    'footer.tagline': 'The platform for basketball strength and conditioning coaches. Plan sessions, monitor load and keep all your data with you.',
     'footer.col.product': 'Product',
     'footer.col.legal': 'Legal',
     'footer.col.contact': 'Contact',
@@ -329,7 +329,7 @@ const T = {
     'nav.pricing': 'Precios',
     'nav.login': 'Login',
 
-    'hero.badge': 'Temporada 26/27 · En vivo para el baloncesto',
+    'hero.badge': 'Temporada 26/27 · Ya disponible para el baloncesto',
     'hero.title.1': 'Entrenar más,',
     'hero.title.2': 'decidir mejor.',
     'hero.subtitle':
@@ -346,7 +346,7 @@ const T = {
     'hero.live.a1': 'Lucas Rodríguez',
     'hero.live.a2': 'Adrià Martínez',
     'hero.live.a3': 'Jaime Villa',
-    'hero.scroll': 'Desliza',
+    'hero.scroll': 'Desplázate',
 
     'features.pill': 'Plataforma',
     'features.h2.1': 'Todo lo que tu staff necesita,',
@@ -355,7 +355,7 @@ const T = {
       'Desde la gestión de atletas hasta la periodización, TrainMind cubre todo el flujo de la preparación física.',
 
     'features.analytics.label': 'Analytics',
-    'features.analytics.title': 'Monitoreo de carga en tiempo real',
+    'features.analytics.title': 'Monitorización de carga en tiempo real',
     'features.analytics.desc':
       'sRPE, ACWR, wellness score y gráficos interactivos. Alertas automáticas cuando un atleta entra en zona de riesgo.',
     'features.analytics.chartTitle': 'ACWR — Equipo',
@@ -392,7 +392,7 @@ const T = {
     'band.1': 'horas para el informe semanal, casi nunca dedicadas a analizarlo',
     'band.2': 'la mirada del primer entrenador a ese informe',
     'band.3': 'sitios distintos donde viven los datos: GPS, tests, wellness, asistencia',
-    'band.4': 'del primer volcado al primer informe: el objetivo de TrainMind',
+    'band.4': 'de la primera subida al primer informe: el objetivo de TrainMind',
 
     'pricing.kick': 'Precios',
     'pricing.h2': 'Planes y precios',
@@ -427,7 +427,7 @@ const T = {
     'plan.ultra.tagline': 'Tu plataforma, sin límites.',
     'plan.ultra.cta': 'Regístrate',
     'plan.ultra.feat.1': 'Equipos y atletas ilimitados',
-    'plan.ultra.feat.2': 'Todo Professional',
+    'plan.ultra.feat.2': 'Todo lo de Professional',
     'plan.ultra.feat.3': 'Acceso API',
     'plan.ultra.feat.4': 'Soporte prioritario',
 

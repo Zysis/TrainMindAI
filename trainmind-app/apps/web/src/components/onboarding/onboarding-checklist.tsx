@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
@@ -19,16 +19,6 @@ interface ChecklistItem {
   label: string;
   href: string;
 }
-
-// ─── Items ───────────────────────────────────────────────
-
-const ITEMS: ChecklistItem[] = [
-  { id: 'add_athlete', label: 'Aggiungi il primo atleta', href: '/dashboard/teams' },
-  { id: 'create_plan', label: 'Crea una scheda con l\u2019AI', href: '/dashboard/chat' },
-  { id: 'log_session', label: 'Registra una sessione', href: '/dashboard/training' },
-  { id: 'fill_wellness', label: 'Compila il wellness', href: '/dashboard/wellness' },
-  { id: 'gen_report', label: 'Genera un report', href: '/dashboard/reports' },
-];
 
 const LS_KEY = 'tm_onboarding_checklist';
 const LS_DISMISSED = 'tm_onboarding_checklist_dismissed';
@@ -59,6 +49,16 @@ function saveState(state: ChecklistState) {
 
 export function OnboardingChecklist() {
   const t = useTranslations('onboarding');
+  const items = useMemo<ChecklistItem[]>(
+    () => [
+      { id: 'add_athlete', label: t('addAthlete'), href: '/dashboard/teams' },
+      { id: 'create_plan', label: t('createAIPlan'), href: '/dashboard/chat' },
+      { id: 'log_session', label: t('logSession'), href: '/dashboard/training' },
+      { id: 'fill_wellness', label: t('fillWellness'), href: '/dashboard/wellness' },
+      { id: 'gen_report', label: t('genReport'), href: '/dashboard/reports' },
+    ],
+    [t]
+  );
   const [state, setState] = useState<ChecklistState>({ completed: [] });
   const [expanded, setExpanded] = useState(true);
   const [dismissed, setDismissed] = useState(true); // start hidden to avoid flash
@@ -103,7 +103,7 @@ export function OnboardingChecklist() {
   if (!mounted || dismissed) return null;
 
   const completedCount = state.completed.length;
-  const total = ITEMS.length;
+  const total = items.length;
   const pct = Math.round((completedCount / total) * 100);
 
   return (
@@ -120,7 +120,7 @@ export function OnboardingChecklist() {
           <div className="text-left">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('gettingStarted')}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {completedCount}/{total} completati
+              {t('completedOf', { done: completedCount, total })}
             </p>
           </div>
         </button>
@@ -157,7 +157,7 @@ export function OnboardingChecklist() {
           <button
             onClick={() => setExpanded((e) => !e)}
             className="rounded p-1 text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 hover:text-slate-600 dark:text-slate-400"
-            aria-label="Espandi/comprimi"
+            aria-label={t('expandCollapse')}
           >
             {expanded ? (
               <ChevronUp className="h-4 w-4" />
@@ -181,14 +181,14 @@ export function OnboardingChecklist() {
       {expanded && (
         <div className="border-t border-slate-100 dark:border-slate-700 px-5 py-3">
           <ul className="space-y-1">
-            {ITEMS.map((item) => {
+            {items.map((item) => {
               const done = state.completed.includes(item.id);
               return (
                 <li key={item.id} className="flex items-center gap-3">
                   <button
                     onClick={() => toggle(item.id)}
                     className="flex-shrink-0"
-                    aria-label={done ? 'Segna come incompleto' : 'Segna come completo'}
+                    aria-label={done ? t('markIncomplete') : t('markComplete')}
                   >
                     {done ? (
                       <CheckCircle2 className="h-5 w-5 text-teal-600" />

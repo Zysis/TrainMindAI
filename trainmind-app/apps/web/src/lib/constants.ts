@@ -75,7 +75,7 @@ export function isBodyweightCategory(category?: string | null): boolean {
 
 export const WELLNESS_FIELDS = [
   { key: 'sleepHours', label: 'Ore Sonno', min: 0, max: 14, unit: 'h' },
-  { key: 'sleepQuality', label: 'Qualita Sonno', min: 1, max: 5 },
+  { key: 'sleepQuality', label: 'Qualità Sonno', min: 1, max: 5 },
   { key: 'fatigue', label: 'Fatica', min: 1, max: 5 },
   { key: 'soreness', label: 'Dolore Muscolare', min: 1, max: 5 },
   { key: 'stress', label: 'Stress', min: 1, max: 5 },

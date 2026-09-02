@@ -181,7 +181,7 @@ export default function SessionsPage() {
 
       {/* Stats bar */}
       <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <span className="font-medium text-slate-700 dark:text-slate-300">{total}</span> sessioni nella libreria
+        <span className="font-medium text-slate-700 dark:text-slate-300">{total}</span> {t('sessionsInLibrary')}
       </div>
 
       {/* Sessions grid */}
@@ -199,7 +199,7 @@ export default function SessionsPage() {
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
           >
             <Plus className="h-4 w-4" />
-            Crea Sessione
+            {t('createSession')}
           </button>
         </div>
       ) : (
@@ -218,11 +218,11 @@ export default function SessionsPage() {
                   <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {s.duration} min
+                      {s.duration} {tCommon('minutes')}
                     </span>
                     <span className="flex items-center gap-1">
                       <Dumbbell className="h-3 w-3" />
-                      {s._count.sessionExercises} esercizi
+                      {s._count.sessionExercises} {tCommon('exercises')}
                     </span>
                   </div>
                 </div>
@@ -262,7 +262,7 @@ export default function SessionsPage() {
 
               {s._count.sessionExercises === 0 && (
                 <p className="mt-3 text-xs text-slate-400 dark:text-slate-500 italic">
-                  Nessun esercizio — clicca per aggiungere
+                  {t('noExercisesClick')}
                 </p>
               )}
 
@@ -282,17 +282,17 @@ export default function SessionsPage() {
             disabled={page <= 1}
             className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:opacity-50"
           >
-            Precedente
+            {t('previousPage')}
           </button>
           <span className="text-sm text-slate-500 dark:text-slate-400">
-            Pagina {page} di {Math.ceil(total / 30)}
+            {t('pageOf', { page, total: Math.ceil(total / 30) })}
           </span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={page >= Math.ceil(total / 30)}
             className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:opacity-50"
           >
-            Successiva
+            {t('nextPage')}
           </button>
         </div>
       )}
@@ -308,14 +308,14 @@ export default function SessionsPage() {
               onClick={() => setShowCreate(false)}
               className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
             >
-              Annulla
+              {tCommon('cancel')}
             </button>
             <button
               onClick={handleCreate}
               disabled={creating || !form.title.trim()}
               className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
             >
-              {creating ? 'Creazione...' : 'Crea Sessione'}
+              {creating ? t('creating') : t('createSession')}
             </button>
           </div>
         }
@@ -325,7 +325,7 @@ export default function SessionsPage() {
             label={t('sessionNameLabel')}
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="es. Forza — Upper Body"
+            placeholder={t('sessionNamePlaceholder')}
           />
           <Input
             label={t('durationLabel')}

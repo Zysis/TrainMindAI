@@ -86,6 +86,7 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
   const t = useTranslations('adaptations');
   const locale = useLocale();
   const tc = useTranslations('common');
+  const tSessions = useTranslations('sessions');
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
@@ -101,7 +102,7 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
   }[proposal.severity];
 
   const zoneLabel = (acwr: number) =>
-    acwr < 0.8 ? 'Bassa' : acwr <= 1.3 ? 'Ottimale' : acwr <= 1.5 ? 'Alta' : 'Critica';
+    acwr < 0.8 ? t('zoneLow') : acwr <= 1.3 ? t('zoneOptimal') : acwr <= 1.5 ? t('zoneHigh') : t('zoneCritical');
   const zoneColor = (acwr: number) =>
     acwr < 0.8 ? 'text-blue-600' : acwr <= 1.3 ? 'text-green-600' : acwr <= 1.5 ? 'text-amber-600' : 'text-red-600';
 
@@ -154,9 +155,9 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Adattamento AI proposto</h3>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">{t('aiProposal')}</h3>
               <span className={`rounded-full px-2 py-0.5 text-2xs font-medium uppercase text-white ${severityStyles.accent}`}>
-                {proposal.severity === 'danger' ? 'Urgente' : proposal.severity === 'warning' ? 'Avviso' : 'Info'}
+                {proposal.severity === 'danger' ? t('urgent') : proposal.severity === 'warning' ? t('severityWarning') : t('severityInfo')}
               </span>
             </div>
             <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
@@ -176,7 +177,7 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
       <div className="grid grid-cols-2 gap-3 border-b border-slate-100 dark:border-slate-700 px-5 py-4 sm:grid-cols-4">
         <MetricBox
           icon={Activity}
-          label="ACWR"
+          label={t('acwr')}
           value={metrics.acwr.toFixed(2)}
           sublabel={zoneLabel(metrics.acwr)}
           valueColor={zoneColor(metrics.acwr)}
@@ -185,21 +186,21 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
           icon={Heart}
           label={t('wellnessLabel')}
           value={`${metrics.wellnessScore}%`}
-          sublabel={metrics.wellnessScore >= 70 ? 'Buono' : metrics.wellnessScore >= 55 ? 'Medio' : 'Basso'}
+          sublabel={metrics.wellnessScore >= 70 ? t('wellnessGood') : metrics.wellnessScore >= 55 ? t('wellnessMedium') : t('wellnessLow')}
           valueColor={wellnessColor(metrics.wellnessScore)}
         />
         <MetricBox
           icon={Gauge}
-          label="RPE Medio"
+          label={t('avgRpe')}
           value={metrics.rpeAvg.toFixed(1)}
-          sublabel={`Target ${metrics.targetRpeAvg.toFixed(1)}`}
+          sublabel={t('targetValue', { value: metrics.targetRpeAvg.toFixed(1) })}
           valueColor="text-slate-900 dark:text-white"
         />
         <MetricBox
           icon={Target}
           label={t('completion')}
           value={`${Math.round(metrics.completionRate * 100)}%`}
-          sublabel={`${metrics.sessionsCount} sessioni`}
+          sublabel={`${metrics.sessionsCount} ${tc('sessions')}`}
           valueColor="text-slate-900 dark:text-white"
         />
       </div>
@@ -209,7 +210,7 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
         <div className="flex items-start gap-2">
           <AlertTriangle className={`mt-0.5 h-4 w-4 flex-shrink-0 ${severityStyles.icon}`} />
           <div className="flex-1">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">Motivazione AI</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{t('aiReasoning')}</p>
             <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{proposal.aiReasoning}</p>
           </div>
         </div>
@@ -252,10 +253,10 @@ export function AdaptationDiffCard({ data, onClose, onReviewed, compact }: Props
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                   <th className="px-2 py-2 text-left font-medium">{t('exerciseColumn')}</th>
-                  <th className="px-2 py-2 text-center font-medium">Serie</th>
-                  <th className="px-2 py-2 text-center font-medium">Rip.</th>
-                  <th className="px-2 py-2 text-center font-medium">Peso</th>
-                  <th className="px-2 py-2 text-center font-medium">Rec.</th>
+                  <th className="px-2 py-2 text-center font-medium">{tSessions('sets')}</th>
+                  <th className="px-2 py-2 text-center font-medium">{tSessions('reps')}</th>
+                  <th className="px-2 py-2 text-center font-medium">{tSessions('weight')}</th>
+                  <th className="px-2 py-2 text-center font-medium">{tSessions('rest')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

@@ -14,7 +14,11 @@ import {
   Activity,
   Sparkles,
   X,
+  Target,
+  ClipboardList,
+  Trash2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
@@ -27,6 +31,9 @@ import {
 } from '@/lib/constants/injuries';
 import { useApiError } from '@/lib/i18n/api-error';
 import { useTranslations, useLocale } from 'next-intl';
+import {
+  rtpText, rtpTemplateKey, rtpPhaseKey, rtpCriterionKey, rtpTestName, rtpUnit,
+} from '@trainmind/types/rtp-i18n';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -54,7 +61,10 @@ interface RTPProtocolSummary {
   currentPhase: string;
   startDate: string;
   targetDate: string | null;
-  injury: { type: string; location: string; severity: number };
+  phases?: Array<{ phase: string; order: number; name: string }>;
+  /** Protocollo di sistema da cui nasce: il `code` indicizza le traduzioni. */
+  template?: { code: string | null } | null;
+  injury: { type: string; location: string; severity: number; dateOccurred: string };
   athlete: { id: string; firstName: string; lastName: string; position: string; photoUrl: string | null };
   _count: { criteria: number; phaseLogs: number };
 }
@@ -62,10 +72,32 @@ interface RTPProtocolSummary {
 interface Criterion {
   id: string;
   phase: string;
+  order: number;
   description: string;
   isMet: boolean;
   metAt: string | null;
   notes: string | null;
+  /** Test e soglia: 'Hop test LSI' + gte + 90 + '%'. Vuoti = criterio descrittivo. */
+  testCode: string | null;
+  comparator: 'gte' | 'lte' | 'eq' | null;
+  targetValue: number | null;
+  unit: string | null;
+  measuredValue: number | null;
+  /** false = raccomandazione: non blocca il passaggio di fase. */
+  mandatory: boolean;
+}
+
+/** Le fasi di QUESTO protocollo: numero e nomi cambiano col template. */
+interface ProtocolPhase {
+  id: string;
+  phase: string;
+  order: number;
+  name: string;
+  goal: string | null;
+  minDays: number | null;
+  typicalDays: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
 }
 
 interface PhaseLog {
@@ -83,10 +115,33 @@ interface RTPDetail {
   startDate: string;
   targetDate: string | null;
   notes: string | null;
+  templateName: string | null;
+  /** Come sopra: assente (o `code` nullo) sui protocolli dell'organizzazione. */
+  template?: { code: string | null } | null;
   injury: { id: string; type: string; location: string; severity: number; status: string };
   athlete: { id: string; firstName: string; lastName: string; position: string; photoUrl: string | null };
+  phases: ProtocolPhase[];
   criteria: Criterion[];
   phaseLogs: PhaseLog[];
+}
+
+/** Anteprima del protocollo che verrebbe scelto, nel modale di registrazione. */
+interface TemplateMatch {
+  zone: string;
+  region: string;
+  template: { id: string; code: string | null; name: string; isSystem: boolean; phaseCount: number } | null;
+  estimatedReturn: string | null;
+}
+
+interface TemplateOption {
+  id: string;
+  code: string | null;
+  name: string;
+  isSystem: boolean;
+  bodyZone: string | null;
+  bodyRegion: string | null;
+  injuryType: string | null;
+  phases: Array<{ id: string; order: number; name: string; typicalDays: number | null }>;
 }
 
 interface Athlete {
@@ -119,6 +174,23 @@ function daysBetween(from: string, to?: string) {
   const end = to ? new Date(to) : new Date();
   return Math.floor((end.getTime() - new Date(from).getTime()) / 86400000);
 }
+
+/**
+ * Le fasi del protocollo, con CLEARED in coda.
+ *
+ * I protocolli avviati prima della libreria non hanno fasi proprie: per loro
+ * si ricade sulle cinque storiche, altrimenti la pagina resterebbe vuota.
+ */
+// Accetta qualunque forma che porti `phase` e `order`: la lista usa una versione
+// ridotta di ProtocolPhase (senza id/goal/durate), il dettaglio quella completa.
+function protocolSequence(p: { phases?: Array<{ phase: string; order: number }> }): string[] {
+  const ordered = [...(p.phases ?? [])].sort((a, b) => a.order - b.order).map((ph) => ph.phase);
+  if (!ordered.length) return [...PHASE_ORDER];
+  return [...ordered, 'CLEARED'];
+}
+
+/** Simbolo del confronto, per la pastiglia della soglia. */
+const COMPARATOR_SIGN: Record<string, string> = { gte: '≥', lte: '≤', eq: '=' };
 
 // ─── Page ────────────────────────────────────────────────
 
@@ -168,6 +240,16 @@ export default function InjuriesRTPPage() {
     [t]
   );
 
+  // ── Testo clinico che arriva dal database ──
+  //
+  // Il seed scrive l'italiano; inglese e spagnolo stanno in `rtp-i18n`,
+  // indicizzati sul `code` del protocollo di sistema. I protocolli
+  // dell'organizzazione non hanno codice: `rtpText` non trova la chiave e
+  // restituisce la stringa del database, cioe' esattamente quello che ha
+  // scritto il medico. E' voluto.
+  const templateLabel = (code: string | null | undefined, name: string) =>
+    rtpText(locale, rtpTemplateKey(code), name);
+
   // Tab: 'rtp' (active protocols overview) or 'detail' (single RTP)
   const [tab, setTab] = useState<'rtp' | 'detail'>('rtp');
 
@@ -190,6 +272,12 @@ export default function InjuriesRTPPage() {
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
   const [advanceReason, setAdvanceReason] = useState('');
   const [advancing, setAdvancing] = useState(false);
+
+  // Protocollo scelto per il nuovo infortunio: proposto in automatico dalla
+  // libreria, sostituibile a mano prima di registrare.
+  const [templateMatch, setTemplateMatch] = useState<TemplateMatch | null>(null);
+  const [templates, setTemplates] = useState<TemplateOption[]>([]);
+  const [templateId, setTemplateId] = useState('');
 
   // AI Suggest
   const [aiSuggestion, setAiSuggestion] = useState<{ answer: string; sources: Array<{ title: string; score: number }>; protocol_summary: { currentPhase: string; metInPhase: number; totalInPhase: number } } | null>(null);
@@ -220,6 +308,33 @@ export default function InjuriesRTPPage() {
         setInjuryForm((f: InjuryForm) => ({ ...f, athleteId: list[0].id }));
       }
     } catch { /* ignore */ }
+  }
+
+  // ── Quale protocollo verrebbe scelto per questo infortunio ──
+  // Gira mentre si compila il modale: il medico vede il protocollo *prima* di
+  // registrare, non dopo averlo avviato.
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const { type, location, severity } = injuryForm;
+    if (!type || !location) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ location, injuryType: type, severity: String(severity) });
+        const res = await apiFetch<{ success: boolean; data: TemplateMatch }>(`/rtp-templates/match?${qs}`);
+        if (!cancelled) setTemplateMatch(res.data);
+      } catch {
+        if (!cancelled) setTemplateMatch(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [showCreateModal, injuryForm.type, injuryForm.location, injuryForm.severity]);
+
+  async function loadTemplates() {
+    try {
+      const res = await apiFetch<{ success: boolean; data: { templates: TemplateOption[] } }>('/rtp-templates');
+      setTemplates(res.data.templates);
+    } catch { /* la lista serve solo a poter scegliere: se manca resta l'automatico */ }
   }
 
   // ── Open RTP detail ──
@@ -260,12 +375,13 @@ export default function InjuriesRTPPage() {
         `/injuries/${injRes.data.injury.id}/rtp`,
         {
           method: 'POST',
-          body: JSON.stringify({ autoCreateCriteria: true }),
+          body: JSON.stringify({ autoCreateCriteria: true, templateId: templateId || undefined }),
         }
       );
 
       toast('success', t('injuryRegisteredRtp'));
       setShowCreateModal(false);
+      setTemplateId('');
       setRtpDetail(rtpRes.data.protocol);
       setTab('detail');
       fetchProtocols();
@@ -309,12 +425,45 @@ export default function InjuriesRTPPage() {
     }
   }
 
+  // ── Valore misurato di un criterio ──
+  async function saveMeasured(criterionId: string, value: string) {
+    if (!rtpDetail) return;
+    const parsed = value.trim() === '' ? null : Number(value.replace(',', '.'));
+    if (parsed != null && !Number.isFinite(parsed)) return;
+    try {
+      await apiFetch(`/rtp/criteria/${criterionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ measuredValue: parsed }),
+      });
+      const res = await apiFetch<{ success: boolean; data: { protocol: RTPDetail } }>(`/rtp/${rtpDetail.id}`);
+      setRtpDetail(res.data.protocol);
+    } catch (err: unknown) {
+      toast('error', apiError(err, t('updateError')));
+    }
+  }
+
+  // ── Elimina un criterio ──
+  async function deleteCriterion(criterionId: string) {
+    if (!rtpDetail) return;
+    try {
+      await apiFetch(`/rtp/criteria/${criterionId}`, { method: 'DELETE' });
+      const res = await apiFetch<{ success: boolean; data: { protocol: RTPDetail } }>(`/rtp/${rtpDetail.id}`);
+      setRtpDetail(res.data.protocol);
+      toast('success', t('criterionDeleted'));
+    } catch (err: unknown) {
+      toast('error', apiError(err, t('updateError')));
+    }
+  }
+
   // ── Advance phase ──
+  // La sequenza e' quella del protocollo, non una costante: un protocollo puo'
+  // avere 3 fasi come 6.
   async function advancePhase(direction: 'next' | 'prev') {
     if (!rtpDetail) return;
-    const currentIdx = PHASE_ORDER.indexOf(rtpDetail.currentPhase);
+    const sequence = protocolSequence(rtpDetail);
+    const currentIdx = sequence.indexOf(rtpDetail.currentPhase);
     const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
-    if (targetIdx < 0 || targetIdx >= PHASE_ORDER.length) return;
+    if (targetIdx < 0 || targetIdx >= sequence.length) return;
 
     setAdvancing(true);
     try {
@@ -323,7 +472,7 @@ export default function InjuriesRTPPage() {
         {
           method: 'POST',
           body: JSON.stringify({
-            targetPhase: PHASE_ORDER[targetIdx],
+            targetPhase: sequence[targetIdx],
             reason: advanceReason || undefined,
           }),
         }
@@ -347,18 +496,65 @@ export default function InjuriesRTPPage() {
 
   // ─── RTP Detail View ──────────────────────────────────
   if (tab === 'detail' && rtpDetail) {
-    const currentIdx = PHASE_ORDER.indexOf(rtpDetail.currentPhase);
-    const progress = ((currentIdx) / (PHASE_ORDER.length - 1)) * 100;
-    const currentCriteria = rtpDetail.criteria.filter((c: Criterion) => c.phase === rtpDetail.currentPhase);
-    const metCount = currentCriteria.filter((c: Criterion) => c.isMet).length;
-    const allMet = currentCriteria.length > 0 && metCount === currentCriteria.length;
+    const phases = [...rtpDetail.phases].sort((a: ProtocolPhase, b: ProtocolPhase) => a.order - b.order);
+    const sequence = protocolSequence(rtpDetail);
+    const currentIdx = sequence.indexOf(rtpDetail.currentPhase);
+    const progress = sequence.length > 1 ? (currentIdx / (sequence.length - 1)) * 100 : 0;
+    const currentPhase = phases.find((p: ProtocolPhase) => p.phase === rtpDetail.currentPhase) ?? null;
+    const currentCriteria = rtpDetail.criteria
+      .filter((c: Criterion) => c.phase === rtpDetail.currentPhase)
+      .sort((a: Criterion, b: Criterion) => a.order - b.order);
+    const mandatoryCriteria = currentCriteria.filter((c: Criterion) => c.mandatory);
+    const metMandatory = mandatoryCriteria.filter((c: Criterion) => c.isMet).length;
+    const openAdvisory = currentCriteria.filter((c: Criterion) => !c.mandatory && !c.isMet).length;
+    const allMandatoryMet = mandatoryCriteria.length > 0 && metMandatory === mandatoryCriteria.length;
     const daysInProtocol = daysBetween(rtpDetail.startDate);
+    const daysInPhase = currentPhase?.startedAt ? daysBetween(currentPhase.startedAt) : null;
+
+    // Il `code` del protocollo di sistema: chiave delle traduzioni di fasi e
+    // criteri. Nullo sui protocolli dell'organizzazione, e allora resta il
+    // testo scritto dal medico.
+    const tplCode = rtpDetail.template?.code ?? null;
+    const phaseNameOf = (ph: ProtocolPhase) => rtpText(locale, rtpPhaseKey(tplCode, ph.order), ph.name);
+    const phaseGoalOf = (ph: ProtocolPhase) => {
+      const key = rtpPhaseKey(tplCode, ph.order);
+      return rtpText(locale, key ? `${key}#g` : null, ph.goal);
+    };
+    /**
+     * I criteri portano la fase come enum (`PHASE_2`), la chiave vuole il suo
+     * numero d'ordine: l'elenco delle fasi del protocollo e' l'unica fonte
+     * attendibile, perche' un protocollo puo' averne da 3 a 6 e la
+     * corrispondenza enum→ordine non e' garantita. Fase non trovata: nessuna
+     * chiave, quindi resta la descrizione del database.
+     */
+    const criterionTextOf = (c: Criterion) => {
+      const order = phases.find((p: ProtocolPhase) => p.phase === c.phase)?.order;
+      return rtpText(locale, order != null ? rtpCriterionKey(tplCode, order, c.order) : null, c.description);
+    };
+
+    /** Nome della fase: dal protocollo se c'e', dalle etichette storiche se no. */
+    const phaseNamed = (code: string) => {
+      if (code === 'CLEARED') return PHASE_LABELS.CLEARED;
+      const ph = phases.find((p: ProtocolPhase) => p.phase === code);
+      return ph ? t('phaseNamed', { n: ph.order, name: phaseNameOf(ph) }) : PHASE_LABELS[code] ?? code;
+    };
+    const phaseShort = (code: string) => {
+      if (code === 'CLEARED') return PHASE_SHORT.CLEARED;
+      const ph = phases.find((p: ProtocolPhase) => p.phase === code);
+      return ph ? t('phaseNumber', { n: ph.order }) : PHASE_SHORT[code] ?? code;
+    };
+    const thresholdOf = (c: Criterion) => {
+      if (!c.comparator || c.targetValue == null) return null;
+      const unit = rtpUnit(locale, c.unit);
+      return `${COMPARATOR_SIGN[c.comparator] ?? ''} ${c.targetValue}${unit ? ` ${unit}` : ''}`.trim();
+    };
+    const currentGoal = currentPhase ? phaseGoalOf(currentPhase) : null;
 
     return (
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <button onClick={() => { setTab('rtp'); setRtpDetail(null); }} className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-700 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+          <button onClick={() => { setTab('rtp'); setRtpDetail(null); }} className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1">
@@ -388,12 +584,32 @@ export default function InjuriesRTPPage() {
           </div>
         </div>
 
+        {/* Protocollo applicato */}
+        <div className="card flex flex-wrap items-center gap-x-6 gap-y-2 py-3">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <ClipboardList className="h-4 w-4 text-indigo-500" />
+            {rtpDetail.templateName ? templateLabel(tplCode, rtpDetail.templateName) : t('protocolLegacy')}
+          </span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {t('phaseCount', { count: phases.length || sequence.length - 1 })}
+          </span>
+          {rtpDetail.targetDate && (
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              <Target className="mr-1 inline h-3.5 w-3.5" />
+              {t('estimatedReturn')}: <span className="font-medium text-slate-700 dark:text-slate-300">{fmtDate(rtpDetail.targetDate, locale)}</span>
+            </span>
+          )}
+          {daysInPhase != null && (
+            <span className="text-sm text-slate-500 dark:text-slate-400">{t('daysInPhase', { days: daysInPhase })}</span>
+          )}
+        </div>
+
         {/* Phase progress bar */}
         <div className="card">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('rtpProgression')}</h3>
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${PHASE_COLORS[rtpDetail.currentPhase]}`}>
-              {PHASE_LABELS[rtpDetail.currentPhase]}
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${PHASE_COLORS[rtpDetail.currentPhase] ?? PHASE_COLORS.PHASE_1}`}>
+              {phaseNamed(rtpDetail.currentPhase)}
             </span>
           </div>
           <div className="relative mb-4">
@@ -403,9 +619,9 @@ export default function InjuriesRTPPage() {
                 style={{ width: `${Math.max(progress, 5)}%` }}
               />
             </div>
-            <div className="mt-2 flex justify-between">
-              {PHASE_ORDER.map((phase: string, i: number) => (
-                <div key={phase} className={`text-center ${i <= currentIdx ? 'text-slate-900 dark:text-white' : 'text-slate-300 dark:text-slate-600'}`}>
+            <div className="mt-2 flex justify-between gap-1">
+              {sequence.map((phase: string, i: number) => (
+                <div key={phase} className={`flex-1 text-center ${i <= currentIdx ? 'text-slate-900 dark:text-white' : 'text-slate-300 dark:text-slate-600'}`}>
                   <div className={`mx-auto mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                     i < currentIdx ? 'bg-emerald-500 text-white' :
                     i === currentIdx ? 'bg-indigo-600 text-white ring-2 ring-indigo-300' :
@@ -413,7 +629,7 @@ export default function InjuriesRTPPage() {
                   }`}>
                     {i < currentIdx ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
                   </div>
-                  <span className="text-xs">{PHASE_SHORT[phase]}</span>
+                  <span className="block truncate text-xs">{phaseShort(phase)}</span>
                 </div>
               ))}
             </div>
@@ -423,17 +639,20 @@ export default function InjuriesRTPPage() {
           <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-3">
             <button
               onClick={() => advancePhase('prev')}
-              disabled={currentIdx === 0 || rtpDetail.currentPhase === 'CLEARED'}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700 disabled:opacity-30"
+              disabled={currentIdx <= 0}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-30"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Fase precedente
+              {t('previousPhase')}
             </button>
             <div className="text-center text-sm">
               <span className="text-slate-500 dark:text-slate-400">{t('phaseCriteria')} </span>
-              <span className={`font-semibold ${allMet ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {metCount}/{currentCriteria.length}
+              <span className={`font-semibold ${allMandatoryMet ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {t('mandatoryProgress', { met: metMandatory, total: mandatoryCriteria.length })}
               </span>
+              {openAdvisory > 0 && (
+                <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">{t('advisoryPending', { count: openAdvisory })}</span>
+              )}
             </div>
             <button
               onClick={() => setShowAdvanceModal(true)}
@@ -491,70 +710,144 @@ export default function InjuriesRTPPage() {
           </div>
         )}
 
-        {/* Clearance criteria for current phase */}
+        {/* Criteri della fase corrente */}
         <div className="card">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {t('clearanceCriteria')} — {PHASE_SHORT[rtpDetail.currentPhase]}
-          </h3>
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {t('clearanceCriteria')} — {phaseNamed(rtpDetail.currentPhase)}
+            </h3>
+            {currentPhase?.typicalDays != null && (
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {t('phaseTypicalDays', { days: currentPhase.typicalDays })}
+                {currentPhase.minDays != null ? ` · ${t('phaseMinDays', { days: currentPhase.minDays })}` : ''}
+              </span>
+            )}
+          </div>
+          {currentGoal && (
+            <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{t('phaseGoal')}: {currentGoal}</p>
+          )}
           {currentCriteria.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-slate-500">{t('noCriteriaForPhase')}</p>
           ) : (
             <div className="space-y-2">
-              {currentCriteria.map((c: Criterion) => (
-                <button
-                  key={c.id}
-                  onClick={() => toggleCriterion(c.id, c.isMet)}
-                  className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition ${
-                    c.isMet
-                      ? 'border-emerald-200 bg-emerald-50'
-                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:border-slate-600 dark:hover:border-slate-600'
-                  }`}
-                >
-                  <div className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
-                    c.isMet ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 dark:border-slate-600'
-                  }`}>
-                    {c.isMet && <CheckCircle2 className="h-4 w-4" />}
-                  </div>
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${c.isMet ? 'text-emerald-800 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
-                      {c.description}
-                    </p>
-                    {c.metAt && (
-                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Verificato il {fmtDate(c.metAt, locale)}</p>
+              {currentCriteria.map((c: Criterion) => {
+                const threshold = thresholdOf(c);
+                const description = criterionTextOf(c);
+                const testName = rtpTestName(locale, c.testCode);
+                const unit = rtpUnit(locale, c.unit);
+                return (
+                  <div
+                    key={c.id}
+                    className={`group flex items-start gap-3 rounded-lg border p-3 transition ${
+                      c.isMet
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : c.mandatory
+                          ? 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
+                          : 'border-dashed border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleCriterion(c.id, c.isMet)}
+                      aria-label={description}
+                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
+                        c.isMet ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 dark:border-slate-600'
+                      }`}
+                    >
+                      {c.isMet && <CheckCircle2 className="h-4 w-4" />}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={`text-sm font-medium ${c.isMet ? 'text-emerald-800 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
+                          {description}
+                        </p>
+                        {!c.mandatory && (
+                          <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                            {t('optionalBadge')}
+                          </span>
+                        )}
+                      </div>
+                      {(threshold || c.testCode) && (
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {testName}
+                          {threshold ? <span className="ml-1 font-semibold text-slate-600 dark:text-slate-300">{threshold}</span> : null}
+                        </p>
+                      )}
+                      {c.metAt && (
+                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{t('verifiedOn', { date: fmtDate(c.metAt, locale) })}</p>
+                      )}
+                    </div>
+                    {threshold && (
+                      <div className="flex flex-shrink-0 items-center gap-1">
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{t('measuredLabel')}</span>
+                        <input
+                          type="number"
+                          step="any"
+                          defaultValue={c.measuredValue ?? ''}
+                          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                            const next = e.target.value;
+                            const prev = c.measuredValue == null ? '' : String(c.measuredValue);
+                            if (next !== prev) saveMeasured(c.id, next);
+                          }}
+                          className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-900"
+                        />
+                        {unit && <span className="text-xs text-slate-400 dark:text-slate-500">{unit}</span>}
+                      </div>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => deleteCriterion(c.id)}
+                      title={t('deleteCriterion')}
+                      className="flex-shrink-0 rounded-lg p-1.5 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:text-slate-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* All criteria by phase (collapsed) */}
+        {/* Tutte le fasi del protocollo */}
         <div className="card">
           <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{t('allPhases')}</h3>
           <div className="space-y-3">
-            {PHASE_ORDER.filter((p: string) => p !== 'CLEARED').map((phase: string) => {
-              const phaseCriteria = rtpDetail.criteria.filter((c: Criterion) => c.phase === phase);
-              const pMet = phaseCriteria.filter((c: Criterion) => c.isMet).length;
-              const isPast = PHASE_ORDER.indexOf(phase) < currentIdx;
-              const isCurrent = phase === rtpDetail.currentPhase;
+            {(phases.length ? phases : []).map((ph: ProtocolPhase) => {
+              const phaseCriteria = rtpDetail.criteria.filter((c: Criterion) => c.phase === ph.phase);
+              const pMandatory = phaseCriteria.filter((c: Criterion) => c.mandatory);
+              const pMet = pMandatory.filter((c: Criterion) => c.isMet).length;
+              const idx = sequence.indexOf(ph.phase);
+              const isPast = idx < currentIdx;
+              const isCurrent = ph.phase === rtpDetail.currentPhase;
 
               return (
-                <div key={phase} className={`rounded-lg border p-3 ${isCurrent ? 'border-indigo-300 bg-indigo-50' : isPast ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {isPast ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> :
-                       isCurrent ? <Activity className="h-4 w-4 text-indigo-500" /> :
-                       <Clock className="h-4 w-4 text-slate-300 dark:text-slate-600" />}
-                      <span className={`text-sm font-medium ${isPast ? 'text-emerald-700' : isCurrent ? 'text-indigo-700' : 'text-slate-400 dark:text-slate-500'}`}>
-                        {PHASE_LABELS[phase]}
-                      </span>
+                <div key={ph.id} className={`rounded-lg border p-3 ${isCurrent ? 'border-indigo-300 bg-indigo-50' : isPast ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-900'}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-2">
+                      {isPast ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" /> :
+                       isCurrent ? <Activity className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-500" /> :
+                       <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-300 dark:text-slate-600" />}
+                      <div className="min-w-0">
+                        <span className={`text-sm font-medium ${isPast ? 'text-emerald-700' : isCurrent ? 'text-indigo-700' : 'text-slate-500 dark:text-slate-400'}`}>
+                          {t('phaseNamed', { n: ph.order, name: phaseNameOf(ph) })}
+                        </span>
+                        {ph.goal && <p className="text-xs text-slate-400 dark:text-slate-500">{phaseGoalOf(ph)}</p>}
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{pMet}/{phaseCriteria.length} {t('criteria')}</span>
+                    <div className="flex-shrink-0 text-right">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{pMet}/{pMandatory.length} {t('criteria')}</span>
+                      {ph.typicalDays != null && (
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{t('phaseTypicalDays', { days: ph.typicalDays })}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
+            {phases.length === 0 && (
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t('noProtocolPhases')}</p>
+            )}
           </div>
         </div>
 
@@ -570,9 +863,9 @@ export default function InjuriesRTPPage() {
                   <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-indigo-400" />
                   <div>
                     <p className="text-slate-700 dark:text-slate-300">
-                      <span className="font-medium">{PHASE_SHORT[log.fromPhase]}</span>
+                      <span className="font-medium">{phaseShort(log.fromPhase)}</span>
                       <ArrowRight className="mx-1 inline h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                      <span className="font-medium">{PHASE_SHORT[log.toPhase]}</span>
+                      <span className="font-medium">{phaseShort(log.toPhase)}</span>
                     </p>
                     {log.reason && <p className="text-slate-500 dark:text-slate-400">{log.reason}</p>}
                     <p className="text-xs text-slate-400 dark:text-slate-500">{fmtDate(log.createdAt, locale)} — {log.changedBy.firstName} {log.changedBy.lastName}</p>
@@ -586,7 +879,7 @@ export default function InjuriesRTPPage() {
         {/* Advance modal */}
         <Modal open={showAdvanceModal} onClose={() => setShowAdvanceModal(false)} title={t('advancePhaseTitle')} size="md" footer={
           <>
-            <button onClick={() => setShowAdvanceModal(false)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700">{tCommon('cancel')}</button>
+            <button onClick={() => setShowAdvanceModal(false)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">{tCommon('cancel')}</button>
             <button
               onClick={() => advancePhase('next')}
               disabled={advancing}
@@ -600,13 +893,16 @@ export default function InjuriesRTPPage() {
           <div className="space-y-4">
             <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm">
               <p className="font-medium text-indigo-800">
-                {PHASE_SHORT[rtpDetail.currentPhase]} → {PHASE_SHORT[PHASE_ORDER[currentIdx + 1] || 'CLEARED']}
+                {phaseShort(rtpDetail.currentPhase)} → {phaseNamed(sequence[currentIdx + 1] ?? 'CLEARED')}
               </p>
-              {!allMet && currentCriteria.length > 0 && (
+              {!allMandatoryMet && mandatoryCriteria.length > 0 && (
                 <p className="mt-1 text-amber-700">
                   <AlertTriangle className="mr-1 inline h-4 w-4" />
-                  {t('criteriaNotMet', { count: currentCriteria.length - metCount })}
+                  {t('criteriaNotMet', { count: mandatoryCriteria.length - metMandatory })}
                 </p>
+              )}
+              {openAdvisory > 0 && (
+                <p className="mt-1 text-xs text-slate-500">{t('advisoryPending', { count: openAdvisory })}</p>
               )}
             </div>
             <Input label={t('clinicalNote')} placeholder={t('clinicalNotePlaceholder')} value={advanceReason} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdvanceReason(e.target.value)} />
@@ -624,13 +920,22 @@ export default function InjuriesRTPPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('title')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle')}</p>
         </div>
-        <button
-          onClick={() => { setShowCreateModal(true); loadAthletes(); }}
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
-        >
-          <Plus className="h-4 w-4" />
-          Nuovo infortunio
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/injuries/protocols"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            <ClipboardList className="h-4 w-4" />
+            {t('protocolLibrary')}
+          </Link>
+          <button
+            onClick={() => { setShowCreateModal(true); loadAthletes(); loadTemplates(); }}
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            <Plus className="h-4 w-4" />
+            {t('newInjury')}
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -644,8 +949,9 @@ export default function InjuriesRTPPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {protocols.map((p: RTPProtocolSummary) => {
-            const phaseIdx = PHASE_ORDER.indexOf(p.currentPhase);
-            const progress = (phaseIdx / (PHASE_ORDER.length - 1)) * 100;
+            const sequence = protocolSequence(p);
+            const phaseIdx = sequence.indexOf(p.currentPhase);
+            const progress = sequence.length > 1 ? (phaseIdx / (sequence.length - 1)) * 100 : 0;
             const days = daysBetween(p.startDate);
 
             return (
@@ -671,6 +977,10 @@ export default function InjuriesRTPPage() {
                     <span className={SEVERITY_COLORS[p.injury.severity]}>{SEVERITY_LABELS[p.injury.severity]}</span>
                   </div>
 
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {t('injuredOn', { date: fmtDate(p.injury.dateOccurred, locale) })}
+                  </p>
+
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-red-400 via-amber-400 to-emerald-500"
@@ -679,8 +989,12 @@ export default function InjuriesRTPPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-xs">
-                    <span className={`rounded-full border px-2 py-0.5 font-medium ${PHASE_COLORS[p.currentPhase]}`}>
-                      {PHASE_SHORT[p.currentPhase]}
+                    <span className={`rounded-full border px-2 py-0.5 font-medium ${PHASE_COLORS[p.currentPhase] ?? PHASE_COLORS.PHASE_1}`}>
+                      {(() => {
+                        const ph = p.phases?.find((x) => x.phase === p.currentPhase);
+                        if (p.currentPhase === 'CLEARED') return PHASE_SHORT.CLEARED;
+                        return ph ? t('phaseNumber', { n: ph.order }) : PHASE_SHORT[p.currentPhase] ?? p.currentPhase;
+                      })()}
                     </span>
                     <span className="text-slate-400 dark:text-slate-500">{t('dayNumber', { day: days })}</span>
                   </div>
@@ -754,6 +1068,47 @@ export default function InjuriesRTPPage() {
             <Input label={t('injuryDate')} type="date" value={injuryForm.dateOccurred} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInjuryForm((f: InjuryForm) => ({ ...f, dateOccurred: e.target.value }))} />
           </div>
           <Input label={t('notesLabel')} placeholder={t('notesPlaceholder')} value={injuryForm.notes} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInjuryForm((f: InjuryForm) => ({ ...f, notes: e.target.value }))} />
+
+          {/* Protocollo di rientro: proposto dalla libreria in base a sede,
+              tipo e severita'. Si vede prima di registrare, non dopo. */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <div className="mb-2 flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-indigo-500" />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('rtpProtocolLabel')}</span>
+            </div>
+            <Select
+              options={[
+                {
+                  value: '',
+                  label: templateMatch?.template
+                    ? t('templateAuto', { name: templateLabel(templateMatch.template.code, templateMatch.template.name) })
+                    : t('templateAutoNone'),
+                  group: t('templateGroupAuto'),
+                },
+                ...templates.map((tp: TemplateOption) => {
+                  const name = templateLabel(tp.code, tp.name);
+                  return {
+                    value: tp.id,
+                    label: tp.isSystem ? name : `${name} ${t('templateOwnSuffix')}`,
+                    group: t('templateGroupManual'),
+                  };
+                }),
+              ]}
+              value={templateId}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTemplateId(e.target.value)}
+            />
+            {templateId === '' && templateMatch?.template && (
+              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                {t('templateEstimate', {
+                  phases: templateMatch.template.phaseCount,
+                  date: templateMatch.estimatedReturn ? fmtDate(templateMatch.estimatedReturn, locale) : '—',
+                })}
+              </p>
+            )}
+            {templateId === '' && templateMatch && !templateMatch.template && (
+              <p className="mt-1.5 text-xs text-amber-600">{t('noTemplateMatch')}</p>
+            )}
+          </div>
         </div>
       </Modal>
     </div>

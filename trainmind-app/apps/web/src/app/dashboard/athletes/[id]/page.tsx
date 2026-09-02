@@ -37,6 +37,7 @@ export default function AthleteProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations('athletes');
+  const tCommon = useTranslations('common');
   const apiError = useApiError();
   const locale = useLocale();
   const [athlete, setAthlete] = useState<AthleteDetail | null>(null);
@@ -483,14 +484,14 @@ export default function AthleteProfilePage() {
               onClick={() => setShowEditModal(false)}
               className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700"
             >
-              Annulla
+              {tCommon('cancel')}
             </button>
             <button
               onClick={handleSaveEdit}
               disabled={saving}
               className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
             >
-              {saving ? 'Salvataggio...' : 'Salva'}
+              {saving ? t('saving') : t('save')}
             </button>
           </div>
         }
@@ -536,13 +537,13 @@ export default function AthleteProfilePage() {
               type="number"
               value={editForm.jerseyNumber}
               onChange={(e) => setEditForm({ ...editForm, jerseyNumber: e.target.value })}
-              placeholder="0-99"
+              placeholder={t('jerseyPlaceholder')}
             />
             <Input
               label={t('team')}
               value={editForm.team}
               onChange={(e) => setEditForm({ ...editForm, team: e.target.value })}
-              placeholder="es. Olimpia Milano"
+              placeholder={t('teamPlaceholder')}
             />
           </div>
         </div>
@@ -993,7 +994,7 @@ function MetricsTabContent({
                     <div className="text-left">
                       <span className="text-sm font-semibold text-slate-900 dark:text-white">{cat.label}</span>
                       <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
-                        {countByCategory[cat.key]} / {catMetricTypes.length} metriche registrate
+                        {tAthletes('metricsRegistered', { count: countByCategory[cat.key], total: catMetricTypes.length })}
                       </span>
                     </div>
                   </div>

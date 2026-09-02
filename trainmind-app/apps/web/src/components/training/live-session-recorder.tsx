@@ -90,6 +90,7 @@ export function LiveSessionRecorder({
 }: LiveSessionRecorderProps) {
   const { toast } = useToast();
   const t = useTranslations('liveSession');
+  const tCommon = useTranslations('common');
 
   // Current exercise index for swipe navigation
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -377,7 +378,7 @@ export function LiveSessionRecorder({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      cleanupAndComplete('Sessione salvata con successo!');
+      cleanupAndComplete(t('sessionSaved'));
     } catch {
       // Network/server failure → fall back to queue
       try {
@@ -416,13 +417,13 @@ export function LiveSessionRecorder({
           className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-8 py-3 text-base font-semibold text-white hover:bg-teal-800 transition-colors"
         >
           <Play className="h-5 w-5" />
-          Inizia Registrazione
+          {t('startRecording')}
         </button>
         <button
           onClick={onCancel}
           className="mt-3 text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400"
         >
-          Annulla
+          {tCommon('cancel')}
         </button>
       </div>
     );
@@ -446,15 +447,15 @@ export function LiveSessionRecorder({
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl bg-teal-50 p-4 text-center">
             <p className="text-2xl font-bold text-teal-700">{stats.completedSets}/{stats.totalSets}</p>
-            <p className="text-xs text-teal-600 mt-1">Serie completate</p>
+            <p className="text-xs text-teal-600 mt-1">{t('setsCompleted')}</p>
           </div>
           <div className="rounded-xl bg-blue-50 p-4 text-center">
             <p className="text-2xl font-bold text-blue-700">{stats.completionPct}%</p>
-            <p className="text-xs text-blue-600 mt-1">Completamento</p>
+            <p className="text-xs text-blue-600 mt-1">{t('completion')}</p>
           </div>
           <div className="rounded-xl bg-amber-50 p-4 text-center">
             <p className="text-2xl font-bold text-amber-700">{stats.totalVolume.toLocaleString()}</p>
-            <p className="text-xs text-amber-600 mt-1">Volume (kg)</p>
+            <p className="text-xs text-amber-600 mt-1">{t('volumeKg')}</p>
           </div>
         </div>
 
@@ -496,7 +497,7 @@ export function LiveSessionRecorder({
             onClick={() => setShowSummary(false)}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900"
           >
-            Torna agli esercizi
+            {t('backToExercises')}
           </button>
           <button
             onClick={saveSession}
@@ -508,7 +509,7 @@ export function LiveSessionRecorder({
             ) : (
               <Trophy className="h-4 w-4" />
             )}
-            {saving ? 'Salvataggio...' : 'Salva Sessione'}
+            {saving ? t('saving') : t('saveSession')}
           </button>
         </div>
       </div>
@@ -527,7 +528,7 @@ export function LiveSessionRecorder({
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-400 dark:text-slate-500">
-            {stats.completedSets}/{stats.totalSets} serie
+            {stats.completedSets}/{stats.totalSets} {t('setsUnit')}
           </span>
           <div className="h-2 w-20 rounded-full bg-slate-700 overflow-hidden">
             <div
@@ -540,7 +541,7 @@ export function LiveSessionRecorder({
           onClick={() => setShowSummary(true)}
           className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium hover:bg-slate-700"
         >
-          Termina
+          {t('finish')}
         </button>
       </div>
 
@@ -593,7 +594,7 @@ export function LiveSessionRecorder({
             </div>
             {/* Target info */}
             <div className="flex gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
-              {currentExercise.sets && <span>Target: {currentExercise.sets} serie</span>}
+              {currentExercise.sets && <span>{t('targetSets', { n: currentExercise.sets })}</span>}
               {currentExercise.reps && <span>x {currentExercise.reps} reps</span>}
               {currentExercise.weight && <span>@ {currentExercise.weight} kg</span>}
             </div>
@@ -674,14 +675,14 @@ export function LiveSessionRecorder({
                 onClick={() => addSet(currentExercise.id)}
                 className="text-xs font-medium text-teal-700 hover:text-teal-800"
               >
-                + Aggiungi serie
+                + {t('addSet')}
               </button>
               {currentLog.sets.length > 1 && (
                 <button
                   onClick={() => removeSet(currentExercise.id, currentLog.sets.length - 1)}
                   className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-red-500"
                 >
-                  - Rimuovi ultima
+                  - {t('removeLastSet')}
                 </button>
               )}
             </div>
@@ -711,7 +712,7 @@ export function LiveSessionRecorder({
           className="inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4" />
-          Precedente
+          {tCommon('previous')}
         </button>
 
         {currentIdx < exercises.length - 1 ? (
@@ -719,7 +720,7 @@ export function LiveSessionRecorder({
             onClick={goNext}
             className="inline-flex items-center gap-1 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
           >
-            Successivo
+            {tCommon('next')}
             <ChevronRight className="h-4 w-4" />
           </button>
         ) : (
@@ -728,7 +729,7 @@ export function LiveSessionRecorder({
             className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
           >
             <Trophy className="h-4 w-4" />
-            Termina sessione
+            {t('endSession')}
           </button>
         )}
       </div>

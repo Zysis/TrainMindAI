@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ApiError } from '@/lib/auth/fetch';
 
@@ -49,6 +50,13 @@ const TRANSLATED_CODES = new Set([
   'EMPTY_PLAN',
 ]);
 
+/**
+ * La funzione e' memoizzata su `t` (che next-intl gia' memoizza): restituirne
+ * una nuova a ogni render la rendeva inutilizzabile nelle dipendenze di
+ * `useCallback`/`useEffect`. Chi la metteva fra le dipendenze si ritrovava un
+ * ciclo di fetch infinito, perche' l'effetto rivedeva una funzione diversa a
+ * ogni giro. E' successo nella libreria dei protocolli RTP.
+ */
 export function useApiError() {
   const t = useTranslations('apiErrors');
 
@@ -56,7 +64,7 @@ export function useApiError() {
    * @param fallback testo gia' tradotto da usare se l'errore non dice nulla di
    *                 utile. E' quello che i chiamanti mostravano prima.
    */
-  return (err: unknown, fallback?: string): string => {
+  return useCallback((err: unknown, fallback?: string): string => {
     if (err instanceof ApiError) {
       if (TRANSLATED_CODES.has(err.code)) {
         const details = (err.details ?? {}) as Record<string, string | number>;
@@ -66,5 +74,5 @@ export function useApiError() {
     }
     if (err instanceof Error && err.message) return err.message;
     return fallback ?? t('generic');
-  };
+  }, [t]);
 }

@@ -117,7 +117,7 @@ export function AcwrChart({ athleteId, teamId, days = 60, dateFrom, dateTo }: Ac
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([weekEnd, w]) => ({
             athleteId: 'team',
-            athleteName: 'Media team',
+            athleteName: t('teamAverage'),
             weekEnd,
             acuteLoad: Math.round(w.acuteSum / w.count),
             chronicLoad: Math.round(w.chronicSum / w.count),

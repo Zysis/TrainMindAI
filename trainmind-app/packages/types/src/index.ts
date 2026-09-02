@@ -598,3 +598,142 @@ export interface GenerateReportResponse {
   report: ReportData;
   downloadUrl?: string;              // present for PDF/DOCX, absent for JSON
 }
+
+// ─── Protocolli RTP per tipologia di infortunio ──────────
+//
+// I criteri di rientro non possono essere gli stessi per una spalla e per un
+// ginocchio. Un protocollo nasce da un *template*: una libreria di protocolli
+// clinici selezionati per zona del corpo, tipo di infortunio e severita'.
+//
+// Queste liste stanno qui perche' servono all'API (matching e seed), al web
+// (editor dei template) e ai renderer dei report. Due copie divergono: e' gia'
+// successo in questo progetto con metriche, categorie esercizi e posizioni.
+
+/** Macro-regione: e' il primo fallback quando manca il protocollo di zona. */
+export const RTP_BODY_REGIONS = ['lower_limb', 'upper_limb', 'spine', 'head', 'other'] as const;
+export type RtpBodyRegion = (typeof RTP_BODY_REGIONS)[number];
+
+/** Zona senza lato: ai fini del protocollo `knee_l` e `knee_r` sono la stessa cosa. */
+export const RTP_BODY_ZONES = [
+  'ankle', 'knee', 'hamstring', 'quadriceps', 'calf', 'groin', 'hip', 'foot',
+  'back_lower', 'back_upper', 'shoulder', 'elbow', 'wrist', 'finger', 'head', 'other',
+] as const;
+export type RtpBodyZone = (typeof RTP_BODY_ZONES)[number];
+
+export const RTP_ZONE_REGION: Record<RtpBodyZone, RtpBodyRegion> = {
+  ankle: 'lower_limb',
+  knee: 'lower_limb',
+  hamstring: 'lower_limb',
+  quadriceps: 'lower_limb',
+  calf: 'lower_limb',
+  groin: 'lower_limb',
+  hip: 'lower_limb',
+  foot: 'lower_limb',
+  back_lower: 'spine',
+  back_upper: 'spine',
+  shoulder: 'upper_limb',
+  elbow: 'upper_limb',
+  wrist: 'upper_limb',
+  finger: 'upper_limb',
+  head: 'head',
+  other: 'other',
+};
+
+/**
+ * Zona di protocollo a partire dal campo `location` dell'infortunio.
+ *
+ * `location` e' un codice di BODY_LOCATION_DEFS (`knee_l`, `hamstring_r`, ...)
+ * oppure testo libero scritto a mano: in quel caso si prova a riconoscere la
+ * zona dalle parole, altrimenti si finisce su `other` e il protocollo arriva
+ * dal fallback generico.
+ */
+export function rtpBaseZone(location: string | null | undefined): RtpBodyZone {
+  if (!location) return 'other';
+  const raw = location.trim().toLowerCase();
+  const stripped = raw.replace(/_(l|r|dx|sx)$/, '');
+  if ((RTP_BODY_ZONES as readonly string[]).includes(stripped)) return stripped as RtpBodyZone;
+
+  // Testo libero: si riconoscono le parole italiane e inglesi piu' comuni.
+  const WORDS: Array<[RegExp, RtpBodyZone]> = [
+    [/caviglia|ankle|malleol/, 'ankle'],
+    [/ginocchi|knee|crociat|acl|menisc|rotule|patell/, 'knee'],
+    [/ischiocrural|femoral|hamstring|bicipite femorale/, 'hamstring'],
+    [/quadricipit|quadriceps|retto femorale/, 'quadriceps'],
+    [/polpacc|calf|gastrocnemio|soleo/, 'calf'],
+    [/adduttor|inguin|groin|pubalgia/, 'groin'],
+    [/anca|hip|iliopsoas/, 'hip'],
+    [/piede|foot|metatars|plantare|achille|achilles/, 'foot'],
+    [/lombar|lumbar|low back|schiena bassa/, 'back_lower'],
+    [/dorsal|toracic|thoracic|cervical|neck|collo/, 'back_upper'],
+    [/spalla|shoulder|cuffia|deltoide|acromion/, 'shoulder'],
+    [/gomito|elbow/, 'elbow'],
+    [/polso|wrist|scafoide/, 'wrist'],
+    [/dito|dita|finger|thumb|pollice|falang/, 'finger'],
+    [/test(a|e)\b|head|cranio|concussion|commozione/, 'head'],
+  ];
+  for (const [re, zone] of WORDS) if (re.test(raw)) return zone;
+  return 'other';
+}
+
+export function rtpRegionOf(location: string | null | undefined): RtpBodyRegion {
+  return RTP_ZONE_REGION[rtpBaseZone(location)];
+}
+
+/** Confronto di un criterio misurabile: `Hop test LSI >= 90%`. */
+export const RTP_COMPARATORS = ['gte', 'lte', 'eq'] as const;
+export type RtpComparator = (typeof RTP_COMPARATORS)[number];
+
+export interface RtpTemplateCriterion {
+  id?: string;
+  order: number;
+  description: string;
+  /** Test di riferimento, testo libero: 'Hop test LSI', 'ROM attivo'. */
+  testCode?: string | null;
+  comparator?: RtpComparator | null;
+  targetValue?: number | null;
+  /** '%', 'gradi', 'cm', 'ripetizioni', ... */
+  unit?: string | null;
+  /** false = raccomandazione, non blocca il passaggio di fase. */
+  mandatory: boolean;
+}
+
+export interface RtpTemplatePhase {
+  id?: string;
+  /** 1..6 */
+  order: number;
+  name: string;
+  goal?: string | null;
+  /** Giorni minimi prima di poter passare oltre, anche a criteri soddisfatti. */
+  minDays?: number | null;
+  /** Giorni tipici: e' quello che genera la data di rientro stimata. */
+  typicalDays?: number | null;
+  criteria: RtpTemplateCriterion[];
+}
+
+export interface RtpTemplate {
+  id?: string;
+  /** null = template di sistema, visibile a tutte le organizzazioni. */
+  organizationId?: string | null;
+  /** Codice stabile del template di sistema, per il seed idempotente. */
+  code?: string | null;
+  name: string;
+  description?: string | null;
+  /** Criteri di selezione: null = "qualsiasi". */
+  bodyZone?: RtpBodyZone | null;
+  bodyRegion?: RtpBodyRegion | null;
+  injuryType?: string | null;
+  severityMin?: number | null;
+  severityMax?: number | null;
+  isSystem?: boolean;
+  phases: RtpTemplatePhase[];
+}
+
+/** Contesto su cui si sceglie il template. */
+export interface RtpMatchContext {
+  location: string;
+  injuryType: string;
+  severity: number;
+}
+
+/** Libreria dei protocolli di sistema (file separato: sono ~800 righe di contenuto clinico). */
+export * from './rtp-library';

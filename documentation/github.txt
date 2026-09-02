@@ -10,6 +10,17 @@ git push origin main          # carica su GitHub
 ----------------------------------------------------------------
 C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
 
+cd C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+
+# 1. c'è davvero un git in esecuzione?
+Get-Process git,git-remote-https -ErrorAction SilentlyContinue
+
+# 2. se la lista è vuota, il lock è stale: eliminalo
+Remove-Item .git\index.lock -Force
+
+# 3. riprova
 git add .
+git status --short | Measure-Object -Line
+
 git commit -m "il tuo messaggio"
 git push -u origin main

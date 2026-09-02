@@ -47,6 +47,10 @@ enum RTPPhase {
   PHASE_3
   PHASE_4
   PHASE_5
+  /// Sesta fase: la usano solo i protocolli lunghi (LCA). Le fasi vere di un
+  /// protocollo sono le righe di RTPProtocolPhase, questo enum e' solo la loro
+  /// posizione, cosi' storico, badge e report non cambiano.
+  PHASE_6
   CLEARED
 }
 
@@ -117,6 +121,7 @@ model Organization {
   dailyReports           DailyReport[]
   athleteInvites         AthleteInvite[]
   aiUsageLogs            AiUsageLog[]
+  rtpTemplates           RTPTemplate[]
 
   @@map("organizations")
 }
@@ -534,13 +539,21 @@ model RTPProtocol {
   startDate    DateTime
   targetDate   DateTime?
   notes        String?
+  /// Template da cui e' nato. Null = protocollo creato prima della libreria,
+  /// oppure template poi cancellato: le fasi restano quelle copiate qui.
+  templateId   String?
+  /// Nome del template al momento dell'avvio: se poi il template cambia, il
+  /// protocollo continua a dire da dove veniva.
+  templateName String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   injury    Injury  @relation(fields: [injuryId], references: [id])
   athlete   Athlete @relation(fields: [athleteId], references: [id])
+  template  RTPTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   phaseLogs RTPPhaseLog[]
   criteria  ClearanceCriteria[]
+  phases    RTPProtocolPhase[]
 
   @@index([athleteId])
   @@map("rtp_protocols")
@@ -571,6 +584,18 @@ model ClearanceCriteria {
   metAt         DateTime?
   metById       String?  // user who verified
   notes         String?
+  /// Test di riferimento, testo libero: 'Hop test LSI', 'CAIT', 'VISA-P'.
+  testCode      String?
+  /// gte | lte | eq. Vuoto = criterio solo descrittivo.
+  comparator    String?
+  targetValue   Float?
+  unit          String?
+  /// Valore misurato all'ultima verifica. Non decide da solo: la spunta resta
+  /// del medico, questo e' il dato che motiva la spunta.
+  measuredValue Float?
+  /// false = raccomandazione: non blocca il passaggio di fase.
+  mandatory     Boolean  @default(true)
+  order         Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -579,6 +604,103 @@ model ClearanceCriteria {
 
   @@index([rtpProtocolId, phase])
   @@map("clearance_criteria")
+}
+
+/// Le fasi vere di un protocollo, copiate dal template all'avvio.
+///
+/// Sono righe e non enum perche' il numero di fasi cambia col protocollo: una
+/// frattura di dito ne ha 4, un LCA 6. `phase` resta l'enum solo come
+/// posizione, cosi' `currentPhase`, lo storico e i badge non cambiano.
+model RTPProtocolPhase {
+  id            String   @id @default(cuid())
+  rtpProtocolId String
+  phase         RTPPhase
+  order         Int
+  name          String
+  goal          String?
+  /// Giorni minimi in fase, anche a criteri soddisfatti. Null = nessun minimo.
+  minDays       Int?
+  /// Giorni tipici: sommati danno la data di rientro stimata.
+  typicalDays   Int?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rtpProtocol RTPProtocol @relation(fields: [rtpProtocolId], references: [id], onDelete: Cascade)
+
+  @@unique([rtpProtocolId, phase])
+  @@index([rtpProtocolId])
+  @@map("rtp_protocol_phases")
+}
+
+/// Libreria dei protocolli: criteri e fasi per zona, tipo e severita'.
+///
+/// `organizationId` null = template di sistema, in sola lettura per tutti;
+/// i template dell'organizzazione nascono duplicandoli. I campi di selezione
+/// vuoti valgono "qualsiasi": vince il template applicabile piu' specifico
+/// (zona > macro-regione > generico), vedi `pickRtpTemplate` in @trainmind/utils.
+model RTPTemplate {
+  id             String  @id @default(cuid())
+  organizationId String?
+  /// Codice stabile dei template di sistema, per un seed idempotente.
+  /// Null sui template dell'organizzazione.
+  code           String? @unique
+  name           String
+  description    String?
+  /// Zona senza lato: 'knee', 'shoulder', ... Null = qualsiasi.
+  bodyZone       String?
+  /// 'lower_limb' | 'upper_limb' | 'spine' | 'head' | 'other'. Null = qualsiasi.
+  bodyRegion     String?
+  injuryType     String?
+  severityMin    Int?
+  severityMax    Int?
+  isSystem       Boolean @default(false)
+  isActive       Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phases       RTPTemplatePhase[]
+  protocols    RTPProtocol[]
+
+  @@index([organizationId])
+  @@index([bodyZone, injuryType])
+  @@map("rtp_templates")
+}
+
+model RTPTemplatePhase {
+  id          String  @id @default(cuid())
+  templateId  String
+  order       Int
+  name        String
+  goal        String?
+  minDays     Int?
+  typicalDays Int?
+
+  template RTPTemplate            @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  criteria RTPTemplateCriterion[]
+
+  @@unique([templateId, order])
+  @@index([templateId])
+  @@map("rtp_template_phases")
+}
+
+model RTPTemplateCriterion {
+  id          String  @id @default(cuid())
+  phaseId     String
+  order       Int
+  description String
+  testCode    String?
+  comparator  String?
+  targetValue Float?
+  unit        String?
+  mandatory   Boolean @default(true)
+
+  phase RTPTemplatePhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("rtp_template_criteria")
 }
 
 model ChatConversation {

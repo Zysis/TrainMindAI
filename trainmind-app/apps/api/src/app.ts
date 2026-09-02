@@ -27,6 +27,7 @@ import { fieldTrainingRoutes } from './routes/field-training.js';
 import { gameTrackingRoutes } from './routes/game-tracking.js';
 import { dailyReportRoutes } from './routes/daily-report.js';
 import { gameReportRoutes } from './routes/game-report.js';
+import { rtpTemplateRoutes } from './routes/rtp-templates.js';
 import { athleteRoutes as athleteAppRoutes } from './routes/athlete.js';
 import { startReportSchedulerWorker } from './services/report-scheduler-worker.js';
 import { startRetentionWorker } from './services/retention-worker.js';
@@ -157,6 +158,7 @@ export async function buildApp() {
   await app.register(gameTrackingRoutes, { prefix: '/api/v1' });
   await app.register(dailyReportRoutes, { prefix: '/api/v1' });
   await app.register(gameReportRoutes, { prefix: '/api/v1' });
+  await app.register(rtpTemplateRoutes, { prefix: '/api/v1' });
   await app.register(athleteAppRoutes, { prefix: '/api/v1' });
 
   // ─── Background workers ───────────────────────────────

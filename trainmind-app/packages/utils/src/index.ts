@@ -237,3 +237,105 @@ export function planFirstTrainingDate(startDate: Date, trainingDays: number[]): 
   }
   return trainingDayDate(startDate, days, 1, days[0]);
 }
+
+// ─── Scelta del protocollo RTP ───────────────────────────
+//
+// I template dichiarano a cosa si applicano (zona, macro-regione, tipo,
+// intervallo di severita'); i campi lasciati vuoti valgono "qualsiasi".
+// Vince il template compatibile piu' specifico, cosi' il ginocchio ha i suoi
+// criteri e una zona senza protocollo dedicato eredita quello di regione e,
+// in ultimo, il generico.
+//
+// Il tipo e' dichiarato qui in forma strutturale invece di importare
+// @trainmind/types: questo package non ha dipendenze e va tenuto cosi'.
+
+export interface RtpTemplateMatchable {
+  bodyZone?: string | null;
+  bodyRegion?: string | null;
+  injuryType?: string | null;
+  severityMin?: number | null;
+  severityMax?: number | null;
+  /** null = template di sistema. A parita' di punteggio vince quello dell'organizzazione. */
+  organizationId?: string | null;
+}
+
+export interface RtpMatchInput {
+  /** Zona gia' normalizzata senza lato (rtpBaseZone). */
+  zone: string;
+  region: string;
+  injuryType: string;
+  severity: number;
+}
+
+/**
+ * Punteggio di specificita', oppure null se il template non e' applicabile.
+ *
+ * I pesi sono scelti in modo che la zona batta qualunque combinazione di
+ * criteri piu' deboli: 8 > 4 + 2 + 1. Un protocollo dedicato al ginocchio
+ * vince quindi su uno "arto inferiore, muscolare, severita' 3-5" anche
+ * quando quest'ultimo combacia su tutto il resto.
+ */
+export function rtpTemplateScore(t: RtpTemplateMatchable, ctx: RtpMatchInput): number | null {
+  let score = 0;
+
+  if (t.bodyZone) {
+    if (t.bodyZone !== ctx.zone) return null;
+    score += 8;
+  }
+  if (t.bodyRegion) {
+    if (t.bodyRegion !== ctx.region) return null;
+    score += 4;
+  }
+  if (t.injuryType) {
+    if (t.injuryType !== ctx.injuryType) return null;
+    score += 2;
+  }
+  if (t.severityMin != null || t.severityMax != null) {
+    if (t.severityMin != null && ctx.severity < t.severityMin) return null;
+    if (t.severityMax != null && ctx.severity > t.severityMax) return null;
+    score += 1;
+  }
+  if (t.organizationId) score += 0.5;
+
+  return score;
+}
+
+/** Il template applicabile piu' specifico, o null se non ce n'e' nessuno. */
+export function pickRtpTemplate<T extends RtpTemplateMatchable>(
+  templates: readonly T[],
+  ctx: RtpMatchInput,
+): T | null {
+  let best: T | null = null;
+  let bestScore = -1;
+  for (const t of templates) {
+    const s = rtpTemplateScore(t, ctx);
+    if (s == null || s <= bestScore) continue;
+    best = t;
+    bestScore = s;
+  }
+  return best;
+}
+
+/**
+ * Data di rientro stimata sommando i giorni tipici delle fasi.
+ *
+ * Le fasi senza `typicalDays` non spostano la stima: un template compilato a
+ * meta' produce una data ottimistica, ed e' meglio di una data inventata.
+ */
+export function rtpEstimatedReturn(
+  startDate: Date,
+  phases: ReadonlyArray<{ typicalDays?: number | null }>,
+): Date | null {
+  let days = 0;
+  let any = false;
+  for (const p of phases) {
+    if (p.typicalDays != null && p.typicalDays > 0) {
+      days += p.typicalDays;
+      any = true;
+    }
+  }
+  if (!any) return null;
+  const out = new Date(startDate);
+  out.setDate(out.getDate() + days);
+  return out;
+}

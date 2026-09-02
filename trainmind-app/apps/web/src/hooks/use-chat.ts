@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/constants';
 import { getAccessToken } from '@/lib/auth/api';
 
@@ -56,8 +57,16 @@ interface UseChatReturn {
   isServiceAvailable: boolean | null;
 }
 
-const DEFAULT_GREETING =
-  'Ciao! Sono il tuo assistente AI per la preparazione fisica nel basket. Posso aiutarti con programmazione allenamenti, analisi dati atleti, protocolli di recupero e molto altro. Come posso aiutarti?';
+/**
+ * Developer-facing error messages thrown internally by the streaming loop.
+ * They are never shown to the user: the catch block maps them to a translated
+ * message. 'Errore streaming' is also compared by value below, so it must stay
+ * a plain literal.
+ */
+const INTERNAL_ERROR_MESSAGES = [
+  'Nessun body nella risposta streaming',
+  'Errore streaming',
+];
 
 /**
  * Hook for managing AI chat interactions with SSE streaming.
@@ -66,20 +75,25 @@ const DEFAULT_GREETING =
  * Supports real-time streaming responses via Server-Sent Events.
  */
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
+  const t = useTranslations('chat');
+  const tAi = useTranslations('ai');
+
   const {
     // La chat passa dall'API (che fa da proxy verso l'ai-service interno):
     // funziona sia in locale sia in produzione, dove l'ai-service non è esposto.
     aiBaseUrl = `${API_BASE_URL}/api/v1`,
     athleteId,
     namespaces = ['protocols', 'exercises'],
-    greeting = DEFAULT_GREETING,
+    greeting,
   } = options;
+
+  const resolvedGreeting = greeting ?? t('greeting');
 
   const [messages, setMessages] = useState<ChatMessageUI[]>([
     {
       id: 'greeting',
       role: 'assistant',
-      content: greeting,
+      content: resolvedGreeting,
       timestamp: new Date(),
     },
   ]);
@@ -145,7 +159,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     // Check service health on first message
     const healthy = await checkHealth();
     if (!healthy) {
-      setError('Il servizio AI non è al momento raggiungibile. Riprova tra qualche istante.');
+      setError(t('serviceUnreachable'));
       return;
     }
 
@@ -200,7 +214,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       });
 
       if (!response.ok) {
-        throw new Error(`Errore dal servizio AI (${response.status})`);
+        throw new Error(t('serviceError', { status: response.status }));
       }
 
       if (!response.body) {
@@ -267,7 +281,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           m.id === assistantId
             ? {
                 ...m,
-                content: fullContent || 'Nessuna risposta ricevuta.',
+                content: fullContent || t('noResponse'),
                 isStreaming: false,
                 sources: sources.length > 0 ? sources : undefined,
               }
@@ -281,8 +295,10 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         return;
       }
 
-      const errorMsg =
-        err instanceof Error ? err.message : 'Errore sconosciuto';
+      const rawMsg = err instanceof Error ? err.message : tAi('unknownError');
+      const errorMsg = INTERNAL_ERROR_MESSAGES.includes(rawMsg)
+        ? t('genericError')
+        : rawMsg;
       setError(errorMsg);
 
       // Update assistant message with error
@@ -291,7 +307,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           m.id === assistantId
             ? {
                 ...m,
-                content: 'Mi dispiace, si è verificato un errore. Riprova.',
+                content: t('genericError'),
                 isStreaming: false,
               }
             : m
@@ -302,7 +318,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isLoading, checkHealth, buildApiMessages, aiBaseUrl, athleteId, namespaces]);
+  }, [input, isLoading, checkHealth, buildApiMessages, aiBaseUrl, athleteId, namespaces, t, tAi]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -311,12 +327,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       {
         id: 'greeting',
         role: 'assistant',
-        content: greeting,
+        content: resolvedGreeting,
         timestamp: new Date(),
       },
     ]);
     setError(null);
-  }, [greeting]);
+  }, [resolvedGreeting]);
 
   return {
     messages,

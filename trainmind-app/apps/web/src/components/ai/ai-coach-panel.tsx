@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Sparkles, Loader2, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
@@ -23,13 +23,6 @@ interface AICoachPanelProps {
   compact?: boolean;
 }
 
-const QUICK_QUESTIONS = [
-  'Quali esercizi consigli per prevenire infortuni al ginocchio?',
-  'Come strutturare una progressione di forza per il basket?',
-  'Quali sono le migliori alternative al back squat?',
-  'Come integrare il lavoro pliometrico nel programma settimanale?',
-];
-
 export function AICoachPanel({ initialContext, category, compact = false }: AICoachPanelProps) {
   const t = useTranslations('ai');
   const apiError = useApiError();
@@ -39,6 +32,16 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(!compact);
+
+  const quickQuestions = useMemo(
+    () => [
+      t('coachQuestion1'),
+      t('coachQuestion2'),
+      t('coachQuestion3'),
+      t('coachQuestion4'),
+    ],
+    [t]
+  );
 
   const askCoach = useCallback(async (q: string) => {
     if (!q.trim()) return;
@@ -62,11 +65,11 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
       setAnswer(payload.answer || payload.content || '');
       setSources(payload.sources || []);
     } catch (err) {
-      setError(apiError(err, 'Errore sconosciuto'));
+      setError(apiError(err, t('unknownError')));
     } finally {
       setIsLoading(false);
     }
-  }, [category]);
+  }, [category, apiError, t]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +88,7 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
         className="flex w-full items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm font-medium text-teal-700 hover:bg-teal-100"
       >
         <Sparkles className="h-4 w-4" />
-        Chiedi al Coach AI
+        {t('askCoach')}
         <ChevronDown className="ml-auto h-4 w-4" />
       </button>
     );
@@ -110,9 +113,9 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
         {/* Quick questions (only when no answer yet) */}
         {!answer && !isLoading && (
           <div className="space-y-1.5">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Domande suggerite:</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('suggestedQuestions')}</p>
             <div className="flex flex-wrap gap-1.5">
-              {QUICK_QUESTIONS.map((q, i) => (
+              {quickQuestions.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => handleQuickQuestion(q)}
@@ -168,7 +171,7 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
 
             {sources.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                <span className="text-2xs text-slate-400 dark:text-slate-500">Fonti:</span>
+                <span className="text-2xs text-slate-400 dark:text-slate-500">{t('sourcesLabel')}</span>
                 {sources.map((s) => (
                   <span
                     key={s.id}
@@ -184,7 +187,7 @@ export function AICoachPanel({ initialContext, category, compact = false }: AICo
               onClick={() => { setAnswer(''); setSources([]); setQuestion(''); }}
               className="text-xs text-teal-600 hover:text-teal-700"
             >
-              Nuova domanda
+              {t('newQuestion')}
             </button>
           </div>
         )}

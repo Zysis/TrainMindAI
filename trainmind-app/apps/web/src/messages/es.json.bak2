@@ -94,12 +94,7 @@
       "saving": "Guardando...",
       "cancel": "Cancelar",
       "genericError": "Error al cambiar la contraseña"
-    },
-    "currentPlan": "Plan actual",
-    "planUltraDesc": "Estás en el plan más alto: sin límites y con soporte prioritario incluido.",
-    "planUpgradeDesc": "Desbloquea más equipos, atletas y funciones avanzadas pasando al plan superior.",
-    "planTop": "Plan más alto",
-    "upgradePlan": "Mejorar plan"
+    }
   },
   "dashboard": {
     "title": "Panel",
@@ -838,9 +833,7 @@
     "bodyweight": "BW",
     "bodyweightHint": "Peso corporal: la carga base es el atleta. El campo de al lado es la carga añadida, vacío = solo peso corporal.",
     "extraLoadLabel": "Carga añadida",
-    "loadLabel": "Kg",
-    "weekLabel": "Semana {n}",
-    "aiModified": "Modificado por IA"
+    "loadLabel": "Kg"
   },
   "sessions": {
     "title": "Sesiones",
@@ -921,8 +914,7 @@
     "bodyweight": "BW",
     "bodyweightHint": "Peso corporal: la carga base es el atleta. El campo de al lado es la carga añadida, vacío = solo peso corporal.",
     "extraLoadLabel": "Carga añadida",
-    "loadLabel": "Kg",
-    "weekLabel": "Semana {n}"
+    "loadLabel": "Kg"
   },
   "exercises": {
     "title": "Biblioteca de Ejercicios",
@@ -1464,17 +1456,7 @@
     "noAdaptationsHint": "Genera una nueva propuesta arriba",
     "exerciseComparison": "Comparación de ejercicios",
     "exerciseColumn": "Ejercicio",
-    "generateProposalError": "Error al generar la propuesta",
-    "zoneLow": "Baja",
-    "zoneOptimal": "Óptima",
-    "zoneHigh": "Alta",
-    "zoneCritical": "Crítica",
-    "severityWarning": "Aviso",
-    "severityInfo": "Info",
-    "wellnessGood": "Bueno",
-    "wellnessMedium": "Medio",
-    "wellnessLow": "Bajo",
-    "targetValue": "Objetivo {value}"
+    "generateProposalError": "Error al generar la propuesta"
   },
   "chat": {
     "title": "Chat IA",
@@ -1486,16 +1468,7 @@
     "sendTitle": "Enviar mensaje (Enter)",
     "newChat": "Nuevo chat",
     "chatPlaceholder": "Pregunta algo sobre el entrenamiento...",
-    "footerHint": "Basado en GPT-4o y la base de conocimiento de TrainMind. Shift+Enter para salto de línea.",
-    "greeting": "¡Hola! Soy tu asistente de IA para la preparación física en baloncesto. Puedo ayudarte con la programación de entrenamientos, el análisis de datos de los atletas, protocolos de recuperación y mucho más. ¿En qué puedo ayudarte?",
-    "suggestion1": "¿Cómo programar la fuerza en pretemporada?",
-    "suggestion2": "Protocolo de prevención de tobillo para baloncesto",
-    "suggestion3": "Diferencia entre periodización ondulante y lineal",
-    "suggestion4": "Ejercicios pliométricos para mejorar el salto",
-    "serviceUnreachable": "El servicio de IA no está disponible en este momento. Inténtalo de nuevo en unos instantes.",
-    "serviceError": "Error del servicio de IA ({status})",
-    "noResponse": "No se ha recibido ninguna respuesta.",
-    "genericError": "Lo sentimos, se ha producido un error. Inténtalo de nuevo."
+    "footerHint": "Basado en GPT-4o y la base de conocimiento de TrainMind. Shift+Enter para salto de línea."
   },
   "periodization": {
     "title": "Periodización",
@@ -1665,14 +1638,7 @@
     "sessionsCountRange": "Las sesiones deben estar entre 1 y 14",
     "selectTeamPlaceholder": "Selecciona un equipo…",
     "teamRequiredHint": "El equipo es obligatorio: sin él, el plan no aparece en las listas filtradas.",
-    "templateNeedsDateAndTeam": "Elige primero la fecha de inicio y el equipo.",
-    "plannedLoad": "Carga planificada",
-    "fatigue": "Fatiga",
-    "runSimulationHint": "Ejecuta una simulación para ver las curvas",
-    "riskLow": "bajo",
-    "riskModerate": "moderado",
-    "riskHigh": "alto",
-    "riskVeryHigh": "muy alto"
+    "templateNeedsDateAndTeam": "Elige primero la fecha de inicio y el equipo."
   },
   "billing": {
     "title": "Suscripción",
@@ -1709,18 +1675,7 @@
     "featureAllProfessional": "Todo de Professional",
     "featurePrioritySupport": "Soporte prioritario",
     "feature2Athletes": "2 atletas",
-    "featureLimitedReports": "Informes limitados",
-    "upgrade": "Mejorar plan",
-    "downgrade": "Bajar de plan",
-    "feature1Team": "1 equipo",
-    "featureWellness": "Seguimiento del bienestar",
-    "featureCalendar": "Calendario de entrenamientos",
-    "feature3Teams": "Hasta 3 equipos",
-    "featureAICoach": "Coach IA",
-    "featureRTP": "Lesiones y protocolos RTP",
-    "featureAnalytics": "Analítica avanzada",
-    "featureUnlimitedTeams": "Equipos ilimitados",
-    "featureApiAccess": "Acceso a la API"
+    "featureLimitedReports": "Informes limitados"
   },
   "topbar": {
     "search": "Buscar atletas, ejercicios, sesiones...",
@@ -1872,10 +1827,7 @@
     "tourReportsDesc": "Genera informes automatizados y análisis",
     "tourReadyTitle": "¡Todo listo!",
     "tourReadyDesc": "Empieza agregando tu primer atleta",
-    "gettingStarted": "Para empezar",
-    "completedOf": "{done}/{total} completados",
-    "markComplete": "Marcar como completado",
-    "markIncomplete": "Marcar como pendiente"
+    "gettingStarted": "Para empezar"
   },
   "offline": {
     "offlineMessage": "Modo sin conexión — los cambios se sincronizarán cuando se restablezca la red",
@@ -2109,8 +2061,7 @@
     "heatmapTitle": "Mapa de calor del bienestar",
     "heatmapFormula": "Puntuación = suma de los cinco apartados del wellness (sueño, fatiga, dolor, estrés, ánimo), cada uno de 1 a 5 donde 5 es la mejor condición, dividida por 25 y multiplicada por 100. Va por tanto del 20% (todos los apartados a 1) al 100% (todos a 5). Pasa el ratón por una celda para ver el cálculo.",
     "noWellnessData": "Sin datos de bienestar disponibles",
-    "scoreLabel": "Puntuación:",
-    "teamAverage": "Media del equipo"
+    "scoreLabel": "Puntuación:"
   },
   "ai": {
     "generateTitle": "Generar Plan con IA",
@@ -2165,14 +2116,7 @@
     "usePlan": "Usar este plan",
     "nWeeks": "{n} semanas",
     "weeksMismatch": "Pediste {asked} semanas y la IA ha producido {got}. Puedes regenerar, o añadir el plan tal cual y completarlo a mano.",
-    "coachAnalyzing": "El Coach IA está analizando...",
-    "askCoach": "Pregunta al Coach IA",
-    "suggestedQuestions": "Preguntas sugeridas:",
-    "newQuestion": "Nueva pregunta",
-    "coachQuestion1": "¿Qué ejercicios recomiendas para prevenir lesiones de rodilla?",
-    "coachQuestion2": "¿Cómo estructurar una progresión de fuerza para el baloncesto?",
-    "coachQuestion3": "¿Cuáles son las mejores alternativas al back squat?",
-    "coachQuestion4": "¿Cómo integrar el trabajo pliométrico en el programa semanal?"
+    "coachAnalyzing": "El Coach IA está analizando..."
   },
   "liveSession": {
     "recoveredFromAutosave": "Sesión recuperada del autoguardado",
@@ -2187,27 +2131,7 @@
     "sessionRpeLabel": "RPE de la sesión (1-10)",
     "sessionNotesLabel": "Notas de la sesión",
     "sessionNotesPlaceholder": "¿Cómo ha ido la sesión?",
-    "exerciseNotesPlaceholder": "Notas para este ejercicio...",
-    "startRecording": "Iniciar Grabación",
-    "sessionSaved": "¡Sesión guardada correctamente!",
-    "setsCompleted": "Series completadas",
-    "completion": "Finalización",
-    "volumeKg": "Volumen (kg)",
-    "backToExercises": "Volver a los ejercicios",
-    "saving": "Guardando...",
-    "saveSession": "Guardar Sesión",
-    "setsUnit": "series",
-    "finish": "Terminar",
-    "targetSets": "Objetivo: {n} series",
-    "addSet": "Añadir serie",
-    "removeLastSet": "Quitar la última",
-    "endSession": "Terminar sesión",
-    "rest": "Descanso",
-    "disableSound": "Desactivar sonido",
-    "enableSound": "Activar sonido",
-    "reset": "Reiniciar",
-    "pause": "Pausa",
-    "start": "Iniciar"
+    "exerciseNotesPlaceholder": "Notas para este ejercicio..."
   },
   "apiErrors": {
     "generic": "Se ha producido un error.",

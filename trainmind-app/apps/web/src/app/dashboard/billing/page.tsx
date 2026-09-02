@@ -301,7 +301,7 @@ export default function BillingPage() {
                   {tier.highlighted && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className="rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
-                        Consigliato
+                        {t('recommended')}
                       </span>
                     </div>
                   )}
@@ -310,7 +310,7 @@ export default function BillingPage() {
                   {isCurrent && (
                     <div className="absolute -top-3 right-4">
                       <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
-                        Piano Attuale
+                        {t('currentPlan')}
                       </span>
                     </div>
                   )}
@@ -332,7 +332,7 @@ export default function BillingPage() {
                   {/* Price */}
                   <div className="mb-6">
                     <span className="text-3xl font-extrabold text-slate-900 dark:text-white">&euro;{tier.price}</span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">/mese</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{t('perMonth')}</span>
                   </div>
 
                   {/* Feature list */}
@@ -355,7 +355,7 @@ export default function BillingPage() {
                       disabled
                       className="w-full rounded-lg border border-teal-300 bg-teal-50 py-2.5 text-sm font-semibold text-teal-700"
                     >
-                      Piano Attuale
+                      {t('currentPlan')}
                     </button>
                   ) : (
                     <button
@@ -370,11 +370,11 @@ export default function BillingPage() {
                       {checkoutLoading === tier.id ? (
                         <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                       ) : isUpgrade ? (
-                        'Upgrade'
+                        t('upgrade')
                       ) : isDowngrade ? (
-                        'Downgrade'
+                        t('downgrade')
                       ) : (
-                        'Scegli Piano'
+                        t('choosePlan')
                       )}
                     </button>
                   )}
@@ -391,23 +391,22 @@ export default function BillingPage() {
                   <Users className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Piano Gratuito</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">{t('freePlan')}</h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Stai utilizzando il piano gratuito con funzionalit&agrave; limitate.
-                    Scegli un piano a pagamento per sbloccare tutte le funzionalit&agrave; di TrainMind.
+                    {t('freePlanDesc')}
                   </p>
                   <ul className="mt-3 space-y-1.5">
                     <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <Check className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                      2 atleti
+                      {t('feature2Athletes')}
                     </li>
                     <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <Check className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                      1 utente
+                      {t('feature1User')}
                     </li>
                     <li className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <Check className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                      Report limitati
+                      {t('featureLimitedReports')}
                     </li>
                   </ul>
                 </div>

@@ -24,6 +24,14 @@ export default function ChatPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('chat');
+  const tCommon = useTranslations('common');
+
+  const suggestions = [
+    t('suggestion1'),
+    t('suggestion2'),
+    t('suggestion3'),
+    t('suggestion4'),
+  ];
 
   // Auto-scroll to bottom on new messages or streaming updates
   useEffect(() => {
@@ -82,7 +90,7 @@ export default function ChatPage() {
             onClick={clearError}
             className="text-xs text-red-400 hover:text-red-600"
           >
-            Chiudi
+            {tCommon('close')}
           </button>
         </div>
       )}
@@ -111,12 +119,7 @@ export default function ChatPage() {
       {/* Quick suggestions (shown only on greeting) */}
       {messages.length === 1 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            'Come programmare la forza in pre-season?',
-            'Protocollo prevenzione caviglia per basket',
-            'Differenza tra periodizzazione ondulata e lineare',
-            'Esercizi pliometrici per migliorare il salto',
-          ].map((suggestion) => (
+          {suggestions.map((suggestion) => (
             <button
               key={suggestion}
               onClick={() => {

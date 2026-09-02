@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ChatInputProps {
   value: string;
@@ -18,8 +19,9 @@ export function ChatInput({
   onSend,
   isLoading,
   disabled = false,
-  placeholder = 'Scrivi un messaggio...',
+  placeholder,
 }: ChatInputProps) {
+  const t = useTranslations('chat');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -50,7 +52,7 @@ export function ChatInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('placeholder')}
         disabled={disabled || isLoading}
         rows={1}
         className="flex-1 resize-none bg-transparent text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 dark:text-slate-500 focus:outline-none disabled:opacity-50"
@@ -60,7 +62,7 @@ export function ChatInput({
         onClick={onSend}
         disabled={!value.trim() || isLoading || disabled}
         className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white transition-all hover:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-        title="Invia messaggio (Enter)"
+        title={t('sendTitle')}
       >
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
