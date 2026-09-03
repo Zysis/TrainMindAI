@@ -45,6 +45,18 @@ export async function buildApp() {
     },
     requestTimeout: 30000,
     bodyLimit: 1048576,
+    // Dietro Caddy `request.ip` era l'indirizzo del container proxy, uguale
+    // per tutti: il limite di 100 richieste al minuto finiva condiviso da
+    // tutta la piattaforma (una societa' che sfoglia tre atleti poteva
+    // mandare in 429 le altre), i limiti su forgot/reset-password valevano
+    // per il prodotto intero, e gli audit log registravano l'IP sbagliato.
+    //
+    // `1` e non `true`: si fida di UN solo hop, cioe' dell'ultimo valore di
+    // X-Forwarded-For, che scrive Caddy. Con `true` un client potrebbe
+    // spedire un X-Forwarded-For fasullo e farsi passare per 127.0.0.1,
+    // che e' nella allowList qui sotto. Il container api e' su `expose` e
+    // non su `ports`, quindi l'unico che lo raggiunge e' il proxy.
+    trustProxy: 1,
   });
 
   // ─── Security & Middleware ────────────────────────────
@@ -90,9 +102,11 @@ export async function buildApp() {
     keyGenerator: (request) => request.ip,
   });
 
-  // NOTE: Stricter rate limiting for auth endpoints is applied per-route
-  // via config.rateLimit in auth.ts route definitions, not via a second
-  // plugin registration (which would crash with FST_ERR_DEC_ALREADY_PRESENT).
+  // I limiti piu' stretti sulle rotte di autenticazione stanno per-rotta in
+  // auth.ts, in `config.rateLimit`, e non in una seconda registrazione del
+  // plugin (che morirebbe con FST_ERR_DEC_ALREADY_PRESENT).
+  // Coperte: /auth/login, /auth/register, /auth/forgot-password,
+  // /auth/reset-password.
 
   // Add security headers
   app.addHook('onSend', async (_request, reply) => {

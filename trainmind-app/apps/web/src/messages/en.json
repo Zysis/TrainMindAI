@@ -455,7 +455,9 @@
     "gtCompetitionLabel": "Competition",
     "gtCompetitionPlaceholder": "e.g. 3rd BBL",
     "gtScoreHint": "Score as on the scoreboard: home on the left.",
-    "gtCompleteWithScore": "Complete and save result"
+    "gtCompleteWithScore": "Complete and save result",
+    "teamRequired": "Team is required for group training sessions and games",
+    "selectTeam": "Choose the team…"
   },
   "teams": {
     "title": "Teams",
@@ -1209,7 +1211,9 @@
     "protocolLibrary": "Protocol library",
     "templateGroupAuto": "Automatic",
     "templateGroupManual": "Choose a protocol",
-    "injuredOn": "Injured on {date}"
+    "injuredOn": "Injured on {date}",
+    "locArmL": "Left arm/forearm",
+    "locArmR": "Right arm/forearm"
   },
   "analytics": {
     "title": "Analytics",
@@ -2342,6 +2346,7 @@
       "dorsal": "Upper back",
       "cervical": "Neck",
       "shoulder": "Shoulder",
+      "arm": "Arm and forearm",
       "elbow": "Elbow",
       "wrist": "Wrist",
       "hand": "Hand and fingers",

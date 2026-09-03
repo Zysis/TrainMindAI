@@ -52,8 +52,21 @@ function emailFingerprint(email: string): string {
 }
 
 export async function authRoutes(app: FastifyInstance) {
+  // Limiti per rotta sulle credenziali.
+  //
+  // Il limite globale (100/min) non basta: qui non c'e' blocco dell'account
+  // dopo N tentativi falliti, quindi questo e' l'unica cosa fra un attacco a
+  // dizionario e le password degli utenti. Venti in un quarto d'ora e' largo
+  // per chi sbaglia a digitare e per uno staff dietro lo stesso IP, stretto
+  // per chi prova un elenco.
+  //
+  // Valgono solo se `trustProxy` e' attivo in app.ts: senza, dietro il proxy
+  // farebbero da tetto unico per tutta la piattaforma invece che per utente.
+  const loginLimit = { config: { rateLimit: { max: 20, timeWindow: '15 minutes' } } };
+  const registerLimit = { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } };
+
   // ─── POST /auth/register ────────────────────────────
-  app.post<{ Body: RegisterInput }>('/auth/register', async (request, reply) => {
+  app.post<{ Body: RegisterInput }>('/auth/register', registerLimit, async (request, reply) => {
     // Interruttore per chiudere le registrazioni pubbliche (fase di test)
     if (process.env.DISABLE_REGISTRATION === 'true') {
       return reply.status(403).send({
@@ -262,7 +275,7 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /auth/login ──────────────────────────────
-  app.post<{ Body: LoginInput }>('/auth/login', async (request, reply) => {
+  app.post<{ Body: LoginInput }>('/auth/login', loginLimit, async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({

@@ -1365,6 +1365,7 @@ function CreateEventModal({
   onCreated: () => void;
 }) {
   const t = useTranslations('calendar');
+  const { toast } = useToast();
   const { teams, selectedTeamId } = useTeam();
   const eventTypeConfig = useEventTypeConfig(t);
   const dateStr = `${defaultDate.getFullYear()}-${String(defaultDate.getMonth() + 1).padStart(2, '0')}-${String(defaultDate.getDate()).padStart(2, '0')}`;
@@ -1393,8 +1394,17 @@ function CreateEventModal({
     return () => { cancelled = true; };
   }, [type, rtpList.length]);
 
+  // Gli stessi quattro tipi dell'API (notifications.ts): allenamenti di gruppo
+  // e partite hanno per definizione una squadra. Se il controllo restasse solo
+  // sul server l'utente vedrebbe un errore generico dopo aver compilato tutto.
+  const squadraObbligatoria = ['gym', 'basket', 'shooting', 'match'].includes(type);
+
   const handleSubmit = async () => {
     if (!title.trim()) return;
+    if (squadraObbligatoria && !teamId) {
+      toast('error', t('teamRequired'));
+      return;
+    }
     setSaving(true);
     try {
       const startTime = allDay ? `${startDate}T00:00:00` : `${startDate}T${startTimeVal}:00`;
@@ -1468,13 +1478,19 @@ function CreateEventModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">{t('teamLabel')}</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                {t('teamLabel')}{squadraObbligatoria && ' *'}
+              </label>
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
               >
-                <option value="">{t('noTeam')}</option>
+                {/* Sui tipi collettivi "nessuna squadra" non e' una scelta
+                    valida: meglio non offrirla che rifiutarla dopo. */}
+                <option value="" disabled={squadraObbligatoria}>
+                  {squadraObbligatoria ? t('selectTeam') : t('noTeam')}
+                </option>
                 {teams.map((tm) => (
                   <option key={tm.id} value={tm.id}>{tm.name}</option>
                 ))}

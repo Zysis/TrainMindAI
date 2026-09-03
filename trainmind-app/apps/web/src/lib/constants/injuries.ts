@@ -9,6 +9,8 @@
  * Sono chiavi i18n, non testo: la traduzione avviene nel componente.
  */
 
+import type { InjuryLocation } from '@trainmind/types';
+
 export const PHASE_LABEL_KEYS: Record<string, string> = {
   PHASE_1: 'phase1Label',
   PHASE_2: 'phase2Label',
@@ -69,7 +71,13 @@ export const INJURY_ONSET_DEFS: { value: string; labelKey: string }[] = [
   { value: 'non_traumatic', labelKey: 'onsetNonTraumatic' },
 ];
 
-export const BODY_LOCATION_DEFS: { value: string; labelKey: string }[] = [
+/**
+ * Le voci del menu "sede". Il tipo del campo `value` e' `InjuryLocation`, non
+ * `string`: se questa lista e l'elenco canonico in @trainmind/types divergono,
+ * il type-check se ne accorge invece di lasciare che una voce inesistente
+ * arrivi all'API e venga rifiutata a runtime.
+ */
+export const BODY_LOCATION_DEFS: { value: InjuryLocation; labelKey: string }[] = [
   { value: 'ankle_l', labelKey: 'locAnkleL' },
   { value: 'ankle_r', labelKey: 'locAnkleR' },
   { value: 'knee_l', labelKey: 'locKneeL' },
@@ -87,6 +95,8 @@ export const BODY_LOCATION_DEFS: { value: string; labelKey: string }[] = [
   { value: 'back_upper', labelKey: 'locBackUpper' },
   { value: 'shoulder_l', labelKey: 'locShoulderL' },
   { value: 'shoulder_r', labelKey: 'locShoulderR' },
+  { value: 'arm_l', labelKey: 'locArmL' },
+  { value: 'arm_r', labelKey: 'locArmR' },
   { value: 'wrist_l', labelKey: 'locWristL' },
   { value: 'wrist_r', labelKey: 'locWristR' },
   { value: 'finger', labelKey: 'locFinger' },

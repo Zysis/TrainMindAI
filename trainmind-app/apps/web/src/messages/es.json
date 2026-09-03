@@ -455,7 +455,9 @@
     "gtCompetitionLabel": "Competición",
     "gtCompetitionPlaceholder": "Ej. 3ª BBL",
     "gtScoreHint": "Marcador como en el tanteador: local a la izquierda.",
-    "gtCompleteWithScore": "Completar y guardar resultado"
+    "gtCompleteWithScore": "Completar y guardar resultado",
+    "teamRequired": "Para entrenamientos de grupo y partidos el equipo es obligatorio",
+    "selectTeam": "Elige el equipo…"
   },
   "teams": {
     "title": "Equipos",
@@ -1209,7 +1211,9 @@
     "protocolLibrary": "Biblioteca de protocolos",
     "templateGroupAuto": "Automático",
     "templateGroupManual": "Elige un protocolo",
-    "injuredOn": "Lesión del {date}"
+    "injuredOn": "Lesión del {date}",
+    "locArmL": "Brazo/antebrazo izquierdo",
+    "locArmR": "Brazo/antebrazo derecho"
   },
   "analytics": {
     "title": "Análisis",
@@ -2342,6 +2346,7 @@
       "dorsal": "Zona dorsal",
       "cervical": "Cervical",
       "shoulder": "Hombro",
+      "arm": "Brazo y antebrazo",
       "elbow": "Codo",
       "wrist": "Muñeca",
       "hand": "Mano y dedos",

@@ -211,6 +211,12 @@ async function main() {
       endDate: planEnd,
       organizationId: org.id,
       createdById: user.id,
+      // Obbligatorio da quando i piani hanno un pattern settimanale
+      // (`Int[]`, numerazione ISO: 1 = lunedi'). Senza, l'upsert muore con
+      // "Null constraint violation on (trainingDays)" ed e' il motivo per cui
+      // questo seed era rotto. Lunedi', mercoledi' e venerdi': lo stesso
+      // schema delle quattro sessioni create qui sotto.
+      trainingDays: [1, 3, 5],
       weeks: {
         create: [
           { id: 'seed-week-1', weekNumber: 1, notes: 'Settimana di adattamento anatomico' },
@@ -306,6 +312,9 @@ async function main() {
       athleteId: athletes[0].id,
       organizationId: org.id,
       createdById: user.id,
+      // Martedi' e giovedi': un piano individuale ha di norma meno sedute
+      // di quello di squadra. Il campo e' obbligatorio (Int[], ISO).
+      trainingDays: [2, 4],
       weeks: {
         create: [
           { id: 'seed-ap-week-1', weekNumber: 1 },
@@ -325,7 +334,7 @@ async function main() {
       athleteId: athletes[2].id, // Davide Marino
       type: 'ligament',
       onset: 'traumatic',
-      location: 'Caviglia destra',
+      location: 'ankle_r',
       severity: 2,
       status: 'RECOVERING',
       dateOccurred: new Date(today.getFullYear(), today.getMonth() - 1, 15),
@@ -401,6 +410,7 @@ async function main() {
         startTime: start,
         endTime: end,
         userId: user.id,
+        organizationId: user.organizationId,
       },
     });
   }

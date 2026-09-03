@@ -122,6 +122,7 @@ model Organization {
   athleteInvites         AthleteInvite[]
   aiUsageLogs            AiUsageLog[]
   rtpTemplates           RTPTemplate[]
+  calendarEvents         CalendarEvent[]
 
   @@map("organizations")
 }
@@ -756,7 +757,14 @@ model CalendarEvent {
   allDay      Boolean  @default(false)
   type        String // 'training', 'match', 'medical', 'meeting', 'other'
   color       String?
+  /// Chi ha creato l'evento. NON e' piu' il filtro di visibilita': il
+  /// calendario e' della societa', non della persona. Resta come traccia.
   userId      String
+  /// Aggiunto il 2/9/2026. Prima il calendario era filtrato per utente e due
+  /// preparatori della stessa societa' non vedevano gli eventi l'uno
+  /// dell'altro — e aprire il foglio di campo su un evento di un collega dava
+  /// "evento non trovato".
+  organizationId String
   athleteId   String?
   sessionId   String?
   teamId      String?
@@ -776,11 +784,13 @@ model CalendarEvent {
   updatedAt   DateTime @updatedAt
 
   user                 User                  @relation(fields: [userId], references: [id])
+  organization         Organization          @relation(fields: [organizationId], references: [id])
   team                 Team?                 @relation(fields: [teamId], references: [id])
   fieldTrainingSession FieldTrainingSession?
   gameSession          GameSession?
 
   @@index([userId])
+  @@index([organizationId])
   @@index([teamId])
   @@index([startTime, endTime])
   @@map("calendar_events")

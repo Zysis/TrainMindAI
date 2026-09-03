@@ -627,6 +627,8 @@ async function main() {
         createdById: userId,
         teamId: team.id,
         periodizationPlanId: periPlan.id,
+        // Obbligatorio: numerazione ISO, 1 = lunedi'.
+        trainingDays: [1, 3, 5],
       },
     });
 

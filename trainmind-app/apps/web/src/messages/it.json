@@ -455,7 +455,9 @@
     "gtCompetitionLabel": "Competizione",
     "gtCompetitionPlaceholder": "Es. 3ª BBL",
     "gtScoreHint": "Punteggio come sul tabellone: casa a sinistra.",
-    "gtCompleteWithScore": "Completa e salva risultato"
+    "gtCompleteWithScore": "Completa e salva risultato",
+    "teamRequired": "Per allenamenti di gruppo e partite la squadra è obbligatoria",
+    "selectTeam": "Scegli la squadra…"
   },
   "teams": {
     "title": "Squadre",
@@ -1209,7 +1211,9 @@
     "protocolLibrary": "Libreria protocolli",
     "templateGroupAuto": "Automatico",
     "templateGroupManual": "Scegli un protocollo",
-    "injuredOn": "Infortunio del {date}"
+    "injuredOn": "Infortunio del {date}",
+    "locArmL": "Braccio/avambraccio sinistro",
+    "locArmR": "Braccio/avambraccio destro"
   },
   "analytics": {
     "title": "Analisi",
@@ -2342,6 +2346,7 @@
       "dorsal": "Zona dorsale",
       "cervical": "Cervicale",
       "shoulder": "Spalla",
+      "arm": "Braccio e avambraccio",
       "elbow": "Gomito",
       "wrist": "Polso",
       "hand": "Mano e dita",

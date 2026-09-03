@@ -11,7 +11,9 @@ import {
   toISODate,
   calculateAge,
   calculateSRPE,
-  calculateACWR,
+  computeAcwr,
+  acwrZone,
+  ACWR_MIN_HISTORY_DAYS,
   calculateWellnessScore,
   slugify,
   getAvatarColor,
@@ -106,50 +108,109 @@ describe('calculateSRPE', () => {
   });
 });
 
-// ─── calculateACWR ────────────────────────────────────────
+// ─── computeAcwr ──────────────────────────────────────────
+//
+// Questi test valgono per TUTTE le rotte: dal 2/9/2026 dashboard,
+// daily-report e game-report usano questa funzione e non piu' una copia a
+// testa. Se qualcuno cambia una finestra o una soglia, si rompono qui una
+// volta sola invece di far divergere in silenzio quattro schermate.
 
-describe('calculateACWR', () => {
-  it('returns 0 when less than 28 days of data', () => {
-    expect(calculateACWR([100, 200, 300])).toBe(0);
+// Un istante fisso, non `Date.now()`. Se le date del fixture e l'istante di
+// calcolo si leggono in due momenti diversi, una seduta piazzata sul confine
+// di una finestra ci entra o ne esce a seconda di quanti millisecondi sono
+// passati — ed e' esattamente l'errore che ha fatto uscire 5400 invece di
+// 6300 nel test della dashboard.
+const ORA = new Date('2026-09-02T12:00:00.000Z');
+
+const giorniPrima = (n: number, load: number) => ({
+  date: new Date(ORA.getTime() - n * 86400000),
+  load,
+});
+
+describe('computeAcwr', () => {
+  it('senza carico non risponde, e dice perche\'', () => {
+    const r = computeAcwr([], ORA);
+    expect(r.acwr).toBeNull();
+    expect(r.zone).toBeNull();
+    expect(r.notAssessable).toBe('no-load');
   });
 
-  it('returns 0 when chronic load is 0', () => {
-    const zeros = new Array(28).fill(0);
-    expect(calculateACWR(zeros)).toBe(0);
+  it('sotto i 14 giorni di storico non risponde', () => {
+    // Cinque giorni di carico altissimo: il rapporto verrebbe gonfiato, ed e'
+    // esattamente il falso allarme da cui la guardia protegge.
+    const punti = [1, 2, 3, 4, 5].map((n) => giorniPrima(n, 900));
+    const r = computeAcwr(punti, ORA);
+    expect(r.acwr).toBeNull();
+    expect(r.notAssessable).toBe('short-history');
   });
 
-  it('calculates ratio correctly with stable load', () => {
-    const stable = new Array(28).fill(100);
-    const acwr = calculateACWR(stable);
-    expect(acwr).toBe(1);
+  it('con carico costante su tutte e tre le settimane da 1,00', () => {
+    // Ventuno sedute, una al giorno: acuto 7 x 360 = 2520, cronico
+    // 21 x 360 / 3 = 2520. Il rapporto e' esattamente 1.
+    // Servono 21 giorni e non 20: con venti il cronico settimanale scende a
+    // 2400 e il rapporto sale a 1,05. La seduta del ventunesimo giorno cade
+    // sul bordo della finestra, che e' inclusivo.
+    const punti = Array.from({ length: 21 }, (_, i) => giorniPrima(i + 1, 360));
+    const r = computeAcwr(punti, ORA);
+    expect(r.acwr).toBe(1);
+    expect(r.zone).toBe('optimal');
+    expect(r.notAssessable).toBeNull();
   });
 
-  it('detects spike (high acute, low chronic)', () => {
-    const data = [
-      ...new Array(21).fill(100),
-      ...new Array(7).fill(200),
+  it('su uno scalino di carico da 1,72 in zona critica', () => {
+    // 13 giorni a 360 (giorni 8-20) + 7 giorni a 900 (giorni 1-7).
+    // acuto = 6300; cronico = 10980 / 3 = 3660; 6300 / 3660 = 1,72.
+    const punti = [
+      ...Array.from({ length: 13 }, (_, i) => giorniPrima(i + 8, 360)),
+      ...Array.from({ length: 7 }, (_, i) => giorniPrima(i + 1, 900)),
     ];
-    const acwr = calculateACWR(data);
-    expect(acwr).toBeGreaterThan(1);
+    const r = computeAcwr(punti, ORA);
+    expect(r.acuteLoad).toBe(6300);
+    expect(r.chronicLoad).toBe(3660);
+    expect(r.acwr).toBe(1.72);
+    expect(r.zone).toBe('danger');
   });
 
-  it('detects deload (low acute, high chronic)', () => {
-    const data = [
-      ...new Array(21).fill(200),
-      ...new Array(7).fill(50),
+  it('riconosce lo scarico', () => {
+    const punti = [
+      ...Array.from({ length: 13 }, (_, i) => giorniPrima(i + 8, 600)),
+      ...Array.from({ length: 7 }, (_, i) => giorniPrima(i + 1, 100)),
     ];
-    const acwr = calculateACWR(data);
-    expect(acwr).toBeLessThan(1);
+    const r = computeAcwr(punti, ORA);
+    expect(r.acwr).toBeLessThan(0.8);
+    expect(r.zone).toBe('low');
   });
 
-  it('rounds to 2 decimal places', () => {
-    const data = [
-      ...new Array(21).fill(100),
-      ...new Array(7).fill(150),
+  it('separa la settimana acuta da quella precedente', () => {
+    const punti = [
+      ...Array.from({ length: 7 }, (_, i) => giorniPrima(i + 1, 500)),   // acuta
+      ...Array.from({ length: 7 }, (_, i) => giorniPrima(i + 8, 300)),   // precedente
+      ...Array.from({ length: 6 }, (_, i) => giorniPrima(i + 15, 200)),  // solo cronica
     ];
-    const acwr = calculateACWR(data);
-    const decimalPlaces = (acwr.toString().split('.')[1] || '').length;
-    expect(decimalPlaces).toBeLessThanOrEqual(2);
+    const r = computeAcwr(punti, ORA);
+    expect(r.acuteLoad).toBe(3500);
+    expect(r.previousWeekLoad).toBe(2100);
+  });
+
+  it('ignora le sedute fuori dalla finestra di tre settimane', () => {
+    const punti = [
+      ...Array.from({ length: 21 }, (_, i) => giorniPrima(i + 1, 360)),
+      giorniPrima(40, 99999),
+    ];
+    expect(computeAcwr(punti, ORA).acwr).toBe(1);
+  });
+
+  it('acwrZone rispetta le soglie 0,8 / 1,3 / 1,5', () => {
+    expect(acwrZone(0.79)).toBe('low');
+    expect(acwrZone(0.8)).toBe('optimal');
+    expect(acwrZone(1.3)).toBe('optimal');
+    expect(acwrZone(1.31)).toBe('high');
+    expect(acwrZone(1.5)).toBe('high');
+    expect(acwrZone(1.51)).toBe('danger');
+  });
+
+  it('la soglia dello storico minimo e di 14 giorni', () => {
+    expect(ACWR_MIN_HISTORY_DAYS).toBe(14);
   });
 });
 

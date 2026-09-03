@@ -43,16 +43,113 @@ export function calculateSRPE(rpe: number, durationMinutes: number): number {
   return rpe * durationMinutes;
 }
 
+// ─── ACWR ───────────────────────────────────────────────────────────────
+//
+// L'unica definizione di ACWR del prodotto. Prima ce n'erano quattro, una per
+// rotta (analytics, daily-report, dashboard, game-report) piu' una quinta qui
+// dentro che non usava nessuno — e non concordavano. Il 2/9/2026 si e' visto
+// a schermo cosa significa: la dashboard diceva "0 atleti valutabili, 38 non
+// valutabili" mentre il report giornaliero, sugli stessi atleti e nello stesso
+// istante, mostrava ACWR 2,44 in rosso e l'intera rosa Under 14 a 3,00.
+//
+// Le scelte, tutte discutibili ma da qui in avanti discutibili UNA volta sola:
+//
+// * Acuto = somma sRPE degli ultimi 7 giorni. Cronico = somma degli ultimi 21
+//   riportata a settimana, cioe' divisa per 3. Finestre accoppiate: i 7 giorni
+//   acuti stanno dentro i 21 cronici.
+// * Il divisore e' SEMPRE 3, perche' il cronico significa "quanto sei abituato
+//   a lavorare". Normalizzare sulle settimane davvero coperte darebbe circa
+//   1,0 — cioe' "va tutto bene" — a un atleta di cui non si sa niente.
+// * Ma proprio per questo, sotto i 14 giorni di storico non si risponde: con
+//   tutto il carico nell'ultima settimana il rapporto verrebbe esattamente
+//   3,00 per chiunque, e l'intera rosa finirebbe in rosso il giorno dopo aver
+//   iniziato a registrare gli RPE. La risposta onesta e' che non si puo' dire.
+
+/** Zone del rapporto acuto/cronico, sulle soglie usate in tutto il prodotto. */
+export type AcwrZone = 'low' | 'optimal' | 'high' | 'danger';
+
+/** Una seduta svolta: quando, e quanto e' pesata (sRPE = RPE x minuti). */
+export interface AcwrLoadPoint {
+  date: Date;
+  load: number;
+}
+
+export interface AcwrResult {
+  /** null quando non si puo' dire: il motivo sta in `notAssessable`. */
+  acwr: number | null;
+  zone: AcwrZone | null;
+  /** Somma sRPE degli ultimi 7 giorni. */
+  acuteLoad: number;
+  /** Cronico riportato a settimana: somma su 21 giorni divisa 3. */
+  chronicLoad: number;
+  /** Somma della settimana precedente a quella acuta, per il confronto. */
+  previousWeekLoad: number;
+  /** `no-load` = nessun carico nelle tre settimane; `short-history` = storico troppo corto. */
+  notAssessable: null | 'no-load' | 'short-history';
+}
+
+export const ACWR_ACUTE_DAYS = 7;
+export const ACWR_CHRONIC_DAYS = 21;
+export const ACWR_MIN_HISTORY_DAYS = 14;
+
+const ACWR_DAY_MS = 86_400_000;
+
+/** Le soglie delle zone, in un posto solo. */
+export function acwrZone(value: number): AcwrZone {
+  if (value < 0.8) return 'low';
+  if (value <= 1.3) return 'optimal';
+  if (value <= 1.5) return 'high';
+  return 'danger';
+}
+
 /**
- * Calculate ACWR (Acute:Chronic Workload Ratio)
- * Acute = last 7 days avg, Chronic = last 28 days avg
+ * ACWR di un atleta a una certa data.
+ *
+ * Le sedute possono arrivare non filtrate: la funzione si ritaglia da sola le
+ * finestre attorno a `asOf`, cosi' chi chiama puo' passare un intervallo piu'
+ * largo (serve ad analytics, che fa scorrere `asOf` lungo una serie).
  */
-export function calculateACWR(dailyLoads: number[]): number {
-  if (dailyLoads.length < 28) return 0;
-  const acute = dailyLoads.slice(-7).reduce((a, b) => a + b, 0) / 7;
-  const chronic = dailyLoads.slice(-28).reduce((a, b) => a + b, 0) / 28;
-  if (chronic === 0) return 0;
-  return Math.round((acute / chronic) * 100) / 100;
+export function computeAcwr(points: AcwrLoadPoint[], asOf: Date = new Date()): AcwrResult {
+  const now = asOf.getTime();
+  const chronicStart = now - ACWR_CHRONIC_DAYS * ACWR_DAY_MS;
+  const acuteStart = now - ACWR_ACUTE_DAYS * ACWR_DAY_MS;
+  const previousWeekStart = now - 2 * ACWR_ACUTE_DAYS * ACWR_DAY_MS;
+
+  let acute = 0;
+  let chronic = 0;
+  let previousWeek = 0;
+  let firstSeen: number | null = null;
+
+  for (const point of points) {
+    const t = point.date.getTime();
+    if (t < chronicStart || t > now) continue;
+    chronic += point.load;
+    if (firstSeen === null || t < firstSeen) firstSeen = t;
+    if (t >= acuteStart) acute += point.load;
+    else if (t >= previousWeekStart) previousWeek += point.load;
+  }
+
+  const chronicWeekly = chronic / (ACWR_CHRONIC_DAYS / 7);
+
+  if (chronic <= 0 || firstSeen === null) {
+    return {
+      acwr: null, zone: null, acuteLoad: 0, chronicLoad: 0,
+      previousWeekLoad: 0, notAssessable: 'no-load',
+    };
+  }
+
+  const base = {
+    acuteLoad: Math.round(acute),
+    chronicLoad: Math.round(chronicWeekly),
+    previousWeekLoad: Math.round(previousWeek),
+  };
+
+  if ((now - firstSeen) / ACWR_DAY_MS < ACWR_MIN_HISTORY_DAYS) {
+    return { ...base, acwr: null, zone: null, notAssessable: 'short-history' };
+  }
+
+  const value = Math.round((acute / chronicWeekly) * 100) / 100;
+  return { ...base, acwr: value, zone: acwrZone(value), notAssessable: null };
 }
 
 /**

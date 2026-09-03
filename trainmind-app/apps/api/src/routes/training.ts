@@ -1168,11 +1168,29 @@ export async function trainingRoutes(app: FastifyInstance) {
       });
     }
 
+    // Gli esercizi devono appartenere a QUESTA sessione. La guardia qui
+    // sopra verifica la sessione, ma gli id arrivano dall'array nel corpo:
+    // senza questo controllo si riordinavano gli esercizi di una sessione
+    // altrui. Il conteggio va fatto prima della transazione: dopo, le
+    // scritture sarebbero gia' avvenute.
+    const exerciseIds = parsed.data.exercises.map((ex) => ex.id);
+    const owned = await app.prisma.sessionExercise.count({
+      where: { id: { in: exerciseIds }, trainingSessionId: sessionId },
+    });
+    if (owned !== exerciseIds.length) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'EXERCISE_NOT_IN_SESSION', message: 'Alcuni esercizi non appartengono a questa sessione' },
+      });
+    }
+
     // Update all in a transaction
     await app.prisma.$transaction(
       parsed.data.exercises.map((ex) =>
-        app.prisma.sessionExercise.update({
-          where: { id: ex.id },
+        // updateMany e non update: accetta il filtro composto, cosi' il
+        // vincolo vale anche sulla scrittura e non solo sul controllo.
+        app.prisma.sessionExercise.updateMany({
+          where: { id: ex.id, trainingSessionId: sessionId },
           data: { orderIndex: ex.orderIndex },
         }),
       ),

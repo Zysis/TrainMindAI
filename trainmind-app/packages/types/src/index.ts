@@ -507,7 +507,7 @@ export const DailyNextTraining_CODES = ['available', 'partial', 'unavailable'] a
 export type DailyNextTraining = (typeof DailyNextTraining_CODES)[number];
 export const DailyInjuryType_CODES = ['inflammation', 'tendinopathy', 'periostitis', 'bone_edema', 'contracture', 'strain', 'tear', 'sprain', 'contusion', 'overload', 'other'] as const;
 export type DailyInjuryType = (typeof DailyInjuryType_CODES)[number];
-export const DailyBodyPart_CODES = ['plantar_fascia', 'achilles', 'tibia', 'ankle', 'foot', 'calf', 'knee', 'patellar_tendon', 'quadriceps', 'hamstring', 'adductor', 'hip', 'lumbar', 'dorsal', 'cervical', 'shoulder', 'elbow', 'wrist', 'hand', 'other'] as const;
+export const DailyBodyPart_CODES = ['plantar_fascia', 'achilles', 'tibia', 'ankle', 'foot', 'calf', 'knee', 'patellar_tendon', 'quadriceps', 'hamstring', 'adductor', 'hip', 'lumbar', 'dorsal', 'cervical', 'shoulder', 'arm', 'elbow', 'wrist', 'hand', 'other'] as const;
 export type DailyBodyPart = (typeof DailyBodyPart_CODES)[number];
 export const DailySide_CODES = ['left', 'right', 'bilateral'] as const;
 export type DailySide = (typeof DailySide_CODES)[number];
@@ -609,6 +609,37 @@ export interface GenerateReportResponse {
 // (editor dei template) e ai renderer dei report. Due copie divergono: e' gia'
 // successo in questo progetto con metriche, categorie esercizi e posizioni.
 
+/**
+ * Sedi di infortunio: l'elenco canonico, e da qui in avanti l'unico ammesso.
+ *
+ * Il lato sta DENTRO il codice (`knee_l`, `arm_r`) e non in un campo a parte:
+ * e' la convenzione con cui i dati sono gia' scritti, e `rtpBaseZone` sa
+ * toglierlo. `groin`, `back_lower`, `back_upper`, `finger` e `other` non hanno
+ * lato perche' non ne hanno uno.
+ *
+ * Fino al 2/9/2026 `POST /athletes/:id/injuries` non aveva nessuno schema e
+ * faceva `request.body as {...}`: `location` accettava qualunque stringa, ed e'
+ * cosi' che in produzione e' finito del testo libero in italiano ("Avambraccio")
+ * che la scheda medica non sa mappare su nessuna parte anatomica.
+ */
+export const INJURY_LOCATION_CODES = [
+  'ankle_l', 'ankle_r',
+  'knee_l', 'knee_r',
+  'hamstring_l', 'hamstring_r',
+  'quadriceps_l', 'quadriceps_r',
+  'calf_l', 'calf_r',
+  'groin',
+  'hip_l', 'hip_r',
+  'back_lower', 'back_upper',
+  'shoulder_l', 'shoulder_r',
+  'arm_l', 'arm_r',
+  'wrist_l', 'wrist_r',
+  'finger',
+  'foot_l', 'foot_r',
+  'other',
+] as const;
+export type InjuryLocation = (typeof INJURY_LOCATION_CODES)[number];
+
 /** Macro-regione: e' il primo fallback quando manca il protocollo di zona. */
 export const RTP_BODY_REGIONS = ['lower_limb', 'upper_limb', 'spine', 'head', 'other'] as const;
 export type RtpBodyRegion = (typeof RTP_BODY_REGIONS)[number];
@@ -616,7 +647,7 @@ export type RtpBodyRegion = (typeof RTP_BODY_REGIONS)[number];
 /** Zona senza lato: ai fini del protocollo `knee_l` e `knee_r` sono la stessa cosa. */
 export const RTP_BODY_ZONES = [
   'ankle', 'knee', 'hamstring', 'quadriceps', 'calf', 'groin', 'hip', 'foot',
-  'back_lower', 'back_upper', 'shoulder', 'elbow', 'wrist', 'finger', 'head', 'other',
+  'back_lower', 'back_upper', 'shoulder', 'arm', 'elbow', 'wrist', 'finger', 'head', 'other',
 ] as const;
 export type RtpBodyZone = (typeof RTP_BODY_ZONES)[number];
 
@@ -632,6 +663,7 @@ export const RTP_ZONE_REGION: Record<RtpBodyZone, RtpBodyRegion> = {
   back_lower: 'spine',
   back_upper: 'spine',
   shoulder: 'upper_limb',
+  arm: 'upper_limb',
   elbow: 'upper_limb',
   wrist: 'upper_limb',
   finger: 'upper_limb',
@@ -666,6 +698,7 @@ export function rtpBaseZone(location: string | null | undefined): RtpBodyZone {
     [/lombar|lumbar|low back|schiena bassa/, 'back_lower'],
     [/dorsal|toracic|thoracic|cervical|neck|collo/, 'back_upper'],
     [/spalla|shoulder|cuffia|deltoide|acromion/, 'shoulder'],
+    [/avambracci|forearm|bicipit|tricipit|braccio|arm\b/, 'arm'],
     [/gomito|elbow/, 'elbow'],
     [/polso|wrist|scafoide/, 'wrist'],
     [/dito|dita|finger|thumb|pollice|falang/, 'finger'],

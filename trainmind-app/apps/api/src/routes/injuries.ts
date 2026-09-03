@@ -12,8 +12,9 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
-import { rtpBaseZone, rtpRegionOf } from '@trainmind/types';
+import { rtpBaseZone, rtpRegionOf, INJURY_LOCATION_CODES } from '@trainmind/types';
 import { pickRtpTemplate, rtpEstimatedReturn } from '@trainmind/utils';
 
 type PhaseName = 'PHASE_1' | 'PHASE_2' | 'PHASE_3' | 'PHASE_4' | 'PHASE_5' | 'PHASE_6';
@@ -130,18 +131,52 @@ export async function injuryRoutes(app: FastifyInstance) {
   });
 
   // ─── CREATE injury ─────────────────────────────────────
+  // La sede e' l'unico campo con un vocabolario chiuso, ed e' voluto: fino al
+  // 2/9/2026 queste due rotte facevano `request.body as {...}` senza nessuno
+  // schema, e in `location` finiva qualunque stringa — e' cosi' che in
+  // produzione e' entrato del testo libero in italiano che la scheda medica
+  // non sa mappare su nessuna parte anatomica.
+  //
+  // `type` resta una stringa limitata e non un enum: esistono tipi storici non
+  // piu' selezionabili (LEGACY_TYPE_DEFS lato web) e trasformarlo in enum
+  // renderebbe non modificabili gli infortuni vecchi.
+  const locationField = z.enum(INJURY_LOCATION_CODES);
+
+  const createInjurySchema = z.object({
+    type: z.string().min(1).max(100),
+    onset: z.string().max(100).optional(),
+    location: locationField,
+    severity: z.number().int().min(1).max(5),
+    dateOccurred: z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'Formato data: YYYY-MM-DD'),
+    notes: z.string().max(5000).optional(),
+  });
+
+  const updateInjurySchema = z.object({
+    type: z.string().min(1).max(100).optional(),
+    onset: z.string().max(100).nullish(),
+    location: locationField.optional(),
+    severity: z.number().int().min(1).max(5).optional(),
+    status: z.enum(['ACTIVE', 'RECOVERING', 'RESOLVED']).optional(),
+    dateResolved: z.string().regex(/^\d{4}-\d{2}-\d{2}/).optional(),
+    notes: z.string().max(5000).nullish(),
+  });
+
   app.post('/athletes/:athleteId/injuries', {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
     const { athleteId } = request.params as { athleteId: string };
-    const body = request.body as {
-      type: string;
-      onset?: string;
-      location: string;
-      severity: number;
-      dateOccurred: string;
-      notes?: string;
-    };
+    const parsed = createInjurySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Dati infortunio non validi',
+          details: parsed.error.flatten().fieldErrors,
+        },
+      });
+    }
+    const body = parsed.data;
 
     const athlete = await app.prisma.athlete.findFirst({
       where: { id: athleteId, organizationId: request.user.organizationId },
@@ -154,7 +189,7 @@ export async function injuryRoutes(app: FastifyInstance) {
         type: body.type,
         onset: body.onset || null,
         location: body.location,
-        severity: Math.min(5, Math.max(1, body.severity)),
+        severity: body.severity,
         dateOccurred: new Date(body.dateOccurred),
         notes: body.notes,
       },
@@ -168,15 +203,18 @@ export async function injuryRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate, requireMinRole('MEDICAL')],
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as {
-      type?: string;
-      onset?: string;
-      location?: string;
-      severity?: number;
-      status?: 'ACTIVE' | 'RECOVERING' | 'RESOLVED';
-      dateResolved?: string;
-      notes?: string;
-    };
+    const parsed = updateInjurySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Dati infortunio non validi',
+          details: parsed.error.flatten().fieldErrors,
+        },
+      });
+    }
+    const body = parsed.data;
 
     const injury = await app.prisma.injury.findFirst({
       where: { id, athlete: { organizationId: request.user.organizationId } },
@@ -189,7 +227,7 @@ export async function injuryRoutes(app: FastifyInstance) {
         ...(body.type && { type: body.type }),
         ...(body.onset !== undefined && { onset: body.onset || null }),
         ...(body.location && { location: body.location }),
-        ...(body.severity && { severity: Math.min(5, Math.max(1, body.severity)) }),
+        ...(body.severity && { severity: body.severity }),
         ...(body.status && { status: body.status }),
         ...(body.dateResolved && { dateResolved: new Date(body.dateResolved) }),
         ...(body.notes !== undefined && { notes: body.notes }),

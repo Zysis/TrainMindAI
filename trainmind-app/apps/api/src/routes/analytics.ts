@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { computeAcwr, acwrZone } from '@trainmind/utils';
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS ROUTES — Sprint 3.2
@@ -371,27 +372,23 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
       while (current <= to) {
         const weekEnd = new Date(current);
-        const weekStart = new Date(current.getTime() - 7 * 86400000);
-        const chronicStart = new Date(current.getTime() - 21 * 86400000);
 
-        const acuteLoad = athleteSessions
-          .filter((s) => s.date >= weekStart && s.date <= weekEnd)
-          .reduce((sum, s) => sum + s.load, 0);
+        // Stessa formula di tutto il resto: `computeAcwr` si ritaglia da sola
+        // le finestre attorno a `weekEnd`, quindi le sedute si passano intere.
+        const punto = computeAcwr(athleteSessions, weekEnd);
+        const acuteLoad = punto.acuteLoad;
+        const chronicLoad = punto.chronicLoad;
 
-        const chronicSessions = athleteSessions.filter(
-          (s) => s.date >= chronicStart && s.date <= weekEnd,
-        );
-        const chronicLoad = chronicSessions.length > 0
-          ? chronicSessions.reduce((sum, s) => sum + s.load, 0) / 3
-          : 0;
-
-        const acwr = chronicLoad > 0 ? Math.round((acuteLoad / chronicLoad) * 100) / 100 : 0;
-
-        let zone: 'low' | 'optimal' | 'high' | 'danger';
-        if (acwr < 0.8) zone = 'low';
-        else if (acwr <= 1.3) zone = 'optimal';
-        else if (acwr <= 1.5) zone = 'high';
-        else zone = 'danger';
+        // DIFFERENZA NOTA, e voluta finche' non si tocca anche il grafico.
+        //
+        // Il contratto di questa serie vuole un numero: `acwr-chart.tsx` fa
+        // `sum += d.acwr` e `d.acwr.toFixed(2)`, e un null lo romperebbe. Un
+        // punto non valutabile resta quindi 0 — che finisce in zona 'low',
+        // cioe' "sotto carico", quando in realta' vuol dire "non lo so".
+        // Sistemarlo davvero significa far accettare al grafico i buchi nella
+        // serie, ed e' un lavoro di frontend, non di questa rotta.
+        const acwr = punto.acwr ?? 0;
+        const zone = punto.zone ?? acwrZone(0);
 
         acwrData.push({
           athleteId,

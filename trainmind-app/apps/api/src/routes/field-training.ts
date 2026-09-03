@@ -40,8 +40,14 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       const { calendarEventId, trainingSessionId, teamId } = parsed.data;
 
       // Il foglio esiste già?
+      // Il filtro sull'organizzazione non e' pleonastico: senza, questa
+      // scorciatoia restituiva il foglio completo — nomi e numeri di maglia
+      // degli atleti — a chiunque conoscesse un calendarEventId, anche di
+      // un'altra societa'. Il controllo esisteva gia' in GET /by-event.
       const existing = await app.prisma.fieldTrainingSession.findFirst({
-        where: calendarEventId ? { calendarEventId } : { trainingSessionId },
+        where: calendarEventId
+          ? { calendarEventId, organizationId }
+          : { trainingSessionId, organizationId },
         include: {
           entries: {
             include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
@@ -52,6 +58,16 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         return reply.send({ success: true, data: { session: existing, created: false } });
       }
 
+      // La squadra puo' arrivare dal corpo della richiesta: va verificata,
+      // altrimenti il foglio nasce popolato con la rosa di un'altra societa'
+      // e quelle entry restano scritte, finendo negli export e nei report.
+      if (teamId) {
+        const team = await app.prisma.team.findFirst({ where: { id: teamId, organizationId } });
+        if (!team) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Squadra non trovata' } });
+        }
+      }
+
       let effectiveTeamId: string | null = teamId || null;
       let defaultDuration: number | null = null;
       let presetExercises: Array<Record<string, unknown>> = [];
@@ -59,7 +75,10 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
       if (calendarEventId) {
         const calendarEvent = await app.prisma.calendarEvent.findFirst({
-          where: { id: calendarEventId, userId: request.user.userId },
+          // Per organizzazione e non per utente: dal 2/9/2026 il calendario e'
+          // della societa', e aprire il foglio su un evento creato da un
+          // collega non deve piu' rispondere "evento non trovato".
+          where: { id: calendarEventId, organizationId },
         });
         if (!calendarEvent) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Evento calendario non trovato (id: ${calendarEventId})` } });
@@ -123,7 +142,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       let athleteIds: string[] = [];
       if (effectiveTeamId) {
         const teamAthletes = await app.prisma.athleteTeam.findMany({
-          where: { teamId: effectiveTeamId },
+          where: { teamId: effectiveTeamId, athlete: { organizationId } },
           select: { athleteId: true },
         });
         athleteIds = teamAthletes.map((at) => at.athleteId);
@@ -165,7 +184,9 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       } catch (createErr) {
         // Race condition: session was created between findUnique and create
         const raceSession = await app.prisma.fieldTrainingSession.findFirst({
-          where: calendarEventId ? { calendarEventId } : { trainingSessionId },
+          where: calendarEventId
+            ? { calendarEventId, organizationId }
+            : { trainingSessionId, organizationId },
           include: {
             entries: {
               include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
@@ -238,7 +259,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       let athleteIds: string[] = [];
       if (teamId) {
         const teamAthletes = await app.prisma.athleteTeam.findMany({
-          where: { teamId },
+          where: { teamId, athlete: { organizationId } },
           select: { athleteId: true },
         });
         athleteIds = teamAthletes.map((at) => at.athleteId);

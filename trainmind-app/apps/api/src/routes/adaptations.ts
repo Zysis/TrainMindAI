@@ -37,10 +37,26 @@ const adaptRequestSchema = z.object({
   { message: 'teamId richiesto per modalità squadra, athleteId per modalità individuale' },
 );
 
+// Il piano modificato arriva dal client e finisce dritto in scrittura sul
+// database: va validato per davvero. Con `z.any()` non si controllava nulla,
+// e un peso testuale arrivava fino a Prisma uscendo come 500.
+//
+// Si validano i tipi ma NON gli intervalli: un tetto arbitrario sui chili o
+// sulle serie rifiuterebbe dati veri di qualche societa'. Le chiavi in piu'
+// che il client manda (exerciseName, original*, action) le scarta zod da
+// solo, senza far fallire la richiesta.
+const modifiedExerciseSchema = z.object({
+  sessionExerciseId: z.string().min(1),
+  proposedSets: z.number().int().min(0).nullable().optional(),
+  proposedReps: z.string().max(50).nullable().optional(),
+  proposedWeight: z.number().min(0).nullable().optional(),
+  proposedRestTime: z.number().int().min(0).nullable().optional(),
+});
+
 const reviewAdaptationSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED', 'MODIFIED']),
   reviewNotes: z.string().max(500).optional(),
-  modifiedPlan: z.any().optional(),
+  modifiedPlan: z.array(modifiedExerciseSchema).optional(),
 });
 
 const listAdaptationsSchema = z.object({
@@ -727,6 +743,14 @@ export async function adaptationRoutes(app: FastifyInstance) {
         });
       }
 
+      // Fissato in una costante, e non usato come `adaptation.trainingSessionId`
+      // piu' sotto: dentro la callback di `.map()` TypeScript perde il
+      // restringimento fatto dalla guardia qui sopra — una proprieta' potrebbe
+      // cambiare fra il controllo e l'esecuzione della callback, quindi il tipo
+      // torna a essere `string | null` e Prisma lo rifiuta. Una `const` locale
+      // invece il restringimento se lo tiene.
+      const targetSessionId = adaptation.trainingSessionId;
+
       const planToApply = (status === 'MODIFIED' && modifiedPlan) ? modifiedPlan : adaptation.proposedPlan;
       const exercises = planToApply as Array<{
         sessionExerciseId: string;
@@ -743,19 +767,30 @@ export async function adaptationRoutes(app: FastifyInstance) {
         });
       }
 
-      // Verify exercises still exist
-      const existingIds = await app.prisma.sessionExercise.findMany({
-        where: { id: { in: exercises.map((ex) => ex.sessionExerciseId) } },
+      // Gli esercizi devono appartenere ALLA sessione di questo adattamento.
+      //
+      // Prima il filtro era il solo `id`: verificava che quegli esercizi
+      // esistessero al mondo, non che fossero i nostri. Con `status:
+      // 'MODIFIED'` i `sessionExerciseId` arrivano dal corpo della richiesta,
+      // quindi bastava conoscerne uno di un'altra societa' per riscriverne
+      // serie, ripetizioni e carichi. Il vincolo sul genitore chiude la porta
+      // una volta sola per tutti e due i percorsi (APPROVED usa il piano
+      // proposto dall'AI, che nasce gia' da questa sessione).
+      const validIds = await app.prisma.sessionExercise.findMany({
+        where: {
+          id: { in: exercises.map((ex) => ex.sessionExerciseId) },
+          trainingSessionId: targetSessionId,
+        },
         select: { id: true },
       });
-      const existingSet = new Set(existingIds.map((e) => e.id));
-      const missing = exercises.filter((ex) => !existingSet.has(ex.sessionExerciseId));
+      const validSet = new Set(validIds.map((e) => e.id));
+      const missing = exercises.filter((ex) => !validSet.has(ex.sessionExerciseId));
       if (missing.length > 0) {
         return reply.status(400).send({
           success: false,
           error: {
             code: 'EXERCISE_NOT_FOUND',
-            message: `${missing.length} esercizi non trovati — la sessione potrebbe essere stata modificata`,
+            message: `${missing.length} esercizi non appartengono a questa sessione — potrebbe essere stata modificata`,
           },
         });
       }
@@ -763,8 +798,10 @@ export async function adaptationRoutes(app: FastifyInstance) {
       // Apply exercises in transaction
       await app.prisma.$transaction(
         exercises.map((ex) =>
-          app.prisma.sessionExercise.update({
-            where: { id: ex.sessionExerciseId },
+          // updateMany e non update: accetta il filtro composto e cosi' il
+          // vincolo sulla sessione vale anche qui, non solo nel controllo.
+          app.prisma.sessionExercise.updateMany({
+            where: { id: ex.sessionExerciseId, trainingSessionId: targetSessionId },
             data: {
               sets: ex.proposedSets ?? undefined,
               reps: ex.proposedReps ?? undefined,
@@ -778,7 +815,7 @@ export async function adaptationRoutes(app: FastifyInstance) {
       // Flag session as AI-modified (safe if column not yet migrated)
       try {
         await app.prisma.trainingSession.update({
-          where: { id: adaptation.trainingSessionId },
+          where: { id: targetSessionId },
           data: { aiModified: true },
         });
       } catch { /* aiModified column may not exist yet */ }

@@ -393,8 +393,11 @@ export async function notificationRoutes(app: FastifyInstance) {
 
     const calendarFrom = new Date(new Date(query.from).getTime() - 86400000);
     const calendarTo = new Date(new Date(query.to + 'T23:59:59Z').getTime() + 86400000);
+    // Per organizzazione e non per utente: il calendario e' della societa'.
+    // Le sedute dei piani, qui sotto, erano gia' filtrate cosi' — erano solo
+    // gli eventi creati a mano a restare personali.
     const calendarWhere: Record<string, unknown> = {
-      userId: request.user.userId,
+      organizationId: request.user.organizationId,
       startTime: { gte: calendarFrom },
       endTime: { lte: calendarTo },
     };
@@ -510,6 +513,15 @@ export async function notificationRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /calendar/events — Create event ─────────────────
+  // Tipi in cui la squadra e' un dato che esiste per definizione: un
+  // allenamento di gruppo o una partita sono di QUALCUNO. Su individual,
+  // rehab, medical, meeting e other resta facoltativa, perche' li la squadra
+  // non e' un dato mancante — e' un dato che non c'e' (una visita e' di un
+  // atleta, una riunione e' dello staff).
+  const TIPI_CON_SQUADRA = ['gym', 'basket', 'shooting', 'match'] as const;
+  const richiedeSquadra = (type: string) =>
+    (TIPI_CON_SQUADRA as readonly string[]).includes(type);
+
   app.post('/calendar/events', async (request, reply) => {
     const schema = z.object({
       title: z.string().min(1).max(200),
@@ -537,10 +549,36 @@ export async function notificationRoutes(app: FastifyInstance) {
       });
     }
 
+    if (richiedeSquadra(parsed.data.type) && !parsed.data.teamId) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'TEAM_REQUIRED',
+          message: 'Per allenamenti di gruppo e partite la squadra e\' obbligatoria',
+          details: { teamId: ['Required'] },
+        },
+      });
+    }
+    // La squadra dev'essere della societa': senza questo controllo si potrebbe
+    // agganciare un evento alla squadra di un'altra organizzazione.
+    if (parsed.data.teamId) {
+      const team = await app.prisma.team.findFirst({
+        where: { id: parsed.data.teamId, organizationId: request.user.organizationId },
+        select: { id: true },
+      });
+      if (!team) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Squadra non trovata' },
+        });
+      }
+    }
+
     const isMatch = parsed.data.type === 'match';
     const event = await app.prisma.calendarEvent.create({
       data: {
         ...parsed.data,
+        organizationId: request.user.organizationId,
         startTime: new Date(parsed.data.startTime),
         endTime: new Date(parsed.data.endTime),
         // Un allenamento non ha un avversario: se il tipo cambia in corsa nel
@@ -569,6 +607,9 @@ export async function notificationRoutes(app: FastifyInstance) {
       opponent: z.string().max(100).nullish(),
       isHome: z.boolean().nullish(),
       venue: z.string().max(120).nullish(),
+      // La squadra si puo' correggere: senza, un evento nato con quella
+      // sbagliata non era piu' sistemabile se non cancellandolo.
+      teamId: z.string().nullish(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -576,12 +617,54 @@ export async function notificationRoutes(app: FastifyInstance) {
       return reply.status(400).send({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Dati non validi' } });
     }
 
+    // L'evento dev'essere della societa'. Prima si filtrava per utente e la
+    // updateMany, non trovando niente, rispondeva comunque `success: true`:
+    // una modifica che non avveniva senza dirlo a nessuno.
+    const esistente = await app.prisma.calendarEvent.findFirst({
+      where: { id, organizationId: request.user.organizationId },
+      select: { id: true, type: true, teamId: true },
+    });
+    if (!esistente) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Evento non trovato' },
+      });
+    }
+
+    // Il vincolo si valuta sul risultato della modifica, non sul solo payload:
+    // cambiare il tipo da 'meeting' a 'basket' senza toccare la squadra deve
+    // far scattare l'obbligo lo stesso.
+    const tipoFinale = parsed.data.type ?? esistente.type;
+    const squadraFinale = parsed.data.teamId !== undefined ? parsed.data.teamId : esistente.teamId;
+    if (richiedeSquadra(tipoFinale) && !squadraFinale) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'TEAM_REQUIRED',
+          message: 'Per allenamenti di gruppo e partite la squadra e\' obbligatoria',
+          details: { teamId: ['Required'] },
+        },
+      });
+    }
+    if (squadraFinale && squadraFinale !== esistente.teamId) {
+      const team = await app.prisma.team.findFirst({
+        where: { id: squadraFinale, organizationId: request.user.organizationId },
+        select: { id: true },
+      });
+      if (!team) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Squadra non trovata' },
+        });
+      }
+    }
+
     const data: Record<string, unknown> = { ...parsed.data };
     if (parsed.data.startTime) data.startTime = new Date(parsed.data.startTime);
     if (parsed.data.endTime) data.endTime = new Date(parsed.data.endTime);
 
     await app.prisma.calendarEvent.updateMany({
-      where: { id, userId: request.user.userId },
+      where: { id, organizationId: request.user.organizationId },
       data,
     });
 
@@ -593,7 +676,7 @@ export async function notificationRoutes(app: FastifyInstance) {
     const { id } = request.params;
 
     const event = await app.prisma.calendarEvent.findFirst({
-      where: { id, userId: request.user.userId },
+      where: { id, organizationId: request.user.organizationId },
       select: {
         id: true,
         title: true,

@@ -19,6 +19,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
+import { computeAcwr, ACWR_CHRONIC_DAYS, type AcwrLoadPoint } from '@trainmind/utils';
 import type {
   GameReportData,
   GameReportPlayer,
@@ -176,9 +177,6 @@ function minutesFromMs(ms: number): number {
   return Math.round(ms / 60000);
 }
 
-function acwrZone(value: number): GameReportPlayer['acwrZone'] {
-  return value < 0.8 ? 'low' : value <= 1.3 ? 'optimal' : value <= 1.5 ? 'high' : 'danger';
-}
 
 export async function gameReportRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
@@ -338,7 +336,18 @@ export async function gameReportRoutes(app: FastifyInstance) {
       playersDressed: players.length,
       totalMinutes: used.reduce((n, p) => n + p.minutes, 0),
       // Minuti-uomo teorici: ogni periodo cinque giocatori in campo.
-      expectedMinutes: Math.round((totalPeriods * session.quarterDurationMs * 5) / 60000),
+      //
+      // Un supplementare vale META' quarto — 10' diventano 5', come nel
+      // regolamento FIBA. Il modello ha un solo `quarterDurationMs` e prima i
+      // supplementari venivano contati come quarti interi: il denominatore si
+      // gonfiava del 20%, e con due supplementari il riquadro arrivava a dire
+      // "Minuti 316 / 300", cioe' piu' minuti giocati di quanti ne
+      // esistessero. Una convenzione e non un campo nuovo: copre il caso reale
+      // senza una migration, e la si cambia qui se un giorno servisse.
+      expectedMinutes: Math.round(
+        ((session.quarters * session.quarterDurationMs
+          + session.overtimes * (session.quarterDurationMs / 2)) * 5) / 60000,
+      ),
       avgRpe: withRpe.length > 0
         ? Math.round((withRpe.reduce((n, p) => n + (p.rpe ?? 0), 0) / withRpe.length) * 10) / 10
         : null,
@@ -387,8 +396,8 @@ export async function gameReportRoutes(app: FastifyInstance) {
   }
 
   /**
-   * ACWR alla data della partita: acuto 7 giorni, cronico 21 diviso 3. Stessa
-   * formula di Analytics e del report giornaliero. La partita e' inclusa,
+   * ACWR alla data della partita. La formula vive in @trainmind/utils, una
+   * sola per tutto il prodotto. La partita e' inclusa,
    * perche' al completamento sono gia' nate le sue TrainingSession.
    */
   async function acwrByAthlete(
@@ -398,32 +407,27 @@ export async function gameReportRoutes(app: FastifyInstance) {
     const out = new Map<string, { acwr: number | null; zone: GameReportPlayer['acwrZone'] }>();
     if (athleteIds.length === 0) return out;
 
-    const chronicStart = new Date(asOf.getTime() - 21 * 86400000);
-    const acuteStart = new Date(asOf.getTime() - 7 * 86400000);
     const sessions = await app.prisma.trainingSession.findMany({
       where: {
         athleteId: { in: athleteIds },
         status: 'COMPLETED',
         rpe: { not: null },
-        date: { gte: chronicStart, lte: asOf },
+        date: { gte: new Date(asOf.getTime() - ACWR_CHRONIC_DAYS * 86400000), lte: asOf },
       },
       select: { athleteId: true, date: true, duration: true, rpe: true },
     });
 
-    const acc = new Map<string, { acute: number; chronic: number }>();
+    const byAthlete = new Map<string, AcwrLoadPoint[]>();
     for (const ts of sessions) {
       if (!ts.athleteId || !ts.date || !ts.rpe) continue;
-      const load = ts.rpe * (ts.duration ?? 0);
-      const cur = acc.get(ts.athleteId) ?? { acute: 0, chronic: 0 };
-      cur.chronic += load;
-      if (ts.date >= acuteStart) cur.acute += load;
-      acc.set(ts.athleteId, cur);
+      const list = byAthlete.get(ts.athleteId) ?? [];
+      list.push({ date: ts.date, load: ts.rpe * (ts.duration ?? 0) });
+      byAthlete.set(ts.athleteId, list);
     }
+
     for (const id of athleteIds) {
-      const a = acc.get(id);
-      if (!a || a.chronic <= 0) { out.set(id, { acwr: null, zone: null }); continue; }
-      const value = Math.round((a.acute / (a.chronic / 3)) * 100) / 100;
-      out.set(id, { acwr: value, zone: acwrZone(value) });
+      const r = computeAcwr(byAthlete.get(id) ?? [], asOf);
+      out.set(id, { acwr: r.acwr, zone: r.zone });
     }
     return out;
   }

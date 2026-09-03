@@ -390,6 +390,8 @@ async function seedOrg(orgName: string) {
         createdById: admin.id,
         teamId: team.id,
         periodizationPlanId: periPlan.id,
+        // Obbligatorio: numerazione ISO, 1 = lunedi'.
+        trainingDays: [1, 3, 5],
       },
     });
 
@@ -513,7 +515,7 @@ async function seedOrg(orgName: string) {
       athleteIdx: 4, // esterno
       type: 'ligament',
       onset: 'traumatic',
-      location: 'Caviglia destra',
+      location: 'ankle_r',
       severity: 2,
       occurred: '2025-11-08',
       resolved: '2025-12-01',
@@ -524,7 +526,7 @@ async function seedOrg(orgName: string) {
       athleteIdx: 9, // lungo
       type: 'muscular',
       onset: 'non_traumatic',
-      location: 'Ischiocrurali sinistri',
+      location: 'hamstring_l',
       severity: 3,
       occurred: '2026-02-14',
       resolved: '2026-03-25',
@@ -535,7 +537,7 @@ async function seedOrg(orgName: string) {
       athleteIdx: 12, // centro
       type: 'tendon',
       onset: 'overuse',
-      location: 'Tendine rotuleo destro',
+      location: 'knee_r',
       severity: 2,
       occurred: '2026-06-10',
       resolved: null, // ancora in gestione

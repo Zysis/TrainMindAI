@@ -671,14 +671,70 @@ export async function periodizationRoutes(app: FastifyInstance) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Piano non trovato' } });
       }
 
-      await app.prisma.$transaction(
-        parsed.data.map((item) =>
-          app.prisma.mesocycle.update({
-            where: { id: item.id },
+      // I mesocicli devono appartenere a QUESTO piano. La guardia qui sopra
+      // verifica il piano, ma gli id arrivano dall'array nel corpo: senza
+      // questo controllo si riordinavano i mesocicli di un piano altrui.
+      // Il conteggio si fa prima della transazione, non dopo: un controllo a
+      // valle troverebbe le scritture gia' fatte.
+      const mesocycleIds = parsed.data.map((item) => item.id);
+      const [owned, total] = await Promise.all([
+        app.prisma.mesocycle.count({ where: { id: { in: mesocycleIds }, periodizationPlanId: id } }),
+        app.prisma.mesocycle.count({ where: { periodizationPlanId: id } }),
+      ]);
+      if (owned !== mesocycleIds.length) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'MESOCYCLE_NOT_IN_PLAN', message: 'Alcuni mesocicli non appartengono a questo piano' },
+        });
+      }
+      // Il riordino deve arrivare completo. Con un elenco parziale i mesocicli
+      // rimasti fuori tengono i loro indici, e la seconda fase della
+      // rinumerazione va a sbattere su uno di quelli: il vincolo di unicita'
+      // risponde P2002 e l'utente si vede un 500. Meglio dirlo prima, e
+      // chiaramente. L'interfaccia manda sempre l'elenco intero, quindi non
+      // toglie niente a nessuno.
+
+      if (owned !== total) {
+        return reply.status(400).send({
+          success: false,
+          error: {
+            code: 'MESOCYCLE_REORDER_INCOMPLETE',
+            message: `Il riordino deve elencare tutti i mesocicli del piano (${total}), ne sono arrivati ${owned}`,
+          },
+        });
+      }
+
+      // Rinumerazione in DUE FASI, e non e' pignoleria.
+      //
+      // `mesocycles` ha @@unique([periodizationPlanId, orderIndex]). Gli
+      // update sono sequenziali: spostando il terzo mesociclo in testa, nel
+      // momento in cui gli si scrive orderIndex 0 il primo ce l'ha ancora, e
+      // Postgres risponde P2002 — cioe' il trascinamento in interfaccia
+      // falliva. Postgres verifica i vincoli a ogni statement, non a fine
+      // transazione, quindi il fatto di essere dentro una $transaction non
+      // salvava niente.
+      //
+      // Fase 1: tutti su indici negativi, che nessuno usa e che sono unici
+      // fra loro. Fase 2: i valori definitivi, ora liberi. Le due fasi
+      // stanno nella stessa transazione: se salta la seconda non resta un
+      // piano con gli indici negativi.
+      //
+      // updateMany e non update anche qui: accetta il filtro composto, cosi'
+      // il vincolo sul piano vale sulla scrittura e non solo nel controllo.
+      await app.prisma.$transaction([
+        ...parsed.data.map((item, i) =>
+          app.prisma.mesocycle.updateMany({
+            where: { id: item.id, periodizationPlanId: id },
+            data: { orderIndex: -(i + 1) },
+          }),
+        ),
+        ...parsed.data.map((item) =>
+          app.prisma.mesocycle.updateMany({
+            where: { id: item.id, periodizationPlanId: id },
             data: { orderIndex: item.orderIndex },
           }),
         ),
-      );
+      ]);
 
       const plan = await app.prisma.periodizationPlan.findUnique({
         where: { id },

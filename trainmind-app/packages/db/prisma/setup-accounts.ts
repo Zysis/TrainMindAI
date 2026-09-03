@@ -227,6 +227,7 @@ async function createDemoOrg(spec: OrgSpec) {
         startTime: start,
         endTime: end,
         userId: user.id,
+        organizationId: user.organizationId,
       },
     });
   }

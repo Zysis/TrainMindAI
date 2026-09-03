@@ -73,12 +73,24 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (app) {
-    // Cleanup test user and all dependent rows via cascade
+    // La pulizia non passa da nessun cascade: `users.organizationId` e
+    // `calendar_events.userId` sono foreign key senza `onDelete: Cascade`,
+    // quindi cancellare l'organizzazione per prima le viola e l'organizzazione
+    // di prova resta nel database a ogni giro.
     try {
       if (organizationId) {
+        await app.prisma.calendarEvent.deleteMany({ where: { organizationId } });
+        await app.prisma.wellnessLog.deleteMany({ where: { athlete: { organizationId } } });
+        await app.prisma.planAdaptation.deleteMany({ where: { organizationId } });
+        await app.prisma.trainingSession.deleteMany({ where: { organizationId } });
+        await app.prisma.week.deleteMany({ where: { trainingPlan: { organizationId } } });
+        await app.prisma.trainingPlan.deleteMany({ where: { organizationId } });
+        await app.prisma.athlete.deleteMany({ where: { organizationId } });
+        await app.prisma.exercise.deleteMany({ where: { organizationId } });
+        await app.prisma.user.deleteMany({ where: { organizationId } });
         await app.prisma.organization.delete({ where: { id: organizationId } });
       }
-    } catch { /* ignore */ }
+    } catch { /* la pulizia e' best-effort: un residuo non deve far fallire la suite */ }
     await app.close();
   }
 });
@@ -103,6 +115,12 @@ describe.sequential('E2E full flow', () => {
         firstName: 'E2E',
         lastName: 'Tester',
         organizationName: 'E2E Test Org',
+        // Aggiunti il 2/9/2026: la registrazione li richiede da quando esiste
+        // il gate dei 14 anni e la raccolta dei consensi, e questo test era
+        // rimasto indietro — falliva con 400 e a cascata tutti i successivi.
+        dateOfBirth: '1990-05-15',
+        acceptTerms: true,
+        acceptPrivacy: true,
       },
     });
     expect(status).toBe(201);
@@ -140,11 +158,14 @@ describe.sequential('E2E full flow', () => {
       payload: {
         firstName: 'Test',
         lastName: 'Athlete',
-        birthDate: '2005-05-15',
-        position: 'GUARD',
+        // Il campo si chiama `dateOfBirth`, non `birthDate`: con il nome
+        // sbagliato mancava un campo obbligatorio e la rotta rispondeva 400.
+        dateOfBirth: '2005-05-15',
+        // I ruoli validi sono le sigle PG/SG/SF/PF/C (o il nome per esteso,
+        // tipo 'point guard'). 'GUARD' non e' fra questi.
+        position: 'PG',
         height: 185,
         weight: 78,
-        dominantHand: 'RIGHT',
       },
     });
     // Accept 201 or 200 depending on route convention
@@ -162,6 +183,8 @@ describe.sequential('E2E full flow', () => {
       payload: {
         athleteId,
         date: new Date().toISOString().slice(0, 10),
+        // Obbligatorio nello schema, e mancava.
+        sleepHours: 7.5,
         sleepQuality: 3,
         fatigue: 4,
         soreness: 3,
@@ -172,32 +195,59 @@ describe.sequential('E2E full flow', () => {
     expect([200, 201]).toContain(status);
   });
 
-  it('[5] creates a training session', async () => {
-    if (!dbAvailable) return;
-    const { status, body } = await inject<{
+  // Una sessione non si crea da sola: sta dentro una settimana, che sta dentro
+  // un piano. La rotta `POST /training/sessions` che questo passo chiamava non
+  // esiste — rispondeva 404, e il test passava lo stesso perche' si limitava a
+  // chiedere `status < 500`. Cioe' non verificava niente.
+  it('[5] creates a training plan, then a session inside its first week', async () => {
+    if (!dbAvailable || !athleteId) return;
+    const day = (offset: number) =>
+      new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+
+    const plan = await inject<{
       success: boolean;
-      data: { id: string };
+      data: { id: string; weeks: Array<{ id: string; weekNumber: number }> };
     }>({
       method: 'POST',
-      url: '/api/v1/training/sessions',
+      url: '/api/v1/training/plans',
       headers: authHeaders(),
       payload: {
+        name: 'E2E Test Plan',
+        startDate: day(0),
+        endDate: day(28),
+        weeks: 1,
         athleteId,
-        title: 'Test Session',
-        scheduledDate: new Date().toISOString(),
-        targetRpe: 7,
-        plannedDuration: 60,
-        status: 'PLANNED',
-        exercises: [],
       },
     });
-    // Depending on validation this may be 201 or 400 (if exercises required)
-    if (status >= 200 && status < 300) {
-      sessionId = body.data.id;
-    } else {
-      console.warn('[e2e] Session create returned', status, body);
-    }
-    expect(status).toBeLessThan(500);
+    expect(plan.status, JSON.stringify(plan.body)).toBe(201);
+    const weekId = plan.body.data.weeks[0]?.id;
+    expect(weekId, 'il piano deve nascere con la sua prima settimana').toBeTruthy();
+
+    const { status, body } = await inject<{ success: boolean; data: { id: string } }>({
+      method: 'POST',
+      url: `/api/v1/training/weeks/${weekId}/sessions`,
+      headers: authHeaders(),
+      payload: {
+        title: 'Test Session',
+        date: day(0),
+        duration: 60,
+        athleteId,
+      },
+    });
+    expect(status, JSON.stringify(body)).toBe(201);
+    expect(body.data.id).toBeTruthy();
+    sessionId = body.data.id;
+
+    // E rileggiamola dall'API: che la scrittura sia arrivata davvero al
+    // database, e non solo che la rotta abbia risposto 201.
+    const reread = await inject<{ data: { id: string; title: string; status: string } }>({
+      method: 'GET',
+      url: `/api/v1/training/sessions/${sessionId}`,
+      headers: authHeaders(),
+    });
+    expect(reread.status).toBe(200);
+    expect(reread.body.data.title).toBe('Test Session');
+    expect(reread.body.data.status).toBe('PLANNED');
   });
 
   it('[6] fetches analytics (ACWR should not 500)', async () => {

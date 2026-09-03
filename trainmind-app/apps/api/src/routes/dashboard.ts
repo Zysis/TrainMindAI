@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { computeAcwr, type AcwrLoadPoint } from '@trainmind/utils';
 
 export async function dashboardRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
@@ -198,8 +199,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
     // NON mette nessuno in lista — viene contato a parte, cosi' il dato non
     // si perde ma non si traveste da allarme.
     const riskWindowStart = new Date(now.getTime() - 21 * 86400000);
-    const acuteStart = new Date(now.getTime() - 7 * 86400000);
-    const prevWeekStart = new Date(now.getTime() - 14 * 86400000);
 
     const [loadSessions, riskWellness, riskAthletes] = await Promise.all([
       app.prisma.trainingSession.findMany({
@@ -223,18 +222,14 @@ export async function dashboardRoutes(app: FastifyInstance) {
 
     const nameById = new Map(riskAthletes.map((a) => [a.id, `${a.firstName} ${a.lastName}`]));
 
-    // sRPE = RPE x durata. Acuto = ultimi 7 giorni; cronico = media
-    // settimanale delle ultime 3, cioe' il totale diviso 3.
-    const loadAcc = new Map<string, { acute: number; chronic: number; prevWeek: number; firstDate: Date }>();
+    // sRPE = RPE x durata. Le finestre e la formula stanno in
+    // `computeAcwr` (@trainmind/utils): qui si raggruppano solo le sedute.
+    const loadByAthlete = new Map<string, AcwrLoadPoint[]>();
     for (const ts of loadSessions) {
       if (!ts.athleteId || !ts.date || !ts.rpe) continue;
-      const load = ts.rpe * (ts.duration ?? 0);
-      const cur = loadAcc.get(ts.athleteId) ?? { acute: 0, chronic: 0, prevWeek: 0, firstDate: ts.date };
-      cur.chronic += load;
-      if (ts.date < cur.firstDate) cur.firstDate = ts.date;
-      if (ts.date >= acuteStart) cur.acute += load;
-      else if (ts.date >= prevWeekStart) cur.prevWeek += load;
-      loadAcc.set(ts.athleteId, cur);
+      const list = loadByAthlete.get(ts.athleteId) ?? [];
+      list.push({ date: ts.date, load: ts.rpe * (ts.duration ?? 0) });
+      loadByAthlete.set(ts.athleteId, list);
     }
 
     // Wellness: media delle cinque voci (su tutte 5 e' il meglio), confrontata
@@ -273,7 +268,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
     let insufficientHistory = 0;  // di questi, quelli con storico troppo corto
 
     for (const [athleteId, name] of nameById) {
-      const l = loadAcc.get(athleteId);
+      const load = computeAcwr(loadByAthlete.get(athleteId) ?? [], now);
       const w = wellAcc.get(athleteId);
       const recent = w ? mean(w.recent) : null;
       const baseline = w ? mean(w.baseline) : null;
@@ -281,35 +276,18 @@ export async function dashboardRoutes(app: FastifyInstance) {
       // non essere rumore, abbastanza poco da accorgersene prima del crollo.
       const wellnessDrop = recent != null && baseline != null && baseline - recent >= 0.8;
 
-      if (!l || l.chronic <= 0) {
+      // Chi non e' valutabile non entra in lista: o non ha carico nelle tre
+      // settimane, o ha meno di 14 giorni di storico. Il perche' di quella
+      // soglia sta scritto una volta sola, in `computeAcwr`.
+      if (load.notAssessable) {
         notAssessable++;
+        if (load.notAssessable === 'short-history') insufficientHistory++;
         if (wellnessDrop) wellnessOnlyDrops++;
         continue;
       }
 
-      // Il cronico si divide SEMPRE per 3 settimane, perche' e' quello che
-      // significa: "quanto sei abituato a lavorare". Ma se lo storico copre
-      // solo gli ultimi giorni, quel divisore fa uscire un ACWR gonfiato di
-      // tre volte — con tutto il carico nell'ultima settimana viene esatto
-      // 3.00 per chiunque, e l'intera rosa finisce in rosso il giorno dopo
-      // aver iniziato a registrare gli RPE.
-      //
-      // Normalizzare sulle settimane davvero coperte sarebbe l'errore
-      // opposto: darebbe circa 1.0, cioe' "va tutto bene", a un atleta di cui
-      // non si sa niente. Senza due settimane di storico la risposta onesta
-      // e' che non si puo' dire.
-      const historyDays = (now.getTime() - l.firstDate.getTime()) / 86400000;
-      if (historyDays < 14) {
-        notAssessable++;
-        insufficientHistory++;
-        if (wellnessDrop) wellnessOnlyDrops++;
-        continue;
-      }
-
-      const chronicWeekly = l.chronic / 3;
-      const acwr = Math.round((l.acute / chronicWeekly) * 100) / 100;
-      const zone: RiskRow['acwrZone'] =
-        acwr < 0.8 ? 'low' : acwr <= 1.3 ? 'optimal' : acwr <= 1.5 ? 'high' : 'danger';
+      const acwr = load.acwr as number;
+      const zone = load.zone as RiskRow['acwrZone'];
 
       const reasons: string[] = [];
       if (zone === 'danger') reasons.push('ACWR_SPIKE');
@@ -327,9 +305,11 @@ export async function dashboardRoutes(app: FastifyInstance) {
         athlete: name,
         acwr,
         acwrZone: zone,
-        acuteLoad: Math.round(l.acute),
-        chronicLoad: Math.round(chronicWeekly),
-        weeklyDeltaPct: l.prevWeek > 0 ? Math.round(((l.acute - l.prevWeek) / l.prevWeek) * 100) : null,
+        acuteLoad: load.acuteLoad,
+        chronicLoad: load.chronicLoad,
+        weeklyDeltaPct: load.previousWeekLoad > 0
+          ? Math.round(((load.acuteLoad - load.previousWeekLoad) / load.previousWeekLoad) * 100)
+          : null,
         wellnessRecent: recent != null ? Math.round(recent * 10) / 10 : null,
         wellnessBaseline: baseline != null ? Math.round(baseline * 10) / 10 : null,
         wellnessDrop,

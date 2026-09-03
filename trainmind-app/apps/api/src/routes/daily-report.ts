@@ -21,6 +21,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { Prisma } from '@trainmind/db';
+import { computeAcwr, ACWR_CHRONIC_DAYS, type AcwrLoadPoint } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
 import {
   DailyNextTraining_CODES,
@@ -183,7 +184,7 @@ const VOCAB_LABELS: Record<Locale, Record<string, Record<string, string>>> = {
   it: {
     nextTraining: { available: "Disponibile", partial: "Parziale", unavailable: "Non disponibile" },
     injuryType: { inflammation: "Infiammazione", tendinopathy: "Tendinopatia", periostitis: "Periostite", bone_edema: "Edema osseo", contracture: "Contrattura", strain: "Stiramento", tear: "Lesione muscolare", sprain: "Distorsione", contusion: "Contusione", overload: "Sovraccarico", other: "Altro" },
-    bodyPart: { plantar_fascia: "Fascia plantare", achilles: "Tendine achilleo", tibia: "Tibia", ankle: "Caviglia", foot: "Piede", calf: "Polpaccio", knee: "Ginocchio", patellar_tendon: "Tendine rotuleo", quadriceps: "Quadricipite", hamstring: "Ischiocrurali", adductor: "Adduttori", hip: "Anca", lumbar: "Zona lombare", dorsal: "Zona dorsale", cervical: "Cervicale", shoulder: "Spalla", elbow: "Gomito", wrist: "Polso", hand: "Mano e dita", other: "Altro" },
+    bodyPart: { plantar_fascia: "Fascia plantare", achilles: "Tendine achilleo", tibia: "Tibia", ankle: "Caviglia", foot: "Piede", calf: "Polpaccio", knee: "Ginocchio", patellar_tendon: "Tendine rotuleo", quadriceps: "Quadricipite", hamstring: "Ischiocrurali", adductor: "Adduttori", hip: "Anca", lumbar: "Zona lombare", dorsal: "Zona dorsale", cervical: "Cervicale", shoulder: "Spalla", arm: "Braccio e avambraccio", elbow: "Gomito", wrist: "Polso", hand: "Mano e dita", other: "Altro" },
     side: { left: "Sinistra", right: "Destra", bilateral: "Bilaterale" },
     clinicalStatus: { mild: "Lieve", stationary: "Stazionario", improving: "In miglioramento", worsening: "In peggioramento", persistent: "Persistente", resolved: "Risolto" },
     taping: { taping: "Taping", kinesio: "Kinesio", brace: "Tutore", bandage: "Bendaggio", insole: "Plantare" },
@@ -194,7 +195,7 @@ const VOCAB_LABELS: Record<Locale, Record<string, Record<string, string>>> = {
   en: {
     nextTraining: { available: "Available", partial: "Partial", unavailable: "Unavailable" },
     injuryType: { inflammation: "Inflammation", tendinopathy: "Tendinopathy", periostitis: "Periostitis", bone_edema: "Bone edema", contracture: "Muscle tightness", strain: "Strain", tear: "Muscle tear", sprain: "Sprain", contusion: "Contusion", overload: "Overload", other: "Other" },
-    bodyPart: { plantar_fascia: "Plantar fascia", achilles: "Achilles tendon", tibia: "Tibia", ankle: "Ankle", foot: "Foot", calf: "Calf", knee: "Knee", patellar_tendon: "Patellar tendon", quadriceps: "Quadriceps", hamstring: "Hamstrings", adductor: "Adductors", hip: "Hip", lumbar: "Lower back", dorsal: "Upper back", cervical: "Neck", shoulder: "Shoulder", elbow: "Elbow", wrist: "Wrist", hand: "Hand and fingers", other: "Other" },
+    bodyPart: { plantar_fascia: "Plantar fascia", achilles: "Achilles tendon", tibia: "Tibia", ankle: "Ankle", foot: "Foot", calf: "Calf", knee: "Knee", patellar_tendon: "Patellar tendon", quadriceps: "Quadriceps", hamstring: "Hamstrings", adductor: "Adductors", hip: "Hip", lumbar: "Lower back", dorsal: "Upper back", cervical: "Neck", shoulder: "Shoulder", arm: "Arm and forearm", elbow: "Elbow", wrist: "Wrist", hand: "Hand and fingers", other: "Other" },
     side: { left: "Left", right: "Right", bilateral: "Bilateral" },
     clinicalStatus: { mild: "Mild", stationary: "Stationary", improving: "Improving", worsening: "Worsening", persistent: "Persistent", resolved: "Resolved" },
     taping: { taping: "Taping", kinesio: "Kinesio", brace: "Brace", bandage: "Bandage", insole: "Insole" },
@@ -205,7 +206,7 @@ const VOCAB_LABELS: Record<Locale, Record<string, Record<string, string>>> = {
   es: {
     nextTraining: { available: "Disponible", partial: "Parcial", unavailable: "No disponible" },
     injuryType: { inflammation: "Inflamación", tendinopathy: "Tendinopatía", periostitis: "Periostitis", bone_edema: "Edema óseo", contracture: "Contractura", strain: "Distensión", tear: "Rotura muscular", sprain: "Esguince", contusion: "Contusión", overload: "Sobrecarga", other: "Otro" },
-    bodyPart: { plantar_fascia: "Fascia plantar", achilles: "Tendón de Aquiles", tibia: "Tibia", ankle: "Tobillo", foot: "Pie", calf: "Gemelo", knee: "Rodilla", patellar_tendon: "Tendón rotuliano", quadriceps: "Cuádriceps", hamstring: "Isquiotibiales", adductor: "Aductores", hip: "Cadera", lumbar: "Zona lumbar", dorsal: "Zona dorsal", cervical: "Cervical", shoulder: "Hombro", elbow: "Codo", wrist: "Muñeca", hand: "Mano y dedos", other: "Otro" },
+    bodyPart: { plantar_fascia: "Fascia plantar", achilles: "Tendón de Aquiles", tibia: "Tibia", ankle: "Tobillo", foot: "Pie", calf: "Gemelo", knee: "Rodilla", patellar_tendon: "Tendón rotuliano", quadriceps: "Cuádriceps", hamstring: "Isquiotibiales", adductor: "Aductores", hip: "Cadera", lumbar: "Zona lumbar", dorsal: "Zona dorsal", cervical: "Cervical", shoulder: "Hombro", arm: "Brazo y antebrazo", elbow: "Codo", wrist: "Muñeca", hand: "Mano y dedos", other: "Otro" },
     side: { left: "Izquierda", right: "Derecha", bilateral: "Bilateral" },
     clinicalStatus: { mild: "Leve", stationary: "Estacionario", improving: "En mejoría", worsening: "Empeorando", persistent: "Persistente", resolved: "Resuelto" },
     taping: { taping: "Vendaje funcional", kinesio: "Kinesio", brace: "Férula", bandage: "Vendaje", insole: "Plantilla" },
@@ -613,10 +614,24 @@ export async function dailyReportRoutes(app: FastifyInstance) {
    * vocabolario del report non copre restano senza parte anatomica: meglio un
    * campo vuoto che una traduzione approssimativa.
    */
+  /**
+   * Ponte fra le sedi degli infortuni (InjuryLocation_CODES, sedici voci) e
+   * le parti anatomiche della scheda medica (DailyBodyPart_CODES, venti).
+   *
+   * Mancavano `elbow` e `other`, che un corrispondente ce l'hanno eccome: un
+   * infortunio al gomito arrivava al foglio di fine giornata con la parte
+   * anatomica vuota, e il preparatore doveva riscrivere a mano una cosa che
+   * il sistema gia' sapeva.
+   *
+   * Resta scoperta `head`: fra le parti anatomiche non c'e' la testa, e
+   * aggiungerla vuol dire toccare i codici condivisi e le tre lingue — non
+   * si inventa qui una mappatura verso 'other', che direbbe una cosa falsa.
+   */
   const LOCATION_TO_BODY_PART: Record<string, string> = {
     ankle: 'ankle', knee: 'knee', hamstring: 'hamstring', quadriceps: 'quadriceps',
     calf: 'calf', groin: 'adductor', hip: 'hip', back_lower: 'lumbar', back_upper: 'dorsal',
-    shoulder: 'shoulder', wrist: 'wrist', finger: 'hand', foot: 'foot',
+    shoulder: 'shoulder', arm: 'arm', elbow: 'elbow', wrist: 'wrist', finger: 'hand',
+    foot: 'foot', other: 'other',
   };
 
   function mapInjuryLocation(location: string | null): { bodyPart: DailyClinicalFields['bodyPart']; side: DailyClinicalFields['side'] } {
@@ -654,7 +669,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
   }
 
   /**
-   * ACWR per atleta alla data del report, con la stessa formula di Analytics:
+   * ACWR per atleta alla data del report. La formula NON sta piu' qui:
    * acuto = carico degli ultimi 7 giorni, cronico = media settimanale degli
    * ultimi 21. Ricalcolato qui e non letto da Analytics perche' quella rotta
    * lavora su un periodo e restituisce una serie: per un giorno solo servirebbe
@@ -667,38 +682,27 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     const out = new Map<string, { acwr: number | null; zone: DailyAthleteLoad['acwrZone'] }>();
     if (athleteIds.length === 0) return out;
 
-    const chronicStart = new Date(asOf.getTime() - 21 * 86400000);
-    const acuteStart = new Date(asOf.getTime() - 7 * 86400000);
     const sessions = await app.prisma.trainingSession.findMany({
       where: {
         athleteId: { in: athleteIds },
         status: 'COMPLETED',
         rpe: { not: null },
-        date: { gte: chronicStart, lte: asOf },
+        date: { gte: new Date(asOf.getTime() - ACWR_CHRONIC_DAYS * 86400000), lte: asOf },
       },
       select: { athleteId: true, date: true, duration: true, rpe: true },
     });
 
-    const acc = new Map<string, { acute: number; chronic: number }>();
+    const byAthlete = new Map<string, AcwrLoadPoint[]>();
     for (const ts of sessions) {
       if (!ts.athleteId || !ts.date || !ts.rpe) continue;
-      const load = ts.rpe * (ts.duration ?? 0);
-      const cur = acc.get(ts.athleteId) ?? { acute: 0, chronic: 0 };
-      cur.chronic += load;
-      if (ts.date >= acuteStart) cur.acute += load;
-      acc.set(ts.athleteId, cur);
+      const list = byAthlete.get(ts.athleteId) ?? [];
+      list.push({ date: ts.date, load: ts.rpe * (ts.duration ?? 0) });
+      byAthlete.set(ts.athleteId, list);
     }
 
     for (const id of athleteIds) {
-      const a = acc.get(id);
-      // Senza carico nelle tre settimane l'ACWR non vuol dire niente: meglio
-      // nessun numero che un rapporto costruito sul vuoto.
-      if (!a || a.chronic <= 0) { out.set(id, { acwr: null, zone: null }); continue; }
-      const chronicWeekly = a.chronic / 3;
-      const value = Math.round((a.acute / chronicWeekly) * 100) / 100;
-      const zone: DailyAthleteLoad['acwrZone'] =
-        value < 0.8 ? 'low' : value <= 1.3 ? 'optimal' : value <= 1.5 ? 'high' : 'danger';
-      out.set(id, { acwr: value, zone });
+      const r = computeAcwr(byAthlete.get(id) ?? [], asOf);
+      out.set(id, { acwr: r.acwr, zone: r.zone });
     }
     return out;
   }

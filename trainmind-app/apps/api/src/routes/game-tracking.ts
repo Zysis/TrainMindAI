@@ -40,8 +40,15 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
       const { calendarEventId, teamId, quarters, quarterDurationMs } = parsed.data;
 
       // Check if session already exists
-      const existing = await app.prisma.gameSession.findUnique({
-        where: { calendarEventId },
+      //
+      // findFirst e non findUnique: findUnique accetta nel where solo campi
+      // unici, quindi non lascia aggiungere organizationId — ed e' cosi' che
+      // era nato il buco. Senza quel filtro questa scorciatoia restituiva la
+      // sessione completa (nomi degli atleti, numeri di maglia, avversario)
+      // a chiunque conoscesse un calendarEventId, anche di un'altra societa'.
+      // Il controllo c'era gia' venti righe piu' sotto, in GET /game/by-event.
+      const existing = await app.prisma.gameSession.findFirst({
+        where: { calendarEventId, organizationId },
         include: {
           entries: {
             include: { athlete: { select: athleteSelect } },
@@ -57,10 +64,25 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
 
       // Verify calendar event
       const calendarEvent = await app.prisma.calendarEvent.findFirst({
-        where: { id: calendarEventId, userId: request.user.userId },
+        // Per organizzazione e non per utente: dal 2/9/2026 il calendario e'
+        // della societa', e avviare la partita su un evento creato da un
+        // collega non deve piu' rispondere "evento non trovato".
+        where: { id: calendarEventId, organizationId },
       });
       if (!calendarEvent) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: `Evento calendario non trovato (id: ${calendarEventId})` } });
+      }
+
+      // La squadra puo' arrivare dal corpo della richiesta: va verificata,
+      // altrimenti la sessione nasce popolata con la rosa di un'altra
+      // societa' — e quelle entry restano scritte, finendo negli export e
+      // nei report. Quella presa dall'evento di calendario e' gia' sicura:
+      // l'evento e' stato appena verificato come dell'utente.
+      if (teamId) {
+        const team = await app.prisma.team.findFirst({ where: { id: teamId, organizationId } });
+        if (!team) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Squadra non trovata' } });
+        }
       }
 
       const effectiveTeamId = teamId || calendarEvent.teamId;
@@ -69,7 +91,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
       let athleteIds: string[] = [];
       if (effectiveTeamId) {
         const teamAthletes = await app.prisma.athleteTeam.findMany({
-          where: { teamId: effectiveTeamId },
+          where: { teamId: effectiveTeamId, athlete: { organizationId } },
           select: { athleteId: true },
         });
         athleteIds = teamAthletes.map((at) => at.athleteId);
@@ -104,8 +126,8 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
         });
       } catch (createErr) {
         // Race condition
-        const raceSession = await app.prisma.gameSession.findUnique({
-          where: { calendarEventId },
+        const raceSession = await app.prisma.gameSession.findFirst({
+          where: { calendarEventId, organizationId },
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
