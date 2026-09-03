@@ -48,3 +48,6 @@ model_production/llm_model/deploy_package.zip
 *.psd
 
 *.tgz
+
+# Pacchetti di deploy — mai in git
+*.tar.gz
