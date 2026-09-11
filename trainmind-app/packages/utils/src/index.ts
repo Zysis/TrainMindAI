@@ -153,18 +153,26 @@ export function computeAcwr(points: AcwrLoadPoint[], asOf: Date = new Date()): A
 }
 
 /**
- * Calculate Wellness Score (0-100) from wellness log entries
+ * Punteggio wellness (0-100) a partire dalle cinque voci giornaliere.
+ *
+ * Su tutte e cinque **5 è la condizione migliore** (Fatica 5 = per niente
+ * affaticato), quindi il punteggio è la somma normalizzata: alto = buono.
+ * Fino alla migrazione `20260824120000_wellness_scale_flip` Fatica, Dolore e
+ * Stress andavano nel verso opposto e qui si ribaltavano con `(6 - x)`:
+ * quella riga era rimasta, e su dati odierni ribaltava una seconda volta.
+ *
+ * Questa è la definizione unica: la usano tutte le rotte dell'API, così lo
+ * stesso giorno non può valere 100 per il preparatore e 52 per l'atleta.
  */
 export function calculateWellnessScore(params: {
-  sleepQuality: number; // 1-5
-  fatigue: number; // 1-5 (inverted: 5 = high fatigue = bad)
-  soreness: number; // 1-5 (inverted)
-  stress: number; // 1-5 (inverted)
-  mood: number; // 1-5
+  sleepQuality: number; // 1-5 (5 = ottimo)
+  fatigue: number; // 1-5 (5 = per niente affaticato)
+  soreness: number; // 1-5 (5 = nessun dolore)
+  stress: number; // 1-5 (5 = nessuno stress)
+  mood: number; // 1-5 (5 = ottimo)
 }): number {
   const { sleepQuality, fatigue, soreness, stress, mood } = params;
-  const score =
-    ((sleepQuality + (6 - fatigue) + (6 - soreness) + (6 - stress) + mood) / 25) * 100;
+  const score = ((sleepQuality + fatigue + soreness + stress + mood) / 25) * 100;
   return Math.round(score);
 }
 

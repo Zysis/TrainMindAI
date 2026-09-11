@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { dateLocale } from '@/lib/i18n/dates';
 import { Dumbbell, Clock, ChevronRight, CheckCircle2, Eye } from 'lucide-react';
 
 interface Session {
@@ -15,14 +17,17 @@ interface Session {
   myLog?: { viewedAt?: string; actualRpe?: number } | null;
 }
 
-const STATUS_LABEL: Record<string, { text: string; color: string }> = {
-  PLANNED: { text: 'Programmata', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' },
-  IN_PROGRESS: { text: 'In corso', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' },
-  COMPLETED: { text: 'Completata', color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' },
-  CANCELLED: { text: 'Cancellata', color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' },
+const STATUS_COLOR: Record<string, string> = {
+  PLANNED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  IN_PROGRESS: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+  COMPLETED: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
 };
 
 export default function SessionsPage() {
+  const t = useTranslations('sessions');
+  const locale = useLocale();
+  const df = dateLocale(locale);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,15 +39,19 @@ export default function SessionsPage() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    api.getSessions({
+    (api.getSessions({
       from: monday.toISOString().split('T')[0],
       to: sunday.toISOString().split('T')[0],
-    }).then((res: { success: boolean; data?: Session[] }) => {
-      if (res.success && res.data) {
-        setSessions(res.data);
-      }
-      setLoading(false);
-    });
+    }) as Promise<{ success: boolean; data?: Session[] }>)
+      .then((res) => {
+        if (res.success && res.data) {
+          setSessions(res.data);
+        }
+      })
+      // Senza questo ramo una chiamata fallita lasciava `loading` a true per
+      // sempre e la pagina restava bloccata sulla rotellina.
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -65,12 +74,12 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-6 px-4 py-6">
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white">Sessioni della settimana</h2>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('title')}</h2>
 
       {sessions.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
           <Dumbbell size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">Nessuna sessione programmata questa settimana</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('empty')}</p>
         </div>
       ) : (
         Object.entries(grouped)
@@ -80,11 +89,14 @@ export default function SessionsPage() {
               <h3 className={`mb-2 text-sm font-semibold uppercase tracking-wider ${
                 day === today ? 'text-teal-600 dark:text-teal-400' : 'text-slate-500 dark:text-slate-400'
               }`}>
-                {day === today ? '📍 Oggi' : formatDay(day)}
+                {day === today
+                  ? `📍 ${t('today')}`
+                  : new Date(day).toLocaleDateString(df, { weekday: 'long', day: 'numeric', month: 'short' })}
               </h3>
               <div className="space-y-2">
                 {daySessions.map((session) => {
-                  const status = STATUS_LABEL[session.status] || STATUS_LABEL.PLANNED;
+                  const color = STATUS_COLOR[session.status] || STATUS_COLOR.PLANNED;
+                  const statusKey = STATUS_COLOR[session.status] ? session.status : 'PLANNED';
                   return (
                     <Link key={session.id} href={`/sessions/${session.id}`} className="block">
                       <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-card dark:border-slate-700 dark:bg-slate-800">
@@ -96,9 +108,9 @@ export default function SessionsPage() {
                             <p className="truncate font-medium text-slate-900 dark:text-white">{session.title}</p>
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                               <span className="flex items-center gap-1"><Clock size={11} /> {session.duration} min</span>
-                              <span>{session.sessionExercises.length} esercizi</span>
-                              <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${status.color}`}>
-                                {status.text}
+                              <span>{t('exercises', { count: session.sessionExercises.length })}</span>
+                              <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${color}`}>
+                                {t(`status${statusKey}`)}
                               </span>
                             </div>
                           </div>
@@ -118,8 +130,4 @@ export default function SessionsPage() {
       )}
     </div>
   );
-}
-
-function formatDay(iso: string): string {
-  return new Date(iso).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
 }

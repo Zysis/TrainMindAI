@@ -1,0 +1,175 @@
+{
+  "lang": "it",
+  "voice": "onyx",
+  "title": "TrainMind — Guida all'uso",
+  "scenes": [
+    {
+      "id": "00-intro",
+      "img": "_title",
+      "caption": "TrainMind — Guida all'uso",
+      "text": "TrainMind è la piattaforma con cui un preparatore fisico programma, registra e legge il lavoro di una squadra di basket. In questo video vediamo l'app del preparatore e, alla fine, quella dell'atleta. Tutto quello che vedrai è calcolato su una misura sola: il carico interno, cioè l'RPE della seduta moltiplicato per la durata effettiva."
+    },
+    {
+      "id": "01-registrazione",
+      "img": "A02-02-registrazione",
+      "caption": "Creare l'account",
+      "text": "Si parte dalla registrazione. Oltre ai dati personali serve il nome dell'organizzazione: è lo spazio di lavoro della società, dove vivranno squadre, atleti e piani. Chi registra l'account ne diventa amministratore. I due consensi obbligatori sono termini e privacy; il terzo, quello sui dati sanitari e di fitness, accende le funzioni di intelligenza artificiale, l'analisi delle prestazioni e il wellness."
+    },
+    {
+      "id": "02-login",
+      "img": "A02-01-login",
+      "caption": "Accedere",
+      "text": "L'accesso è email e password. Il selettore in alto a destra cambia la lingua fra italiano, inglese e spagnolo, e funziona anche prima del login."
+    },
+    {
+      "id": "03-interfaccia",
+      "img": "A03-01-interfaccia",
+      "caption": "Tre zone: menù, selettore squadra, barra superiore",
+      "text": "L'interfaccia ha tre zone fisse. A sinistra il menù. Sotto il logo il selettore squadra, che filtra tutta l'applicazione: scegliendo una squadra, dashboard, wellness, analisi e report si restringono a quella. In alto la ricerca globale e il menù del profilo."
+    },
+    {
+      "id": "04-dashboard",
+      "img": "A04-01-dashboard",
+      "caption": "La Dashboard",
+      "text": "La dashboard è la fotografia del momento. Le caselle contano atleti, sedute, infortuni e protocolli attivi. Ma la parte che conta è il pannello degli atleti a rischio: il criterio è il rapporto fra carico acuto e cronico, quello che tutti chiamano A-C-W-R, e il wellness serve come conferma, non come sentenza."
+    },
+    {
+      "id": "05-rischio",
+      "img": "A04-01-dashboard",
+      "caption": "Perché non basta il wellness",
+      "text": "Alessandro Baldini è in rosso, sopra uno virgola cinque: ha lavorato molto più della sua media delle ultime tre settimane. L'etichetta dice il motivo — scalino di carico. Un due su cinque nel wellness dopo una notte storta non dice niente sul rischio di infortunio; il rapporto fra quanto ha lavorato e quanto è abituato a lavorare, invece, sì."
+    },
+    {
+      "id": "06-squadre",
+      "img": "A05-02-squadra-dettaglio",
+      "caption": "Squadre e roster",
+      "text": "Le squadre si creano in pochi secondi e ognuna ha il suo roster. Un atleta che si allena con due squadre va aggiunto da esistente, non duplicato: altrimenti test, wellness e storico di carico si spezzano in due."
+    },
+    {
+      "id": "07-atleta",
+      "img": "A05-04-atleta-panoramica",
+      "caption": "La scheda dell'atleta",
+      "text": "La scheda dell'atleta raccoglie anagrafica, misure, performance fisica e infortuni. Da qui parte anche l'invito all'app dell'atleta."
+    },
+    {
+      "id": "08-test",
+      "img": "A06-01-atleta-metriche",
+      "caption": "Test e misurazioni",
+      "text": "Ogni test mostra l'ultimo valore, la variazione rispetto alla misurazione precedente e lo storico delle date. Il consiglio pratico è misurare tutta la squadra nello stesso giorno e con lo stesso protocollo: le date allineate rendono confrontabili i grafici."
+    },
+    {
+      "id": "09-calendario",
+      "img": "A07-01-calendario-mese",
+      "caption": "Il calendario",
+      "text": "Il calendario è il diario della squadra: allenamenti, partite, sedute di tiro, riabilitazione, visite. In alto compare la periodizzazione attiva, con il mesociclo in corso e le settimane di scarico. Un evento si sposta trascinandolo su un altro giorno."
+    },
+    {
+      "id": "10-periodizzazione",
+      "img": "A08-01-periodizzazione-elenco",
+      "caption": "Periodizzazione",
+      "text": "La periodizzazione è la macrostruttura della stagione: pre-season, campionato, playoff, off-season, ognuna con i suoi mesocicli e il carico percentuale che governa la progressione."
+    },
+    {
+      "id": "11-mesociclo",
+      "img": "A09-04-mesociclo-dettaglio",
+      "caption": "Dentro un mesociclo",
+      "text": "Dentro un mesociclo ci sono le settimane e, in ognuna, le sedute con durata, numero di esercizi e RPE. La barra in alto dice a che punto è il piano."
+    },
+    {
+      "id": "12-ai-piano",
+      "img": "A08-03-genera-piano-ai",
+      "caption": "Generare un piano con l'AI",
+      "text": "Un mesociclo si può anche far generare all'intelligenza artificiale, indicando fase stagionale, obiettivo, durata e giorni di allenamento. Il risultato è una bozza modificabile: va letta e corretta, non applicata a occhi chiusi."
+    },
+    {
+      "id": "13-campo",
+      "img": "A10-01-campo-presenze",
+      "caption": "L'allenamento in campo",
+      "text": "Questa è la pagina da tenere aperta sul tablet a bordo campo. Ogni giocatore ha il suo semaforo — disponibile, carico ridotto, fuori — e il suo RPE. In alto si vede quanti sono disponibili sul totale della rosa."
+    },
+    {
+      "id": "14-cronometri",
+      "img": "A10-02-campo-esercizi",
+      "caption": "Cronometri per esercizio",
+      "text": "Gli esercizi hanno un cronometro ciascuno: avvio, stop, tempo di lavoro e recupero. Alla fine i totali sono quelli veri, non quelli programmati, e il carico di ogni atleta viene scritto quando si completa la sessione."
+    },
+    {
+      "id": "15-partita",
+      "img": "A11-01-partita-minuti",
+      "caption": "I minuti di partita",
+      "text": "Per la partita c'è il foglio dei minutaggi, con i quarti, gli eventuali supplementari e il cronometro: da lì escono minuti, RPE e carico di ogni giocatore."
+    },
+    {
+      "id": "16-wellness",
+      "img": "A12-01-wellness-panoramica",
+      "caption": "Wellness",
+      "text": "Il wellness lo compila l'atleta ogni mattina: sonno, fatica, dolore, stress, umore. La scala è uniforme su tutte le voci — cinque è sempre la condizione migliore — così non serve ricordare che su una voce alto è buono e su un'altra è cattivo."
+    },
+    {
+      "id": "17-infortunio",
+      "img": "A13-05-registra-infortunio",
+      "caption": "Registrare un infortunio",
+      "text": "Quando succede qualcosa, l'infortunio si registra con tipo, zona, gravità e note cliniche. L'app propone da sola un protocollo di rientro in base a zona, tipo e gravità, con le fasi previste e la data stimata."
+    },
+    {
+      "id": "18-rtp",
+      "img": "A13-03-rtp-dettaglio",
+      "caption": "Return-to-Play",
+      "text": "Il protocollo Return-to-Play è fatto di fasi e di criteri di clearance. Si avanza solo quando i criteri obbligatori sono soddisfatti, e ogni passaggio resta scritto con chi lo ha deciso e quando. È la parte che serve quando bisogna spiegare a qualcun altro perché un giocatore è tornato in campo quel giorno."
+    },
+    {
+      "id": "19-analisi",
+      "img": "A14-01-analisi-squadra",
+      "caption": "Analisi",
+      "text": "La scheda Analisi distribuisce la rosa nelle zone di carico: ottimale, attenzione, rischio. È la stessa lettura della dashboard, con in più i filtri per squadra, atleta e intervallo di date."
+    },
+    {
+      "id": "20-acwr",
+      "img": "A14-03-analisi-acwr",
+      "caption": "ACWR nel tempo",
+      "text": "Il grafico dell'A-C-W-R mostra l'andamento nel tempo, con le fasce: sotto zero virgola otto è sotto-allenamento, fra zero virgola otto e uno virgola tre è la zona ottimale, sopra uno virgola cinque è rischio alto."
+    },
+    {
+      "id": "21-heatmap",
+      "img": "A14-04-analisi-wellness-heatmap",
+      "caption": "La heatmap del wellness",
+      "text": "La heatmap del wellness mette una riga per atleta e una colonna per giorno: è la vista che fa emergere il buco, cioè la riga che vira al rosso per più giorni di fila."
+    },
+    {
+      "id": "22-report",
+      "img": "A15-02-report-giornaliero",
+      "caption": "Il report giornaliero",
+      "text": "Il report giornaliero è il foglio di fine giornata: attività svolte, disponibilità di ogni giocatore da zero a cinque, note e linee per il giorno dopo. Si esporta in PDF o Word, e si può programmare l'invio automatico via email."
+    },
+    {
+      "id": "23-ai",
+      "img": "A17-02-chat-ai-risposta",
+      "caption": "L'assistente AI",
+      "text": "L'assistente AI conosce la libreria esercizi della tua organizzazione e cita le fonti che ha usato. È un consulente, non un decisore: la programmazione la firmi tu."
+    },
+    {
+      "id": "24-atleta-home",
+      "img": "B22-01-home-atleta",
+      "caption": "L'app dell'atleta",
+      "text": "Passiamo all'app dell'atleta. Si installa sul telefono dal browser, senza passare dagli store, e mostra tre cose: se il wellness di oggi è stato compilato, qual è il prossimo allenamento e a che punto è il proprio percorso."
+    },
+    {
+      "id": "25-atleta-wellness",
+      "img": "B23-01-wellness-atleta",
+      "caption": "Un minuto la mattina",
+      "text": "Il wellness quotidiano è cinque voci e le ore di sonno: un minuto la mattina, prima dell'allenamento. È il gesto che tiene in piedi tutto il monitoraggio."
+    },
+    {
+      "id": "26-atleta-sessioni",
+      "img": "B24-01-sessioni-atleta",
+      "caption": "Le sedute assegnate",
+      "text": "Nelle sessioni l'atleta trova gli esercizi con serie, ripetizioni e carichi, e può segnare cosa ha fatto e con che fatica percepita."
+    },
+    {
+      "id": "27-chiusura",
+      "img": "_end",
+      "caption": "Buon lavoro",
+      "text": "Questo è TrainMind: programmare, registrare quello che succede davvero in campo, e leggere i numeri prima che diventino un infortunio. La guida in PDF che accompagna questo video entra nel dettaglio di ogni schermata. Buon lavoro."
+    }
+  ]
+}

@@ -36,7 +36,10 @@ export function PwaRegister() {
   return null;
 }
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+// Il tipo va stretto a `Uint8Array<ArrayBuffer>`: `applicationServerKey` vuole
+// un BufferSource su ArrayBuffer, e il generico `Uint8Array` include anche
+// SharedArrayBuffer, che non e' assegnabile.
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);

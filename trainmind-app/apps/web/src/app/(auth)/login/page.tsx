@@ -7,9 +7,13 @@ import { useTranslations } from 'next-intl';
 import { useApiError } from '@/lib/i18n/api-error';
 import { useAuth } from '@/hooks/use-auth';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { useForwardedParams, withForwarded } from '@/lib/attribution';
 
 export default function LoginPage() {
   const router = useRouter();
+  // Se l'utente passa da qui prima di registrarsi, i parametri di campagna
+  // devono sopravvivere anche a questo salto.
+  const forwarded = useForwardedParams();
   const t = useTranslations('auth');
   const apiError = useApiError();
   const { login, isAuthenticated } = useAuth();
@@ -110,7 +114,10 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-slate-500">
         {t('noAccount')}{' '}
-        <Link href="/register" className="font-medium text-teal-700 hover:text-teal-600">
+        <Link
+          href={withForwarded('/register', forwarded)}
+          className="font-medium text-teal-700 hover:text-teal-600"
+        >
           {t('register')}
         </Link>
       </p>

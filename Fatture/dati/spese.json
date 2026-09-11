@@ -188,7 +188,81 @@
       ],
       "avvisi": [],
       "origine": "pdf"
+    },
+    {
+      "hash": "1ad5c300ba6d31bd",
+      "file": "ionos/IONOS fattura 2026-09-08 - FA_109994206417.pdf",
+      "fornitore": "ionos",
+      "fornitore_nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "numero": "109994206417",
+      "data": "2026-09-08",
+      "descrizione": "IONOS Pack Dominio",
+      "contratto": "112970496",
+      "periodo_da": "2026-09-07",
+      "periodo_a": "2027-09-06",
+      "sconto_a": "2027-09-06",
+      "valuta": "EUR",
+      "cambio": 1.0,
+      "cambio_fonte": "n/a",
+      "netto": 5.0,
+      "iva": 1.1,
+      "iva_percento": 22.0,
+      "totale": 6.1,
+      "netto_eur": 5.0,
+      "iva_eur": 1.1,
+      "totale_eur": 6.1,
+      "voci": [
+        {
+          "n": 1,
+          "descrizione": "Dominio .com",
+          "netto": 15.0,
+          "iva_percento": 22.0
+        },
+        {
+          "n": 2,
+          "descrizione": "Sconto",
+          "netto": -10.0,
+          "iva_percento": 22.0
+        }
+      ],
+      "avvisi": [],
+      "origine": "pdf"
+    },
+    {
+      "hash": "bcf12165b4a350dd",
+      "file": "ionos/IONOS fattura 2026-09-08 - FA_109994206419.pdf",
+      "fornitore": "ionos",
+      "fornitore_nome": "IONOS SE",
+      "categoria": "Infrastruttura",
+      "numero": "109994206419",
+      "data": "2026-09-08",
+      "descrizione": "IONOS Pack Dominio",
+      "contratto": "112970496",
+      "periodo_da": "2026-09-07",
+      "periodo_a": "2026-10-06",
+      "sconto_a": null,
+      "valuta": "EUR",
+      "cambio": 1.0,
+      "cambio_fonte": "n/a",
+      "netto": 1.5,
+      "iva": 0.33,
+      "iva_percento": 22.0,
+      "totale": 1.83,
+      "netto_eur": 1.5,
+      "iva_eur": 0.33,
+      "totale_eur": 1.83,
+      "voci": [
+        {
+          "n": 1,
+          "descrizione": "IONOS Mail Basic 1",
+          "netto": 1.5,
+          "iva_percento": 22.0
+        }
+      ],
+      "avvisi": [],
+      "origine": "pdf"
     }
   ],
-  "ultimo_import": "2026-09-01T09:22:47"
+  "ultimo_import": "2026-09-08T09:30:52"
 }

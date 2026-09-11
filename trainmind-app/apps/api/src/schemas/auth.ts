@@ -43,6 +43,28 @@ export const registerSchema = z
     // Piano scelto in registrazione. Opzionale: le vecchie chiamate senza
     // questo campo continuano a funzionare e ricadono su starter.
     plan: z.enum(['starter', 'professional', 'ultra']).optional().default('starter'),
+    // Provenienza dell'iscrizione: parametri UTM della campagna e referrer,
+    // raccolti dal sito vetrina e inoltrati fin qui.
+    //
+    // Tutto OPZIONALE di proposito: una registrazione fatta da un client
+    // vecchio, o da chi arriva digitando l'indirizzo a mano, deve continuare a
+    // funzionare esattamente come prima. Un dato di provenienza mancante e' la
+    // norma, non un errore.
+    //
+    // I limiti di lunghezza non sono formali: questi valori arrivano dal
+    // browser, quindi da fuori. Senza un tetto, chiunque potrebbe scriverci
+    // dentro megabyte a ogni registrazione.
+    attribution: z
+      .object({
+        utmSource: z.string().max(120).optional(),
+        utmMedium: z.string().max(120).optional(),
+        utmCampaign: z.string().max(200).optional(),
+        utmTerm: z.string().max(200).optional(),
+        utmContent: z.string().max(200).optional(),
+        referrer: z.string().max(500).optional(),
+        landing: z.string().max(500).optional(),
+      })
+      .optional(),
   })
   .superRefine((data, ctx) => {
     // Gate età: minimo 14 anni compiuti alla data odierna

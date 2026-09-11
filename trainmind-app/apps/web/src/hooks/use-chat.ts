@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/constants';
 import { getAccessToken } from '@/lib/auth/api';
 
@@ -77,6 +77,10 @@ const INTERNAL_ERROR_MESSAGES = [
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const t = useTranslations('chat');
   const tAi = useTranslations('ai');
+  // La lingua viene dall'interfaccia, non dalla colonna `locale` dell'utente:
+  // quella si aggiorna con una PATCH fire-and-forget che puo' fallire o
+  // arrivare dopo, e intanto l'assistente rispondeva nella lingua sbagliata.
+  const locale = useLocale();
 
   const {
     // La chat passa dall'API (che fa da proxy verso l'ai-service interno):
@@ -209,6 +213,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           top_k: 5,
           temperature: 0.7,
           max_tokens: 2048,
+          locale,
         }),
         signal: abortRef.current.signal,
       });

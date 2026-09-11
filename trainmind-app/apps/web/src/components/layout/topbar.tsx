@@ -90,7 +90,11 @@ export function Topbar() {
     if (showDropdown) fetchNotifications();
   }, [showDropdown]);
 
-  // Close on outside click
+  // Chiusura con clic fuori e con Esc.
+  //
+  // L'Esc mancava: i due menù si chiudevano solo cliccando altrove, e chi
+  // naviga da tastiera restava intrappolato nel pannello aperto. Stesso
+  // schema del selettore di lingua (`components/i18n/lang-switcher.tsx`).
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -100,8 +104,18 @@ export function Topbar() {
         setShowUserMenu(false);
       }
     };
+    const escHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowDropdown(false);
+        setShowUserMenu(false);
+      }
+    };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', escHandler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', escHandler);
+    };
   }, []);
 
   const markAsRead = async (id: string) => {
@@ -165,6 +179,8 @@ export function Topbar() {
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
+            aria-haspopup="menu"
+            aria-expanded={showDropdown}
             className="relative rounded-lg p-2 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <Bell className="h-5 w-5" />
@@ -254,6 +270,8 @@ export function Topbar() {
           <button
             type="button"
             onClick={() => setShowUserMenu(!showUserMenu)}
+            aria-haspopup="menu"
+            aria-expanded={showUserMenu}
             className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-800"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white">

@@ -34,7 +34,7 @@ function RegisterForm() {
       return;
     }
 
-    api.validateInvite(token).then((res: { success: boolean; data?: InviteInfo; error?: { message: string } }) => {
+    (api.validateInvite(token) as Promise<{ success: boolean; data?: InviteInfo; error?: { message: string } }>).then((res) => {
       if (res.success && res.data) {
         setInviteInfo(res.data);
       } else {
@@ -166,7 +166,7 @@ function RegisterForm() {
             />
             <span>
               Accetto i{' '}
-              <a href="https://app.trainmind-app.com/terms" target="_blank" rel="noreferrer" className="font-medium text-teal-600 underline">
+              <a href={`${process.env.NEXT_PUBLIC_APP_WEB_URL || 'https://lab21sport.com/app'}/terms`} target="_blank" rel="noreferrer" className="font-medium text-teal-600 underline">
                 Termini di Servizio
               </a>{' '}
               e dichiaro di aver letto l&apos;{' '}

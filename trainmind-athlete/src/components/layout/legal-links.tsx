@@ -16,7 +16,7 @@ import { useTranslations } from 'next-intl';
 
 /** Dominio della web app: sovrascrivibile con NEXT_PUBLIC_APP_WEB_URL. */
 const APP_WEB_URL =
-  process.env.NEXT_PUBLIC_APP_WEB_URL || 'https://app.trainmind-app.com';
+  process.env.NEXT_PUBLIC_APP_WEB_URL || 'https://lab21sport.com/app';
 
 export function LegalLinks({ className = '' }: { className?: string }) {
   const t = useTranslations('legal');

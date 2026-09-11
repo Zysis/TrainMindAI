@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/stores/auth-store';
 import { User, Mail, MapPin, Ruler, Weight, Hash, LogOut, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -7,6 +8,7 @@ import { LegalLinks } from '@/components/layout/legal-links';
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
+  const t = useTranslations('profile');
   const router = useRouter();
 
   function handleLogout() {
@@ -43,17 +45,17 @@ export default function ProfilePage() {
 
       {/* Info cards */}
       <div className="space-y-2">
-        <InfoRow icon={<User size={16} />} label="Ruolo" value={athlete.position} />
-        <InfoRow icon={<Hash size={16} />} label="Numero" value={athlete.jerseyNumber?.toString() || '-'} />
-        <InfoRow icon={<Ruler size={16} />} label="Altezza" value={athlete.height ? `${athlete.height} cm` : '-'} />
-        <InfoRow icon={<Weight size={16} />} label="Peso" value={athlete.weight ? `${athlete.weight} kg` : '-'} />
-        <InfoRow icon={<Mail size={16} />} label="Email" value={user.email} />
+        <InfoRow icon={<User size={16} />} label={t('role')} value={athlete.position} />
+        <InfoRow icon={<Hash size={16} />} label={t('number')} value={athlete.jerseyNumber?.toString() || '-'} />
+        <InfoRow icon={<Ruler size={16} />} label={t('height')} value={athlete.height ? `${athlete.height} cm` : '-'} />
+        <InfoRow icon={<Weight size={16} />} label={t('weight')} value={athlete.weight ? `${athlete.weight} kg` : '-'} />
+        <InfoRow icon={<Mail size={16} />} label={t('email')} value={user.email} />
         <InfoRow
           icon={<MapPin size={16} />}
-          label="Squadre"
-          value={athlete.teams.length > 0 ? athlete.teams.map((t) => t.name).join(', ') : '-'}
+          label={t('teams')}
+          value={athlete.teams.length > 0 ? athlete.teams.map((team) => team.name).join(', ') : '-'}
         />
-        <InfoRow icon={<Shield size={16} />} label="Organizzazione" value={organization.name} />
+        <InfoRow icon={<Shield size={16} />} label={t('organization')} value={organization.name} />
       </div>
 
       {/* Logout */}
@@ -61,7 +63,7 @@ export default function ProfilePage() {
         onClick={handleLogout}
         className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-500 px-4 py-3 text-sm font-semibold text-danger-500 transition hover:bg-danger-50 dark:hover:bg-danger-700/20"
       >
-        <LogOut size={16} /> Esci
+        <LogOut size={16} /> {t('logout')}
       </button>
 
       <LegalLinks className="mt-6" />

@@ -2,21 +2,23 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { Heart, Moon, Frown, Activity, Brain, Smile, CheckCircle2 } from 'lucide-react';
 
 const FIELDS = [
-  { key: 'sleepQuality', label: 'Qualità sonno', icon: Moon, low: 'Pessimo', high: 'Eccellente' },
-  { key: 'fatigue', label: 'Fatica', icon: Activity, low: 'Esausto', high: 'Riposato' },
-  { key: 'soreness', label: 'Dolori muscolari', icon: Frown, low: 'Molto forte', high: 'Nessuno' },
-  { key: 'stress', label: 'Stress', icon: Brain, low: 'Molto stressato', high: 'Rilassato' },
-  { key: 'mood', label: 'Umore', icon: Smile, low: 'Pessimo', high: 'Ottimo' },
+  { key: 'sleepQuality', icon: Moon },
+  { key: 'fatigue', icon: Activity },
+  { key: 'soreness', icon: Frown },
+  { key: 'stress', icon: Brain },
+  { key: 'mood', icon: Smile },
 ] as const;
 
 type WellnessField = typeof FIELDS[number]['key'];
 
 export default function WellnessPage() {
   const router = useRouter();
+  const t = useTranslations('wellness');
   const [sleepHours, setSleepHours] = useState(7);
   const [values, setValues] = useState<Record<WellnessField, number>>({
     sleepQuality: 3, fatigue: 3, soreness: 3, stress: 3, mood: 3,
@@ -29,7 +31,7 @@ export default function WellnessPage() {
   // Check if already submitted today
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
-    api.getWellnessHistory({ from: today, to: today }).then((res: { success: boolean; data?: { sleepHours: number; sleepQuality: number; fatigue: number; soreness: number; stress: number; mood: number; notes?: string }[] }) => {
+    (api.getWellnessHistory({ from: today, to: today }) as Promise<{ success: boolean; data?: { sleepHours: number; sleepQuality: number; fatigue: number; soreness: number; stress: number; mood: number; notes?: string }[] }>).then((res) => {
       if (res.success && res.data && res.data.length > 0) {
         const log = res.data[0];
         setSleepHours(log.sleepHours);
@@ -43,7 +45,11 @@ export default function WellnessPage() {
         if (log.notes) setNotes(log.notes);
         setAlreadyDone(true);
       }
-    });
+    })
+      // Il precaricamento e' un di piu': se fallisce si resta sul modulo
+      // vuoto, ma la promessa va comunque chiusa (altrimenti finisce fra le
+      // "unhandled rejection" in console).
+      .catch(() => undefined);
   }, []);
 
   function setValue(key: WellnessField, val: number) {
@@ -73,8 +79,8 @@ export default function WellnessPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
         <CheckCircle2 size={48} className="mb-4 text-green-500" />
-        <p className="text-lg font-semibold text-slate-900 dark:text-white">Wellness inviato!</p>
-        <p className="mt-1 text-sm text-slate-500">Reindirizzamento...</p>
+        <p className="text-lg font-semibold text-slate-900 dark:text-white">{t('sent')}</p>
+        <p className="mt-1 text-sm text-slate-500">{t('redirecting')}</p>
       </div>
     );
   }
@@ -84,9 +90,9 @@ export default function WellnessPage() {
       <div className="mb-6 flex items-center gap-3">
         <Heart size={24} className="text-teal-600" />
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Wellness giornaliero</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('title')}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {alreadyDone ? 'Puoi aggiornare le risposte' : 'Come ti senti oggi?'}
+            {alreadyDone ? t('subtitleUpdate') : t('subtitleNew')}
           </p>
         </div>
       </div>
@@ -95,7 +101,7 @@ export default function WellnessPage() {
         {/* Sleep hours */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
           <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            <Moon size={16} className="text-teal-500" /> Ore di sonno
+            <Moon size={16} className="text-teal-500" /> {t('sleepHours')}
           </label>
           <div className="flex items-center gap-3">
             <input
@@ -112,10 +118,10 @@ export default function WellnessPage() {
         </div>
 
         {/* Rating fields */}
-        {FIELDS.map(({ key, label, icon: Icon, low, high }) => (
+        {FIELDS.map(({ key, icon: Icon }) => (
           <div key={key} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <label className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <Icon size={16} className="text-teal-500" /> {label}
+              <Icon size={16} className="text-teal-500" /> {t(`${key}Label`)}
             </label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -134,8 +140,8 @@ export default function WellnessPage() {
               ))}
             </div>
             <div className="mt-1 flex justify-between text-2xs text-slate-400">
-              <span>{low}</span>
-              <span>{high}</span>
+              <span>{t(`${key}Low`)}</span>
+              <span>{t(`${key}High`)}</span>
             </div>
           </div>
         ))}
@@ -143,13 +149,13 @@ export default function WellnessPage() {
         {/* Notes */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
           <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Note (opzionale)
+            {t('notes')}
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            placeholder="Dolori specifici, sensazioni, note per il preparatore..."
+            placeholder={t('notesPlaceholder')}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
           />
         </div>
@@ -159,7 +165,7 @@ export default function WellnessPage() {
           disabled={submitting}
           className="w-full rounded-xl bg-teal-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50"
         >
-          {submitting ? 'Invio...' : alreadyDone ? 'Aggiorna wellness' : 'Invia wellness'}
+          {submitting ? t('submitting') : alreadyDone ? t('update') : t('submit')}
         </button>
       </form>
     </div>

@@ -90,7 +90,19 @@ export async function buildApp() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    // Lista chiusa: un'intestazione non elencata qui viene rifiutata dal
+    // browser nella richiesta preliminare (OPTIONS) e la chiamata vera non
+    // parte nemmeno. Non e' un errore che si vede lato server, quindi chi
+    // aggiunge un'intestazione nuova deve ricordarsi di aggiungerla anche qui.
+    //
+    // `x-registration-token` apre il cancello delle registrazioni quando sono
+    // chiuse al pubblico (vedi routes/auth.ts).
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'x-registration-token',
+    ],
     exposedHeaders: ['X-Total-Count', 'X-Request-Id'],
     maxAge: 86400,
   });

@@ -14,7 +14,7 @@ from openai import APIError
 from app.models.schemas import CoachRequest, CoachResponse, UsageInfo
 from app.services.rag import get_rag_service
 from app.services.context_builder import get_context_builder
-from app.services.prompts import SYSTEM_PROMPT_COACH
+from app.services.prompts import SYSTEM_PROMPT_COACH, with_language
 from app.clients.openai_client import get_openai_client
 from app.services.cache import cache_get, cache_set, build_response_cache_key
 
@@ -44,11 +44,14 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
         )
 
         # Check cache
+        # La lingua entra nella chiave: senza, una risposta italiana gia' in
+        # cache verrebbe servita anche a chi ha l'interfaccia in inglese.
         cache_key = build_response_cache_key(
             request.question,
             namespaces=request.namespaces,
             athlete_id=request.athlete_id,
             model=request.model,
+            language=request.language,
         )
         cached = cache_get("response", cache_key)
         if cached:
@@ -79,7 +82,7 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
 
         # Costruisci i messaggi con separazione corretta system/user
         messages = rag_service.build_messages(
-            system_prompt=SYSTEM_PROMPT_COACH,
+            system_prompt=with_language(SYSTEM_PROMPT_COACH, request.language),
             context_docs=matches,
             user_query=request.question,
             athlete_context=athlete_context,

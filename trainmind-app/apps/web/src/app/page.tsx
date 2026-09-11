@@ -18,6 +18,7 @@ import { openCookiePreferences } from '@/components/cookie-banner';
 import { useLocaleStore, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/store';
 import { useReveal } from '@/hooks/use-reveal';
 import { withBasePath } from '@/lib/base-path';
+import { useForwardedParams, withForwarded } from '@/lib/attribution';
 import '@/styles/landing.css';
 
 /* ═════════════════════════════════════════════════════════
@@ -538,6 +539,11 @@ export default function LandingPage() {
   // Comparsa progressiva degli elementi `.rv` allo scroll (stile LAB21)
   useReveal();
 
+  // Parametri di campagna (e token del cancello) arrivati dal sito vetrina:
+  // vanno riattaccati ai link verso la registrazione, altrimenti si perdono
+  // qui e ogni iscritto risulterebbe arrivato da nessuna parte.
+  const forwarded = useForwardedParams();
+
   // La navbar e' trasparente sopra l'hero scuro e diventa bianca appena
   // si scrolla, altrimenti il testo bianco finirebbe su fondo chiaro.
   const [navSolid, setNavSolid] = useState(false);
@@ -596,7 +602,10 @@ export default function LandingPage() {
 
           <div className="ml-auto flex items-center gap-3 md:ml-0">
             <LangSwitcher />
-            <Link href="/login" className="btn btn-o">
+            {/* Anche il percorso landing → accedi → registrati deve conservare
+                i parametri: e' il giro che fa chi ha gia' un account in mente
+                e poi cambia idea, ed e' il piu' facile da dimenticare. */}
+            <Link href={withForwarded('/login', forwarded)} className="btn btn-o">
               {t('nav.login')}
             </Link>
           </div>
@@ -993,7 +1002,7 @@ export default function LandingPage() {
                       Il piano viaggia nell'URL e arriva preselezionato
                       nel modulo di registrazione, dove resta modificabile. */}
                   <Link
-                    href={`/register?plan=${plan.planId}`}
+                    href={withForwarded(`/register?plan=${plan.planId}`, forwarded)}
                     className={`btn${plan.popular ? '' : ' btn-o'}`}
                   >
                     {t(`plan.${plan.key}.cta` as TKey)}
@@ -1013,7 +1022,7 @@ export default function LandingPage() {
             <h2 className="rv d1">{t('cta.h2')}</h2>
             <p className="rv d2">{t('cta.sub')}</p>
             <div className="rv d3">
-              <Link href="/register" className="btn btn-lg">
+              <Link href={withForwarded('/register', forwarded)} className="btn btn-lg">
                 {t('cta.button')}
                 <Zap className="h-4 w-4" />
               </Link>
@@ -1050,7 +1059,7 @@ export default function LandingPage() {
                 <h5>{t('footer.col.product')}</h5>
                 <a href="#features">{t('nav.features')}</a>
                 {SHOW_PRICING && <a href="#pricing">{t('nav.pricing')}</a>}
-                <Link href="/login">{t('nav.login')}</Link>
+                <Link href={withForwarded('/login', forwarded)}>{t('nav.login')}</Link>
               </div>
               <div>
                 <h5>{t('footer.col.legal')}</h5>

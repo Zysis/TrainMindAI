@@ -1,13 +1,13 @@
 {
   "auth": {
     "appName": "TrainMind",
-    "areaLabel": "Área Atleta",
-    "email": "Email",
+    "areaLabel": "Área del Atleta",
+    "email": "Correo electrónico",
     "emailPlaceholder": "nombre@email.com",
     "password": "Contraseña",
-    "login": "Iniciar sesión",
-    "loggingIn": "Iniciando sesión...",
-    "loginError": "Error de inicio de sesión",
+    "login": "Entrar",
+    "loggingIn": "Accediendo...",
+    "loginError": "Error de acceso",
     "noAccountHint": "¿No tienes cuenta? Pide a tu preparador que te invite."
   },
   "nav": {
@@ -25,7 +25,7 @@
   "register": {
     "title": "Completa tu registro",
     "invalidInvite": "Invitación no válida o caducada",
-    "checking": "Verificando la invitación..."
+    "checking": "Comprobando la invitación..."
   },
   "common": {
     "loading": "Cargando...",
@@ -36,8 +36,99 @@
   },
   "legal": {
     "title": "Documentos legales",
-    "privacy": "Política de Privacidad",
-    "terms": "Términos de Servicio",
-    "cookies": "Política de Cookies"
+    "privacy": "Política de privacidad",
+    "terms": "Términos del servicio",
+    "cookies": "Política de cookies"
+  },
+  "home": {
+    "greetingMorning": "Buenos días",
+    "greetingAfternoon": "Buenas tardes",
+    "greetingEvening": "Buenas noches",
+    "athleteFallback": "Atleta",
+    "wellnessCtaTitle": "Bienestar diario",
+    "wellnessCtaSubtitle": "Rellena tu check-in de hoy",
+    "wellnessDone": "Bienestar de hoy completado",
+    "todayTraining": "Entrenamiento de hoy",
+    "exercises": "{count} ejercicios",
+    "viewed": "Visto",
+    "noSessionToday": "No hay sesión programada para hoy",
+    "upcoming": "Próximas sesiones"
+  },
+  "wellness": {
+    "title": "Bienestar diario",
+    "subtitleUpdate": "Puedes actualizar tus respuestas",
+    "subtitleNew": "¿Cómo te sientes hoy?",
+    "sent": "¡Bienestar enviado!",
+    "redirecting": "Redirigiendo...",
+    "sleepHours": "Horas de sueño",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "Dolores concretos, sensaciones, notas para el preparador...",
+    "submitting": "Enviando...",
+    "update": "Actualizar bienestar",
+    "submit": "Enviar bienestar",
+    "sleepQualityLabel": "Calidad del sueño",
+    "sleepQualityLow": "Pésima",
+    "sleepQualityHigh": "Excelente",
+    "fatigueLabel": "Fatiga",
+    "fatigueLow": "Agotado",
+    "fatigueHigh": "Descansado",
+    "sorenessLabel": "Dolor muscular",
+    "sorenessLow": "Muy fuerte",
+    "sorenessHigh": "Ninguno",
+    "stressLabel": "Estrés",
+    "stressLow": "Muy estresado",
+    "stressHigh": "Relajado",
+    "moodLabel": "Ánimo",
+    "moodLow": "Pésimo",
+    "moodHigh": "Óptimo"
+  },
+  "sessions": {
+    "title": "Sesiones de la semana",
+    "empty": "No hay sesiones programadas esta semana",
+    "today": "Hoy",
+    "exercises": "{count} ejercicios",
+    "statusPLANNED": "Programada",
+    "statusIN_PROGRESS": "En curso",
+    "statusCOMPLETED": "Completada",
+    "statusCANCELLED": "Cancelada"
+  },
+  "sessionDetail": {
+    "notFound": "Sesión no encontrada",
+    "back": "Atrás",
+    "exercises": "{count} ejercicios",
+    "completed": "{done}/{total} completados",
+    "feedbackSent": "Feedback enviado",
+    "feedbackTitle": "Feedback post-sesión",
+    "rpeLabel": "RPE (esfuerzo percibido)",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "¿Cómo te has sentido? ¿Algo que comentar?",
+    "submitting": "Enviando...",
+    "submit": "Enviar feedback",
+    "sets": "{count} series",
+    "reps": "× {reps} rep",
+    "rest": "{seconds}s pausa"
+  },
+  "history": {
+    "title": "Historial (30 días)",
+    "tabSessions": "Sesiones",
+    "tabWellness": "Bienestar",
+    "emptySessions": "Ninguna sesión en el último mes",
+    "emptyWellness": "Ningún dato de bienestar en el último mes",
+    "sleepSummary": "{hours}h de sueño · Calidad {quality}/5",
+    "barFatigue": "Fat",
+    "barSoreness": "Dol",
+    "barStress": "Est",
+    "barSleep": "Sue",
+    "barMood": "Áni"
+  },
+  "profile": {
+    "role": "Posición",
+    "number": "Número",
+    "height": "Altura",
+    "weight": "Peso",
+    "email": "Correo electrónico",
+    "teams": "Equipos",
+    "organization": "Organización",
+    "logout": "Cerrar sesión"
   }
 }

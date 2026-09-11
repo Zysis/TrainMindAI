@@ -1,0 +1,31 @@
+{
+  "name": "@trainmind/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3005",
+    "build": "next build",
+    "start": "next start --port 3005",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo node_modules",
+    "verifica": "esbuild verifica/controlli.mts --bundle --platform=node --format=esm --outfile=verifica/controlli.mjs --external:pg --alias:@=./src && node verifica/controlli.mjs"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "pg": "^8.13.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "recharts": "^2.15.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.0",
+    "esbuild": "^0.23.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0"
+  }
+}

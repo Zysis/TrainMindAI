@@ -20,9 +20,9 @@ export const site = {
     // Fase 1: l'unica azione della pagina è l'iscrizione alla lista d'attesa.
     // TODO: sostituire con l'URL del modulo appena è collegato al database.
     waitlist: '#',
-    // TODO: handle social da registrare (@lab21.sport)
-    instagram: '#',
-    linkedin: '#',
-    youtube: '#'
+    instagram: 'https://www.instagram.com/lab21_sport/',
+    linkedin: 'https://www.linkedin.com/company/lab21sport'
+    // YouTube: la voce tornerà nel footer quando il canale esisterà.
+    // Un link a "#" online è un link che non porta da nessuna parte.
   }
 }

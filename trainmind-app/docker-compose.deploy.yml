@@ -27,6 +27,11 @@ services:
       APP_DOMAIN: ${APP_DOMAIN}
       API_DOMAIN: ${API_DOMAIN}
       ATHLETE_DOMAIN: ${ATHLETE_DOMAIN}
+      # Console di amministrazione: dominio e credenziali del basic_auth.
+      # Volutamente fuori dal database dei clienti.
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
     volumes:
       - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -37,6 +42,7 @@ services:
       - web
       - api
       - lab21
+      - admin
 
   # ─── Sito vetrina LAB21 ───────────────────────────────
   # Serve la radice del dominio ed e' il punto di ingresso del percorso
@@ -131,10 +137,18 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: '15m'
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
+      # Apre il cancello a registrazioni chiuse (intestazione
+      # x-registration-token). Se manca qui, il container non la vede e nessun
+      # token funziona, per quanto giusto sia scritto in .env.deploy.
+      REGISTRATION_ACCESS_TOKEN: ${REGISTRATION_ACCESS_TOKEN:-}
       ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
       # CORS ragiona per origine (schema + host), il sottopercorso non conta:
       # qui va il dominio del sito, non piu' quello dell'app.
-      CORS_ORIGIN: https://${SITE_DOMAIN}
+      # Il vecchio dominio resta in elenco durante la transizione: un
+      # bundle ancora in cache nel browser di qualcuno puo' chiamare
+      # l'API dalla vecchia origine. Da riportare al solo SITE_DOMAIN
+      # fra qualche settimana.
+      CORS_ORIGIN: https://${SITE_DOMAIN},https://trainmind-app.com,https://app.trainmind-app.com
       AI_SERVICE_URL: http://ai-service:3004
       # Routing dei modelli AI: decide quale modello usa ogni operazione.
       # Vive qui e non nell'ai-service perché /ai/wellness-insights e
@@ -186,6 +200,11 @@ services:
     build:
       context: ../trainmind-athlete
       dockerfile: Dockerfile
+      args:
+        # Base dei link a Termini e Cookie, che vivono nella web app.
+        # Next la incastona nel bundle: e' una ARG di build, non una
+        # variabile a runtime.
+        NEXT_PUBLIC_APP_WEB_URL: https://${SITE_DOMAIN}${APP_BASE_PATH:-/app}
     container_name: trainmind-athlete
     restart: always
     expose:
@@ -208,6 +227,39 @@ services:
       resources:
         limits:
           memory: 512M
+
+  # ─── Console di amministrazione ───────────────────────
+  # Vista di piattaforma (tutte le societa'), separata dall'app clienti.
+  # Non passa dall'API: legge Postgres con un utente in SOLA LETTURA.
+  # L'ingresso e' protetto dal basic_auth di Caddy, non da un account
+  # TrainMind: le credenziali stanno fuori dal database dei clienti.
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: trainmind-admin
+    restart: always
+    expose:
+      - '3005'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL_READONLY: ${DATABASE_URL_READONLY}
+      ADMIN_DEMO_EMAIL_PATTERNS: ${ADMIN_DEMO_EMAIL_PATTERNS:-%@demo.com,%@pro.com,%@starter.com,%@example.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - trainmind-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3005']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
 
   # ─── Migrazioni DB (one-shot, profilo "tools") ────────
   migrate:

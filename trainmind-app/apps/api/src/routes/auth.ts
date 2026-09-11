@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { Prisma } from '@trainmind/db';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -21,6 +21,12 @@ import type {
 import { seedDefaultExercises } from '../lib/seed-default-exercises.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { sendEmail, buildPasswordResetEmailHtml, getAuthFrom } from '../services/email-service.js';
+import {
+  issueRefreshToken,
+  rotateRefreshToken,
+  revokeRefreshToken,
+  revokeAllRefreshTokens,
+} from '../lib/refresh-tokens.js';
 
 const SALT_ROUNDS = 12;
 
@@ -65,10 +71,43 @@ export async function authRoutes(app: FastifyInstance) {
   const loginLimit = { config: { rateLimit: { max: 20, timeWindow: '15 minutes' } } };
   const registerLimit = { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } };
 
+  /**
+   * Le registrazioni sono aperte?
+   *
+   * `DISABLE_REGISTRATION=true` chiude la porta al pubblico. Ma durante i test
+   * di produzione serve poter creare account passando dal flusso VERO — con
+   * email, consensi versionati e seed degli esercizi — non fabbricandoli in
+   * SQL, che verificherebbe tutto tranne cio' che gli utenti faranno davvero.
+   *
+   * Da qui il cancello: chi presenta il token in `x-registration-token` passa
+   * anche a porta chiusa. Il token vive solo in `.env.deploy`: senza
+   * `REGISTRATION_ACCESS_TOKEN` impostata non esiste scorciatoia, e chiuso
+   * vuol dire chiuso.
+   *
+   * Il confronto e' a tempo costante: un `===` su stringhe esce al primo
+   * carattere diverso, e la differenza di tempo fra un tentativo e l'altro
+   * lascia indovinare il token un carattere per volta.
+   */
+  function registrationAllowed(request: FastifyRequest): boolean {
+    if (process.env.DISABLE_REGISTRATION !== 'true') return true;
+
+    const expected = process.env.REGISTRATION_ACCESS_TOKEN;
+    if (!expected) return false;
+
+    const raw = request.headers['x-registration-token'];
+    const provided = Array.isArray(raw) ? raw[0] : raw;
+    if (!provided) return false;
+
+    const a = Buffer.from(provided);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  }
+
   // ─── POST /auth/register ────────────────────────────
   app.post<{ Body: RegisterInput }>('/auth/register', registerLimit, async (request, reply) => {
     // Interruttore per chiudere le registrazioni pubbliche (fase di test)
-    if (process.env.DISABLE_REGISTRATION === 'true') {
+    if (!registrationAllowed(request)) {
       return reply.status(403).send({
         success: false,
         error: {
@@ -101,6 +140,7 @@ export async function authRoutes(app: FastifyInstance) {
       acceptMarketing,
       uiLanguage,
       plan,
+      attribution,
     } = parsed.data;
 
     const userAgent = request.headers['user-agent'] ?? null;
@@ -142,6 +182,20 @@ export async function authRoutes(app: FastifyInstance) {
           slug: `${slug}-${Date.now().toString(36)}`,
           sport: 'basketball',
           tier,
+          // Provenienza dell'iscrizione. Le tre colonne dedicate sono quelle su
+          // cui la console raggruppa; il resto sta nel JSON, che non ha bisogno
+          // di una migrazione ogni volta che nasce un parametro nuovo.
+          utmSource: attribution?.utmSource ?? null,
+          utmMedium: attribution?.utmMedium ?? null,
+          utmCampaign: attribution?.utmCampaign ?? null,
+          signupReferrer: attribution?.referrer ?? null,
+          signupAttribution: attribution
+            ? ({
+                utmTerm: attribution.utmTerm ?? null,
+                utmContent: attribution.utmContent ?? null,
+                landing: attribution.landing ?? null,
+              } as Prisma.InputJsonValue)
+            : undefined,
         },
       });
 
@@ -238,12 +292,15 @@ export async function authRoutes(app: FastifyInstance) {
     };
 
     const accessToken = app.jwt.sign(payload);
-    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const refreshToken = await issueRefreshToken(
+      app.prisma,
+      result.user.id,
+      request.headers['user-agent'],
+    );
 
-    // Store refresh token
     await app.prisma.user.update({
       where: { id: result.user.id },
-      data: { refreshToken, lastLoginAt: new Date() },
+      data: { lastLoginAt: new Date() },
     });
 
     return reply.status(201).send({
@@ -340,12 +397,15 @@ export async function authRoutes(app: FastifyInstance) {
     if (user.athleteId) payload.athleteId = user.athleteId;
 
     const accessToken = app.jwt.sign(payload);
-    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const refreshToken = await issueRefreshToken(
+      app.prisma,
+      user.id,
+      request.headers['user-agent'],
+    );
 
-    // Store refresh token + update last login
     await app.prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken, lastLoginAt: new Date() },
+      data: { lastLoginAt: new Date() },
     });
 
     return reply.send({
@@ -394,10 +454,25 @@ export async function authRoutes(app: FastifyInstance) {
 
     const { refreshToken } = parsed.data;
 
-    // Find user by refresh token
-    const user = await app.prisma.user.findFirst({
-      where: { refreshToken, isActive: true },
-    });
+    // Ruota la sessione: il token ricevuto viene revocato e sostituito, le
+    // altre sessioni dello stesso utente restano vive.
+    const rotated = await rotateRefreshToken(
+      app.prisma,
+      refreshToken,
+      request.headers['user-agent'],
+    );
+
+    if (!rotated) {
+      return reply.status(401).send({
+        success: false,
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'Refresh token non valido o scaduto',
+        },
+      });
+    }
+
+    const user = await app.prisma.user.findUnique({ where: { id: rotated.userId } });
 
     if (!user) {
       return reply.status(401).send({
@@ -409,29 +484,33 @@ export async function authRoutes(app: FastifyInstance) {
       });
     }
 
-    // Rotate tokens
-    const payload = {
+    const payload: {
+      userId: string;
+      id: string;
+      email: string;
+      role: string;
+      organizationId: string;
+      athleteId?: string;
+    } = {
       userId: user.id,
       id: user.id,
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
     };
+    // Come al login: senza questa riga un atleta, dopo il primo refresh, si
+    // ritrova un token privo di athleteId e ogni endpoint che lo legge dal JWT
+    // smette di funzionare.
+    if (user.athleteId) payload.athleteId = user.athleteId;
 
     const newAccessToken = app.jwt.sign(payload);
-    const newRefreshToken = crypto.randomBytes(64).toString('hex');
-
-    await app.prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: newRefreshToken },
-    });
 
     return reply.send({
       success: true,
       data: {
         tokens: {
           accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
+          refreshToken: rotated.refreshToken,
           expiresIn: 900,
         },
       },
@@ -484,19 +563,28 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /auth/logout ─────────────────────────────
-  app.post('/auth/logout', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { userId } = request.user;
+  app.post<{ Body?: { refreshToken?: string } }>(
+    '/auth/logout',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { userId } = request.user;
 
-    await app.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: null },
-    });
+      // Se il client manda il proprio refresh token si chiude solo quella
+      // sessione: uscire dal telefono non deve buttare fuori anche il
+      // portatile. Senza token si chiude tutto, come prima.
+      const token = request.body?.refreshToken;
+      if (token) {
+        await revokeRefreshToken(app.prisma, token);
+      } else {
+        await revokeAllRefreshTokens(app.prisma, userId);
+      }
 
-    return reply.send({
-      success: true,
-      data: { message: 'Logout effettuato con successo' },
-    });
-  });
+      return reply.send({
+        success: true,
+        data: { message: 'Logout effettuato con successo' },
+      });
+    },
+  );
 
   // ─── PATCH /auth/locale ────────────────────────────
   // Salva la lingua UI preferita sul profilo, cosi segue l'utente su ogni
@@ -569,17 +657,18 @@ export async function authRoutes(app: FastifyInstance) {
 
       const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-      // Invalidiamo il refresh token: le altre sessioni devono rifare login.
+      // Tutte le sessioni cadono: chi conosceva la vecchia password non deve
+      // restare dentro da nessun dispositivo.
       await app.prisma.user.update({
         where: { id: userId },
         data: {
           passwordHash,
           passwordChangedAt: new Date(),
-          refreshToken: null,
           resetTokenHash: null,
           resetTokenExpiry: null,
         },
       });
+      await revokeAllRefreshTokens(app.prisma, userId);
 
       request.log.info({ userId }, 'Password cambiata dall utente');
 
@@ -726,9 +815,9 @@ export async function authRoutes(app: FastifyInstance) {
         passwordChangedAt: new Date(),
         resetTokenHash: null,
         resetTokenExpiry: null,
-        refreshToken: null,
       },
     });
+    await revokeAllRefreshTokens(app.prisma, user.id);
 
     request.log.info({ userId: user.id }, 'Password reimpostata via token');
 

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api';
+import { dateLocale } from '@/lib/i18n/dates';
 import { Dumbbell, Heart, ChevronRight, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 interface Session {
@@ -23,6 +25,9 @@ interface WellnessLog {
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const t = useTranslations('home');
+  const locale = useLocale();
+  const df = dateLocale(locale);
   const [todaySession, setTodaySession] = useState<Session | null>(null);
   const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
   const [wellnessDone, setWellnessDone] = useState(false);
@@ -47,8 +52,13 @@ export default function HomePage() {
       if (wellnessRes.success && wellnessRes.data?.length) {
         setWellnessDone(true);
       }
-      setLoading(false);
-    });
+    })
+      // Senza questo ramo una chiamata fallita (rete assente, sessione
+      // scaduta) lasciava `loading` a true per sempre: la pagina restava con
+      // la rotellina che gira, senza nessun messaggio. Meglio mostrare lo
+      // stato vuoto, che l'utente puo' almeno ricaricare.
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -59,8 +69,9 @@ export default function HomePage() {
     );
   }
 
-  const greeting = getGreeting();
-  const firstName = user?.athlete?.firstName || 'Atleta';
+  const h = new Date().getHours();
+  const greeting = h < 12 ? t('greetingMorning') : h < 18 ? t('greetingAfternoon') : t('greetingEvening');
+  const firstName = user?.athlete?.firstName || t('athleteFallback');
 
   return (
     <div className="space-y-6 px-4 py-6">
@@ -70,7 +81,7 @@ export default function HomePage() {
           {greeting}, {firstName}! 👋
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {new Date().toLocaleDateString(df, { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
 
@@ -83,8 +94,8 @@ export default function HomePage() {
                 <Heart size={20} className="text-teal-600 dark:text-teal-400" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-teal-800 dark:text-teal-300">Wellness giornaliero</p>
-                <p className="text-xs text-teal-600 dark:text-teal-500">Compila il tuo check-in di oggi</p>
+                <p className="font-semibold text-teal-800 dark:text-teal-300">{t('wellnessCtaTitle')}</p>
+                <p className="text-xs text-teal-600 dark:text-teal-500">{t('wellnessCtaSubtitle')}</p>
               </div>
               <ChevronRight size={18} className="text-teal-400" />
             </div>
@@ -94,7 +105,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2 rounded-xl bg-success-50 px-4 py-3 dark:bg-success-700/20">
           <CheckCircle2 size={18} className="text-success-500" />
           <span className="text-sm font-medium text-success-700 dark:text-success-500">
-            Wellness di oggi completato
+            {t('wellnessDone')}
           </span>
         </div>
       )}
@@ -102,7 +113,7 @@ export default function HomePage() {
       {/* Today's Session */}
       <section>
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Allenamento di oggi
+          {t('todayTraining')}
         </h3>
         {todaySession ? (
           <Link href={`/sessions/${todaySession.id}`} className="block">
@@ -117,10 +128,10 @@ export default function HomePage() {
                     <span className="flex items-center gap-1">
                       <Clock size={12} /> {todaySession.duration} min
                     </span>
-                    <span>{todaySession.sessionExercises.length} esercizi</span>
+                    <span>{t('exercises', { count: todaySession.sessionExercises.length })}</span>
                     {todaySession.myLog?.viewedAt && (
                       <span className="flex items-center gap-1 text-teal-600">
-                        <CheckCircle2 size={12} /> Visto
+                        <CheckCircle2 size={12} /> {t('viewed')}
                       </span>
                     )}
                   </div>
@@ -132,7 +143,7 @@ export default function HomePage() {
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
             <AlertCircle size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">Nessuna sessione programmata per oggi</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('noSessionToday')}</p>
           </div>
         )}
       </section>
@@ -141,7 +152,7 @@ export default function HomePage() {
       {upcomingSessions.length > 0 && (
         <section>
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Prossime sessioni
+            {t('upcoming')}
           </h3>
           <div className="space-y-2">
             {upcomingSessions.map((session) => (
@@ -150,7 +161,7 @@ export default function HomePage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900 dark:text-white">{session.title}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(session.date).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                      {new Date(session.date).toLocaleDateString(df, { weekday: 'short', day: 'numeric', month: 'short' })}
                       {' · '}{session.duration} min
                     </p>
                   </div>
@@ -163,11 +174,4 @@ export default function HomePage() {
       )}
     </div>
   );
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Buongiorno';
-  if (h < 18) return 'Buon pomeriggio';
-  return 'Buonasera';
 }

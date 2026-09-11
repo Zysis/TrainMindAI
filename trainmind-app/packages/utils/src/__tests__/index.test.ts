@@ -216,16 +216,19 @@ describe('computeAcwr', () => {
 
 // ─── calculateWellnessScore ───────────────────────────────
 
+// Dopo `wellness_scale_flip` 5 e' la condizione migliore su tutte e cinque le
+// voci: questi casi erano scritti sulla scala vecchia e passavano solo perche'
+// anche la funzione ribaltava.
 describe('calculateWellnessScore', () => {
   it('returns 100 for perfect wellness', () => {
     expect(calculateWellnessScore({
-      sleepQuality: 5, fatigue: 1, soreness: 1, stress: 1, mood: 5,
+      sleepQuality: 5, fatigue: 5, soreness: 5, stress: 5, mood: 5,
     })).toBe(100);
   });
 
   it('returns 20 for worst wellness', () => {
     expect(calculateWellnessScore({
-      sleepQuality: 1, fatigue: 5, soreness: 5, stress: 5, mood: 1,
+      sleepQuality: 1, fatigue: 1, soreness: 1, stress: 1, mood: 1,
     })).toBe(20);
   });
 
@@ -235,6 +238,20 @@ describe('calculateWellnessScore', () => {
     });
     expect(score).toBeGreaterThan(40);
     expect(score).toBeLessThan(70);
+  });
+
+  it('non ribalta fatica, dolore e stress: 5 vale come 5', () => {
+    // Atleta fresco (fatica 5) contro atleta distrutto (fatica 1), a parita'
+    // di tutto il resto: il primo deve stare piu' in alto.
+    const fresco = calculateWellnessScore({
+      sleepQuality: 3, fatigue: 5, soreness: 5, stress: 5, mood: 3,
+    });
+    const distrutto = calculateWellnessScore({
+      sleepQuality: 3, fatigue: 1, soreness: 1, stress: 1, mood: 3,
+    });
+    expect(fresco).toBeGreaterThan(distrutto);
+    expect(fresco).toBe(84);
+    expect(distrutto).toBe(36);
   });
 
   it('returns rounded integer', () => {

@@ -34,8 +34,20 @@ def mono(size):
         return ImageFont.load_default()
 
 
+SRC = os.path.join(RAD, 'sorgenti')
+
+
 def carica(nome):
-    return Image.open(os.path.join(IMG, nome)).convert('RGB')
+    """
+    Le immagini di partenza dei montaggi stanno in sorgenti/, non in public/:
+    tutto quello che sta in public/ finisce online, e queste servono solo a
+    generare i video. Si guarda comunque anche in public/ per compatibilità.
+    """
+    for cartella in (SRC, IMG):
+        p = os.path.join(cartella, nome)
+        if os.path.exists(p):
+            return Image.open(p).convert('RGB')
+    raise SystemExit(f'immagine non trovata: {nome} (cercata in sorgenti/ e public/assets/img/)')
 
 
 def duotone(arr):

@@ -427,7 +427,7 @@ function SortableMesoCard({ meso: m, dateRange, isExpanded, onToggle, onEdit, on
                       className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-dashed border-teal-300 px-2 py-1 text-xs font-medium text-teal-600 hover:bg-teal-50 transition"
                     >
                       <Plus className="h-3 w-3" />
-                      Aggiungi sessione
+                      {tPer('addSession')}
                     </button>
                   </div>
                 );
@@ -1223,9 +1223,9 @@ export default function PeriodizationPage() {
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('weeksAllocated')}</h3>
                 <span className={`text-sm font-bold ${isOver ? 'text-red-600' : remaining === 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {allocatedWeeks} / {totalWeeks} settimane
-                  {remaining > 0 && <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">({remaining} rimanenti)</span>}
-                  {isOver && <span className="ml-1 font-normal text-red-500">({Math.abs(remaining)} in eccesso!)</span>}
+                  {allocatedWeeks} / {totalWeeks} {tCommon('weeks')}
+                  {remaining > 0 && <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">({remaining} {t('remaining')})</span>}
+                  {isOver && <span className="ml-1 font-normal text-red-500">({Math.abs(remaining)} {t('excess')})</span>}
                 </span>
               </div>
               <div className="h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
@@ -1325,7 +1325,7 @@ export default function PeriodizationPage() {
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 py-3 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:border-teal-400 hover:text-teal-700 disabled:opacity-50"
           >
             {savingMeso ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Aggiungi mesociclo
+            {t('addMesocycle')}
           </button>
         )}
 
@@ -1505,7 +1505,7 @@ export default function PeriodizationPage() {
               <button onClick={() => setShowMicroModal(false)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700">{tCommon('cancel')}</button>
               <button onClick={saveMicro} disabled={savingMeso} className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">
                 {savingMeso && <Loader2 className="h-4 w-4 animate-spin" />}
-                Salva
+                {tCommon('save')}
               </button>
             </>
           }
@@ -1589,7 +1589,7 @@ export default function PeriodizationPage() {
                           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{tp.description}</p>
                         )}
                         <div className="mt-1 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                          <span className={!weeksMatch ? 'font-semibold text-amber-600' : ''}>{tp._count.weeks} settimane</span>
+                          <span className={!weeksMatch ? 'font-semibold text-amber-600' : ''}>{tp._count.weeks} {tCommon('weeks')}</span>
                           <span>{fmtDate(tp.startDate, locale)} → {fmtDate(tp.endDate, locale)}</span>
                         </div>
                         {!weeksMatch && (
@@ -1845,7 +1845,7 @@ export default function PeriodizationPage() {
                 <div>
                   <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {TYPE_OPTIONS.find((t) => t.value === p.type)?.label ?? p.type} · {p.totalWeeks} settimane
+                    {TYPE_OPTIONS.find((t) => t.value === p.type)?.label ?? p.type} · {p.totalWeeks} {tCommon('weeks')}
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500">{fmtDate(p.startDate, locale)} → {fmtDate(p.endDate, locale)}</p>
                 </div>
@@ -1857,8 +1857,8 @@ export default function PeriodizationPage() {
                 </button>
               </div>
               <div className="mt-3 flex gap-3 text-xs text-slate-500 dark:text-slate-400">
-                <span>{p._count.mesocycles} mesocicli</span>
-                <span>{p._count.simulations} simulazioni</span>
+                <span>{p._count.mesocycles} {t('mesocycles')}</span>
+                <span>{p._count.simulations} {t('simulations')}</span>
               </div>
             </div>
           ))}
@@ -1965,7 +1965,7 @@ export default function PeriodizationPage() {
           </div>
           {createForm.startDate && createForm.endDate && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Durata: <span className="font-medium text-slate-700 dark:text-slate-300">{createForm.totalWeeks} settimane</span>
+              {t('durationLabel')}: <span className="font-medium text-slate-700 dark:text-slate-300">{createForm.totalWeeks} {tCommon('weeks')}</span>
               {' '}({(() => {
                 const start = new Date(createForm.startDate);
                 return start.toLocaleDateString(locale, { day: 'numeric', month: 'short' });

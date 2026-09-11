@@ -56,3 +56,55 @@
 	reverse_proxy athlete:3003
 	encode gzip
 }
+
+# Console di amministrazione — sottodominio a se', protetto da utente e
+# password. Le credenziali NON sono un account TrainMind: stanno in
+# .env.deploy, fuori dal database dei clienti, cosi' nessun utente della
+# piattaforma puo' arrivare qui scalando i propri privilegi.
+#
+# L'hash si genera sul server con:
+#   docker exec trainmind-caddy caddy hash-password
+# e si incolla in ADMIN_PASSWORD_HASH (attenzione: nel file .env i simboli $
+# vanno raddoppiati in $$, altrimenti Compose li interpreta come variabili).
+{$ADMIN_DOMAIN} {
+	basic_auth {
+		{$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+	}
+	reverse_proxy admin:3005
+	encode gzip
+
+	# Una console interna non ha motivo di finire in un indice.
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# VECCHIO DOMINIO trainmind-app.com — da tenere attivo a lungo.
+# I nomi sono scritti per esteso e NON come variabili: le variabili
+# ormai indicano il dominio nuovo. Senza questi blocchi Caddy non
+# emette piu' il certificato per i vecchi nomi, e chi ci arriva vede
+# un errore di sicurezza invece di un rimando.
+# Procedura completa: documentation/GUIDA_CAMBIO_DOMINIO.md
+# ─────────────────────────────────────────────────────────────────────
+
+trainmind-app.com, www.trainmind-app.com {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
+app.trainmind-app.com {
+	redir https://{$SITE_DOMAIN}{$APP_BASE_PATH}{uri} permanent
+}
+
+# API e app atleti: proxy veri, NON redirect.
+# Due motivi: un 301 su una POST fa perdere il corpo della richiesta ai
+# client vecchi, e la PWA gia' installata sui telefoni degli atleti e'
+# legata a questo dominio — finche' non la reinstallano, qui deve
+# rispondere l'applicazione, non un rimando.
+api.trainmind-app.com {
+	reverse_proxy api:3001
+	encode gzip
+}
+
+atleti.trainmind-app.com {
+	reverse_proxy athlete:3003
+	encode gzip
+}

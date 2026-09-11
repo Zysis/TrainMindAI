@@ -122,7 +122,7 @@ export function PerformanceCharts({ athleteId, teamId, days = 30, dateFrom, date
             <TrendingUp className="h-4 w-4 text-amber-600" />
             <span className="text-xs font-medium text-amber-600">{t('totalVolume')}</span>
           </div>
-          <p className="text-2xl font-bold text-amber-700">{totalVolume.toLocaleString()} kg</p>
+          <p className="text-2xl font-bold text-amber-700">{totalVolume.toLocaleString(locale)} kg</p>
         </div>
         <div className="rounded-xl bg-red-50 p-4">
           <div className="flex items-center gap-2 mb-1">
@@ -150,7 +150,7 @@ export function PerformanceCharts({ athleteId, teamId, days = 30, dateFrom, date
             <Tooltip
               contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
               labelFormatter={formatDate}
-              formatter={(value: number) => [`${value.toLocaleString()} kg`, 'Volume']}
+              formatter={(value: number) => [`${value.toLocaleString(locale)} kg`, 'Volume']}
             />
             <Area
               type="monotone"
@@ -223,7 +223,7 @@ export function PerformanceCharts({ athleteId, teamId, days = 30, dateFrom, date
                     <td className="py-2 pr-4 text-right text-slate-600 dark:text-slate-400">{a.sessions}</td>
                     <td className="py-2 pr-4 text-right text-slate-600 dark:text-slate-400">{Math.round(a.totalDuration / 60)}h {a.totalDuration % 60}m</td>
                     <td className="py-2 pr-4 text-right text-slate-600 dark:text-slate-400">{a.avgRpe}/10</td>
-                    <td className="py-2 text-right text-slate-600 dark:text-slate-400">{a.totalVolume.toLocaleString()}</td>
+                    <td className="py-2 text-right text-slate-600 dark:text-slate-400">{a.totalVolume.toLocaleString(locale)}</td>
                   </tr>
                 ))}
               </tbody>

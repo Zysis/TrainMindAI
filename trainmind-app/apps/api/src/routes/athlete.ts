@@ -11,7 +11,7 @@ import {
   pushSubscriptionSchema,
 } from '../schemas/athlete.js';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
+import { issueRefreshToken } from '../lib/refresh-tokens.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { sendEmail } from '../services/email-service.js';
 
@@ -263,19 +263,34 @@ export async function athleteRoutes(app: FastifyInstance) {
     });
 
     // Generate JWT
-    const tokenPayload = {
+    const tokenPayload: {
+      userId: string;
+      id: string;
+      email: string;
+      role: string;
+      organizationId: string;
+      athleteId?: string;
+    } = {
       userId: user.id,
       id: user.id,
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
     };
+    // Come al login: senza athleteId nel token l'atleta appena registrato non
+    // vede nulla finché non rifà l'accesso.
+    if (user.athleteId) tokenPayload.athleteId = user.athleteId;
+
     const accessToken = app.jwt.sign(tokenPayload);
-    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const refreshToken = await issueRefreshToken(
+      app.prisma,
+      user.id,
+      request.headers['user-agent'],
+    );
 
     await app.prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken, lastLoginAt: new Date() },
+      data: { lastLoginAt: new Date() },
     });
 
     return reply.status(201).send({

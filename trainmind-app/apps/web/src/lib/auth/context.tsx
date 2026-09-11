@@ -10,6 +10,7 @@ import {
 import {
   login as apiLogin,
   register as apiRegister,
+  type RegisterInput,
   logout as apiLogout,
   fetchMe,
   clearTokens,
@@ -28,20 +29,7 @@ export interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (input: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    organizationName: string;
-    dateOfBirth: string;
-    plan?: 'starter' | 'professional' | 'ultra';
-    acceptTerms: boolean;
-    acceptPrivacy: boolean;
-    consentHealthData?: boolean;
-    acceptMarketing?: boolean;
-    uiLanguage?: 'it' | 'en' | 'es';
-  }) => Promise<void>;
+  register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -105,20 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (input: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-      organizationName: string;
-      dateOfBirth: string;
-      plan?: 'starter' | 'professional' | 'ultra';
-      acceptTerms: boolean;
-      acceptPrivacy: boolean;
-      consentHealthData?: boolean;
-      acceptMarketing?: boolean;
-      uiLanguage?: 'it' | 'en' | 'es';
-    }) => {
+    async (input: RegisterInput) => {
       const response = await apiRegister(input);
       setUser(response.data.user);
       syncLocaleWithUser(response.data.user);

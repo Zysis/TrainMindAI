@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { calculateWellnessScore } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
 
 // ═══════════════════════════════════════════════════════════
@@ -116,17 +117,8 @@ interface ProposedExercise {
 
 // ─── Helpers ────────────────────────────────────────────
 
-function computeWellnessScore(log: {
-  sleepQuality: number;
-  mood: number;
-  fatigue: number;
-  soreness: number;
-  stress: number;
-}): number {
-  return Math.round(
-    ((log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress) / 25) * 100,
-  );
-}
+/** Definizione unica in `@trainmind/utils`: qui c'era una copia della formula. */
+const computeWellnessScore = calculateWellnessScore;
 
 /**
  * Core adaptation algorithm. Decision tree:

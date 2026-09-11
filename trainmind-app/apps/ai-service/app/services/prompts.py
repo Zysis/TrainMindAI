@@ -46,7 +46,7 @@ Risposta attesa: Una risposta che include analisi del profilo forza-velocita', p
 - Non consigliare farmaci, integratori non evidence-based o pratiche non sicure
 - Se rilevi segnali di overtraining o rischio infortunio, segnalalo proattivamente
 
-Lingua: Rispondi sempre in italiano con terminologia tecnica appropriata."""
+Lingua: la lingua della risposta e' indicata in fondo a questo prompt. Usa terminologia tecnica appropriata."""
 
 
 # ============================================================
@@ -102,7 +102,7 @@ Risposta attesa: Una sessione completa con warm-up (mobilita' anche/caviglie, at
 - Segnala quando un esercizio richiede supervisione o spotting
 - Per atleti in RTP, rispetta rigorosamente le fasi del protocollo
 
-Lingua: Rispondi sempre in italiano con terminologia tecnica appropriata."""
+Lingua: la lingua della risposta e' indicata in fondo a questo prompt. Usa terminologia tecnica appropriata."""
 
 
 # ============================================================
@@ -149,7 +149,7 @@ Risposta: Spiega entrambi i modelli con pro/contro, indica per chi sono piu' ada
 - Per dolore acuto o sintomi preoccupanti, raccomanda visita medica
 - Non consigliare restrizioni alimentari estreme o integratori non sicuri
 
-Lingua: Rispondi sempre in italiano, adattando il linguaggio al livello dell'utente."""
+Lingua: la lingua della risposta e' indicata in fondo a questo prompt. Adatta il linguaggio al livello dell'utente."""
 
 
 # ============================================================
@@ -413,5 +413,34 @@ REGOLE:
 - Integra sempre la prevenzione infortuni (caviglia, ginocchio, spalla)
 - Adatta i volumi al periodo della stagione
 - Usa il contesto della knowledge base per scegliere gli esercizi
-- Rispondi in italiano
+- La lingua della risposta e' indicata in fondo a questo prompt
 """
+
+
+# ============================================================
+# LINGUA DELLA RISPOSTA
+# ------------------------------------------------------------
+# I system prompt qui sopra sono scritti in italiano, ma l'app parla tre
+# lingue: la risposta deve seguire la lingua scelta nell'interfaccia, non
+# quella in cui e' scritto il prompt. `with_language` accoda l'istruzione in
+# fondo al system prompt, dove vince sul resto.
+#
+# I prompt chiudevano anche con "Lingua: rispondi sempre in italiano": due
+# istruzioni in conflitto nello stesso messaggio, e il modello ne seguiva un
+# po' l'una e un po' l'altra. Ora rimandano qui e basta.
+#
+# Il richiamo alla traduzione serve perche' la knowledge base e' in italiano:
+# senza, i nomi delle fasi finivano tali e quali dentro risposte in spagnolo.
+# ============================================================
+
+LANGUAGE_INSTRUCTIONS = {
+    "it": "Lingua della risposta: rispondi SEMPRE in italiano, con terminologia tecnica appropriata. Questa indicazione sostituisce qualsiasi istruzione di lingua precedente.",
+    "en": "Response language: ALWAYS reply in English, with appropriate technical terminology. Source material may be written in Italian: translate anything you use from it, including phase and week names — never leave Italian wording in your answer. This instruction overrides any previous language instruction.",
+    "es": "Idioma de la respuesta: responde SIEMPRE en espanol, con la terminologia tecnica adecuada. El material de origen puede estar escrito en italiano: traduce todo lo que utilices de el, incluidos los nombres de fases y semanas — no dejes nunca texto en italiano en tu respuesta. Esta indicacion sustituye cualquier instruccion de idioma anterior.",
+}
+
+
+def with_language(prompt: str, language: str | None = "it") -> str:
+    """Accoda al system prompt l'istruzione di lingua per la risposta."""
+    instruction = LANGUAGE_INSTRUCTIONS.get(language or "it", LANGUAGE_INSTRUCTIONS["it"])
+    return f"{prompt}\n\n{instruction}"

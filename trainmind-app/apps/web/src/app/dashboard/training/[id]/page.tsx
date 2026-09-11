@@ -418,7 +418,7 @@ export default function TrainingPlanDetailPage() {
                 <div className="border-t border-slate-100 dark:border-slate-700">
                   {week.trainingSessions.length === 0 ? (
                     <div className="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-                      Nessuna sessione in questa settimana
+                      {t('noSessionsThisWeek')}
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-50 dark:divide-slate-700">

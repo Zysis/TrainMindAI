@@ -34,6 +34,34 @@ MAX_CONTEXT_CHARS = 6000  # ~1500 token
 # Budget per singolo documento nel contesto
 MAX_DOC_CHARS = 1200  # ~300 token
 
+# Intestazione della domanda, nella lingua della risposta: se resta in
+# italiano il modello prende l'italiano come lingua di lavoro anche quando
+# gli si e' chiesto di rispondere in un'altra.
+USER_QUESTION_HEADING = {
+    "it": "DOMANDA DELL'UTENTE:",
+    "en": "USER QUESTION:",
+    "es": "PREGUNTA DEL USUARIO:",
+}
+
+# La knowledge base e' scritta in italiano: va detto esplicitamente, altrimenti
+# nomi di fasi e diciture vengono ricopiati tali e quali dentro una risposta in
+# un'altra lingua.
+TRANSLATE_CONTEXT_NOTE = {
+    "en": (
+        "\nNOTE: the knowledge-base excerpts above are written in Italian. "
+        "Translate into English everything you take from them — including "
+        "phase names, week labels and any other quoted wording. Never copy "
+        "Italian text verbatim into your answer."
+    ),
+    "es": (
+        "\nNOTA: los extractos de la base de conocimiento anteriores estan "
+        "escritos en italiano. Traduce al espanol todo lo que tomes de ellos "
+        "— incluidos los nombres de las fases, las etiquetas de semana y "
+        "cualquier otra expresion citada. No copies nunca texto en italiano "
+        "literalmente en tu respuesta."
+    ),
+}
+
 # Mappatura keyword italiane -> namespace per query routing
 KEYWORD_NAMESPACE_MAP = {
     "exercises": [
@@ -269,6 +297,7 @@ class RAGService:
         user_query: str,
         athlete_context: Optional[str] = None,
         max_context_chars: int = MAX_CONTEXT_CHARS,
+        language: Optional[str] = "it",
     ) -> str:
         """
         Costruisce un prompt RAG completo con budget di token.
@@ -279,6 +308,7 @@ class RAGService:
             user_query: Query/domanda dell'utente
             athlete_context: Contesto dell'atleta (opzionale)
             max_context_chars: Limite caratteri per il contesto
+            language: lingua della risposta (it | en | es)
 
         Returns:
             Prompt formattato pronto per l'LLM
@@ -340,11 +370,22 @@ class RAGService:
             # Assembla il prompt finale
             context_block = "\n".join(parts) if parts else ""
 
-            full_prompt = f"""{context_block}
+            # I documenti della knowledge base sono scritti in italiano. Senza
+            # dirlo, il modello ricopiava i nomi delle fasi cosi' com'erano e
+            # una risposta in spagnolo usciva mezza in italiano ("Settimana
+            # Tipo 2: Forza"). L'istruzione va accanto al contesto, non solo
+            # nel system prompt: e' li' che sta il testo da tradurre.
+            translate_note = ""
+            if context_block and (language or "it") != "it":
+                translate_note = TRANSLATE_CONTEXT_NOTE.get(
+                    language or "it", TRANSLATE_CONTEXT_NOTE["en"]
+                ) + "\n"
 
+            full_prompt = f"""{context_block}
+{translate_note}
 ---
 
-## DOMANDA DELL'UTENTE:
+## {USER_QUESTION_HEADING.get(language or "it", USER_QUESTION_HEADING["it"])}
 
 {user_query}"""
 
@@ -368,6 +409,7 @@ class RAGService:
         user_query: str,
         history: Optional[list[dict]] = None,
         athlete_context: Optional[str] = None,
+        language: Optional[str] = "it",
     ) -> list[dict]:
         """
         Costruisce la lista di messaggi OpenAI con system prompt, history e RAG context.
@@ -381,6 +423,7 @@ class RAGService:
             user_query: Ultima domanda dell'utente
             history: Messaggi precedenti della conversazione
             athlete_context: Contesto atleta opzionale
+            language: lingua della risposta (it | en | es)
 
         Returns:
             Lista di messaggi nel formato OpenAI
@@ -407,6 +450,7 @@ class RAGService:
             context_docs=context_docs,
             user_query=user_query,
             athlete_context=athlete_context,
+            language=language,
         )
 
         messages.append({

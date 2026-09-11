@@ -111,7 +111,9 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14, dateFrom, dateTo
 
       <div className="min-w-[600px]">
         {/* Date headers */}
-        <div className="flex items-end gap-1 mb-2 ml-32">
+        <div className="flex items-end gap-1 mb-2">
+          {/* segnaposto fisso, allineato alla colonna dei nomi qui sotto */}
+          <div className="sticky left-0 z-10 w-32 shrink-0 bg-white dark:bg-slate-800" />
           {dates.map((date) => (
             <div key={date} className="w-10 text-center">
               <span className="block text-2xs font-medium text-slate-400 dark:text-slate-500">{formatDay(date)}</span>
@@ -124,7 +126,12 @@ export function WellnessHeatmap({ athleteId, teamId, days = 14, dateFrom, dateTo
         <div className="space-y-1">
           {athletes.map(([athleteId, athleteName]) => (
             <div key={athleteId} className="flex items-center gap-1">
-              <div className="w-32 truncate text-sm font-medium text-slate-700">{athleteName}</div>
+              {/* Il nome resta visibile mentre la griglia scorre: con molti
+                  giorni la heatmap e' piu' larga del contenitore e prima la
+                  colonna dei nomi spariva a sinistra. */}
+              <div className="sticky left-0 z-10 w-32 shrink-0 truncate bg-white pr-2 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                {athleteName}
+              </div>
               {dates.map((date) => {
                 const entry = lookup[athleteId]?.[date];
                 if (!entry) {

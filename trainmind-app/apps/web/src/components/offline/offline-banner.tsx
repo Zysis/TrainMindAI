@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { CloudOff, CloudUpload, Check, Loader2 } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
@@ -14,8 +15,13 @@ import {
 /**
  * Thin status strip shown at the top of the app when offline, or when there
  * are pending operations to sync. Auto-hides when everything is clean.
+ *
+ * Le stringhe stavano scritte a mano in italiano pur esistendo gia' in
+ * messages/{it,en,es}.json sotto `offline`: con l'app in inglese o spagnolo
+ * questa striscia restava l'unico pezzo di interfaccia in italiano.
  */
 export function OfflineBanner() {
+  const t = useTranslations('offline');
   const online = useOnlineStatus();
   const [status, setStatus] = useState<SyncStatus>({ running: false, pending: 0 });
   const [justSynced, setJustSynced] = useState(false);
@@ -42,10 +48,10 @@ export function OfflineBanner() {
     return (
       <div className="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 border-b border-amber-200">
         <CloudOff className="h-3.5 w-3.5" />
-        Modalità offline — le modifiche verranno sincronizzate al ripristino della rete
+        {t('offlineMessage')}
         {status.pending > 0 && (
           <span className="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-2xs">
-            {status.pending} in coda
+            {t('queued', { count: status.pending })}
           </span>
         )}
       </div>
@@ -57,7 +63,7 @@ export function OfflineBanner() {
     return (
       <div className="flex items-center justify-center gap-2 bg-teal-50 px-4 py-2 text-xs font-medium text-teal-800 border-b border-teal-200">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Sincronizzazione in corso… ({status.pending} operazioni)
+        {t('syncing', { count: status.pending })}
       </div>
     );
   }
@@ -67,12 +73,12 @@ export function OfflineBanner() {
     return (
       <div className="flex items-center justify-center gap-2 bg-blue-50 px-4 py-2 text-xs font-medium text-blue-800 border-b border-blue-200">
         <CloudUpload className="h-3.5 w-3.5" />
-        {status.pending} operazioni in attesa di sincronizzazione
+        {t('pendingSync', { count: status.pending })}
         <button
           onClick={() => drainQueue()}
           className="ml-2 rounded border border-blue-300 bg-white dark:bg-slate-800 px-2 py-0.5 text-2xs font-semibold hover:bg-blue-100"
         >
-          Sincronizza ora
+          {t('syncNow')}
         </button>
       </div>
     );
@@ -83,7 +89,7 @@ export function OfflineBanner() {
     return (
       <div className="flex items-center justify-center gap-2 bg-green-50 px-4 py-2 text-xs font-medium text-green-800 border-b border-green-200">
         <Check className="h-3.5 w-3.5" />
-        Tutte le modifiche sincronizzate
+        {t('allSynced')}
       </div>
     );
   }

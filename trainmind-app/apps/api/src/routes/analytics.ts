@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { computeAcwr, acwrZone } from '@trainmind/utils';
+import { computeAcwr, calculateWellnessScore } from '@trainmind/utils';
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS ROUTES — Sprint 3.2
@@ -243,9 +243,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       soreness: log.soreness,
       stress: log.stress,
       mood: log.mood,
-      wellnessScore: Math.round(
-        ((log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress) / 25) * 100
-      ),
+      wellnessScore: calculateWellnessScore(log),
     }));
 
     return reply.send({ success: true, data: heatmapData });
@@ -258,6 +256,9 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { organizationId } = request.user;
 
     const to = query.to ? new Date(query.to) : new Date();
+    // Un filtro 'YYYY-MM-DD' arriva a mezzanotte: senza questa riga le sedute
+    // di oggi restano fuori e l'ACWR "attuale" e' quello di ieri sera.
+    if (query.to) to.setHours(23, 59, 59, 999);
     // Inizio richiesto (filtro date) oppure finestra `days`.
     const displayFrom = query.from
       ? new Date(query.from)
@@ -367,40 +368,44 @@ export async function analyticsRoutes(app: FastifyInstance) {
     }> = [];
 
     for (const [athleteId, athleteSessions] of Object.entries(byAthlete)) {
-      const startDate = new Date(displayFrom.getTime());
-      const current = new Date(startDate);
+      // Le date in cui si campiona la serie: una a settimana da `displayFrom`,
+      // piu' SEMPRE un punto finale su `to`.
+      //
+      // Il badge "ACWR attuale" del grafico legge l'ultimo punto della serie.
+      // Col solo passo settimanale quel punto poteva essere vecchio di sei
+      // giorni, e mostrava un valore diverso da quello della scheda Squadra,
+      // che calcola a oggi: stessa formula, momenti diversi. Da qui la
+      // divergenza segnalata dagli utenti.
+      const stops: Date[] = [];
+      const cursor = new Date(displayFrom.getTime());
+      while (cursor <= to) {
+        stops.push(new Date(cursor));
+        cursor.setDate(cursor.getDate() + 7);
+      }
+      const last = stops[stops.length - 1];
+      if (!last || last.getTime() !== to.getTime()) stops.push(new Date(to.getTime()));
 
-      while (current <= to) {
-        const weekEnd = new Date(current);
-
+      for (const weekEnd of stops) {
         // Stessa formula di tutto il resto: `computeAcwr` si ritaglia da sola
         // le finestre attorno a `weekEnd`, quindi le sedute si passano intere.
         const punto = computeAcwr(athleteSessions, weekEnd);
-        const acuteLoad = punto.acuteLoad;
-        const chronicLoad = punto.chronicLoad;
 
-        // DIFFERENZA NOTA, e voluta finche' non si tocca anche il grafico.
-        //
-        // Il contratto di questa serie vuole un numero: `acwr-chart.tsx` fa
-        // `sum += d.acwr` e `d.acwr.toFixed(2)`, e un null lo romperebbe. Un
-        // punto non valutabile resta quindi 0 — che finisce in zona 'low',
-        // cioe' "sotto carico", quando in realta' vuol dire "non lo so".
-        // Sistemarlo davvero significa far accettare al grafico i buchi nella
-        // serie, ed e' un lavoro di frontend, non di questa rotta.
-        const acwr = punto.acwr ?? 0;
-        const zone = punto.zone ?? acwrZone(0);
+        // Un punto non valutabile (storico troppo corto, o nessun carico nella
+        // finestra) NON entra nella serie. Prima diventava 0, che il grafico
+        // legge come "sotto-allenamento": un'informazione falsa al posto di
+        // un'informazione mancante, e un'altra fonte di divergenza con la
+        // scheda Squadra, che quegli atleti li conta come non valutabili.
+        if (punto.acwr === null || punto.zone === null) continue;
 
         acwrData.push({
           athleteId,
           athleteName: athleteNameMap[athleteId] || 'Sconosciuto',
           weekEnd: weekEnd.toISOString().slice(0, 10),
-          acuteLoad: Math.round(acuteLoad),
-          chronicLoad: Math.round(chronicLoad),
-          acwr,
-          zone,
+          acuteLoad: Math.round(punto.acuteLoad),
+          chronicLoad: Math.round(punto.chronicLoad),
+          acwr: punto.acwr,
+          zone: punto.zone,
         });
-
-        current.setDate(current.getDate() + 7);
       }
     }
 
@@ -673,9 +678,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
       const latestWellness = athleteWellness[0];
       const avgWellnessScore = athleteWellness.length > 0
         ? Math.round(
-            athleteWellness.reduce((sum, w) => {
-              return sum + ((w.sleepQuality + w.mood + w.fatigue + w.soreness + w.stress) / 25) * 100;
-            }, 0) / athleteWellness.length
+            athleteWellness.reduce((sum, w) => sum + calculateWellnessScore(w), 0) /
+              athleteWellness.length
           )
         : null;
 

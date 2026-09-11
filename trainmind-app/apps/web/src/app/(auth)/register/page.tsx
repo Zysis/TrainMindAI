@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { readAttribution, useForwardedParams, withForwarded } from '@/lib/attribution';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useApiError } from '@/lib/i18n/api-error';
@@ -62,6 +63,19 @@ function RegisterForm() {
     isPlanId(planFromUrl) ? planFromUrl : 'starter',
   );
 
+  // Provenienza dell'iscrizione, letta una volta sola: se la calcolassimo al
+  // momento dell'invio, un utente che nel frattempo ha ripulito l'indirizzo
+  // arriverebbe senza sorgente.
+  const attribution = useMemo(() => readAttribution(params), [params]);
+
+  // Token che apre il cancello quando le registrazioni pubbliche sono chiuse.
+  // Serve solo a noi, durante i test in produzione: `/register?k=<token>`.
+  const accessToken = params.get('k') ?? undefined;
+
+  // Serve al link verso l'accesso qui sotto: chi va a fare login e poi torna
+  // indietro non deve perdere ne' la campagna ne' il token.
+  const forwarded = useForwardedParams();
+
   // Nessun consenso pre-flaggato (conforme al principio del consenso libero).
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
@@ -112,6 +126,8 @@ function RegisterForm() {
         acceptMarketing,
         // La lingua scelta qui diventa la lingua di default dell'account.
         uiLanguage: locale,
+        attribution,
+        accessToken,
       });
       router.push('/dashboard');
     } catch (err) {
@@ -129,6 +145,16 @@ function RegisterForm() {
       {error && (
         <div className="mb-4 rounded-lg border border-danger-500/20 bg-danger-50 px-4 py-3 text-sm text-danger-700">
           {error}
+        </div>
+      )}
+
+      {/* Segnale visibile che il token del cancello e' arrivato fin qui.
+          Senza, l'unico modo di scoprire che si e' perso per strada e'
+          compilare tutto il modulo e vedersi rifiutare l'invio. */}
+      {accessToken && (
+        <div className="mb-4 rounded-lg border border-teal-600/20 bg-teal-50 px-4 py-3 text-sm text-teal-800">
+          Accesso di prova attivo: questa registrazione passa anche a
+          registrazioni chiuse.
         </div>
       )}
 
@@ -394,7 +420,10 @@ function RegisterForm() {
 
       <p className="mt-4 text-center text-sm text-slate-500">
         {t('hasAccount')}{' '}
-        <Link href="/login" className="font-medium text-teal-700 hover:text-teal-600">
+        <Link
+          href={withForwarded('/login', forwarded)}
+          className="font-medium text-teal-700 hover:text-teal-600"
+        >
           {t('login')}
         </Link>
       </p>

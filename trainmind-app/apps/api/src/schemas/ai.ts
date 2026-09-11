@@ -45,6 +45,10 @@ export const aiChatSchema = z.object({
   max_tokens: z.number().min(100).max(4096).optional().default(2048),
   namespaces: z.array(z.string()).optional(),
   top_k: z.number().min(1).max(50).optional().default(5),
+  // Lingua dell'interfaccia al momento della domanda. Ha la precedenza sulla
+  // colonna `locale` dell'utente, che si aggiorna con una chiamata a parte e
+  // puo' essere indietro — o nulla, sugli account piu' vecchi.
+  locale: z.enum(['it', 'en', 'es']).optional(),
 });
 
 export type AIChatInput = z.infer<typeof aiChatSchema>;

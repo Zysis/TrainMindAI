@@ -8,6 +8,26 @@ import { CookieBanner } from '@/components/cookie-banner';
 import { withBasePath } from '@/lib/base-path';
 import '@/styles/globals.css';
 
+/**
+ * Nessuna pagina viene servita dalla cache di route di Next.
+ *
+ * Non e' una scelta di prestazioni: e' la cura di un bug che rendeva bianche
+ * tutte le pagine aperte con un link diretto o ricaricate con F5 in
+ * produzione. Il middleware genera un `nonce` CSP nuovo a ogni richiesta, ma
+ * l'HTML che usciva dalla cache era stato costruito con un nonce diverso (o
+ * senza): il browser trovava un'intestazione CSP che non combaciava con la
+ * pagina e bloccava OGNI script, quindi React non si avviava mai. Dentro
+ * l'app non si notava, perche' la navigazione e' lato client e l'HTML viene
+ * chiesto una volta sola.
+ *
+ * Con l'HTML generato a ogni richiesta il nonce combacia sempre. Il costo e'
+ * quasi nullo: queste pagine sono gusci renderizzati dal browser, non
+ * contengono dati, e i file JavaScript restano cachati come prima.
+ *
+ * Se un giorno si toglie il nonce dalla CSP, questa riga si puo' togliere.
+ */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: {
     default: 'TrainMind',

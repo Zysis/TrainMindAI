@@ -158,11 +158,33 @@ export async function aiRoutes(app: FastifyInstance) {
     }
 
     const { organizationId, userId } = request.user;
+
+    // La risposta segue la lingua scelta nell'interfaccia. Vale prima quella
+    // mandata dal client con la domanda: la colonna `locale` si aggiorna con
+    // una chiamata separata, che puo' fallire o arrivare dopo, e finche' resta
+    // indietro l'assistente risponde nella lingua sbagliata. Il database resta
+    // come riserva per i client che non la mandano.
+    let chatLanguage: 'it' | 'en' | 'es' | undefined = parsed.data.locale;
+    if (!chatLanguage) {
+      const chatRequester = await app.prisma.user.findUnique({
+        where: { id: userId },
+        select: { locale: true },
+      });
+      chatLanguage =
+        chatRequester?.locale === 'en' || chatRequester?.locale === 'es'
+          ? chatRequester.locale
+          : 'it';
+    }
+
     const chatModel = getModelForOperation('CHAT');
     const startedAt = Date.now();
 
     try {
-      const response = await proxyToAI('/ai/chat', { ...parsed.data, model: chatModel });
+      const response = await proxyToAI('/ai/chat', {
+        ...parsed.data,
+        model: chatModel,
+        language: chatLanguage,
+      });
 
       if (!response.ok) {
         const errBody = await response.text();
@@ -325,6 +347,18 @@ export async function aiRoutes(app: FastifyInstance) {
     }
 
     const { userId } = request.user;
+
+    // La lingua della risposta segue la preferenza di interfaccia dell'utente.
+    // Senza, l'assistente risponde sempre in italiano: i system prompt
+    // dell'ai-service sono scritti in italiano e si chiudono con
+    // "Rispondi sempre in italiano".
+    const requester = await app.prisma.user.findUnique({
+      where: { id: userId },
+      select: { locale: true },
+    });
+    const language: 'it' | 'en' | 'es' =
+      requester?.locale === 'en' || requester?.locale === 'es' ? requester.locale : 'it';
+
     const coachModel = getModelForOperation('COACH');
     const startedAt = Date.now();
 
@@ -333,6 +367,7 @@ export async function aiRoutes(app: FastifyInstance) {
         ...parsed.data,
         question: parsed.data.question + exerciseContext,
         model: coachModel,
+        language,
       });
 
       if (!response.ok) {
@@ -371,8 +406,19 @@ export async function aiRoutes(app: FastifyInstance) {
       if ((msg === 'AI_SERVICE_DOWN' || msg === 'AI_SERVICE_TIMEOUT') && isOpenAIFallbackAvailable()) {
         app.log.info('AI service down — using OpenAI direct fallback for /ai/coach');
         try {
+          const fallbackInstruction =
+            language === 'en'
+              ? 'Reply in English.'
+              : language === 'es'
+                ? 'Responde en espanol.'
+                : 'Rispondi in italiano.';
           const fallbackData = await openAIChat(
-            [{ role: 'user', content: parsed.data.question + exerciseContext }],
+            [
+              {
+                role: 'user',
+                content: `${fallbackInstruction}\n\n${parsed.data.question}${exerciseContext}`,
+              },
+            ],
             { model: coachModel },
           );
           void recordAiUsage(app, {

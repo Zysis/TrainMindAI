@@ -31,7 +31,8 @@
     "description": "Description",
     "notes": "Notes",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "logout": "Log out"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -756,10 +757,10 @@
     "team": "Team",
     "noTeam": "No team",
     "creating": "Creating...",
-    "aiPlanCreated": "Plan \"{name}\" created with {weeks} weeks and all exercises!",
+    "aiPlanCreated": "Plan \"{name}\" created with {weeks} weeks and all its exercises!",
     "aiPlanCreateError": "Error creating structured plan.",
     "planNotFound": "Plan not found",
-    "noSessionsThisWeek": "No sessions this week",
+    "noSessionsThisWeek": "No session in this week",
     "markAsCompleted": "Mark as completed",
     "deleteSession": "Delete session",
     "deload": "Deload",
@@ -984,7 +985,9 @@
     "cat_Condizionamento-Metabolico": "Metabolic conditioning",
     "cat_Mobilita": "Mobility",
     "cat_Release": "Release",
-    "cat_Basket-Specifico": "Basketball-specific"
+    "cat_Basket-Specifico": "Basketball-specific",
+    "cat_Cardio": "Cardio",
+    "cat_Tecnica": "Technique"
   },
   "wellness": {
     "title": "Wellness",
@@ -1499,7 +1502,13 @@
     "serviceUnreachable": "The AI service is not reachable right now. Please try again in a moment.",
     "serviceError": "AI service error ({status})",
     "noResponse": "No response received.",
-    "genericError": "Sorry, something went wrong. Please try again."
+    "genericError": "Sorry, something went wrong. Please try again.",
+    "sourcesUsedOne": "1 source used",
+    "sourcesUsedMany": "{count} sources used",
+    "catExercises": "Exercises",
+    "catProtocols": "Protocols",
+    "catPeriodization": "Periodization",
+    "catReferences": "References"
   },
   "periodization": {
     "title": "Periodization",
@@ -1676,7 +1685,8 @@
     "riskLow": "low",
     "riskModerate": "moderate",
     "riskHigh": "high",
-    "riskVeryHigh": "very high"
+    "riskVeryHigh": "very high",
+    "durationLabel": "Duration"
   },
   "billing": {
     "title": "Subscription",
@@ -2532,5 +2542,10 @@
     "viewTitle": "System protocol",
     "duplicateToEdit": "Duplicate to edit",
     "openReadonly": "Open read-only"
+  },
+  "authGuard": {
+    "staffOnlyTitle": "Staff-only area",
+    "staffOnlyBody": "Your account is registered as an athlete. This dashboard is for coaches and medical staff: use the TrainMind Athlete app for your sessions and the wellness questionnaire.",
+    "goToAthleteApp": "Go to the athlete app"
   }
 }

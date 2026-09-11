@@ -3,14 +3,15 @@
    vengono richiesti a mano con un orologio finto. */
 import { JSDOM } from 'jsdom'
 import fs from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import * as esbuild from 'esbuild'
 
 // Node non importa i .json come fa Vite: il modulo viene impacchettato
 // con esbuild (già presente fra le dipendenze di Vite) e poi caricato.
 const BUNDLE = 'node_modules/.tmp-hero-morph.mjs'
-execFileSync('node_modules/.bin/esbuild',
-  ['src/js/hero-morph.js', '--bundle', '--format=esm', '--outfile=' + BUNDLE],
-  { stdio: 'pipe' })
+await esbuild.build({
+  entryPoints: ['src/js/hero-morph.js'],
+  bundle: true, format: 'esm', outfile: BUNDLE
+})
 
 const html = fs.readFileSync('dist/index.html', 'utf8')
 const dom = new JSDOM(html, { url: 'http://localhost/', pretendToBeVisual: true })

@@ -2,6 +2,7 @@
 
 import { BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { SourceUI } from '@/hooks/use-chat';
 
 interface SourcesPanelProps {
@@ -14,18 +15,18 @@ function scoreColor(score: number): string {
   return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400';
 }
 
-function categoryLabel(category: string): string {
-  const labels: Record<string, string> = {
-    exercises: 'Esercizi',
-    protocols: 'Protocolli',
-    periodization: 'Periodizzazione',
-    references: 'Riferimenti',
-  };
-  return labels[category] || category;
-}
+const CATEGORY_KEYS: Record<string, string> = {
+  exercises: 'catExercises',
+  protocols: 'catProtocols',
+  periodization: 'catPeriodization',
+  references: 'catReferences',
+};
 
 export function SourcesPanel({ sources }: SourcesPanelProps) {
+  const t = useTranslations('chat');
   const [isOpen, setIsOpen] = useState(false);
+  const categoryLabel = (category: string): string =>
+    CATEGORY_KEYS[category] ? t(CATEGORY_KEYS[category]) : category;
 
   if (!sources || sources.length === 0) return null;
 
@@ -36,7 +37,7 @@ export function SourcesPanel({ sources }: SourcesPanelProps) {
         className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 transition-colors"
       >
         <BookOpen className="h-3 w-3" />
-        <span>{sources.length} {sources.length === 1 ? 'fonte' : 'fonti'} utilizzate</span>
+        <span>{sources.length === 1 ? t('sourcesUsedOne') : t('sourcesUsedMany', { count: sources.length })}</span>
         {isOpen ? (
           <ChevronUp className="h-3 w-3" />
         ) : (

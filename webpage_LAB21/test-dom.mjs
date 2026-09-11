@@ -1,9 +1,21 @@
 /* Test di verifica: carica la pagina compilata in un DOM simulato. */
 import { JSDOM } from 'jsdom'
 import fs from 'node:fs'
+import * as esbuild from 'esbuild'
 
 const html = fs.readFileSync('dist/index.html', 'utf8')
-const bundle = fs.readFileSync('dist/' + fs.readdirSync('dist/assets').find(f => f.endsWith('.js')).replace(/^/, 'assets/'), 'utf8')
+// Vite divide il codice in più chunk collegati da import, che window.eval
+// non sa caricare: per il test si rifà un pacchetto unico con esbuild
+// (già presente fra le dipendenze di Vite). Il CSS lo si legge invece dal
+// build vero, perché è quello che finisce online.
+const { text: bundle } = (await esbuild.build({
+  entryPoints: ['src/js/main.js'],
+  bundle: true, format: 'iife', write: false,
+  loader: { '.css': 'empty' },
+  // import.meta.env lo definisce Vite: qui si simula il caso "in produzione"
+  define: { 'import.meta.env': '{"DEV":false,"PROD":true}' }
+})).outputFiles[0]
+
 
 const dom = new JSDOM(html, { url: 'http://localhost/', pretendToBeVisual: true, runScripts: 'dangerously' })
 const { window } = dom
@@ -60,7 +72,13 @@ check('ritorno a IT', nav1() === 'Prodotti', nav1())
 // tutte le lingue devono avere esattamente le stesse chiavi
 const lingue = ['it', 'en', 'es']
 const dizionari = Object.fromEntries(lingue.map(l => [l, JSON.parse(fs.readFileSync(`src/i18n/${l}.json`, 'utf8'))]))
-const usate = [...new Set([...html.matchAll(/data-i18n(?:-html)?="([^"]+)"/g)].map(m => m[1]))]
+// Le pagine sono più d'una (home + legali): le chiavi vanno cercate in tutte,
+// altrimenti quelle usate solo nelle legali risultano "inutilizzate".
+const pagine = ['dist/index.html',
+  ...(fs.existsSync('dist/legal') ? fs.readdirSync('dist/legal')
+        .filter(f => f.endsWith('.html')).map(f => 'dist/legal/' + f) : [])]
+const tuttoHtml = pagine.map(f => fs.readFileSync(f, 'utf8')).join('\n')
+const usate = [...new Set([...tuttoHtml.matchAll(/data-i18n(?:-html)?="([^"]+)"/g)].map(m => m[1]))]
 for (const l of lingue) {
   const mancanti = usate.filter(k => !(k in dizionari[l]))
   const inutili = Object.keys(dizionari[l]).filter(k => !usate.includes(k))
@@ -75,7 +93,8 @@ check('nessun testo vuoto', empty === 0, empty + ' vuoti')
 // Il fondo nero di .hero-media.wire è indispensabile: senza, durante il
 // morphing a particelle il livello verde in "multiply" non ha nulla sotto
 // con cui fondersi e riempie lo schermo di verde.
-const css = fs.readFileSync('dist/' + fs.readdirSync('dist/assets').find(f => f.endsWith('.css')).replace(/^/, 'assets/'), 'utf8')
+const css = fs.readdirSync('dist/assets').filter(f => f.endsWith('.css'))
+  .map(f => fs.readFileSync('dist/assets/' + f, 'utf8')).join('\n')
 check('hero wire: fondo nero presente', /\.hero-media\.wire\{[^}]*background:\s*#000/.test(css))
 check('hero wire: livello verde in multiply', /mix-blend-mode:\s*multiply/.test(css))
 

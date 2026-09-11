@@ -21,6 +21,7 @@ import { ATHLETE_APP_URL, STAFF_ROLES } from '@/lib/constants';
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const t = useTranslations('common');
+  const tGuard = useTranslations('authGuard');
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const router = useRouter();
 
@@ -73,26 +74,24 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           </div>
 
           <h1 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">
-            Area riservata allo staff tecnico
+            {tGuard('staffOnlyTitle')}
           </h1>
           <p className="mb-6 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            Il tuo account e registrato come atleta. Questa dashboard e destinata a
-            preparatori e staff medico: per i tuoi allenamenti e il questionario wellness
-            usa l&apos;app TrainMind Athlete.
+            {tGuard('staffOnlyBody')}
           </p>
 
           <a
             href={ATHLETE_APP_URL}
             className="block w-full rounded-lg bg-teal-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
           >
-            Vai all&apos;app atleti
+            {tGuard('goToAthleteApp')}
           </a>
 
           <button
             onClick={() => logout()}
             className="mt-3 w-full rounded-lg border border-slate-300 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Esci
+            {t('logout')}
           </button>
         </div>
       </div>

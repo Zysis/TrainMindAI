@@ -126,16 +126,15 @@ export function PWARegister() {
           <div className="bg-white dark:bg-slate-800 rounded-t-xl sm:rounded-xl w-full sm:max-w-md sm:mx-4 p-6 shadow-2xl">
             <div className="text-center">
               <h3 className="text-xl font-bold text-teal-900 mb-2">
-                Installa TrainMind
+                {t('installTitle')}
               </h3>
               <p className="text-gray-600 text-sm mb-6">
-                Aggiungi TrainMind alla schermata iniziale per un accesso più
-                veloce e un'esperienza migliore.
+                {t('installDescIOS')}
               </p>
 
               <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-6 text-left">
                 <p className="text-xs font-semibold text-gray-700 mb-3">
-                  Per installare:
+                  {t('installSteps')}
                 </p>
                 <ol className="text-xs text-gray-600 space-y-2">
                   <li className="flex gap-3">
@@ -143,7 +142,7 @@ export function PWARegister() {
                       1.
                     </span>
                     <span>
-                      Tocca il bottone di condivisione{' '}
+                      {t('iosStep1')}{' '}
                       <span className="font-bold">↑</span>
                     </span>
                   </li>
@@ -152,8 +151,7 @@ export function PWARegister() {
                       2.
                     </span>
                     <span>
-                      Scorri verso il basso e tocca "Aggiungi alla schermata
-                      iniziale"
+                      {t('iosStep2')}
                     </span>
                   </li>
                   <li className="flex gap-3">
@@ -169,7 +167,7 @@ export function PWARegister() {
                 onClick={dismissIOSPrompt}
                 className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
               >
-                Ho capito
+                {t('understood')}
               </button>
             </div>
           </div>
@@ -198,10 +196,10 @@ export function PWARegister() {
               </div>
 
               <h3 className="text-xl font-bold text-teal-900 mb-2">
-                Installa TrainMind
+                {t('installTitle')}
               </h3>
               <p className="text-gray-600 text-sm mb-6">
-                Installa l'app per un accesso più veloce e un'esperienza offline.
+                {t('installDescAndroid')}
               </p>
 
               <div className="flex gap-3">
@@ -209,13 +207,13 @@ export function PWARegister() {
                   onClick={() => setInstallPromptEvent(null)}
                   className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
                 >
-                  Non adesso
+                  {t('notNow')}
                 </button>
                 <button
                   onClick={handleInstall}
                   className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
                 >
-                  Installa
+                  {t('install')}
                 </button>
               </div>
             </div>

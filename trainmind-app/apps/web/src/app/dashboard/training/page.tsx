@@ -560,7 +560,7 @@ export default function TrainingPage() {
               }),
             });
 
-            toast('success', `Piano "${plan.planName}" creato con ${plan.weeks.length} settimane e tutti gli esercizi!`);
+            toast('success', t('aiPlanCreated', { name: plan.planName, weeks: plan.weeks.length }));
             loadPlans();
           } catch (err) {
             console.error('Error creating AI plan:', err);

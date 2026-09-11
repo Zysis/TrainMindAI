@@ -111,6 +111,10 @@ class CoachRequest(BaseModel):
         None,
         description="Override del modello. Passato da apps/api in base all'operazione.",
     )
+    language: Literal["it", "en", "es"] = Field(
+        "it",
+        description="Lingua della risposta: arriva dalla preferenza UI dell'utente.",
+    )
 
 
 class CoachResponse(BaseModel):
@@ -167,6 +171,10 @@ class ChatRequest(BaseModel):
         description="Namespace da cui recuperare il contesto",
     )
     top_k: int = Field(5, ge=1, le=50, description="Numero di documenti da recuperare")
+    language: Literal["it", "en", "es"] = Field(
+        "it",
+        description="Lingua della risposta: arriva dalla preferenza UI dell'utente.",
+    )
     model: Optional[str] = Field(
         None,
         description="Override del modello. Passato da apps/api in base all'operazione.",

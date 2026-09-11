@@ -8,6 +8,11 @@ import { useApiError } from '@/lib/i18n/api-error';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import { EXERCISE_CATEGORIES } from '@/lib/constants';
+
+/** "MOBILITA", "Mobilità", "mobilita" -> "mobilita" */
+function normalizeCategory(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 import { AICoachPanel } from '@/components/ai/ai-coach-panel';
 import { ExerciseCard } from '@/components/exercises/exercise-card';
 import { ExerciseFormModal } from '@/components/exercises/exercise-form-modal';
@@ -41,11 +46,22 @@ export default function ExercisesPage() {
   const apiError = useApiError();
   const t = useTranslations('exercises');
   const tCommon = useTranslations('common');
-  // Localized category labels (DB values stay in IT -- display layer only)
-  const categoryLabels = useMemo<Record<string, string>>(
-    () => Object.fromEntries(EXERCISE_CATEGORIES.map((c) => [c, t(`cat_${c}`)])),
-    [t]
-  );
+  // Localized category labels (DB values stay in IT -- display layer only).
+  // Il confronto e' insensibile a maiuscole e accenti: in banca dati le
+  // categorie arrivano scritte in tutti i modi ("FORZA", "forza", "Forza") e
+  // prima solo la forma canonica veniva tradotta, le altre restavano grezze.
+  const categoryLabels = useMemo<Record<string, string>>(() => {
+    const extra = ['Cardio', 'Tecnica', 'Resistenza'];
+    const out: Record<string, string> = {};
+    for (const c of [...EXERCISE_CATEGORIES, ...extra]) {
+      const label = t(`cat_${c}`);
+      out[c] = label;
+      out[normalizeCategory(c)] = label;
+    }
+    return out;
+  }, [t]);
+  const labelFor = (category: string) =>
+    categoryLabels[category] ?? categoryLabels[normalizeCategory(category)] ?? category;
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
@@ -238,7 +254,7 @@ export default function ExercisesPage() {
         >
           <option value="">{t('allCategories')}</option>
           {EXERCISE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{categoryLabels[c] || c}</option>
+            <option key={c} value={c}>{labelFor(c)}</option>
           ))}
         </select>
         <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer select-none">
@@ -273,7 +289,7 @@ export default function ExercisesPage() {
             .map(([category, items]) => (
               <div key={category}>
                 <div className="mb-3 flex items-center gap-2">
-                  <Badge variant={categoryColors[category] || 'default'}>{categoryLabels[category] || category}</Badge>
+                  <Badge variant={categoryColors[category] || 'default'}>{labelFor(category)}</Badge>
                   <span className="text-xs text-slate-400 dark:text-slate-500">{items.length} {tCommon('exercises')}</span>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

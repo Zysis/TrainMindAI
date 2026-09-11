@@ -31,7 +31,8 @@
     "description": "Descripción",
     "notes": "Notas",
     "copy": "Copiar",
-    "copied": "Copiado"
+    "copied": "Copiado",
+    "logout": "Cerrar sesión"
   },
   "nav": {
     "dashboard": "Panel",
@@ -759,7 +760,7 @@
     "aiPlanCreated": "¡Plan \"{name}\" creado con {weeks} semanas y todos los ejercicios!",
     "aiPlanCreateError": "Error al crear el plan estructurado.",
     "planNotFound": "Plan no encontrado",
-    "noSessionsThisWeek": "Sin sesiones esta semana",
+    "noSessionsThisWeek": "Ninguna sesión en esta semana",
     "markAsCompleted": "Marcar como completada",
     "deleteSession": "Eliminar sesión",
     "deload": "Descarga",
@@ -984,7 +985,9 @@
     "cat_Condizionamento-Metabolico": "Acondicionamiento metabólico",
     "cat_Mobilita": "Movilidad",
     "cat_Release": "Release",
-    "cat_Basket-Specifico": "Específico de baloncesto"
+    "cat_Basket-Specifico": "Específico de baloncesto",
+    "cat_Cardio": "Cardio",
+    "cat_Tecnica": "Técnica"
   },
   "wellness": {
     "title": "Bienestar",
@@ -1499,7 +1502,13 @@
     "serviceUnreachable": "El servicio de IA no está disponible en este momento. Inténtalo de nuevo en unos instantes.",
     "serviceError": "Error del servicio de IA ({status})",
     "noResponse": "No se ha recibido ninguna respuesta.",
-    "genericError": "Lo sentimos, se ha producido un error. Inténtalo de nuevo."
+    "genericError": "Lo sentimos, se ha producido un error. Inténtalo de nuevo.",
+    "sourcesUsedOne": "1 fuente utilizada",
+    "sourcesUsedMany": "{count} fuentes utilizadas",
+    "catExercises": "Ejercicios",
+    "catProtocols": "Protocolos",
+    "catPeriodization": "Periodización",
+    "catReferences": "Referencias"
   },
   "periodization": {
     "title": "Periodización",
@@ -1676,7 +1685,8 @@
     "riskLow": "bajo",
     "riskModerate": "moderado",
     "riskHigh": "alto",
-    "riskVeryHigh": "muy alto"
+    "riskVeryHigh": "muy alto",
+    "durationLabel": "Duración"
   },
   "billing": {
     "title": "Suscripción",
@@ -2532,5 +2542,10 @@
     "viewTitle": "Protocolo del sistema",
     "duplicateToEdit": "Duplicar para modificar",
     "openReadonly": "Abrir en solo lectura"
+  },
+  "authGuard": {
+    "staffOnlyTitle": "Área reservada al cuerpo técnico",
+    "staffOnlyBody": "Tu cuenta está registrada como atleta. Este panel es para preparadores y personal médico: usa la app TrainMind Athlete para tus sesiones y el cuestionario de bienestar.",
+    "goToAthleteApp": "Ir a la app del atleta"
   }
 }

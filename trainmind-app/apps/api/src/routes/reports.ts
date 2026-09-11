@@ -30,6 +30,7 @@ import type {
   ReportTable,
   ReportChart,
 } from '@trainmind/types';
+import { calculateWellnessScore } from '@trainmind/utils';
 import { renderReportPdf } from '../services/report-renderer-pdf.js';
 import { renderReportDocx } from '../services/report-renderer-docx.js';
 
@@ -58,20 +59,14 @@ function formatPct(n: number): string {
 }
 
 /**
- * Wellness composite score: 0-100.
- * Higher is better. Formula matches the one used in adaptations.ts.
+ * Punteggio wellness 0-100, alto = buono.
+ *
+ * La formula stava scritta qui, e in altre quattro rotte, ognuna con la sua
+ * copia. Bastava che una restasse indietro — com'era successo a
+ * `calculateWellnessScore`, ferma alla scala pre-flip — perché lo stesso
+ * giorno valesse due numeri diversi. Ora la definizione è una sola.
  */
-function computeWellnessScore(log: {
-  sleepQuality: number;
-  mood: number;
-  fatigue: number;
-  soreness: number;
-  stress: number;
-}): number {
-  const numerator =
-    log.sleepQuality + log.mood + log.fatigue + log.soreness + log.stress;
-  return (numerator / 25) * 100;
-}
+const computeWellnessScore = calculateWellnessScore;
 
 /**
  * ACWR = acute load (7 days) / chronic load (28 days / 4).

@@ -19,7 +19,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
-import { computeAcwr, ACWR_CHRONIC_DAYS, type AcwrLoadPoint } from '@trainmind/utils';
+import { computeAcwr } from '@trainmind/utils';
+import { acwrLoadPoints } from '../lib/acwr-loads.js';
 import type {
   GameReportData,
   GameReportPlayer,
@@ -407,23 +408,9 @@ export async function gameReportRoutes(app: FastifyInstance) {
     const out = new Map<string, { acwr: number | null; zone: GameReportPlayer['acwrZone'] }>();
     if (athleteIds.length === 0) return out;
 
-    const sessions = await app.prisma.trainingSession.findMany({
-      where: {
-        athleteId: { in: athleteIds },
-        status: 'COMPLETED',
-        rpe: { not: null },
-        date: { gte: new Date(asOf.getTime() - ACWR_CHRONIC_DAYS * 86400000), lte: asOf },
-      },
-      select: { athleteId: true, date: true, duration: true, rpe: true },
-    });
-
-    const byAthlete = new Map<string, AcwrLoadPoint[]>();
-    for (const ts of sessions) {
-      if (!ts.athleteId || !ts.date || !ts.rpe) continue;
-      const list = byAthlete.get(ts.athleteId) ?? [];
-      list.push({ date: ts.date, load: ts.rpe * (ts.duration ?? 0) });
-      byAthlete.set(ts.athleteId, list);
-    }
+    // Le sedute di squadra (athleteId nullo) valgono per tutta la rosa: la
+    // regola sta in `acwrLoadPoints`, una sola volta per tutto il prodotto.
+    const byAthlete = await acwrLoadPoints(app.prisma, athleteIds, asOf);
 
     for (const id of athleteIds) {
       const r = computeAcwr(byAthlete.get(id) ?? [], asOf);

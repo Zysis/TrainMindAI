@@ -31,7 +31,8 @@
     "description": "Descrizione",
     "notes": "Note",
     "copy": "Copia",
-    "copied": "Copiato"
+    "copied": "Copiato",
+    "logout": "Esci"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -984,7 +985,9 @@
     "cat_Condizionamento-Metabolico": "Condizionamento metabolico",
     "cat_Mobilita": "Mobilità",
     "cat_Release": "Release",
-    "cat_Basket-Specifico": "Basket-Specifico"
+    "cat_Basket-Specifico": "Basket-Specifico",
+    "cat_Cardio": "Cardio",
+    "cat_Tecnica": "Tecnica"
   },
   "wellness": {
     "title": "Wellness",
@@ -1499,7 +1502,13 @@
     "serviceUnreachable": "Il servizio AI non è al momento raggiungibile. Riprova tra qualche istante.",
     "serviceError": "Errore dal servizio AI ({status})",
     "noResponse": "Nessuna risposta ricevuta.",
-    "genericError": "Mi dispiace, si è verificato un errore. Riprova."
+    "genericError": "Mi dispiace, si è verificato un errore. Riprova.",
+    "sourcesUsedOne": "1 fonte utilizzata",
+    "sourcesUsedMany": "{count} fonti utilizzate",
+    "catExercises": "Esercizi",
+    "catProtocols": "Protocolli",
+    "catPeriodization": "Periodizzazione",
+    "catReferences": "Riferimenti"
   },
   "periodization": {
     "title": "Periodizzazione",
@@ -1676,7 +1685,8 @@
     "riskLow": "basso",
     "riskModerate": "moderato",
     "riskHigh": "alto",
-    "riskVeryHigh": "molto alto"
+    "riskVeryHigh": "molto alto",
+    "durationLabel": "Durata"
   },
   "billing": {
     "title": "Abbonamento",
@@ -2532,5 +2542,10 @@
     "viewTitle": "Protocollo di sistema",
     "duplicateToEdit": "Duplica per modificare",
     "openReadonly": "Apri in sola lettura"
+  },
+  "authGuard": {
+    "staffOnlyTitle": "Area riservata allo staff tecnico",
+    "staffOnlyBody": "Il tuo account è registrato come atleta. Questa dashboard è destinata a preparatori e staff medico: per i tuoi allenamenti e il questionario wellness usa l'app TrainMind Athlete.",
+    "goToAthleteApp": "Vai all'app atleti"
   }
 }

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { dateLocale } from '@/lib/i18n/dates';
 import { ArrowLeft, Clock, CheckCircle2, Play, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Exercise {
@@ -46,6 +48,9 @@ interface SessionDetail {
 export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const t = useTranslations('sessionDetail');
+  const locale = useLocale();
+  const df = dateLocale(locale);
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -59,19 +64,23 @@ export default function SessionDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.getSession(id).then((res: { success: boolean; data?: SessionDetail }) => {
-      if (res.success && res.data) {
-        setSession(res.data);
-        // Pre-fill from existing log
-        if (res.data.myLog) {
-          if (res.data.myLog.actualRpe) setRpe(res.data.myLog.actualRpe);
-          if (res.data.myLog.notes) setNotes(res.data.myLog.notes);
-          if (res.data.myLog.exerciseChecks) setChecks(res.data.myLog.exerciseChecks);
-          if (res.data.myLog.actualRpe) setSubmitted(true);
+    (api.getSession(id) as Promise<{ success: boolean; data?: SessionDetail }>)
+      .then((res) => {
+        if (res.success && res.data) {
+          setSession(res.data);
+          // Pre-fill from existing log
+          if (res.data.myLog) {
+            if (res.data.myLog.actualRpe) setRpe(res.data.myLog.actualRpe);
+            if (res.data.myLog.notes) setNotes(res.data.myLog.notes);
+            if (res.data.myLog.exerciseChecks) setChecks(res.data.myLog.exerciseChecks);
+            if (res.data.myLog.actualRpe) setSubmitted(true);
+          }
         }
-      }
-      setLoading(false);
-    });
+      })
+      // Senza questo ramo una chiamata fallita lasciava `loading` a true per
+      // sempre e la pagina restava bloccata sulla rotellina.
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, [id]);
 
   async function handleSubmit() {
@@ -105,7 +114,7 @@ export default function SessionDetailPage() {
 
   if (!session) {
     return (
-      <div className="px-4 py-10 text-center text-slate-500">Sessione non trovata</div>
+      <div className="px-4 py-10 text-center text-slate-500">{t('notFound')}</div>
     );
   }
 
@@ -117,16 +126,16 @@ export default function SessionDetailPage() {
       {/* Header */}
       <div className="bg-gradient-to-b from-teal-600 to-teal-700 px-4 pb-6 pt-4 text-white">
         <button onClick={() => router.back()} className="mb-3 flex items-center gap-1 text-sm text-teal-100 hover:text-white">
-          <ArrowLeft size={16} /> Indietro
+          <ArrowLeft size={16} /> {t('back')}
         </button>
         <h2 className="text-xl font-bold">{session.title}</h2>
         <div className="mt-2 flex items-center gap-4 text-sm text-teal-100">
           <span className="flex items-center gap-1">
             <Clock size={14} /> {session.duration} min
           </span>
-          <span>{totalExercises} esercizi</span>
+          <span>{t('exercises', { count: totalExercises })}</span>
           {session.date && (
-            <span>{new Date(session.date).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+            <span>{new Date(session.date).toLocaleDateString(df, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
           )}
         </div>
         {session.notes && (
@@ -137,7 +146,7 @@ export default function SessionDetailPage() {
       {/* Progress bar */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>{completedCount}/{totalExercises} completati</span>
+          <span>{t('completed', { done: completedCount, total: totalExercises })}</span>
           <span>{totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0}%</span>
         </div>
         <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
@@ -182,11 +191,11 @@ export default function SessionDetailPage() {
                     {se.exercise.name}
                   </p>
                   <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    {se.sets && <span>{se.sets} serie</span>}
-                    {se.reps && <span>× {se.reps} rep</span>}
+                    {se.sets && <span>{t('sets', { count: se.sets })}</span>}
+                    {se.reps && <span>{t('reps', { reps: se.reps })}</span>}
                     {se.weight && <span>@ {se.weight}kg</span>}
                     {se.duration && <span>{se.duration}s</span>}
-                    {se.restTime && <span>🔄 {se.restTime}s pausa</span>}
+                    {se.restTime && <span>🔄 {t('rest', { seconds: se.restTime })}</span>}
                   </div>
                 </div>
 
@@ -240,12 +249,12 @@ export default function SessionDetailPage() {
       <div className="mt-6 px-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
           <h3 className="mb-3 font-semibold text-slate-900 dark:text-white">
-            {submitted ? '✅ Feedback inviato' : 'Feedback post-sessione'}
+            {submitted ? `✅ ${t('feedbackSent')}` : t('feedbackTitle')}
           </h3>
 
           {/* RPE scale */}
           <div className="mb-4">
-            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-400">RPE (sforzo percepito)</label>
+            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-400">{t('rpeLabel')}</label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                 <button
@@ -269,13 +278,13 @@ export default function SessionDetailPage() {
 
           {/* Notes */}
           <div className="mb-4">
-            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-400">Note (opzionale)</label>
+            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-400">{t('notes')}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={submitted}
               rows={3}
-              placeholder="Come ti sei sentito? Qualcosa da segnalare?"
+              placeholder={t('notesPlaceholder')}
               className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 disabled:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:disabled:bg-slate-800"
             />
           </div>
@@ -286,7 +295,7 @@ export default function SessionDetailPage() {
               disabled={rpe === null || submitting}
               className="w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50"
             >
-              {submitting ? 'Invio...' : 'Invia feedback'}
+              {submitting ? t('submitting') : t('submit')}
             </button>
           )}
         </div>

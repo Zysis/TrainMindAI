@@ -1,0 +1,175 @@
+{
+  "lang": "es",
+  "voice": "onyx",
+  "title": "TrainMind — Guía de uso",
+  "scenes": [
+    {
+      "id": "00-intro",
+      "img": "_title",
+      "caption": "TrainMind — Guía de uso",
+      "text": "TrainMind es la plataforma con la que un preparador físico planifica, registra y lee el trabajo de un equipo de baloncesto. En este vídeo vemos la app del preparador y, al final, la del atleta. Todo lo que verás se calcula sobre una sola medida: la carga interna, es decir, el RPE de la sesión multiplicado por la duración real."
+    },
+    {
+      "id": "01-registrazione",
+      "img": "A02-02-registrazione",
+      "caption": "Crear la cuenta",
+      "text": "Se empieza por el registro. Además de los datos personales hace falta el nombre de la organización: es el espacio de trabajo del club, donde vivirán equipos, atletas y planes. Quien registra la cuenta se convierte en su administrador. Los dos consentimientos obligatorios son términos y privacidad; el tercero, el de los datos de salud y fitness, es el que enciende las funciones de inteligencia artificial, el análisis del rendimiento y el bienestar."
+    },
+    {
+      "id": "02-login",
+      "img": "A02-01-login",
+      "caption": "Acceder",
+      "text": "El acceso es correo y contraseña. El selector de arriba a la derecha cambia el idioma entre italiano, inglés y español, y funciona también antes de entrar."
+    },
+    {
+      "id": "03-interfaccia",
+      "img": "A03-01-interfaccia",
+      "caption": "Tres zonas: menú, selector de equipo, barra superior",
+      "text": "La interfaz tiene tres zonas fijas. A la izquierda el menú. Bajo el logo, el selector de equipo, que filtra toda la aplicación: al elegir un equipo, panel, bienestar, análisis e informes se limitan a ese. Arriba, la búsqueda global y el menú del perfil."
+    },
+    {
+      "id": "04-dashboard",
+      "img": "A04-01-dashboard",
+      "caption": "El Panel",
+      "text": "El panel es la fotografía del momento. Las tarjetas cuentan atletas, sesiones, lesiones y protocolos activos. Pero lo que de verdad importa es el bloque de atletas en riesgo: el criterio es la relación entre carga aguda y crónica, lo que todos llaman A C W R, y el bienestar sirve para confirmar, no para sentenciar."
+    },
+    {
+      "id": "05-rischio",
+      "img": "A04-01-dashboard",
+      "caption": "Por qué no basta el bienestar",
+      "text": "Alessandro Baldini está en rojo, por encima de uno coma cinco: ha trabajado mucho más que su propia media de las últimas tres semanas. La etiqueta dice el motivo: escalón de carga. Un dos sobre cinco en el bienestar tras una mala noche no dice nada sobre el riesgo de lesión; la relación entre cuánto ha trabajado y cuánto está acostumbrado a trabajar, sí."
+    },
+    {
+      "id": "06-squadre",
+      "img": "A05-02-squadra-dettaglio",
+      "caption": "Equipos y plantillas",
+      "text": "Los equipos se crean en segundos y cada uno tiene su plantilla. Un atleta que entrena con dos equipos hay que añadirlo desde los existentes, no duplicarlo: si no, pruebas, bienestar e historial de carga se parten en dos."
+    },
+    {
+      "id": "07-atleta",
+      "img": "A05-04-atleta-panoramica",
+      "caption": "La ficha del atleta",
+      "text": "La ficha del atleta reúne datos personales, medidas, rendimiento físico y lesiones. Desde aquí sale también la invitación a la app del atleta."
+    },
+    {
+      "id": "08-test",
+      "img": "A06-01-atleta-metriche",
+      "caption": "Pruebas y mediciones",
+      "text": "Cada prueba muestra el último valor, la variación respecto a la medición anterior y el histórico de fechas. El consejo práctico es medir a todo el equipo el mismo día y con el mismo protocolo: las fechas alineadas son las que hacen comparables los gráficos."
+    },
+    {
+      "id": "09-calendario",
+      "img": "A07-01-calendario-mese",
+      "caption": "El calendario",
+      "text": "El calendario es el diario del equipo: entrenamientos, partidos, sesiones de tiro, rehabilitación, visitas médicas. Arriba aparece la periodización activa, con el mesociclo en curso y las semanas de descarga. Un evento se mueve arrastrándolo a otro día."
+    },
+    {
+      "id": "10-periodizzazione",
+      "img": "A08-01-periodizzazione-elenco",
+      "caption": "Periodización",
+      "text": "La periodización es la macroestructura de la temporada: pretemporada, liga, playoffs, off-season, cada una con sus mesociclos y el porcentaje de carga que gobierna la progresión."
+    },
+    {
+      "id": "11-mesociclo",
+      "img": "A09-04-mesociclo-dettaglio",
+      "caption": "Dentro de un mesociclo",
+      "text": "Dentro de un mesociclo están las semanas y, en cada una, las sesiones con duración, número de ejercicios y RPE. La barra de arriba dice en qué punto está el plan."
+    },
+    {
+      "id": "12-ai-piano",
+      "img": "A08-03-genera-piano-ai",
+      "caption": "Generar un plan con la IA",
+      "text": "Un mesociclo también lo puede generar la inteligencia artificial, indicando fase de la temporada, objetivo, duración y días de entrenamiento. El resultado es un borrador editable: hay que leerlo y corregirlo, no aplicarlo a ciegas."
+    },
+    {
+      "id": "13-campo",
+      "img": "A10-01-campo-presenze",
+      "caption": "El entrenamiento en pista",
+      "text": "Esta es la página para tener abierta en la tableta a pie de pista. Cada jugador tiene su semáforo — disponible, carga reducida, fuera — y su RPE. Arriba se ve cuántos están disponibles del total de la plantilla."
+    },
+    {
+      "id": "14-cronometri",
+      "img": "A10-02-campo-esercizi",
+      "caption": "Un cronómetro por ejercicio",
+      "text": "Cada ejercicio tiene su cronómetro: inicio, parada, tiempo de trabajo y descanso. Al final los totales son los reales, no los planificados, y la carga de cada atleta se escribe al completar la sesión."
+    },
+    {
+      "id": "15-partita",
+      "img": "A11-01-partita-minuti",
+      "caption": "Los minutos de partido",
+      "text": "Para el partido está la hoja de minutajes, con los cuartos, las posibles prórrogas y el cronómetro: de ahí salen minutos, RPE y carga de cada jugador."
+    },
+    {
+      "id": "16-wellness",
+      "img": "A12-01-wellness-panoramica",
+      "caption": "Bienestar",
+      "text": "El bienestar lo rellena el atleta cada mañana: sueño, fatiga, dolor, estrés, ánimo. La escala es uniforme en todas las variables — cinco es siempre la mejor condición — así nadie tiene que recordar que en una variable alto es bueno y en otra es malo."
+    },
+    {
+      "id": "17-infortunio",
+      "img": "A13-05-registra-infortunio",
+      "caption": "Registrar una lesión",
+      "text": "Cuando pasa algo, la lesión se registra con tipo, zona, gravedad y notas clínicas. La app propone por su cuenta un protocolo de vuelta según zona, tipo y gravedad, con las fases previstas y la fecha estimada."
+    },
+    {
+      "id": "18-rtp",
+      "img": "A13-03-rtp-dettaglio",
+      "caption": "Return-to-Play",
+      "text": "El protocolo Return-to-Play está hecho de fases y criterios de alta. Se avanza solo cuando los criterios obligatorios se cumplen, y cada paso queda escrito con quién lo decidió y cuándo. Es la parte que hace falta cuando hay que explicarle a otro por qué un jugador volvió a la pista ese día."
+    },
+    {
+      "id": "19-analisi",
+      "img": "A14-01-analisi-squadra",
+      "caption": "Análisis",
+      "text": "La pestaña Equipo de Análisis reparte la plantilla en las zonas de carga: óptima, atención, riesgo. Es la misma lectura del panel, con además los filtros por equipo, atleta e intervalo de fechas."
+    },
+    {
+      "id": "20-acwr",
+      "img": "A14-03-analisi-acwr",
+      "caption": "El ACWR en el tiempo",
+      "text": "El gráfico del A C W R muestra la evolución en el tiempo, con las franjas: por debajo de cero coma ocho es subentrenamiento, entre cero coma ocho y uno coma tres es la zona óptima, por encima de uno coma cinco es riesgo alto."
+    },
+    {
+      "id": "21-heatmap",
+      "img": "A14-04-analisi-wellness-heatmap",
+      "caption": "El mapa de calor del bienestar",
+      "text": "El mapa de calor del bienestar pone una fila por atleta y una columna por día: es la vista que saca a la luz el agujero, la fila que vira al rojo varios días seguidos."
+    },
+    {
+      "id": "22-report",
+      "img": "A15-02-report-giornaliero",
+      "caption": "El informe diario",
+      "text": "El informe diario es la hoja de fin de jornada: actividades realizadas, disponibilidad de cada jugador de cero a cinco, notas y pautas para el día siguiente. Se exporta a PDF o Word, y se puede programar el envío automático por correo."
+    },
+    {
+      "id": "23-ai",
+      "img": "A17-02-chat-ai-risposta",
+      "caption": "El asistente IA",
+      "text": "El asistente de inteligencia artificial conoce la biblioteca de ejercicios de tu organización y cita las fuentes que ha usado. Es un consultor, no quien decide: la programación la firmas tú."
+    },
+    {
+      "id": "24-atleta-home",
+      "img": "B22-01-home-atleta",
+      "caption": "La app del atleta",
+      "text": "Pasamos a la app del atleta. Se instala en el móvil desde el navegador, sin pasar por las tiendas, y muestra tres cosas: si el bienestar de hoy está rellenado, cuál es el próximo entrenamiento y en qué punto está su propio proceso."
+    },
+    {
+      "id": "25-atleta-wellness",
+      "img": "B23-01-wellness-atleta",
+      "caption": "Un minuto por la mañana",
+      "text": "El bienestar diario son cinco variables y las horas de sueño: un minuto por la mañana, antes de entrenar. Es el gesto que sostiene todo el seguimiento."
+    },
+    {
+      "id": "26-atleta-sessioni",
+      "img": "B24-01-sessioni-atleta",
+      "caption": "Las sesiones asignadas",
+      "text": "En las sesiones el atleta encuentra los ejercicios con series, repeticiones y cargas, y puede marcar qué ha hecho y con qué esfuerzo percibido."
+    },
+    {
+      "id": "27-chiusura",
+      "img": "_end",
+      "caption": "Buen trabajo",
+      "text": "Esto es TrainMind: planificar, registrar lo que de verdad pasa en la pista, y leer los números antes de que se conviertan en una lesión. La guía en PDF que acompaña a este vídeo entra en el detalle de cada pantalla. Buen trabajo."
+    }
+  ]
+}

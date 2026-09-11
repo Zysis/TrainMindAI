@@ -109,7 +109,26 @@ export async function login(email: string, password: string): Promise<LoginRespo
   return data;
 }
 
-export async function register(input: {
+/**
+ * Provenienza dell'iscrizione. Tutto opzionale: chi digita l'indirizzo a mano
+ * non porta nessun parametro, ed e' un caso normale.
+ */
+export interface SignupAttribution {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
+  referrer?: string;
+  landing?: string;
+}
+
+/**
+ * Un solo tipo, usato anche dal contesto di autenticazione e dalla pagina.
+ * Prima era ricopiato in tre punti: bastava aggiungere un campo per
+ * ritrovarsi con tre definizioni che divergevano in silenzio.
+ */
+export interface RegisterInput {
   email: string;
   password: string;
   firstName: string;
@@ -122,11 +141,25 @@ export async function register(input: {
   consentHealthData?: boolean; // opt-in art. 9 GDPR
   acceptMarketing?: boolean; // opt-in facoltativo
   uiLanguage?: 'it' | 'en' | 'es'; // proof-of-consent locale
-}): Promise<LoginResponse> {
+  attribution?: SignupAttribution;
+  /**
+   * Token che apre il cancello quando le registrazioni pubbliche sono chiuse
+   * (fase di test in produzione). Viaggia in un'intestazione e NON nel corpo:
+   * cosi' non finisce nei log delle richieste insieme ai dati del modulo.
+   * Non fa parte di cio' che viene salvato.
+   */
+  accessToken?: string;
+}
+
+export async function register(input: RegisterInput): Promise<LoginResponse> {
+  const { accessToken, ...body } = input;
   const res = await fetch(`${AUTH_URL}/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { 'x-registration-token': accessToken } : {}),
+    },
+    body: JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'Errore di registrazione');

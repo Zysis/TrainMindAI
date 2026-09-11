@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { apiFetch } from '@/lib/auth/fetch';
-import { isBodyweightCategory } from '@/lib/constants';
+import { EXERCISE_CATEGORIES, isBodyweightCategory } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import { LiveSessionRecorder } from '@/components/training';
@@ -77,6 +77,11 @@ const statusVariants: Record<string, 'default' | 'teal' | 'success' | 'danger'> 
   CANCELLED: 'danger',
 };
 
+/** "TECNICA", "Tecnica", "tecnica" -> "tecnica" */
+function normalizeCategory(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 const categoryColors: Record<string, string> = {
   Forza: 'bg-red-100 text-red-700',
   Potenza: 'bg-orange-100 text-orange-700',
@@ -98,6 +103,19 @@ export default function SessionDetailPage() {
   const router = useRouter();
   const { toast } = useToast();
   const t = useTranslations('sessions');
+  const tExercises = useTranslations('exercises');
+  // Le categorie arrivano dal database scritte in tutti i modi ("TECNICA",
+  // "Tecnica", "tecnica"): la mappa si costruisce sulle chiavi conosciute e il
+  // confronto ignora maiuscole e accenti. Quello che non e' in elenco (una
+  // categoria scritta a mano dall'utente) resta com'e'.
+  const categoryLabels = useMemo<Record<string, string>>(() => {
+    const known = [...EXERCISE_CATEGORIES, 'Cardio', 'Tecnica', 'Resistenza'];
+    const out: Record<string, string> = {};
+    for (const c of known) out[normalizeCategory(c)] = tExercises(`cat_${c}`);
+    return out;
+  }, [tExercises]);
+  const categoryLabel = (category: string) =>
+    categoryLabels[normalizeCategory(category)] ?? category;
   const locale = useLocale();
   const sessionId = params.id as string;
 
@@ -371,7 +389,7 @@ export default function SessionDetailPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-900 dark:text-white">{se.exercise.name}</span>
                       <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${categoryColors[se.exercise.category] || 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}>
-                        {se.exercise.category}
+                        {categoryLabel(se.exercise.category)}
                       </span>
                       {se.exercise.videoUrl && (
                         <button
@@ -435,11 +453,13 @@ export default function SessionDetailPage() {
                             {t('loadLabel')}
                           </label>
                         )}
+                        {/* Piu' largo degli altri: il carico ha i decimali e a
+                            w-16 un "65.57" veniva tagliato a meta'. */}
                         <input
                           type="number"
                           defaultValue={se.weight ?? ''}
                           placeholder={isBodyweightCategory(se.exercise.category) ? '0' : ''}
-                          className="w-16 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm"
+                          className="w-20 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm"
                           onBlur={(e) => {
                             // Svuotare il campo deve poter togliere un sovraccarico
                             // messo prima: con il solo isNaN restava per sempre.
@@ -529,7 +549,7 @@ export default function SessionDetailPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-slate-900 dark:text-white">{ex.name}</span>
                           <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${categoryColors[ex.category] || 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}>
-                            {ex.category}
+                            {categoryLabel(ex.category)}
                           </span>
                         </div>
                         <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{ex.muscleGroups.join(', ')}</p>

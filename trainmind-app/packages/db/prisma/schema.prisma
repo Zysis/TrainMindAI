@@ -106,6 +106,22 @@ model Organization {
   subscriptionStatus   String?  @default("inactive")
   subscriptionEndsAt   DateTime?
 
+  // ─── Provenienza dell'iscrizione (dal 4 settembre 2026) ───
+  // Raccolta dal sito vetrina e inoltrata dalla pagina di registrazione.
+  //
+  // Vale SOLO per le registrazioni successive al deploy: per gli account
+  // creati prima resta tutto NULL, e non e' ricostruibile in alcun modo —
+  // prima di oggi la sorgente non veniva semplicemente osservata.
+  //
+  // Le tre colonne dedicate sono quelle su cui la console raggruppa e filtra;
+  // term, content e pagina di atterraggio stanno nel JSON, cosi' un parametro
+  // nuovo non costringe a una migrazione.
+  utmSource         String?  @db.VarChar(120)
+  utmMedium         String?  @db.VarChar(120)
+  utmCampaign       String?  @db.VarChar(200)
+  signupReferrer    String?  @db.VarChar(500)
+  signupAttribution Json?
+
   users           User[]
   athletes        Athlete[]
   exercises       Exercise[]
@@ -124,6 +140,7 @@ model Organization {
   rtpTemplates           RTPTemplate[]
   calendarEvents         CalendarEvent[]
 
+  @@index([utmSource])
   @@map("organizations")
 }
 
@@ -144,8 +161,9 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  refreshToken String?
-  lastLoginAt  DateTime?
+  // I refresh token stanno in RefreshToken, una riga per sessione: qui c'era
+  // una colonna sola, e un utente poteva restare collegato da un solo posto.
+  lastLoginAt DateTime?
 
   // Password reset (flusso "password dimenticata")
   // Salviamo l'HASH SHA-256 del token, mai il token in chiaro: se il DB viene
@@ -184,6 +202,7 @@ model User {
   consentRecords      ConsentRecord[]
   auditLogs           AuditLog[]
   dailyReports        DailyReport[]
+  refreshTokens       RefreshToken[]
 
   // Soft-delete: quando l'utente richiede la cancellazione GDPR, i dati
   // personali vengono anonimizzati e deletedAt viene valorizzato.
@@ -192,6 +211,26 @@ model User {
   @@index([organizationId])
   @@index([email])
   @@map("users")
+}
+
+// Una riga per sessione aperta. Sostituisce la vecchia colonna
+// `User.refreshToken`, che ne ammetteva una sola: due schede della stessa app
+// si buttavano fuori a vicenda, e il token non aveva scadenza memorizzata.
+// Del token si salva solo l'hash SHA-256, mai il valore in chiaro.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // Registro accessi agli endpoint che toccano dati personali/sanitari

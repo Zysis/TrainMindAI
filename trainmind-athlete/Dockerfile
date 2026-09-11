@@ -21,6 +21,12 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile
 
+# URL pubblico della web app (Termini, Cookie). Next lo inlinea nel
+# bundle a build time: passarlo solo come variabile d'ambiente del
+# container non avrebbe alcun effetto.
+ARG NEXT_PUBLIC_APP_WEB_URL
+ENV NEXT_PUBLIC_APP_WEB_URL=$NEXT_PUBLIC_APP_WEB_URL
+
 RUN pnpm build
 
 # ============================================

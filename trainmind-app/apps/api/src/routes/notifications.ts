@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { calculateWellnessScore } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
 
 // ═══════════════════════════════════════════════════════════
@@ -302,9 +303,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             const athleteWellness = recentWellness.filter((w) => w.athleteId === athlete.id);
             if (athleteWellness.length > 0) {
               const latest = athleteWellness[0];
-              metricValue = Math.round(
-                ((latest.sleepQuality + latest.mood + latest.fatigue + latest.soreness + latest.stress) / 25) * 100
-              );
+              metricValue = calculateWellnessScore(latest);
               message = `Wellness score di ${athlete.firstName} ${athlete.lastName}: ${metricValue}% (soglia: ${condition.operator} ${condition.threshold})`;
             }
             break;

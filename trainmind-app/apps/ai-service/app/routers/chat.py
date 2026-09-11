@@ -17,7 +17,7 @@ from openai import APIError
 from app.models.schemas import ChatRequest, ChatResponse, UsageInfo
 from app.services.rag import get_rag_service
 from app.services.context_builder import get_context_builder
-from app.services.prompts import SYSTEM_PROMPT_CHAT
+from app.services.prompts import SYSTEM_PROMPT_CHAT, with_language
 from app.clients.openai_client import get_openai_client
 
 logger = structlog.get_logger(__name__)
@@ -158,11 +158,12 @@ async def chat_with_rag(request: ChatRequest):
 
         # Costruisci i messaggi con gestione corretta della history
         openai_messages = rag_service.build_messages(
-            system_prompt=SYSTEM_PROMPT_CHAT,
+            system_prompt=with_language(SYSTEM_PROMPT_CHAT, request.language),
             context_docs=matches,
             user_query=user_query,
             history=history_dicts,
             athlete_context=athlete_context,
+            language=request.language,
         )
 
         # Gestisci streaming

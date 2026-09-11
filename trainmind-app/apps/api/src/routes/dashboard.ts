@@ -206,9 +206,28 @@ export async function dashboardRoutes(app: FastifyInstance) {
           status: 'COMPLETED',
           rpe: { not: null },
           date: { gte: riskWindowStart, lte: now },
-          athlete: athleteOrgFilter,
+          isTemplate: false,
+          // Le sedute di squadra hanno athleteId nullo e valgono per tutta la
+          // rosa del piano: e' cosi' che le conta /analytics/acwr. Filtrarle
+          // via con `athlete: ...` rendeva "non valutabile" chiunque si alleni
+          // in gruppo, cioe' il caso normale.
+          OR: teamAthleteIds
+            ? [
+                { athleteId: { in: teamAthleteIds } },
+                { athleteId: null, week: { trainingPlan: { teamId } } },
+              ]
+            : [
+                { athlete: athleteOrgFilter },
+                { athleteId: null, week: { trainingPlan: { organizationId } } },
+              ],
         },
-        select: { athleteId: true, date: true, duration: true, rpe: true },
+        select: {
+          athleteId: true,
+          date: true,
+          duration: true,
+          rpe: true,
+          week: { select: { trainingPlan: { select: { teamId: true } } } },
+        },
       }),
       app.prisma.wellnessLog.findMany({
         where: { ...wellnessAthleteFilter, date: { gte: riskWindowStart } },
@@ -224,12 +243,36 @@ export async function dashboardRoutes(app: FastifyInstance) {
 
     // sRPE = RPE x durata. Le finestre e la formula stanno in
     // `computeAcwr` (@trainmind/utils): qui si raggruppano solo le sedute.
+    const teamMemberships = await app.prisma.athleteTeam.findMany({
+      where: { athlete: athleteOrgFilter },
+      select: { teamId: true, athleteId: true },
+    });
+    const athletesByTeam = new Map<string, string[]>();
+    for (const m of teamMemberships) {
+      const list = athletesByTeam.get(m.teamId) ?? [];
+      list.push(m.athleteId);
+      athletesByTeam.set(m.teamId, list);
+    }
+
     const loadByAthlete = new Map<string, AcwrLoadPoint[]>();
+    const pushLoad = (athleteId: string, date: Date, load: number) => {
+      const list = loadByAthlete.get(athleteId) ?? [];
+      list.push({ date, load });
+      loadByAthlete.set(athleteId, list);
+    };
     for (const ts of loadSessions) {
-      if (!ts.athleteId || !ts.date || !ts.rpe) continue;
-      const list = loadByAthlete.get(ts.athleteId) ?? [];
-      list.push({ date: ts.date, load: ts.rpe * (ts.duration ?? 0) });
-      loadByAthlete.set(ts.athleteId, list);
+      if (!ts.date || !ts.rpe) continue;
+      const load = ts.rpe * (ts.duration ?? 0);
+      if (ts.athleteId) {
+        pushLoad(ts.athleteId, ts.date, load);
+        continue;
+      }
+      // Seduta di squadra: vale per ogni atleta iscritto a quella squadra.
+      const sessionTeamId = ts.week?.trainingPlan?.teamId;
+      if (!sessionTeamId) continue;
+      for (const aid of athletesByTeam.get(sessionTeamId) ?? []) {
+        pushLoad(aid, ts.date, load);
+      }
     }
 
     // Wellness: media delle cinque voci (su tutte 5 e' il meglio), confrontata
