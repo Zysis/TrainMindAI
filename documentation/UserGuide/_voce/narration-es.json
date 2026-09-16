@@ -227,6 +227,18 @@
       "text": "Una ultima cosa: desde la configuracion se cambian el tema y el idioma de la interfaz, entre italiano, ingles y espanol. La eleccion sigue a la cuenta, no al dispositivo, asi que la encuentras igual desde cualquier ordenador."
     },
     {
+      "id": "26e-staff",
+      "img": "A19-01-staff-scheda",
+      "caption": "El staff del club",
+      "text": "El calendario, los atletas y los informes son del club, no de una persona: quien forma parte de la misma organizacion ve lo mismo. En Ajustes, en la seccion Staff, esta quien forma parte y cuantas plazas quedan. Una plaza es una cuenta de staff; los atletas no ocupan ninguna, tienen su invitacion y su app. Las plazas incluidas dependen del plan: una con Starter, dos con Professional, cuatro con Ultra."
+    },
+    {
+      "id": "26f-staff-invito",
+      "img": "A19-02-staff-invito-inviato",
+      "caption": "Invitar a un colega",
+      "text": "Para que entre un colega hace falta una invitacion, y solo puede mandarla un administrador: escribes la direccion, eliges el rol, y sale un correo con un enlace valido siete dias. El enlace aparece tambien en pantalla, una sola vez, para cuando el correo cae en spam. Esta es la unica forma de entrar en una organizacion que ya existe: quien se registra por la pagina normal crea siempre un club nuevo, aunque escriba un nombre identico al tuyo. Dos clubes homonimos siguen separados, y nadie entra en tu calendario por error."
+    },
+    {
       "id": "27-chiusura",
       "img": "_end",
       "caption": "Buen trabajo",

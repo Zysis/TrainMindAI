@@ -227,6 +227,18 @@
       "text": "One last thing: from Settings you change the theme and the interface language, between Italian, English and Spanish. The choice follows the account, not the device, so you find it the same from any computer."
     },
     {
+      "id": "26e-staff",
+      "img": "A19-01-staff-scheda",
+      "caption": "Your coaching staff",
+      "text": "The calendar, the athletes and the reports belong to the club, not to one person: everyone in the same organization sees the same things. In Settings, under Staff, you find who is in and how many seats are left. A seat is a staff account; athletes do not use any, they have their own invitation and their own app. The seats included depend on the plan: one with Starter, two with Professional, four with Ultra."
+    },
+    {
+      "id": "26f-staff-invito",
+      "img": "A19-02-staff-invito-inviato",
+      "caption": "Inviting a colleague",
+      "text": "Bringing a colleague in takes an invitation, and only an administrator can send one: type the address, pick the role, and an email goes out with a link valid for seven days. The link also appears on screen, once, for when the email lands in spam. This is the only way into an organization that already exists: signing up from the normal page always creates a new club, even with a name identical to yours. Two clubs with the same name stay separate, and nobody lands in your calendar by accident."
+    },
+    {
       "id": "27-chiusura",
       "img": "_end",
       "caption": "Good work",

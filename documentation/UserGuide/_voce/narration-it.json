@@ -227,6 +227,18 @@
       "text": "Un'ultima cosa: dalle impostazioni si cambiano tema e lingua dell'interfaccia, fra italiano, inglese e spagnolo. La scelta segue l'account, non il dispositivo, quindi la ritrovi uguale da qualsiasi computer."
     },
     {
+      "id": "26e-staff",
+      "img": "A19-01-staff-scheda",
+      "caption": "Lo staff della societa'",
+      "text": "Il calendario, gli atleti e i report sono della societa', non della singola persona: chi fa parte della stessa organizzazione vede le stesse cose. In Impostazioni, sezione Staff, trovi chi ne fa parte e quanti posti restano. Un posto e' un account di staff; gli atleti non ne occupano, hanno il loro invito e la loro app. I posti inclusi dipendono dal piano: uno con Starter, due con Professional, quattro con Ultra."
+    },
+    {
+      "id": "26f-staff-invito",
+      "img": "A19-02-staff-invito-inviato",
+      "caption": "Invitare un collega",
+      "text": "Per far entrare un collega serve un invito, e puo' mandarlo solo un amministratore: scrivi l'indirizzo, scegli il ruolo, e parte una email con un link valido sette giorni. Il link compare anche a schermo, una volta sola, per quando l'email finisce nello spam. Questo e' l'unico modo per entrare in un'organizzazione che esiste gia': chi si registra dalla pagina normale crea sempre una societa' nuova, anche scrivendo un nome identico al tuo. Due omonime restano separate, e nessuno entra nel tuo calendario per sbaglio."
+    },
+    {
       "id": "27-chiusura",
       "img": "_end",
       "caption": "Buon lavoro",
