@@ -51,3 +51,11 @@ model_production/llm_model/deploy_package.zip
 
 # Pacchetti di deploy — mai in git
 *.tar.gz
+
+# Copie dei file consegnati in chat, non sorgenti
+Claude outputs/
+
+# Dump e script di manutenzione con dati personali
+backup_pre_staff.sql
+rinomina-account-atleta.sql
+ripristina-account-atleta.sql
