@@ -3,12 +3,17 @@
     "id": "lineare-001",
     "name": "Periodizzazione Lineare",
     "nameEN": "Linear Periodization",
+    "nameES": "Periodización Lineal",
     "description": "Modello di periodizzazione progressiva che riduce il volume mentre aumenta l'intensità nel corso dei mesocicli. Ideale per la preparazione specifica in prossimità della stagione agonistica nel basket.",
     "phases": [
       {
         "name": "Fase di Accumulo (Ipertrofia)",
+        "nameEN": "Accumulation Phase (Hypertrophy)",
+        "nameES": "Fase de Acumulación (Hipertrofia)",
         "duration": "4 settimane",
         "focus": "Ipertrofia muscolare",
+        "focusEN": "Muscle hypertrophy",
+        "focusES": "Hipertrofia muscular",
         "volumeRange": "3-5 serie x 8-12 ripetizioni",
         "intensityRange": "65-75% 1RM",
         "rpeRange": "6-7",
@@ -17,8 +22,12 @@
       },
       {
         "name": "Fase di Intensificazione",
+        "nameEN": "Intensification Phase",
+        "nameES": "Fase de Intensificación",
         "duration": "3 settimane",
         "focus": "Forza massima",
+        "focusEN": "Maximum strength",
+        "focusES": "Fuerza máxima",
         "volumeRange": "3-4 serie x 5-6 ripetizioni",
         "intensityRange": "80-87% 1RM",
         "rpeRange": "7-8",
@@ -27,8 +36,12 @@
       },
       {
         "name": "Fase di Realizzazione (Potenza)",
+        "nameEN": "Realization Phase (Power)",
+        "nameES": "Fase de Realización (Potencia)",
         "duration": "2-3 settimane",
         "focus": "Espressione di potenza",
+        "focusEN": "Power expression",
+        "focusES": "Expresión de potencia",
         "volumeRange": "3 serie x 3-5 ripetizioni",
         "intensityRange": "75-85% 1RM + esercizi balistici",
         "rpeRange": "7-9",
@@ -36,7 +49,10 @@
         "basketballSpecific": "Box jump, scatti esplosivi, burpees, salti laterali"
       }
     ],
-    "suitableFor": ["Pre-stagione", "Preparazione specifica"],
+    "suitableFor": [
+      "Pre-stagione",
+      "Preparazione specifica"
+    ],
     "sport": "basketball",
     "totalDuration": "9-10 settimane",
     "notes": "Efficace per giocatori con esperienza di allenamento. Permette adattamenti neuromuscolari progressivi. Attenzione ai microtraumi da accumulo nella fase iniziale."
@@ -45,12 +61,17 @@
     "id": "ondulata-daily-002",
     "name": "Ondulazione Giornaliera (DUP)",
     "nameEN": "Daily Undulating Periodization",
+    "nameES": "Ondulación Diaria (DUP)",
     "description": "Periodizzazione ondulante giornaliera che alterna focus di ipertrofia, forza e potenza all'interno della stessa settimana. Massimizza l'adattamento neuromusculare e la prevenzione degli infortuni nel basket.",
     "phases": [
       {
         "name": "Allenamento Giorno 1 - Ipertrofia",
+        "nameEN": "Training Day 1 - Hypertrophy",
+        "nameES": "Entrenamiento Día 1 - Hipertrofia",
         "duration": "1 seduta a settimana",
         "focus": "Ipertrofia muscolare",
+        "focusEN": "Muscle hypertrophy",
+        "focusES": "Hipertrofia muscular",
         "volumeRange": "3-4 serie x 8-12 ripetizioni",
         "intensityRange": "70-80% 1RM",
         "rpeRange": "6-7",
@@ -59,8 +80,12 @@
       },
       {
         "name": "Allenamento Giorno 2 - Forza",
+        "nameEN": "Training Day 2 - Strength",
+        "nameES": "Entrenamiento Día 2 - Fuerza",
         "duration": "1 seduta a settimana",
         "focus": "Forza massima",
+        "focusEN": "Maximum strength",
+        "focusES": "Fuerza máxima",
         "volumeRange": "4-5 serie x 3-5 ripetizioni",
         "intensityRange": "85-93% 1RM",
         "rpeRange": "8-9",
@@ -69,8 +94,12 @@
       },
       {
         "name": "Allenamento Giorno 3 - Potenza",
+        "nameEN": "Training Day 3 - Power",
+        "nameES": "Entrenamiento Día 3 - Potencia",
         "duration": "1 seduta a settimana",
         "focus": "Potenza e velocità",
+        "focusEN": "Power and speed",
+        "focusES": "Potencia y velocidad",
         "volumeRange": "3-4 serie x 3-6 ripetizioni + balistico",
         "intensityRange": "75-85% 1RM o balistico",
         "rpeRange": "7-9",
@@ -78,7 +107,11 @@
         "basketballSpecific": "Box jump, power clean, med ball throws, scatti laterali esplosivi"
       }
     ],
-    "suitableFor": ["Durante stagione", "Tutto l'anno", "Atleti avanzati"],
+    "suitableFor": [
+      "Durante stagione",
+      "Tutto l'anno",
+      "Atleti avanzati"
+    ],
     "sport": "basketball",
     "totalDuration": "Continuo durante stagione",
     "notes": "Ottimale per conciliare preparazione con allenamenti tecnici basket. Riduce overtraining grazie alla varietà. Richiede buona gestione del recupero tra sedute."
@@ -87,12 +120,17 @@
     "id": "ondulata-weekly-003",
     "name": "Ondulazione Settimanale (WUP)",
     "nameEN": "Weekly Undulating Periodization",
+    "nameES": "Ondulación Semanal (WUP)",
     "description": "Periodizzazione ondulante settimanale dove ogni settimana ha un focus diverso: una settimana ipertrofia, una forza, una potenza. Consente adattamento variato mantenendo struttura e progressione.",
     "phases": [
       {
         "name": "Settimana Tipo 1 - Ipertrofia",
+        "nameEN": "Week Type 1 - Hypertrophy",
+        "nameES": "Semana Tipo 1 - Hipertrofia",
         "duration": "1 settimana (ripetuta ogni 3 settimane)",
         "focus": "Ipertrofia muscolare",
+        "focusEN": "Muscle hypertrophy",
+        "focusES": "Hipertrofia muscular",
         "volumeRange": "3-4 serie x 8-12 ripetizioni",
         "intensityRange": "70-80% 1RM",
         "rpeRange": "6-7",
@@ -101,8 +139,12 @@
       },
       {
         "name": "Settimana Tipo 2 - Forza",
+        "nameEN": "Week Type 2 - Strength",
+        "nameES": "Semana Tipo 2 - Fuerza",
         "duration": "1 settimana (ripetuta ogni 3 settimane)",
         "focus": "Forza massima e potenza muscolare",
+        "focusEN": "Maximum strength and muscular power",
+        "focusES": "Fuerza máxima y potencia muscular",
         "volumeRange": "4-5 serie x 3-5 ripetizioni",
         "intensityRange": "85-93% 1RM",
         "rpeRange": "8-9",
@@ -111,8 +153,12 @@
       },
       {
         "name": "Settimana Tipo 3 - Potenza",
+        "nameEN": "Week Type 3 - Power",
+        "nameES": "Semana Tipo 3 - Potencia",
         "duration": "1 settimana (ripetuta ogni 3 settimane)",
         "focus": "Potenza e velocità di movimento",
+        "focusEN": "Power and movement speed",
+        "focusES": "Potencia y velocidad de movimiento",
         "volumeRange": "3-4 serie x 3-6 rip + plyometrico",
         "intensityRange": "75-85% 1RM",
         "rpeRange": "7-9",
@@ -120,7 +166,10 @@
         "basketballSpecific": "Jump squat, box jump, power clean, med ball chest pass"
       }
     ],
-    "suitableFor": ["Mesocicli di 3-4 settimane", "Stagione competitiva"],
+    "suitableFor": [
+      "Mesocicli di 3-4 settimane",
+      "Stagione competitiva"
+    ],
     "sport": "basketball",
     "totalDuration": "3-4 settimane (ciclo completo)",
     "notes": "Mantiene varietà allenante senza eccessive variazioni giornaliere. Ideale per squadre che si allenano 3-4 volte a settimana. Permette recupero specifico per ogni qualità fisica."
@@ -129,12 +178,17 @@
     "id": "blocchi-004",
     "name": "Periodizzazione a Blocchi",
     "nameEN": "Block Periodization",
+    "nameES": "Periodización por Bloques",
     "description": "Modello a blocchi che utilizza tre blocchi consecutivi: accumulo (volume), trasmutazione (intensità) e realizzazione (potenza). Sviluppato originariamente da Yuri Verkhoshansky per la periodizzazione della forza.",
     "phases": [
       {
         "name": "Blocco di Accumulo",
+        "nameEN": "Accumulation Block",
+        "nameES": "Bloque de Acumulación",
         "duration": "3-4 settimane",
         "focus": "Accumulo di volume e base muscolare",
+        "focusEN": "Volume accumulation and muscular base",
+        "focusES": "Acumulación de volumen y base muscular",
         "volumeRange": "3-5 serie x 8-12 ripetizioni",
         "intensityRange": "65-75% 1RM",
         "rpeRange": "6-7",
@@ -143,8 +197,12 @@
       },
       {
         "name": "Blocco di Trasmutazione",
+        "nameEN": "Transmutation Block",
+        "nameES": "Bloque de Transmutación",
         "duration": "2-3 settimane",
         "focus": "Trasmutazione del volume in forza",
+        "focusEN": "Transmuting volume into strength",
+        "focusES": "Transmutación del volumen en fuerza",
         "volumeRange": "3-4 serie x 5-7 ripetizioni",
         "intensityRange": "80-87% 1RM",
         "rpeRange": "7-8",
@@ -153,8 +211,12 @@
       },
       {
         "name": "Blocco di Realizzazione",
+        "nameEN": "Realization Block",
+        "nameES": "Bloque de Realización",
         "duration": "2 settimane",
         "focus": "Realizzazione della potenza",
+        "focusEN": "Power realization",
+        "focusES": "Realización de la potencia",
         "volumeRange": "2-3 serie x 3-5 rip + plyometrico",
         "intensityRange": "75-90% 1RM + esplosivo",
         "rpeRange": "8-9",
@@ -162,7 +224,10 @@
         "basketballSpecific": "Box jump, power clean, explosive burpees, med ball throws"
       }
     ],
-    "suitableFor": ["Cicli lunghi pre-stagione", "Atleti di alto livello"],
+    "suitableFor": [
+      "Cicli lunghi pre-stagione",
+      "Atleti di alto livello"
+    ],
     "sport": "basketball",
     "totalDuration": "7-9 settimane per ciclo completo",
     "notes": "Ottimale per sviluppare qualità muscolari sequenziali. Riduce il carico neurovergetativo rispetto a DUP. Richiede periodizzazione dell'allenamento tecnico per non sovrapporre carichi."
@@ -171,12 +236,17 @@
     "id": "atr-005",
     "name": "Modello ATR (Accumulo-Trasmutazione-Realizzazione)",
     "nameEN": "ATR Model",
+    "nameES": "Modelo ATR (Acumulación-Transmutación-Realización)",
     "description": "Variante avanzata della periodizzazione a blocchi con enfasi sul trasferimento di adattamenti tra fasi. Particolarmente efficace per atleti che necessitano di mantenere contemporaneamente multiple qualità fisiche.",
     "phases": [
       {
         "name": "Fase di Accumulo Mirato",
+        "nameEN": "Targeted Accumulation Phase",
+        "nameES": "Fase de Acumulación Dirigida",
         "duration": "3-4 settimane",
         "focus": "Accumulo di capacità condizionali specifiche",
+        "focusEN": "Accumulation of specific conditional capacities",
+        "focusES": "Acumulación de capacidades condicionales específicas",
         "volumeRange": "3-5 serie x 8-12 ripetizioni",
         "intensityRange": "65-77% 1RM",
         "rpeRange": "6-7",
@@ -185,8 +255,12 @@
       },
       {
         "name": "Fase di Trasmutazione Progressiva",
+        "nameEN": "Progressive Transmutation Phase",
+        "nameES": "Fase de Transmutación Progresiva",
         "duration": "3 settimane",
         "focus": "Trasformazione del volume in espressione di forza",
+        "focusEN": "Transforming volume into strength expression",
+        "focusES": "Transformación del volumen en expresión de fuerza",
         "volumeRange": "3-4 serie x 5-8 ripetizioni",
         "intensityRange": "77-87% 1RM",
         "rpeRange": "7-8",
@@ -195,8 +269,12 @@
       },
       {
         "name": "Fase di Realizzazione Atletica",
+        "nameEN": "Athletic Realization Phase",
+        "nameES": "Fase de Realización Atlética",
         "duration": "2 settimane",
         "focus": "Espressione massima di potenza e velocità",
+        "focusEN": "Maximum expression of power and speed",
+        "focusES": "Expresión máxima de potencia y velocidad",
         "volumeRange": "3 serie x 3-5 rip + plyometrico ad alto volume",
         "intensityRange": "75-90% 1RM + massimale balistico",
         "rpeRange": "8-10",
@@ -205,8 +283,12 @@
       },
       {
         "name": "Fase di Mantenimento Competitivo",
+        "nameEN": "Competitive Maintenance Phase",
+        "nameES": "Fase de Mantenimiento Competitivo",
         "duration": "Continua durante stagione",
         "focus": "Mantenimento di tutte le qualità durante competizioni",
+        "focusEN": "Maintaining all qualities during competition",
+        "focusES": "Mantenimiento de todas las cualidades durante las competiciones",
         "volumeRange": "2 serie x 5-6 rip composti + 1 plyometrico",
         "intensityRange": "80-87% 1RM + balistico",
         "rpeRange": "6-7",
@@ -214,7 +296,11 @@
         "basketballSpecific": "Squat, stacchi leggeri, box jump, single leg balance work"
       }
     ],
-    "suitableFor": ["Stagione completa", "Atleti d'élite", "Cicli di 8-10 settimane"],
+    "suitableFor": [
+      "Stagione completa",
+      "Atleti d'élite",
+      "Cicli di 8-10 settimane"
+    ],
     "sport": "basketball",
     "totalDuration": "8-10 settimane poi mantenimento",
     "notes": "Permette il trasferimento di adattamenti tra fasi, riducendo il calo di performance tra blocchi. Ideale per mantener múltiples qualità durante la stagione. Richiede programmazione accurata della tecnica basket parallela."

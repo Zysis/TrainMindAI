@@ -20,6 +20,7 @@ import type {
 } from '../schemas/auth.js';
 import { seedDefaultExercises } from '../lib/seed-default-exercises.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
+import { appPublicUrl } from '../lib/app-url.js';
 import { sendEmail, buildPasswordResetEmailHtml, getAuthFrom } from '../services/email-service.js';
 import {
   issueRefreshToken,
@@ -736,7 +737,7 @@ export async function authRoutes(app: FastifyInstance) {
       },
     });
 
-    const appUrl = process.env.APP_PUBLIC_URL || 'http://localhost:3000';
+    const appUrl = appPublicUrl();
     const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
 
     // Il link contiene il token in chiaro: chi legge i log puo' reimpostare

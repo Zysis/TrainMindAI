@@ -62,27 +62,73 @@ TRANSLATE_CONTEXT_NOTE = {
     ),
 }
 
-# Mappatura keyword italiane -> namespace per query routing
+# Mappatura keyword -> namespace per query routing.
+#
+# Fino al 15/09/2026 c'erano solo termini italiani: una domanda in spagnolo o
+# in inglese non ne agganciava nessuno e `detect_relevant_namespaces` ripiegava
+# su ["exercises", "protocols"], senza mai guardare in periodizzazione o nelle
+# tabelle di riferimento. Le tre lingue stanno nella stessa lista perche' il
+# punteggio serve solo a ordinare i namespace, non a sceglierne uno.
+#
+# Due avvertenze per chi aggiunge voci:
+#   - il confronto e' `kw in query_lower`, senza normalizzare gli accenti:
+#     "prevención" e "prevencion" sono due stringhe diverse e vanno entrambe;
+#   - e' un match per sottostringa, quindi le parole corte pescano di tutto
+#     ("back" prenderebbe "feedback"). Meglio forme lunghe o composte.
 KEYWORD_NAMESPACE_MAP = {
     "exercises": [
+        # italiano
         "esercizio", "esercizi", "squat", "deadlift", "bench", "press",
         "jump", "salto", "plyo", "pliometria", "forza", "potenza",
         "agilita", "velocita", "core", "stretching", "flessibilita",
         "mobilita", "propriocezione", "coordinazione",
+        # inglese
+        "exercise", "strength", "power", "speed", "agility", "flexibility",
+        "mobility", "proprioception", "coordination", "lunge", "pull-up",
+        "push-up", "sprint",
+        # spagnolo
+        "ejercicio", "ejercicios", "fuerza", "potencia", "velocidad",
+        "agilidad", "flexibilidad", "movilidad", "propiocepcion",
+        "propiocepción", "coordinacion", "coordinación", "sentadilla",
+        "zancada", "pliometría",
     ],
     "protocols": [
+        # italiano
         "protocollo", "prevenzione", "infortunio", "rtp", "return to play",
         "riabilitazione", "recupero", "caviglia", "ginocchio", "spalla",
         "schiena", "hamstring", "achille", "anca", "tendinite",
+        # inglese
+        "protocol", "prevention", "injury", "rehab", "rehabilitation",
+        "recovery", "ankle", "knee", "shoulder", "low back", "hip",
+        "tendinitis", "achilles", "groin",
+        # spagnolo
+        "protocolo", "prevencion", "prevención", "lesion", "lesión",
+        "rehabilitacion", "rehabilitación", "recuperacion", "recuperación",
+        "tobillo", "rodilla", "hombro", "espalda", "cadera",
+        "isquiotibiales", "aductores",
     ],
     "periodization": [
+        # italiano
         "periodizzazione", "lineare", "ondulata", "blocchi", "atr",
         "mesociclo", "microciclo", "macrociclo", "fase", "pre-season",
         "in-season", "off-season", "deload", "scarico", "picco",
+        # inglese
+        "periodization", "periodisation", "linear", "undulating", "block",
+        "mesocycle", "microcycle", "macrocycle", "phase", "taper", "peaking",
+        "preseason", "offseason",
+        # spagnolo
+        "periodizacion", "periodización", "lineal", "ondulante", "bloques",
+        "pretemporada", "temporada", "descarga", "pico", "fases",
     ],
     "references": [
+        # italiano
         "1rm", "percentuale", "rpe", "scala", "borg", "vbt",
         "velocita", "zona", "tabella", "riferimento", "conversione",
+        # inglese
+        "percentage", "scale", "zone", "table", "reference", "conversion",
+        "velocity",
+        # spagnolo
+        "porcentaje", "escala", "tabla", "referencia", "conversión",
     ],
 }
 

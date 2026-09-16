@@ -3,7 +3,7 @@
 // ============================================
 // Esegue tre cose, in modo idempotente (puoi rilanciarlo quando vuoi):
 //
-//  1. Cerca l'utente `alessandro.vispa@gmail.com` e, se esiste,
+//  1. Cerca l'utente GUIDE_ADMIN_EMAIL e, se esiste,
 //     porta la sua organization a tier=ULTRA. Nessun altro dato
 //     viene modificato.
 //
@@ -25,6 +25,18 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 const PASSWORD = 'TrainMind2024!';
+
+/**
+ * Account dell'organizzazione usata per girare le guide.
+ *
+ * Era l'indirizzo personale di chi ha registrato l'account a mano dalla
+ * landing, e come tale finiva stampato in una trentina di figure per lingua
+ * fra PDF e video. Rinominato in un indirizzo neutro (example.com e'
+ * riservato dallo standard, non e' di nessuno): la costante sta qui perche'
+ * questo script lo cerca per portarlo a ULTRA, e con l'indirizzo vecchio
+ * scritto in mezzo al codice non lo troverebbe piu'.
+ */
+const GUIDE_ADMIN_EMAIL = 'coach@example.com';
 
 async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -58,12 +70,12 @@ interface OrgSpec {
   teams: TeamSpec[];
 }
 
-// ─── 1. alessandro.vispa@gmail.com → ULTRA ───────────────
+// ─── 1. account delle guide → ULTRA ─────────────────
 async function upgradeAlessandro() {
-  console.log('\n─── alessandro.vispa@gmail.com → ULTRA ───');
+  console.log(`\n─── ${GUIDE_ADMIN_EMAIL} → ULTRA ───`);
 
   const user = await prisma.user.findUnique({
-    where: { email: 'alessandro.vispa@gmail.com' },
+    where: { email: GUIDE_ADMIN_EMAIL },
     select: {
       organizationId: true,
       organization: { select: { name: true, tier: true } },
@@ -71,7 +83,7 @@ async function upgradeAlessandro() {
   });
 
   if (!user) {
-    console.log('⚠️  Account alessandro.vispa@gmail.com non trovato nel DB.');
+    console.log(`⚠️  Account ${GUIDE_ADMIN_EMAIL} non trovato nel DB.`);
     console.log('    Registra prima l\'account dalla landing/login, poi rilancia');
     console.log('    questo script — l\'upgrade a ULTRA verrà applicato.');
     return;
@@ -290,7 +302,7 @@ async function main() {
   console.log('\n📧 Account demo creati:');
   console.log(`   PROFESSIONAL  avispa@pro.com      / ${PASSWORD}`);
   console.log(`   STARTER       avispa@starter.com  / ${PASSWORD}`);
-  console.log('\n   alessandro.vispa@gmail.com → tier ULTRA');
+  console.log(`\n   ${GUIDE_ADMIN_EMAIL} → tier ULTRA`);
   console.log('   (dati esistenti dell\'account invariati)\n');
 }
 

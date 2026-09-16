@@ -100,7 +100,38 @@
     "planUltraDesc": "Estás en el plan más alto: sin límites y con soporte prioritario incluido.",
     "planUpgradeDesc": "Desbloquea más equipos, atletas y funciones avanzadas pasando al plan superior.",
     "planTop": "Plan más alto",
-    "upgradePlan": "Mejorar plan"
+    "upgradePlan": "Mejorar plan",
+    "staff": {
+      "title": "Staff",
+      "intro": "Quien está aquí comparte calendario, atletas e informes. Solo se entra por invitación: escribir el mismo nombre de organización al registrarse crea una organización nueva, no entra en esta.",
+      "seatsUsed": "{used} de {total} plazas",
+      "you": "(tú)",
+      "disabled": "desactivado",
+      "disable": "Desactivar",
+      "revoke": "Revocar invitación",
+      "invite": "Invitar",
+      "inviting": "Enviando...",
+      "inviteEmail": "Email del colega",
+      "invitePlaceholder": "nombre@club.es",
+      "inviteRole": "Rol",
+      "inviteSent": "Invitación enviada a {email}. El enlace vale 7 días.",
+      "inviteError": "No se ha podido completar la operación",
+      "adminOnly": "Solo un administrador puede invitar o quitar miembros del staff.",
+      "fullTitle": "Plazas agotadas",
+      "fullUpgradeHint": "Tu plan no tiene plazas libres. Subir de plan cuesta menos que comprar una plaza suelta.",
+      "fullUpgradeCta": "Ver los planes",
+      "fullSeatHint": "Ya estás en el plan más alto. Puedes añadir plazas sueltas, cada una al precio de una suscripción Starter.",
+      "fullSeatCta": "Añadir una plaza",
+      "role": {
+        "ADMIN": "Administrador",
+        "TRAINER": "Preparador",
+        "MEDICAL": "Staff médico",
+        "VIEWER": "Solo lectura"
+      },
+      "inviteLinkHint": "Si el correo no llega, pasa este enlace directamente al colega. Vale 7 días y solo se ve ahora.",
+      "copy": "Copiar",
+      "copied": "Copiado"
+    }
   },
   "dashboard": {
     "title": "Panel",
@@ -1830,7 +1861,19 @@
     "planStarter": "Starter",
     "planProfessional": "Professional",
     "planUltra": "Ultra",
-    "planPerMonth": "/mes"
+    "planPerMonth": "/mes",
+    "staffInviteTitle": "Únete al staff",
+    "staffInviteSubtitle": "Vas a entrar en {organization}. Compartiréis calendario, atletas e informes.",
+    "staffInviteBanner": "Entrarás en {organization} como {role}. La organización y el rol vienen de la invitación y no se pueden cambiar aquí.",
+    "staffInviteLoading": "Comprobando la invitación...",
+    "staffInviteInvalidTitle": "Invitación no válida",
+    "staffInviteInvalidHint": "Pide a quien te ha invitado que te mande una nueva: los enlaces valen siete días.",
+    "staffRole": {
+      "ADMIN": "administrador",
+      "TRAINER": "preparador",
+      "MEDICAL": "staff médico",
+      "VIEWER": "solo lectura"
+    }
   },
   "fieldTraining": {
     "title": "Entrenamiento de campo",
@@ -2246,6 +2289,13 @@
     "EMPTY_PLAN": "El plan generado está vacío.",
     "EVENT_ALREADY_COMPLETED": "Este entrenamiento ya está completado: la carga registrada quedaría en las analíticas sin la hoja que la explica. Anúlalo en lugar de eliminarlo.",
     "SESSION_ALREADY_COMPLETED": "Esta sesión ya se ha completado: las cargas de los atletas ya están registradas. No se puede anular.",
+    "INVITE_NOT_FOUND": "Invitación no encontrada. Comprueba el enlace o pide una nueva a quien te invitó.",
+    "INVITE_REVOKED": "Esta invitación ha sido revocada. Pide una nueva a quien te invitó.",
+    "INVITE_ACCEPTED": "Esta invitación ya se ha utilizado. Inicia sesión con tus credenciales.",
+    "INVITE_EXPIRED": "Esta invitación ha caducado: los enlaces valen siete días. Pide una nueva.",
+    "INVALID_INVITE": "Invitación no válida o caducada.",
+    "NO_SEAT_AVAILABLE": "La organización se ha quedado sin plazas. Contacta con quien te invitó.",
+    "EMAIL_ALREADY_REGISTERED": "Esta dirección ya está registrada. Inicia sesión en lugar de crear una cuenta nueva.",
     "PRISMA_CLIENT_OUTDATED": "El cliente Prisma no está actualizado: ejecuta `pnpm db:generate` y `pnpm db:push`, luego reinicia la API."
   },
   "dailyReport": {

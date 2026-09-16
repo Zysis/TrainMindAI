@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { readAttribution, useForwardedParams, withForwarded } from '@/lib/attribution';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import { useApiError } from '@/lib/i18n/api-error';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocaleStore } from '@/lib/i18n/store';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { fetchStaffInvite, type StaffInvitePreview } from '@/lib/auth/api';
 
 /* ─────────────────────────────────────────────────────────
  * Piani selezionabili in registrazione.
@@ -44,7 +45,7 @@ function RegisterForm() {
   const params = useSearchParams();
   const t = useTranslations('auth');
   const apiError = useApiError();
-  const { register, isAuthenticated } = useAuth();
+  const { register, registerStaff, isAuthenticated } = useAuth();
   const locale = useLocaleStore((s) => s.locale);
 
   const [firstName, setFirstName] = useState('');
@@ -71,6 +72,44 @@ function RegisterForm() {
   // Token che apre il cancello quando le registrazioni pubbliche sono chiuse.
   // Serve solo a noi, durante i test in produzione: `/register?k=<token>`.
   const accessToken = params.get('k') ?? undefined;
+
+  /* ─── Invito allo staff ──────────────────────────────────
+     `/register?staff=<token>` significa: non stai creando una societa' tua,
+     stai entrando in quella di chi ti ha invitato. Cambiano tre cose — niente
+     nome organizzazione (arriva dal token), niente scelta del piano (lo paga
+     gia' l'organizzazione) ed email non modificabile, perche' e' quella a cui
+     l'invito e' stato spedito. Il resto del modulo, consensi compresi, resta
+     identico: un invitato e' un utente come gli altri. */
+  const staffToken = params.get('staff') ?? undefined;
+  const [staffInvite, setStaffInvite] = useState<StaffInvitePreview | null>(null);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(!!staffToken);
+
+  useEffect(() => {
+    if (!staffToken) return;
+    let cancelled = false;
+    fetchStaffInvite(staffToken)
+      .then((data) => {
+        if (cancelled) return;
+        setStaffInvite(data);
+        setEmail(data.email);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        // Passa dal traduttore come tutti gli altri errori: qui si mostrava
+        // `err.message`, cioe' la frase italiana del backend, anche a chi
+        // aveva la pagina in inglese o in spagnolo.
+        setInviteError(apiError(err, t('registerError')));
+      })
+      .finally(() => {
+        if (!cancelled) setInviteLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `apiError` e' memoizzata su `t` (vedi la nota in lib/i18n/api-error.ts):
+    // metterla fra le dipendenze non rifa' il fetch a ogni render.
+  }, [staffToken, t, apiError]);
 
   // Serve al link verso l'accesso qui sotto: chi va a fare login e poi torna
   // indietro non deve perdere ne' la campagna ne' il token.
@@ -112,6 +151,24 @@ function RegisterForm() {
     setIsSubmitting(true);
 
     try {
+      if (staffToken && staffInvite) {
+        await registerStaff({
+          // L'organizzazione e il ruolo arrivano dal token, non da qui.
+          token: staffToken,
+          password,
+          firstName,
+          lastName,
+          dateOfBirth,
+          acceptTerms,
+          acceptPrivacy,
+          consentHealthData,
+          acceptMarketing,
+          uiLanguage: locale,
+        });
+        router.push('/dashboard');
+        return;
+      }
+
       await register({
         email,
         password,
@@ -137,10 +194,37 @@ function RegisterForm() {
     }
   };
 
+  // Invito non ancora letto, o link rotto: non ha senso mostrare il modulo.
+  // Nel secondo caso il messaggio spiega cosa fare invece di lasciare
+  // compilare tutto per poi rifiutare l'invio.
+  if (staffToken && inviteLoading) {
+    return (
+      <AuthShell>
+        <p className="text-sm text-slate-500">{t('staffInviteLoading')}</p>
+      </AuthShell>
+    );
+  }
+
+  if (staffToken && inviteError) {
+    return (
+      <AuthShell>
+        <h2 className="mb-1 text-2xl font-bold text-slate-900">{t('staffInviteInvalidTitle')}</h2>
+        <p className="mb-4 text-sm text-slate-500">{inviteError}</p>
+        <p className="text-sm text-slate-500">{t('staffInviteInvalidHint')}</p>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell wide>
-      <h2 className="mb-1 text-2xl font-bold text-slate-900">{t('createAccount')}</h2>
-      <p className="mb-6 text-sm text-slate-500">{t('registerSubtitle')}</p>
+      <h2 className="mb-1 text-2xl font-bold text-slate-900">
+        {staffInvite ? t('staffInviteTitle') : t('createAccount')}
+      </h2>
+      <p className="mb-6 text-sm text-slate-500">
+        {staffInvite
+          ? t('staffInviteSubtitle', { organization: staffInvite.organizationName })
+          : t('registerSubtitle')}
+      </p>
 
       {error && (
         <div className="mb-4 rounded-lg border border-danger-500/20 bg-danger-50 px-4 py-3 text-sm text-danger-700">
@@ -221,7 +305,11 @@ function RegisterForm() {
               placeholder={t('emailPlaceholder')}
               className="input-field"
               required
-              disabled={isSubmitting}
+              /* Su invito l'indirizzo e' quello a cui il link e' stato
+                 spedito: lasciarlo modificabile permetterebbe di girare
+                 l'invito a chiunque. */
+              disabled={isSubmitting || !!staffInvite}
+              readOnly={!!staffInvite}
             />
           </div>
 
@@ -259,28 +347,46 @@ function RegisterForm() {
             />
           </div>
 
-          <div className="sm:col-span-2">
-            <label htmlFor="organizationName" className="label mb-1.5 block">
-              {t('organizationName')}
-            </label>
-            <input
-              id="organizationName"
-              type="text"
-              value={organizationName}
-              onChange={(e) => setOrganizationName(e.target.value)}
-              placeholder={t('orgPlaceholder')}
-              className="input-field"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
+          {/* Su invito il campo sparisce: l'organizzazione e' quella di chi
+              ha invitato, e non e' una cosa che si scrive. E' anche la
+              ragione per cui digitare il nome di una societa' altrui nella
+              registrazione normale non da' accesso a niente — quel modulo
+              crea sempre un'organizzazione nuova. */}
+          {!staffInvite && (
+            <div className="sm:col-span-2">
+              <label htmlFor="organizationName" className="label mb-1.5 block">
+                {t('organizationName')}
+              </label>
+              <input
+                id="organizationName"
+                type="text"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder={t('orgPlaceholder')}
+                className="input-field"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+          )}
         </div>
+
+        {staffInvite && (
+          <div className="rounded-lg border border-teal-600/20 bg-teal-50 px-4 py-3 text-sm text-teal-800">
+            {t('staffInviteBanner', {
+              organization: staffInvite.organizationName,
+              role: t(`staffRole.${staffInvite.role}`),
+            })}
+          </div>
+        )}
 
         {/* ─── Piano ─────────────────────────────────────────
             Controllo segmentato invece di una tendina: mostra le tre
             opzioni e i prezzi tutti insieme, senza aprire nulla.
             Sono radio veri, quindi restano navigabili da tastiera. */}
-        <fieldset disabled={isSubmitting}>
+        {/* Niente scelta del piano su invito: l'abbonamento e' gia' quello
+            dell'organizzazione, e il posto l'ha gia' pagato chi invita. */}
+        <fieldset disabled={isSubmitting} className={staffInvite ? 'hidden' : undefined}>
           <legend className="label mb-1.5 block">{t('planLabel')}</legend>
           <div className="grid grid-cols-3 gap-2">
             {PLANS.map((p) => {

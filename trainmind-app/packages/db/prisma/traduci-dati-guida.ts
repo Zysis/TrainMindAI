@@ -17,10 +17,18 @@
  * Run: pnpm --filter @trainmind/db exec tsx prisma/traduci-dati-guida.ts en
  */
 
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const ORG_NAME = 'AV';
+/**
+ * Account dell'organizzazione usata per girare le guide.
+ *
+ * Si cerca per EMAIL dell'amministratore, non per nome dell'organizzazione:
+ * il nome e' un dato che si cambia da Impostazioni — ed e' gia' successo, si
+ * chiamava 'AV', le iniziali di una persona, e finiva stampato in tutte le
+ * figure delle guide. L'indirizzo dell'admin e' l'ancora stabile.
+ */
+const GUIDE_ADMIN_EMAIL = 'coach@example.com';
 
 type Lang = 'it' | 'en' | 'es';
 const TARGET = (process.argv[2] || 'it') as Lang;
@@ -218,9 +226,12 @@ function trPhaseReason(text: string | null): string | null {
 }
 
 async function main() {
-  const org = await prisma.organization.findFirst({ where: { name: ORG_NAME } });
-  if (!org) throw new Error(`Organizzazione ${ORG_NAME} non trovata`);
-  const orgId = org.id;
+  const admin = await prisma.user.findUnique({
+    where: { email: GUIDE_ADMIN_EMAIL },
+    select: { organizationId: true },
+  });
+  if (!admin) throw new Error(`Account ${GUIDE_ADMIN_EMAIL} non trovato`);
+  const orgId = admin.organizationId;
   let n = 0;
 
   for (const t of await prisma.team.findMany({ where: { organizationId: orgId } })) {
@@ -246,7 +257,9 @@ async function main() {
   })) {
     await prisma.mesocycle.update({
       where: { id: m.id },
-      data: { name: tr(m.name)!, description: tr(m.description) },
+      // Il campo libero del mesociclo si chiama `notes`, non `description`:
+      // e' `description` sul piano di periodizzazione, da cui l'equivoco.
+      data: { name: tr(m.name)!, notes: tr(m.notes) },
     });
     n++;
   }
@@ -339,7 +352,11 @@ async function main() {
       await prisma.fieldTrainingSession.update({
         where: { id: f.id },
         data: {
-          exercises: list.map((x) => (typeof x.name === 'string' ? { ...x, name: tr(x.name) } : x)),
+          // `exercises` e' una colonna Json: senza il cast, TypeScript
+          // offre un Record[] dove Prisma vuole un InputJsonValue.
+          exercises: list.map((x) =>
+            typeof x.name === 'string' ? { ...x, name: tr(x.name) } : x
+          ) as Prisma.InputJsonValue,
           notes: tr(f.notes),
         },
       });

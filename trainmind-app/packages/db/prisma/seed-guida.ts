@@ -29,7 +29,15 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const TARGET_ORGS = ['AV'];
+/**
+ * Account dell'organizzazione usata per girare le guide.
+ *
+ * Si cerca per EMAIL dell'amministratore, non per nome dell'organizzazione:
+ * il nome e' un dato che si cambia da Impostazioni — ed e' gia' successo, si
+ * chiamava 'AV', le iniziali di una persona, e finiva stampato in tutte le
+ * figure delle guide. L'indirizzo dell'admin e' l'ancora stabile.
+ */
+const GUIDE_ADMIN_EMAIL = 'coach@example.com';
 
 const SEASON_START = new Date('2025-09-01');
 const SEASON_END = new Date('2027-06-30');
@@ -254,19 +262,22 @@ const SESSION_TYPES = [
 
 // ─── Seed per singola organizzazione ──────────────────────
 
-async function seedOrg(orgName: string) {
-  console.log(`\n══════════ ORG: ${orgName} ══════════`);
-
-  const org = await prisma.organization.findFirst({ where: { name: orgName } });
-  if (!org) {
-    console.error(`❌ Organizzazione "${orgName}" non trovata — salto.`);
-    return;
-  }
-  const admin = await prisma.user.findFirst({ where: { organizationId: org.id, role: 'ADMIN' } });
+async function seedOrg(adminEmail: string) {
+  const admin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!admin) {
-    console.error(`❌ Nessun ADMIN per "${orgName}" — salto.`);
+    console.error(`❌ Account "${adminEmail}" non trovato — salto.`);
     return;
   }
+  const org = await prisma.organization.findUnique({ where: { id: admin.organizationId } });
+  if (!org) {
+    console.error(`❌ Organizzazione di "${adminEmail}" non trovata — salto.`);
+    return;
+  }
+  // `ROSTERS` piu' sotto e' indicizzato per nome organizzazione (oggi c'e'
+  // solo la chiave MM, che fa da ripiego): la variabile resta per non
+  // toccare quel punto di estensione.
+  const orgName = org.name;
+  console.log(`\n══════════ ORG: ${orgName} ══════════`);
   const orgId = org.id;
   console.log(`✅ ${org.name} — admin: ${admin.email}`);
 
@@ -714,9 +725,7 @@ async function seedOrg(orgName: string) {
 async function main() {
   console.log('🏀 TrainMind — Seed Prima Squadra (14 giocatori, stagione 2025/26)');
   console.log(`   Stagione: ${SEASON_START.toISOString().slice(0, 10)} → ${SEASON_END.toISOString().slice(0, 10)}`);
-  for (const orgName of TARGET_ORGS) {
-    await seedOrg(orgName);
-  }
+  await seedOrg(GUIDE_ADMIN_EMAIL);
   console.log('\n✅ Seed completato per tutte le organizzazioni.');
 }
 

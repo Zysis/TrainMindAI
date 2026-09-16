@@ -13,6 +13,7 @@ import {
 import bcrypt from 'bcrypt';
 import { issueRefreshToken } from '../lib/refresh-tokens.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
+import { athleteAppUrl } from '../lib/app-url.js';
 import { sendEmail } from '../services/email-service.js';
 
 export async function athleteRoutes(app: FastifyInstance) {
@@ -88,8 +89,7 @@ export async function athleteRoutes(app: FastifyInstance) {
     });
 
     // Costruisci il link di invito verso l'app atleti
-    const athleteAppUrl = process.env.ATHLETE_APP_URL || 'http://localhost:3003';
-    const inviteLink = `${athleteAppUrl}/register?token=${invite.token}`;
+    const inviteLink = `${athleteAppUrl()}/register?token=${invite.token}`;
 
     // Nome organizzazione per personalizzare l'email
     const orgRow = await app.prisma.organization.findUnique({

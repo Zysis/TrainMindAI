@@ -100,7 +100,38 @@
     "planUltraDesc": "Sei sul piano top — nessun limite, supporto prioritario incluso.",
     "planUpgradeDesc": "Sblocca più squadre, atleti e funzionalità avanzate passando al piano superiore.",
     "planTop": "Piano top",
-    "upgradePlan": "Aggiorna piano"
+    "upgradePlan": "Aggiorna piano",
+    "staff": {
+      "title": "Staff",
+      "intro": "Chi sta qui dentro condivide calendario, atleti e report. Si entra solo su invito: scrivere lo stesso nome di società in registrazione crea un'organizzazione nuova, non fa entrare in questa.",
+      "seatsUsed": "{used} di {total} posti",
+      "you": "(tu)",
+      "disabled": "disattivato",
+      "disable": "Disattiva",
+      "revoke": "Revoca invito",
+      "invite": "Invita",
+      "inviting": "Invio...",
+      "inviteEmail": "Email del collega",
+      "invitePlaceholder": "nome@societa.it",
+      "inviteRole": "Ruolo",
+      "inviteSent": "Invito inviato a {email}. Il link vale 7 giorni.",
+      "inviteError": "Non è stato possibile completare l'operazione",
+      "adminOnly": "Solo un amministratore può invitare o rimuovere membri dello staff.",
+      "fullTitle": "Posti esauriti",
+      "fullUpgradeHint": "Il tuo piano non ha più posti liberi. Passare al piano superiore costa meno che comprare un posto singolo.",
+      "fullUpgradeCta": "Vedi i piani",
+      "fullSeatHint": "Sei già sul piano più alto. Puoi aggiungere posti singoli, ognuno al prezzo di un abbonamento Starter.",
+      "fullSeatCta": "Aggiungi un posto",
+      "role": {
+        "ADMIN": "Amministratore",
+        "TRAINER": "Preparatore",
+        "MEDICAL": "Staff medico",
+        "VIEWER": "Sola lettura"
+      },
+      "inviteLinkHint": "Se l'email non arriva, passa questo link direttamente al collega. Vale 7 giorni e si vede solo adesso.",
+      "copy": "Copia",
+      "copied": "Copiato"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1210,7 +1241,7 @@
     "templateAutoNone": "Automatico",
     "templateOwnSuffix": "(tuo)",
     "templateEstimate": "{phases} fasi · rientro stimato {date}",
-    "noTemplateMatch": "Nessun protocollo dedicato per questa combinazione: verra' usato quello generico.",
+    "noTemplateMatch": "Nessun protocollo dedicato per questa combinazione: verrà usato quello generico.",
     "protocolLibrary": "Libreria protocolli",
     "templateGroupAuto": "Automatico",
     "templateGroupManual": "Scegli un protocollo",
@@ -1830,7 +1861,19 @@
     "planStarter": "Starter",
     "planProfessional": "Professional",
     "planUltra": "Ultra",
-    "planPerMonth": "/mese"
+    "planPerMonth": "/mese",
+    "staffInviteTitle": "Unisciti allo staff",
+    "staffInviteSubtitle": "Stai entrando in {organization}. Condividerete calendario, atleti e report.",
+    "staffInviteBanner": "Entrerai in {organization} come {role}. L'organizzazione e il ruolo arrivano dall'invito e non si possono cambiare qui.",
+    "staffInviteLoading": "Verifica dell'invito in corso...",
+    "staffInviteInvalidTitle": "Invito non valido",
+    "staffInviteInvalidHint": "Chiedi a chi ti ha invitato di mandartene uno nuovo: i link valgono sette giorni.",
+    "staffRole": {
+      "ADMIN": "amministratore",
+      "TRAINER": "preparatore",
+      "MEDICAL": "staff medico",
+      "VIEWER": "sola lettura"
+    }
   },
   "fieldTraining": {
     "title": "Allenamento in campo",
@@ -2246,6 +2289,13 @@
     "EMPTY_PLAN": "Il piano generato è vuoto.",
     "EVENT_ALREADY_COMPLETED": "Questo allenamento è già stato completato: il carico registrato resterebbe negli analytics senza il foglio che lo spiega. Annullalo invece di eliminarlo.",
     "SESSION_ALREADY_COMPLETED": "Questa sessione è già stata completata: i carichi degli atleti sono già registrati. Non può essere annullata.",
+    "INVITE_NOT_FOUND": "Invito non trovato. Controlla il link, o chiedine uno nuovo a chi ti ha invitato.",
+    "INVITE_REVOKED": "Questo invito è stato revocato. Chiedi a chi ti ha invitato di mandartene uno nuovo.",
+    "INVITE_ACCEPTED": "Questo invito è già stato usato. Accedi con le tue credenziali.",
+    "INVITE_EXPIRED": "Questo invito è scaduto: i link valgono sette giorni. Chiedine uno nuovo.",
+    "INVALID_INVITE": "Invito non valido o scaduto.",
+    "NO_SEAT_AVAILABLE": "L'organizzazione ha esaurito i posti disponibili. Contatta chi ti ha invitato.",
+    "EMAIL_ALREADY_REGISTERED": "Questo indirizzo è già registrato. Accedi, invece di creare un nuovo account.",
     "PRISMA_CLIENT_OUTDATED": "Il client Prisma non è aggiornato: esegui `pnpm db:generate` e `pnpm db:push`, poi riavvia l'API."
   },
   "dailyReport": {
@@ -2455,7 +2505,7 @@
   },
   "rtpTemplates": {
     "title": "Libreria protocolli RTP",
-    "subtitle": "Criteri e fasi di rientro per zona del corpo, tipo di infortunio e severita'.",
+    "subtitle": "Criteri e fasi di rientro per zona del corpo, tipo di infortunio e severità.",
     "newTemplate": "Nuovo protocollo",
     "ownSection": "I tuoi protocolli",
     "systemSection": "Protocolli di sistema",
@@ -2470,7 +2520,7 @@
     "duplicate": "Duplica",
     "duplicated": "Protocollo duplicato",
     "systemReadonlyHint": "I protocolli di sistema sono in sola lettura: vengono riallineati a ogni aggiornamento. Duplicalo per modificarlo.",
-    "severityRange": "severita'' {min}-{max}",
+    "severityRange": "severità {min}-{max}",
     "appliesToAll": "Si applica a tutti gli infortuni",
     "anyZone": "Qualsiasi zona",
     "anyRegion": "Qualsiasi regione",
@@ -2508,7 +2558,7 @@
     "deleted": "Protocollo eliminato",
     "deleteTitle": "Eliminare il protocollo?",
     "deleteMessage": "Stai per eliminare «{name}».",
-    "deleteDetail": "I percorsi di rientro gia' avviati con questo protocollo non cambiano: hanno la loro copia di fasi e criteri.",
+    "deleteDetail": "I percorsi di rientro già avviati con questo protocollo non cambiano: hanno la loro copia di fasi e criteri.",
     "editTitle": "Modifica protocollo",
     "newTitle": "Nuovo protocollo",
     "nameLabel": "Nome",

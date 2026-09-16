@@ -16,7 +16,15 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const ORG_NAME = 'AV';
+/**
+ * Account dell'organizzazione usata per girare le guide.
+ *
+ * Si cerca per EMAIL dell'amministratore, non per nome dell'organizzazione:
+ * il nome e' un dato che si cambia da Impostazioni — ed e' gia' successo, si
+ * chiamava 'AV', le iniziali di una persona, e finiva stampato in tutte le
+ * figure delle guide. L'indirizzo dell'admin e' l'ancora stabile.
+ */
+const GUIDE_ADMIN_EMAIL = 'coach@example.com';
 const TAG = '[extra individuale]';
 
 function daysAgo(n: number): Date {
@@ -27,8 +35,12 @@ function daysAgo(n: number): Date {
 }
 
 async function main() {
-  const org = await prisma.organization.findFirst({ where: { name: ORG_NAME } });
-  if (!org) throw new Error(`Organizzazione ${ORG_NAME} non trovata`);
+  const admin = await prisma.user.findUnique({
+    where: { email: GUIDE_ADMIN_EMAIL },
+    select: { organizationId: true },
+  });
+  if (!admin) throw new Error(`Account ${GUIDE_ADMIN_EMAIL} non trovato`);
+  const org = { id: admin.organizationId };
 
   const athletes = await prisma.athlete.findMany({
     where: { organizationId: org.id, isActive: true },

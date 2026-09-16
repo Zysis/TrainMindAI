@@ -10,7 +10,9 @@ import {
 import {
   login as apiLogin,
   register as apiRegister,
+  registerStaff as apiRegisterStaff,
   type RegisterInput,
+  type StaffRegisterInput,
   logout as apiLogout,
   fetchMe,
   clearTokens,
@@ -30,6 +32,8 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  /** Registrazione da invito: entra in un'organizzazione gia' esistente. */
+  registerStaff: (input: StaffRegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -101,6 +105,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [syncLocaleWithUser],
   );
 
+  const registerStaff = useCallback(
+    async (input: StaffRegisterInput) => {
+      const response = await apiRegisterStaff(input);
+      setUser(response.data.user);
+      syncLocaleWithUser(response.data.user);
+    },
+    [syncLocaleWithUser],
+  );
+
   const logout = useCallback(async () => {
     await apiLogout();
     setUser(null);
@@ -114,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         login,
         register,
+        registerStaff,
         logout,
         refreshUser,
       }}

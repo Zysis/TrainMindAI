@@ -3,6 +3,21 @@
 // ============================================
 
 import { API_BASE_URL, API_PREFIX } from '../constants';
+import { ApiError } from './fetch';
+
+/*
+ * Perche' questi helper lanciano ApiError e non Error (16/09/2026).
+ *
+ * Lanciavano `new Error(data.error?.message)`, cioe' la frase italiana scritta
+ * nel backend. `useApiError` traduce **per codice**; senza codice ripiegava sul
+ * messaggio del server, e una pagina inglese o spagnola mostrava l'errore in
+ * italiano. Si vedeva soprattutto sugli inviti allo staff, dove la pagina e'
+ * pubblica e chi la apre non ha ancora scelto una lingua.
+ *
+ * Il messaggio del server resta dentro l'eccezione: per i codici non ancora
+ * tradotti (VALIDATION_ERROR, NOT_FOUND) e' piu' informativo di una frase
+ * generica, ed e' esattamente quello che `useApiError` usa come ultima risorsa.
+ */
 
 const AUTH_URL = `${API_BASE_URL}${API_PREFIX}/auth`;
 
@@ -104,7 +119,14 @@ export async function login(email: string, password: string): Promise<LoginRespo
     body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Errore di login');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore di login',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   setTokens(data.data.tokens);
   return data;
 }
@@ -162,7 +184,78 @@ export async function register(input: RegisterInput): Promise<LoginResponse> {
     body: JSON.stringify(body),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Errore di registrazione');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore di registrazione',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
+  setTokens(data.data.tokens);
+  return data;
+}
+
+// ─── Invito allo staff ───────────────────────────────
+//
+// E' l'UNICO modo di entrare in un'organizzazione gia' esistente: la
+// registrazione normale ne crea sempre una nuova. Per questo qui non c'e' ne'
+// il nome dell'organizzazione ne' l'email — arrivano dal token, e scrivere il
+// nome di una societa' altrui non porta da nessuna parte.
+
+const STAFF_URL = `${API_BASE_URL}${API_PREFIX}/staff`;
+
+export interface StaffInvitePreview {
+  email: string;
+  role: 'ADMIN' | 'TRAINER' | 'MEDICAL' | 'VIEWER';
+  organizationName: string;
+  organizationLogo?: string | null;
+  expiresAt: string;
+}
+
+/** Legge l'invito per mostrare a chi ci si sta per unire. Pubblica. */
+export async function fetchStaffInvite(token: string): Promise<StaffInvitePreview> {
+  const res = await fetch(`${STAFF_URL}/invite/${encodeURIComponent(token)}`);
+  const data = await res.json();
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Invito non valido o scaduto',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
+  return data.data;
+}
+
+export interface StaffRegisterInput {
+  token: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  acceptTerms: boolean;
+  acceptPrivacy: boolean;
+  consentHealthData?: boolean;
+  acceptMarketing?: boolean;
+  uiLanguage?: 'it' | 'en' | 'es';
+}
+
+export async function registerStaff(input: StaffRegisterInput): Promise<LoginResponse> {
+  const res = await fetch(`${STAFF_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore di registrazione',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   setTokens(data.data.tokens);
   return data;
 }
@@ -229,7 +322,14 @@ export async function changePassword(
     }
   }
 
-  if (!res.ok) throw new Error(data.error?.message || 'Errore durante il cambio password');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore durante il cambio password',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   // Il server invalida il refresh token: puliamo anche lato client per
   // evitare che un refresh successivo fallisca in modo silenzioso.
   clearTokens();
@@ -244,7 +344,14 @@ export async function requestPasswordReset(email: string): Promise<string> {
     body: JSON.stringify({ email }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Errore durante la richiesta');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore durante la richiesta',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   return data.data.message as string;
 }
 
@@ -252,7 +359,14 @@ export async function requestPasswordReset(email: string): Promise<string> {
 export async function verifyResetToken(token: string): Promise<{ email: string }> {
   const res = await fetch(`${AUTH_URL}/reset-password/${encodeURIComponent(token)}`);
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Link non valido o scaduto');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Link non valido o scaduto',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   return data.data;
 }
 
@@ -264,7 +378,14 @@ export async function resetPassword(token: string, password: string): Promise<st
     body: JSON.stringify({ token, password }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Errore durante il reset');
+  if (!res.ok) {
+    throw new ApiError(
+      data.error?.message || 'Errore durante il reset',
+      data.error?.code || 'UNKNOWN',
+      res.status,
+      data.error?.details,
+    );
+  }
   return data.data.message as string;
 }
 

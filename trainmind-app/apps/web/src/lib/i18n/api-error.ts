@@ -40,6 +40,15 @@ const TRANSLATED_CODES = new Set([
   // configurazione: il client Prisma non e' stato rigenerato dopo una migrazione
   'PRISMA_CLIENT_OUTDATED',
   'EXERCISE_IN_USE',
+  // inviti allo staff: la pagina e' pubblica e chi la apre non ha ancora
+  // scelto una lingua, quindi il messaggio del server non basta mai
+  'INVITE_NOT_FOUND',
+  'INVITE_REVOKED',
+  'INVITE_ACCEPTED',
+  'INVITE_EXPIRED',
+  'INVALID_INVITE',
+  'NO_SEAT_AVAILABLE',
+  'EMAIL_ALREADY_REGISTERED',
   // AI
   'AI_SERVICE_DOWN',
   'AI_SERVICE_TIMEOUT',

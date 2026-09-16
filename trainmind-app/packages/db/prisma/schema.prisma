@@ -122,6 +122,17 @@ model Organization {
   signupReferrer    String?  @db.VarChar(500)
   signupAttribution Json?
 
+  // ─── Posti dello staff (dal 14 settembre 2026) ───
+  // Quanti preparatori possono stare in questa organizzazione. La quota
+  // inclusa dipende dal piano (vedi SEATS_BY_TIER in api/src/lib/seats.ts);
+  // qui si contano SOLO i posti comprati in piu', ognuno al prezzo di un
+  // abbonamento Starter.
+  //
+  // Perche' una colonna e non un conteggio chiesto a Stripe: il controllo sul
+  // posto libero avviene a ogni invito e a ogni accettazione, cioe' su
+  // percorsi che devono rispondere anche quando Stripe non e' raggiungibile.
+  extraSeats Int @default(0)
+
   users           User[]
   athletes        Athlete[]
   exercises       Exercise[]
@@ -136,6 +147,7 @@ model Organization {
   gameSessions           GameSession[]
   dailyReports           DailyReport[]
   athleteInvites         AthleteInvite[]
+  staffInvites           StaffInvite[]
   aiUsageLogs            AiUsageLog[]
   rtpTemplates           RTPTemplate[]
   calendarEvents         CalendarEvent[]
@@ -199,6 +211,7 @@ model User {
   rtpPhaseLogs        RTPPhaseLog[]
   clearanceVerified   ClearanceCriteria[]
   sentInvites         AthleteInvite[]    @relation("InviteSender")
+  sentStaffInvites    StaffInvite[]      @relation("StaffInviteSender")
   consentRecords      ConsentRecord[]
   auditLogs           AuditLog[]
   dailyReports        DailyReport[]
@@ -1226,6 +1239,46 @@ model AthleteInvite {
   @@index([email])
   @@index([organizationId, status])
   @@map("athlete_invites")
+}
+
+/// Invito a un membro dello staff (preparatore, medico, osservatore).
+///
+/// Questo e' l'UNICO modo per entrare in un'organizzazione gia' esistente.
+/// La registrazione normale crea sempre un'organizzazione nuova, quindi
+/// scrivere lo stesso nome societa' di qualcun altro non porta da nessuna
+/// parte: senza un invito non si condivide niente, calendario compreso.
+///
+/// A differenza di AthleteInvite non c'e' un `athleteId`: il nome e il
+/// cognome li scrive l'invitato quando completa la registrazione, perche'
+/// di lui l'organizzazione non ha ancora nessuna anagrafica.
+model StaffInvite {
+  id             String       @id @default(cuid())
+  email          String
+  /// Ruolo che avra' l'utente una volta accettato. ATHLETE non e' ammesso
+  /// (gli atleti hanno il loro invito e non occupano un posto dello staff):
+  /// il controllo sta nello schema Zod della rotta, non nel database.
+  role           UserRole     @default(TRAINER)
+  token          String       @unique @default(cuid())
+  status         InviteStatus @default(PENDING)
+  invitedById    String
+  organizationId String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  invitedBy    User         @relation("StaffInviteSender", fields: [invitedById], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  /// Niente vincolo di unicita' su (organizzazione, email): la stessa persona
+  /// puo' essere invitata, revocata e reinvitata, e ogni tentativo resta a
+  /// storico. Che di inviti VALIDI ce ne sia uno solo lo garantisce la rotta,
+  /// che revoca i pendenti prima di crearne uno nuovo — come gia' fa
+  /// l'invito atleta. Il posto, invece, si verifica due volte: quando
+  /// l'invito parte e quando viene accettato.
+  @@index([token])
+  @@index([email])
+  @@index([organizationId, status])
+  @@map("staff_invites")
 }
 
 // ═══════════════════════════════════════════════════════════

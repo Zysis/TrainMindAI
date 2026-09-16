@@ -194,6 +194,33 @@ Parametri: {load_params.get('sets')} serie x {load_params.get('reps')} reps, rip
 {protocol.get('description')}{exercises_text}{phases_text}"""
         return text
 
+    @staticmethod
+    def trilingual(entry: Dict[str, Any], field: str) -> str:
+        """
+        Rende un campo nelle tre lingue, nella forma "italiano [EN: ...] [ES: ...]".
+
+        Perche' serve (15/09/2026). L'indice ha un embedding per documento e
+        nessuna dimensione di lingua: il chunk e' sempre e solo italiano. Il
+        modello traduceva bene la prosa ma ricopiava di peso i nomi delle fasi
+        e dei blocchi — "Fase di Accumulo", "Blocco di Trasmutazione" — perche'
+        leggono come nomi propri, e cosi' finivano tali e quali dentro risposte
+        in spagnolo. Aggiungere `nameES` da solo non bastava: nessuno lo
+        leggeva. Mettendo le tre lingue nello stesso chunk il modello ha sempre
+        sotto gli occhi la forma nella lingua in cui deve rispondere.
+
+        Se le traduzioni mancano (un modello aggiunto a mano) si degrada al
+        solo italiano invece di stampare "None".
+        """
+        it = entry.get(field, "") or ""
+        en = entry.get(f"{field}EN") or ""
+        es = entry.get(f"{field}ES") or ""
+        parts = [it]
+        if en and en != it:
+            parts.append(f"[EN: {en}]")
+        if es and es != it:
+            parts.append(f"[ES: {es}]")
+        return " ".join(p for p in parts if p)
+
     def format_periodization_text(self, model: Dict[str, Any]) -> str:
         """
         Format periodization model data for embedding.
@@ -209,15 +236,15 @@ Parametri: {load_params.get('sets')} serie x {load_params.get('reps')} reps, rip
         if phases:
             phases_list = []
             for phase in phases:
-                name = phase.get("name", "")
-                focus = phase.get("focus", "")
+                name = self.trilingual(phase, "name")
+                focus = self.trilingual(phase, "focus")
                 duration = phase.get("duration", "")
                 phases_list.append(f"- {name} ({duration}): {focus}")
-            phases_text = "\nFasi: " + "\n".join(phases_list)
+            phases_text = "\nFasi / Phases / Fases: " + "\n".join(phases_list)
 
         suitable_for = ", ".join(model.get("suitableFor", []))
 
-        text = f"""{model.get('name')} ({model.get('nameEN')})
+        text = f"""{self.trilingual(model, 'name')}
 {model.get('description')}{phases_text}
 Adatta a: {suitable_for}"""
         return text

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { PLAN_FULL_NAME, tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
 import { ChangePasswordCard } from '@/components/settings/change-password-card';
+import { StaffCard } from '@/components/settings/staff-card';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -122,6 +123,9 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Staff — chi condivide calendario, atleti e report */}
+          <StaffCard />
 
           {/* Password */}
           <ChangePasswordCard />

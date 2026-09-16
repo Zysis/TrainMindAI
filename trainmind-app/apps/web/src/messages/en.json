@@ -100,7 +100,38 @@
     "planUltraDesc": "You are on the top plan — no limits, priority support included.",
     "planUpgradeDesc": "Unlock more teams, athletes and advanced features by moving up a plan.",
     "planTop": "Top plan",
-    "upgradePlan": "Upgrade plan"
+    "upgradePlan": "Upgrade plan",
+    "staff": {
+      "title": "Staff",
+      "intro": "Everyone here shares the calendar, athletes and reports. The only way in is by invitation: typing the same organization name at signup creates a new organization, it does not join this one.",
+      "seatsUsed": "{used} of {total} seats",
+      "you": "(you)",
+      "disabled": "disabled",
+      "disable": "Disable",
+      "revoke": "Revoke invitation",
+      "invite": "Invite",
+      "inviting": "Sending...",
+      "inviteEmail": "Colleague's email",
+      "invitePlaceholder": "name@club.com",
+      "inviteRole": "Role",
+      "inviteSent": "Invitation sent to {email}. The link is valid for 7 days.",
+      "inviteError": "The operation could not be completed",
+      "adminOnly": "Only an administrator can invite or remove staff members.",
+      "fullTitle": "No seats left",
+      "fullUpgradeHint": "Your plan has no free seats. Moving up a plan costs less than buying a single extra seat.",
+      "fullUpgradeCta": "See plans",
+      "fullSeatHint": "You are already on the top plan. You can add single seats, each priced like a Starter subscription.",
+      "fullSeatCta": "Add a seat",
+      "role": {
+        "ADMIN": "Administrator",
+        "TRAINER": "Strength coach",
+        "MEDICAL": "Medical staff",
+        "VIEWER": "Read only"
+      },
+      "inviteLinkHint": "If the email doesn't arrive, send this link to your colleague directly. It is valid for 7 days and is shown only now.",
+      "copy": "Copy",
+      "copied": "Copied"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1830,7 +1861,19 @@
     "planStarter": "Starter",
     "planProfessional": "Professional",
     "planUltra": "Ultra",
-    "planPerMonth": "/month"
+    "planPerMonth": "/month",
+    "staffInviteTitle": "Join the staff",
+    "staffInviteSubtitle": "You are joining {organization}. You will share the calendar, athletes and reports.",
+    "staffInviteBanner": "You will join {organization} as {role}. The organization and the role come from the invitation and cannot be changed here.",
+    "staffInviteLoading": "Checking the invitation...",
+    "staffInviteInvalidTitle": "Invitation not valid",
+    "staffInviteInvalidHint": "Ask whoever invited you to send a new one: links are valid for seven days.",
+    "staffRole": {
+      "ADMIN": "administrator",
+      "TRAINER": "strength coach",
+      "MEDICAL": "medical staff",
+      "VIEWER": "read only"
+    }
   },
   "fieldTraining": {
     "title": "Field Training",
@@ -2246,6 +2289,13 @@
     "EMPTY_PLAN": "The generated plan is empty.",
     "EVENT_ALREADY_COMPLETED": "This training is already completed: the recorded load would stay in the analytics without the sheet that explains it. Cancel it instead of deleting it.",
     "SESSION_ALREADY_COMPLETED": "This session has already been completed: the athletes' loads are already recorded. It cannot be cancelled.",
+    "INVITE_NOT_FOUND": "Invitation not found. Check the link, or ask whoever invited you for a new one.",
+    "INVITE_REVOKED": "This invitation was revoked. Ask whoever invited you to send a new one.",
+    "INVITE_ACCEPTED": "This invitation has already been used. Sign in with your credentials.",
+    "INVITE_EXPIRED": "This invitation has expired: links are valid for seven days. Ask for a new one.",
+    "INVALID_INVITE": "Invalid or expired invitation.",
+    "NO_SEAT_AVAILABLE": "The organization has run out of seats. Contact whoever invited you.",
+    "EMAIL_ALREADY_REGISTERED": "This address is already registered. Sign in instead of creating a new account.",
     "PRISMA_CLIENT_OUTDATED": "The Prisma client is out of date: run `pnpm db:generate` and `pnpm db:push`, then restart the API."
   },
   "dailyReport": {
