@@ -714,11 +714,21 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
       const { organizationId } = request.user;
 
-      // Mark as completed
-      await app.prisma.fieldTrainingSession.update({
-        where: { id: session.id },
+      // Chiusura idempotente. Ogni chiusura crea una TrainingSession per
+      // giocatore, cioe' carico che entra nell'ACWR: una seconda chiamata —
+      // doppio click, due schede, un retry di rete della PWA — duplicava
+      // tutte le righe e raddoppiava il carico di quel giorno. L'update
+      // condizionato e' atomico: di due richieste concorrenti ne passa una.
+      const closed = await app.prisma.fieldTrainingSession.updateMany({
+        where: { id: session.id, status: { not: 'COMPLETED' } },
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
+      if (closed.count === 0) {
+        return reply.status(409).send({
+          success: false,
+          error: { code: 'SESSION_ALREADY_COMPLETED', message: 'Sessione gia\' completata' },
+        });
+      }
 
       const presentEntries = session.entries.filter((e) => e.status === 'PRESENT');
 

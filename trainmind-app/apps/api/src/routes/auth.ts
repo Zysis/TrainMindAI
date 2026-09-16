@@ -31,6 +31,12 @@ import {
 
 const SALT_ROUNDS = 12;
 
+/**
+ * Hash bcrypt (costo 12) di una stringa casuale buttata: serve solo a far
+ * durare il login di un'email inesistente quanto quello di una vera.
+ */
+const TIMING_DUMMY_HASH = '$2b$12$xz0YTYbBW2Bx5wRNTmJFqOkPlXh77NAdnA4l67i3b9R/BMwKX.o9K';
+
 /** Validita' del link di reset. Breve per limitare la finestra di attacco. */
 const RESET_TOKEN_TTL_MINUTES = 60;
 
@@ -357,19 +363,12 @@ export async function authRoutes(app: FastifyInstance) {
         },
       },
     });
-    if (!user || !user.isActive) {
-      return reply.status(401).send({
-        success: false,
-        error: {
-          code: 'INVALID_CREDENTIALS',
-          message: 'Email o password non corretti',
-        },
-      });
-    }
-
-    // Verify password
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-    if (!validPassword) {
+    // bcrypt si esegue SEMPRE, anche quando l'account non c'e'. Rispondere
+    // subito a un'email sconosciuta e dopo ~250 ms a una registrata lasciava
+    // capire dai tempi quali indirizzi hanno un account, nonostante il
+    // messaggio identico nei due casi.
+    const validPassword = await bcrypt.compare(password, user?.passwordHash ?? TIMING_DUMMY_HASH);
+    if (!user || !user.isActive || !validPassword) {
       return reply.status(401).send({
         success: false,
         error: {
@@ -575,7 +574,7 @@ export async function authRoutes(app: FastifyInstance) {
       // portatile. Senza token si chiude tutto, come prima.
       const token = request.body?.refreshToken;
       if (token) {
-        await revokeRefreshToken(app.prisma, token);
+        await revokeRefreshToken(app.prisma, token, userId);
       } else {
         await revokeAllRefreshTokens(app.prisma, userId);
       }

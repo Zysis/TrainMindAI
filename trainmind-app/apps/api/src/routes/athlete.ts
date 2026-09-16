@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { Prisma } from '@trainmind/db';
 import { requireMinRole } from '../middleware/rbac.js';
 import { requireAthlete } from '../middleware/rbac.js';
 import {
@@ -9,12 +10,58 @@ import {
   athleteSessionsQuerySchema,
   athleteWellnessQuerySchema,
   pushSubscriptionSchema,
+  markNotificationsReadSchema,
 } from '../schemas/athlete.js';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import { issueRefreshToken } from '../lib/refresh-tokens.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { athleteAppUrl } from '../lib/app-url.js';
 import { sendEmail } from '../services/email-service.js';
+
+/**
+ * Le sessioni che un atleta puo' vedere: quelle assegnate a lui e quelle dei
+ * piani delle sue squadre, dentro la sua organizzazione.
+ *
+ * Un solo posto per la regola, usato dall'elenco, dal dettaglio e dal
+ * registro RPE. Fino al 16/9/2026 la usava solo l'elenco: il dettaglio
+ * leggeva la sessione per id senza altri filtri e il registro scriveva su
+ * qualunque id ricevuto, quindi un atleta poteva leggere — e annotare —
+ * sessioni di altri atleti e di altre organizzazioni.
+ */
+async function loadAthleteScope(
+  app: FastifyInstance,
+  userId: string,
+): Promise<{ athleteId: string; where: Prisma.TrainingSessionWhereInput } | null> {
+  const user = await app.prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      athleteId: true,
+      organizationId: true,
+      athlete: { select: { athleteTeams: { select: { teamId: true } } } },
+    },
+  });
+  if (!user?.athleteId) return null;
+
+  const teamIds = user.athlete?.athleteTeams.map((at) => at.teamId) ?? [];
+  return {
+    athleteId: user.athleteId,
+    where: {
+      organizationId: user.organizationId,
+      OR: [
+        { athleteId: user.athleteId },
+        { week: { trainingPlan: { teamId: { in: teamIds } } } },
+      ],
+    },
+  };
+}
+
+class InviteAlreadyUsedError extends Error {}
+
+const athleteProfileNotFound = {
+  success: false,
+  error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
+} as const;
 
 export async function athleteRoutes(app: FastifyInstance) {
   // ═══════════════════════════════════════════════════════════
@@ -83,6 +130,11 @@ export async function athleteRoutes(app: FastifyInstance) {
         athleteId,
         email,
         invitedById: userId,
+        // Token dal generatore crittografico e non dal default `cuid()` dello
+        // schema: un cuid e' fatto di data, contatore e impronta della
+        // macchina, con una parte casuale corta, e la documentazione stessa
+        // lo sconsiglia per i segreti. Questo token da' accesso a un account.
+        token: crypto.randomBytes(32).toString('base64url'),
         organizationId,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
@@ -193,7 +245,10 @@ export async function athleteRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /athlete/register — Complete registration ───────
-  app.post('/athlete/register', async (request, reply) => {
+  // Stesso limite di /staff/register: e' una rotta pubblica che crea account.
+  app.post('/athlete/register', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (request, reply) => {
     const parsed = registerFromInviteSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -229,38 +284,58 @@ export async function athleteRoutes(app: FastifyInstance) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user + accept invite in transaction
-    const user = await app.prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: invite.email,
-          passwordHash,
-          firstName: invite.athlete.firstName,
-          lastName: invite.athlete.lastName,
-          role: 'ATHLETE',
-          organizationId: invite.organizationId,
-          athleteId: invite.athleteId,
-        },
-      });
+    // Create user + accept invite in transaction. L'invito si prende per
+    // primo con un update condizionato: di due registrazioni concorrenti con
+    // lo stesso link ne passa una, l'altra riceve 410 e non un 500.
+    let user;
+    try {
+      user = await app.prisma.$transaction(async (tx) => {
+        const claimed = await tx.athleteInvite.updateMany({
+          where: { id: invite.id, status: 'PENDING' },
+          data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        });
+        if (claimed.count === 0) throw new InviteAlreadyUsedError();
 
-      // Registra le accettazioni versionate (ToS, informativa atleti,
-      // consenso esplicito art. 9 GDPR ai dati sanitari, dichiarazione età)
-      await tx.consentRecord.createMany({
-        data: [
-          { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ipAddress: request.ip },
-          { userId: newUser.id, docType: 'PRIVACY_ATHLETE_ACK', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
-          { userId: newUser.id, docType: 'HEALTH_DATA', docVersion: LEGAL_VERSIONS.HEALTH_DATA, ipAddress: request.ip },
-          { userId: newUser.id, docType: 'AGE_DECLARATION', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
-        ],
-      });
+        const newUser = await tx.user.create({
+          data: {
+            email: invite.email,
+            passwordHash,
+            firstName: invite.athlete.firstName,
+            lastName: invite.athlete.lastName,
+            role: 'ATHLETE',
+            organizationId: invite.organizationId,
+            athleteId: invite.athleteId,
+          },
+        });
 
-      await tx.athleteInvite.update({
-        where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
-      });
+        // Registra le accettazioni versionate (ToS, informativa atleti,
+        // consenso esplicito art. 9 GDPR ai dati sanitari, dichiarazione età)
+        await tx.consentRecord.createMany({
+          data: [
+            { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ipAddress: request.ip },
+            { userId: newUser.id, docType: 'PRIVACY_ATHLETE_ACK', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
+            { userId: newUser.id, docType: 'HEALTH_DATA', docVersion: LEGAL_VERSIONS.HEALTH_DATA, ipAddress: request.ip },
+            { userId: newUser.id, docType: 'AGE_DECLARATION', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
+          ],
+        });
 
-      return newUser;
-    });
+        return newUser;
+      });
+    } catch (err) {
+      if (err instanceof InviteAlreadyUsedError) {
+        return reply.status(410).send({
+          success: false,
+          error: { code: 'INVALID_INVITE', message: 'Invito non valido o scaduto' },
+        });
+      }
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        return reply.status(409).send({
+          success: false,
+          error: { code: 'CONFLICT', message: 'Email già registrata' },
+        });
+      }
+      throw err;
+    }
 
     // Generate JWT
     const tokenPayload: {
@@ -373,48 +448,17 @@ export async function athleteRoutes(app: FastifyInstance) {
     const { userId } = request.user;
     const query = athleteSessionsQuerySchema.parse(request.query);
 
-    // Get athlete profile to find athleteId and teams
-    const user = await app.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        athleteId: true,
-        athlete: {
-          select: {
-            athleteTeams: { select: { teamId: true } },
-          },
-        },
-      },
-    });
+    const scope = await loadAthleteScope(app, userId);
+    if (!scope) return reply.status(404).send(athleteProfileNotFound);
+    const myAthleteId = scope.athleteId;
 
-    if (!user?.athleteId) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
-      });
-    }
-
-    const teamIds = user.athlete?.athleteTeams.map((at) => at.teamId) || [];
-
-    // Build where: sessions assigned to this athlete OR to their teams
-    const where: Record<string, unknown> = {
-      OR: [
-        { athleteId: user.athleteId },
-        // Sessions in plans assigned to athlete's teams
-        {
-          week: {
-            trainingPlan: {
-              teamId: { in: teamIds },
-            },
-          },
-        },
-      ],
-    };
-
+    const where: Prisma.TrainingSessionWhereInput = { ...scope.where };
     if (query.status) where.status = query.status;
     if (query.from || query.to) {
-      where.date = {};
-      if (query.from) (where.date as Record<string, unknown>).gte = new Date(query.from);
-      if (query.to) (where.date as Record<string, unknown>).lte = new Date(query.to);
+      where.date = {
+        ...(query.from ? { gte: new Date(query.from) } : {}),
+        ...(query.to ? { lte: new Date(query.to) } : {}),
+      };
     }
 
     const [sessions, total] = await Promise.all([
@@ -430,7 +474,7 @@ export async function athleteRoutes(app: FastifyInstance) {
             orderBy: { orderIndex: 'asc' },
           },
           sessionLogs: {
-            where: { athleteId: user.athleteId },
+            where: { athleteId: myAthleteId },
             take: 1,
           },
         },
@@ -462,20 +506,14 @@ export async function athleteRoutes(app: FastifyInstance) {
     const { userId } = request.user;
     const { id } = request.params;
 
-    const user = await app.prisma.user.findUnique({
-      where: { id: userId },
-      select: { athleteId: true },
-    });
+    const scope = await loadAthleteScope(app, userId);
+    if (!scope) return reply.status(404).send(athleteProfileNotFound);
+    const myAthleteId = scope.athleteId;
 
-    if (!user?.athleteId) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
-      });
-    }
-
-    const session = await app.prisma.trainingSession.findUnique({
-      where: { id },
+    // findFirst con il perimetro dell'atleta: una sessione che non gli
+    // appartiene risponde 404 come una che non esiste, senza rivelare nulla.
+    const session = await app.prisma.trainingSession.findFirst({
+      where: { AND: [{ id }, scope.where] },
       include: {
         sessionExercises: {
           include: {
@@ -498,12 +536,13 @@ export async function athleteRoutes(app: FastifyInstance) {
       });
     }
 
-    // Mark as viewed (upsert SessionLog with viewedAt)
-    await app.prisma.sessionLog.upsert({
+    // Mark as viewed (upsert SessionLog with viewedAt). L'upsert restituisce
+    // gia' la riga aggiornata: rileggerla era una query in piu'.
+    const myLog = await app.prisma.sessionLog.upsert({
       where: {
         trainingSessionId_athleteId: {
           trainingSessionId: id,
-          athleteId: user.athleteId,
+          athleteId: myAthleteId,
         },
       },
       update: {
@@ -511,17 +550,8 @@ export async function athleteRoutes(app: FastifyInstance) {
       },
       create: {
         trainingSessionId: id,
-        athleteId: user.athleteId,
+        athleteId: myAthleteId,
         viewedAt: new Date(),
-      },
-    });
-
-    const myLog = await app.prisma.sessionLog.findUnique({
-      where: {
-        trainingSessionId_athleteId: {
-          trainingSessionId: id,
-          athleteId: user.athleteId,
-        },
       },
     });
 
@@ -544,25 +574,27 @@ export async function athleteRoutes(app: FastifyInstance) {
     }
 
     const { userId } = request.user;
-    const user = await app.prisma.user.findUnique({
-      where: { id: userId },
-      select: { athleteId: true },
-    });
-
-    if (!user?.athleteId) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
-      });
-    }
+    const scope = await loadAthleteScope(app, userId);
+    if (!scope) return reply.status(404).send(athleteProfileNotFound);
+    const myAthleteId = scope.athleteId;
 
     const { trainingSessionId, actualRpe, notes, exerciseChecks } = parsed.data;
+
+    const visible = await app.prisma.trainingSession.count({
+      where: { AND: [{ id: trainingSessionId }, scope.where] },
+    });
+    if (visible === 0) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Sessione non trovata' },
+      });
+    }
 
     const log = await app.prisma.sessionLog.upsert({
       where: {
         trainingSessionId_athleteId: {
           trainingSessionId,
-          athleteId: user.athleteId,
+          athleteId: myAthleteId,
         },
       },
       update: {
@@ -572,7 +604,7 @@ export async function athleteRoutes(app: FastifyInstance) {
       },
       create: {
         trainingSessionId,
-        athleteId: user.athleteId,
+        athleteId: myAthleteId,
         actualRpe,
         notes,
         exerciseChecks: exerciseChecks || undefined,
@@ -692,11 +724,20 @@ export async function athleteRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /athlete/notifications/read — Mark as read ──────
-  app.post<{ Body: { ids: string[] } }>('/athlete/notifications/read', {
+  app.post('/athlete/notifications/read', {
     preHandler: [app.authenticate, requireAthlete()],
   }, async (request, reply) => {
     const { userId } = request.user;
-    const { ids } = request.body as { ids: string[] };
+    // Senza validazione un corpo senza `ids` arrivava a Prisma come
+    // `{ in: undefined }` e un valore non-array faceva rispondere 500.
+    const parsed = markNotificationsReadSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Dati non validi', details: parsed.error.flatten().fieldErrors },
+      });
+    }
+    const { ids } = parsed.data;
 
     await app.prisma.notification.updateMany({
       where: { id: { in: ids }, userId },

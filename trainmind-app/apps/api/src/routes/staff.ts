@@ -19,6 +19,7 @@
 import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@trainmind/db';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import { requireRole } from '../middleware/rbac.js';
 import { createStaffInviteSchema, staffRegisterSchema } from '../schemas/staff.js';
 import {
@@ -153,6 +154,11 @@ export async function staffRoutes(app: FastifyInstance) {
           email,
           role,
           invitedById: userId,
+          // Token dal generatore crittografico e non dal default `cuid()` dello
+          // schema: un cuid e' fatto di data, contatore e impronta della
+          // macchina, con una parte casuale corta, e la documentazione stessa
+          // lo sconsiglia per i segreti. Questo token da' accesso a un account.
+          token: crypto.randomBytes(32).toString('base64url'),
           organizationId,
           expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000),
         },
@@ -418,62 +424,73 @@ export async function staffRoutes(app: FastifyInstance) {
     const userAgent = request.headers['user-agent'] ?? null;
     const baseAudit = { ipAddress: request.ip, userAgent, language: uiLanguage };
 
-    const user = await app.prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: invite.email,
-          passwordHash,
-          firstName,
-          lastName,
-          role: invite.role,
-          organizationId: invite.organizationId,
-          locale: uiLanguage,
-        },
-      });
-
-      const consents: Array<{
-        userId: string;
-        docType: string;
-        docVersion: string;
-        ipAddress: string | null;
-        userAgent: string | null;
-        language: string | null;
-        metadata?: Prisma.InputJsonValue;
-      }> = [
-        { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ...baseAudit },
-        { userId: newUser.id, docType: 'PRIVACY_ACK', docVersion: LEGAL_VERSIONS.PRIVACY, ...baseAudit },
-        {
-          userId: newUser.id,
-          docType: 'AGE_DECLARATION',
-          docVersion: LEGAL_VERSIONS.PRIVACY,
-          ...baseAudit,
-          metadata: { dateOfBirth } as Prisma.InputJsonValue,
-        },
-        {
-          userId: newUser.id,
-          docType: 'HEALTH_DATA',
-          docVersion: LEGAL_VERSIONS.HEALTH_DATA,
-          ...baseAudit,
-          metadata: { granted: consentHealthData } as Prisma.InputJsonValue,
-        },
-      ];
-      if (acceptMarketing) {
-        consents.push({
-          userId: newUser.id,
-          docType: 'MARKETING',
-          docVersion: LEGAL_VERSIONS.MARKETING,
-          ...baseAudit,
+    let user;
+    try {
+      user = await app.prisma.$transaction(async (tx) => {
+        // L'invito si "prende" per primo, con un update condizionato: di due
+        // registrazioni concorrenti con lo stesso link ne passa una sola, e
+        // l'altra riceve 410 invece di un 500 dal vincolo di unicita'.
+        const claimed = await tx.staffInvite.updateMany({
+          where: { id: invite.id, status: 'PENDING' },
+          data: { status: 'ACCEPTED', acceptedAt: new Date() },
         });
-      }
-      await tx.consentRecord.createMany({ data: consents });
+        if (claimed.count === 0) throw new InviteAlreadyUsedError();
 
-      await tx.staffInvite.update({
-        where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        const newUser = await tx.user.create({
+          data: {
+            email: invite.email,
+            passwordHash,
+            firstName,
+            lastName,
+            role: invite.role,
+            organizationId: invite.organizationId,
+            locale: uiLanguage,
+          },
+        });
+
+        const consents: Array<{
+          userId: string;
+          docType: string;
+          docVersion: string;
+          ipAddress: string | null;
+          userAgent: string | null;
+          language: string | null;
+          metadata?: Prisma.InputJsonValue;
+        }> = [
+          { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ...baseAudit },
+          { userId: newUser.id, docType: 'PRIVACY_ACK', docVersion: LEGAL_VERSIONS.PRIVACY, ...baseAudit },
+          {
+            userId: newUser.id,
+            docType: 'AGE_DECLARATION',
+            docVersion: LEGAL_VERSIONS.PRIVACY,
+            ...baseAudit,
+            metadata: { dateOfBirth } as Prisma.InputJsonValue,
+          },
+          {
+            userId: newUser.id,
+            docType: 'HEALTH_DATA',
+            docVersion: LEGAL_VERSIONS.HEALTH_DATA,
+            ...baseAudit,
+            metadata: { granted: consentHealthData } as Prisma.InputJsonValue,
+          },
+        ];
+        if (acceptMarketing) {
+          consents.push({
+            userId: newUser.id,
+            docType: 'MARKETING',
+            docVersion: LEGAL_VERSIONS.MARKETING,
+            ...baseAudit,
+          });
+        }
+        await tx.consentRecord.createMany({ data: consents });
+
+        return newUser;
       });
-
-      return newUser;
-    });
+    } catch (err) {
+      const conflict = registrationConflict(err);
+      if (conflict) return reply.status(conflict.status).send({ success: false, error: conflict.error });
+      throw err;
+    }
 
     const accessToken = app.jwt.sign({
       userId: user.id,
@@ -517,6 +534,26 @@ export async function staffRoutes(app: FastifyInstance) {
       },
     });
   });
+}
+
+// ─── Concorrenza sulla registrazione ────────────────────
+
+class InviteAlreadyUsedError extends Error {}
+
+/** Traduce le due corse possibili in una risposta, o `null` per gli altri errori. */
+function registrationConflict(
+  err: unknown,
+): { status: number; error: { code: string; message: string } } | null {
+  if (err instanceof InviteAlreadyUsedError) {
+    return { status: 410, error: { code: 'INVALID_INVITE', message: 'Invito non valido o scaduto' } };
+  }
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+    return {
+      status: 409,
+      error: { code: 'EMAIL_ALREADY_REGISTERED', message: 'Email gia\' registrata' },
+    };
+  }
+  return null;
 }
 
 // ─── Email ───────────────────────────────────────────────

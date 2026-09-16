@@ -96,10 +96,14 @@ export async function rotateRefreshToken(
   return { userId: row.userId, refreshToken: next };
 }
 
-/** Chiude una sola sessione (logout dal dispositivo corrente). */
-export async function revokeRefreshToken(db: Db, token: string): Promise<void> {
+/**
+ * Chiude una sola sessione (logout dal dispositivo corrente). Con `userId`
+ * la chiude solo se appartiene a quell'utente: il logout di Mario non deve
+ * poter chiudere la sessione di un altro, qualunque token gli arrivi.
+ */
+export async function revokeRefreshToken(db: Db, token: string, userId?: string): Promise<void> {
   await db.refreshToken.updateMany({
-    where: { tokenHash: hash(token), revokedAt: null },
+    where: { tokenHash: hash(token), revokedAt: null, ...(userId ? { userId } : {}) },
     data: { revokedAt: new Date() },
   });
 }

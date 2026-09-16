@@ -35,7 +35,31 @@ import { startRetentionWorker } from './services/retention-worker.js';
 import auditPlugin from './plugins/audit.js';
 import { errorHandler } from './lib/error-handler.js';
 
+/**
+ * Il plugin di autenticazione ripiega su un segreto di sviluppo scritto nel
+ * codice quando JWT_SECRET manca. Il file di deploy passa `${JWT_SECRET}`
+ * senza `:?`, quindi una riga dimenticata in `.env.deploy` produceva una
+ * stringa vuota e, in silenzio, token firmati con un segreto pubblico:
+ * chiunque avesse letto il repository poteva fabbricarsi un accesso ADMIN a
+ * qualunque organizzazione. In produzione ci si rifiuta di partire.
+ */
+const KNOWN_WEAK_SECRETS = [
+  'dev-secret-must-be-at-least-32-chars-long',
+  'CAMBIAMI_stringa_casuale_di_almeno_32_caratteri',
+];
+
+export function assertProductionSecrets(env: NodeJS.ProcessEnv = process.env): void {
+  if (env.NODE_ENV !== 'production') return;
+  const secret = env.JWT_SECRET ?? '';
+  if (secret.length < 32 || KNOWN_WEAK_SECRETS.includes(secret)) {
+    throw new Error(
+      'JWT_SECRET mancante, troppo corto (< 32 caratteri) o uguale al valore di esempio: impostalo in .env.deploy',
+    );
+  }
+}
+
 export async function buildApp() {
+  assertProductionSecrets();
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL || 'info',
@@ -143,7 +167,15 @@ export async function buildApp() {
   app.addContentTypeParser(
     'application/json',
     { parseAs: 'string' },
-    (_req, body: string, done) => {
+    (req, body: string, done) => {
+      // Le rotte che devono verificare una firma sul corpo (il webhook di
+      // Stripe) lo chiedono con `config: { rawBody: true }`: il testo
+      // originale resta in `request.rawBody`, perche' riserializzare l'oggetto
+      // non restituisce gli stessi byte e la firma non tornerebbe.
+      const routeConfig = req.routeOptions?.config as { rawBody?: boolean } | undefined;
+      if (routeConfig?.rawBody) {
+        (req as unknown as { rawBody?: string }).rawBody = body;
+      }
       if (!body || body.trim() === '') return done(null, {});
       try {
         done(null, JSON.parse(body));

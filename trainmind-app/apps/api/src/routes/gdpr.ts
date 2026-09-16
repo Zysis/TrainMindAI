@@ -11,6 +11,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
+import { Prisma } from '@trainmind/db';
 import { requireMinRole } from '../middleware/rbac.js';
 
 const consentSchema = z.object({
@@ -29,7 +30,32 @@ export async function gdprRoutes(app: FastifyInstance) {
 
   // ─── GET /gdpr/export — Data portability (Art. 20) ────
   app.get('/gdpr/export', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { userId, organizationId } = request.user;
+    const { userId, organizationId, role } = request.user;
+
+    // Perimetro dell'esportazione.
+    //
+    // Lo staff esporta i dati della propria organizzazione, che vede gia'
+    // tutti dall'applicazione. Un ATHLETE invece passa di qui perche' /gdpr/*
+    // e' fra i prefissi che il plugin di autenticazione gli lascia aperti,
+    // e fino al 16/9/2026 riceveva anche lui l'organizzazione intera:
+    // anagrafiche, wellness e infortuni dei compagni di squadra, cioe' dati
+    // sanitari altrui. All'atleta spettano solo i suoi.
+    let athleteScope: { organizationId: string } | { organizationId: string; id: string };
+    let sessionScope: Record<string, unknown>;
+    if (role === 'ATHLETE') {
+      const self = await app.prisma.user.findUnique({
+        where: { id: userId },
+        select: { athleteId: true },
+      });
+      // Un atleta senza anagrafica collegata non ha dati sanitari da
+      // esportare: l'id impossibile fa restituire elenchi vuoti.
+      const ownAthleteId = self?.athleteId ?? '__none__';
+      athleteScope = { organizationId, id: ownAthleteId };
+      sessionScope = { organizationId, athleteId: ownAthleteId };
+    } else {
+      athleteScope = { organizationId };
+      sessionScope = { week: { trainingPlan: { organizationId } } };
+    }
 
     const [user, athletes, wellnessLogs, trainingSessions, injuries] = await Promise.all([
       app.prisma.user.findUnique({
@@ -40,14 +66,14 @@ export async function gdprRoutes(app: FastifyInstance) {
         },
       }),
       app.prisma.athlete.findMany({
-        where: { organizationId },
+        where: athleteScope,
         select: {
           id: true, firstName: true, lastName: true, dateOfBirth: true,
           position: true, height: true, weight: true, createdAt: true,
         },
       }),
       app.prisma.wellnessLog.findMany({
-        where: { athlete: { organizationId } },
+        where: { athlete: athleteScope },
         select: {
           id: true, athleteId: true, date: true, sleepHours: true, sleepQuality: true,
           fatigue: true, soreness: true, stress: true, mood: true, notes: true, createdAt: true,
@@ -56,7 +82,7 @@ export async function gdprRoutes(app: FastifyInstance) {
         take: 1000,
       }),
       app.prisma.trainingSession.findMany({
-        where: { week: { trainingPlan: { organizationId } } },
+        where: sessionScope,
         select: {
           id: true, title: true, date: true, status: true,
           duration: true, notes: true, createdAt: true,
@@ -65,7 +91,7 @@ export async function gdprRoutes(app: FastifyInstance) {
         take: 500,
       }),
       app.prisma.injury.findMany({
-        where: { athlete: { organizationId } },
+        where: { athlete: athleteScope },
         select: {
           id: true, athleteId: true, type: true, location: true, severity: true,
           status: true, dateOccurred: true, dateResolved: true, notes: true,
@@ -122,6 +148,42 @@ export async function gdprRoutes(app: FastifyInstance) {
       });
     }
 
+    // Stessa regola di /staff/members/:id/disable: l'ultimo amministratore
+    // non puo' andarsene lasciando dentro altri colleghi, perche' nessuno
+    // potrebbe piu' invitare, disattivare o gestire l'abbonamento. Se invece
+    // e' rimasto da solo, l'organizzazione e' sua e puo' chiuderla.
+    if (user.role === 'ADMIN') {
+      const [otherAdmins, otherStaff] = await Promise.all([
+        app.prisma.user.count({
+          where: {
+            organizationId: user.organizationId,
+            role: 'ADMIN',
+            isActive: true,
+            deletedAt: null,
+            id: { not: userId },
+          },
+        }),
+        app.prisma.user.count({
+          where: {
+            organizationId: user.organizationId,
+            role: { not: 'ATHLETE' },
+            isActive: true,
+            deletedAt: null,
+            id: { not: userId },
+          },
+        }),
+      ]);
+      if (otherAdmins === 0 && otherStaff > 0) {
+        return reply.status(409).send({
+          success: false,
+          error: {
+            code: 'LAST_ADMIN',
+            message: 'Deve restare almeno un amministratore attivo: nomina un altro amministratore prima di eliminare il tuo account',
+          },
+        });
+      }
+    }
+
     // Soft-delete + anonimizzazione: preserva l'integrità referenziale
     // (ConsentRecord, AuditLog, invites) senza mantenere dati identificativi.
     // I dati sanitari collegati vengono cancellati subito solo per atleti.
@@ -145,12 +207,17 @@ export async function gdprRoutes(app: FastifyInstance) {
           firstName: 'Rimosso',
           lastName: 'Rimosso',
           passwordHash: '!disabled',
-          refreshToken: null,
           isActive: false,
           deletedAt: new Date(),
-          pushSubscription: undefined,
+          // `undefined` lasciava la sottoscrizione dov'era: per un campo Json
+          // l'azzeramento si scrive con Prisma.DbNull.
+          pushSubscription: Prisma.DbNull,
         },
       });
+      // Le sessioni stanno in refresh_tokens dal 10/9/2026. Prima qui si
+      // scriveva `refreshToken: null` su una colonna che non esiste piu', e
+      // Prisma rifiutava l'intera update: la cancellazione rispondeva 500.
+      await tx.refreshToken.deleteMany({ where: { userId } });
     });
 
     request.log.info({ userId, role: user.role }, 'GDPR account erasure completed');
@@ -207,11 +274,12 @@ export async function gdprRoutes(app: FastifyInstance) {
               firstName: 'Rimosso',
               lastName: 'Rimosso',
               passwordHash: '!disabled',
-              refreshToken: null,
               isActive: false,
               deletedAt: new Date(),
+              pushSubscription: Prisma.DbNull,
             },
           });
+          await tx.refreshToken.deleteMany({ where: { userId: linkedUser.id } });
         }
 
         // Anonimizza l'anagrafica dell'atleta ma la conserva per integrità

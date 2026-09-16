@@ -66,7 +66,28 @@ async function request<T>(
   return res.json();
 }
 
-async function tryRefresh(): Promise<boolean> {
+/**
+ * Un solo rinnovo alla volta.
+ *
+ * Quando l'access token scade, una pagina che ha piu' richieste in corso le
+ * vede tornare tutte con 401 e ognuna chiedeva un rinnovo per conto suo,
+ * con lo STESSO refresh token. Il server ruota il token al primo rinnovo e
+ * revoca il vecchio: il secondo, se arrivava dopo, prendeva 401 e la pagina
+ * mandava l'utente al login dopo un quarto d'ora di lavoro. Ora le richieste
+ * concorrenti aspettano lo stesso rinnovo.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = doRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function doRefresh(): Promise<boolean> {
   const refreshToken = localStorage.getItem('athlete_refresh_token');
   if (!refreshToken) return false;
 

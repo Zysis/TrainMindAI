@@ -49,6 +49,9 @@ const TRANSLATED_CODES = new Set([
   'INVALID_INVITE',
   'NO_SEAT_AVAILABLE',
   'EMAIL_ALREADY_REGISTERED',
+  // staff: l'ultimo amministratore non puo' uscire ne' essere disattivato
+  'LAST_ADMIN',
+  'CANNOT_DISABLE_SELF',
   // AI
   'AI_SERVICE_DOWN',
   'AI_SERVICE_TIMEOUT',

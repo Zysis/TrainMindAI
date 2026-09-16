@@ -85,6 +85,24 @@ const TIER_TO_ENUM: Record<string, 'STARTER' | 'PROFESSIONAL' | 'ULTRA'> = {
   ultra: 'ULTRA',
 };
 
+/**
+ * URL di ritorno da Stripe: quello chiesto dal client solo se punta alla
+ * nostra applicazione, altrimenti quello di default.
+ *
+ * Senza questo controllo `successUrl` era un redirect aperto: una pagina di
+ * pagamento autentica di Stripe che, finito il pagamento, rimanda dove vuole
+ * chi ha costruito la richiesta. I client attuali non mandano questi campi,
+ * quindi il default e' anche il comportamento di oggi.
+ */
+export function sameOriginOr(requested: string | undefined, fallback: string): string {
+  if (!requested) return fallback;
+  try {
+    return new URL(requested).origin === new URL(fallback).origin ? requested : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 // ─── Schemas ───────────────────────────────────────────
 
 const checkoutSchema = z.object({
@@ -119,8 +137,10 @@ export async function billingRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /billing/checkout — Create checkout session ──
+  // Solo ADMIN, come /billing/seats: cambiare il piano impegna la societa'
+  // a pagare, e fino al 16/9/2026 poteva farlo anche un osservatore.
   app.post('/billing/checkout', {
-    preHandler: [app.authenticate],
+    preHandler: [app.authenticate, requireRole('ADMIN')],
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     if (!isStripeConfigured()) {
       return reply.status(503).send({
@@ -169,8 +189,8 @@ export async function billingRoutes(app: FastifyInstance) {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: tier.priceId, quantity: 1 }],
-      success_url: parsed.data.successUrl || `${appUrl}/dashboard/settings?billing=success`,
-      cancel_url: parsed.data.cancelUrl || `${appUrl}/dashboard/settings?billing=cancelled`,
+      success_url: sameOriginOr(parsed.data.successUrl, `${appUrl}/dashboard/settings?billing=success`),
+      cancel_url: sameOriginOr(parsed.data.cancelUrl, `${appUrl}/dashboard/settings?billing=cancelled`),
       metadata: { organizationId, userId, tier: parsed.data.tier },
       subscription_data: {
         metadata: { organizationId, tier: parsed.data.tier },
@@ -244,8 +264,8 @@ export async function billingRoutes(app: FastifyInstance) {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity }],
-      success_url: parsed.data.successUrl || `${appUrl}/dashboard/settings?seats=success`,
-      cancel_url: parsed.data.cancelUrl || `${appUrl}/dashboard/settings?seats=cancelled`,
+      success_url: sameOriginOr(parsed.data.successUrl, `${appUrl}/dashboard/settings?seats=success`),
+      cancel_url: sameOriginOr(parsed.data.cancelUrl, `${appUrl}/dashboard/settings?seats=cancelled`),
       // `kind` e' cio' che distingue questo acquisto da un cambio di piano
       // quando il webhook rilegge la sessione: senza, comprare due posti
       // verrebbe interpretato come un passaggio al piano Starter.
@@ -270,8 +290,10 @@ export async function billingRoutes(app: FastifyInstance) {
   });
 
   // ─── POST /billing/portal — Customer portal ─────────
+  // Solo ADMIN: dal portale Stripe si disdice l'abbonamento, si cambia la
+  // carta e si scaricano le fatture della societa'.
   app.post('/billing/portal', {
-    preHandler: [app.authenticate],
+    preHandler: [app.authenticate, requireRole('ADMIN')],
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     if (!isStripeConfigured()) {
       return reply.status(503).send({
@@ -336,8 +358,9 @@ export async function billingRoutes(app: FastifyInstance) {
   // ─── POST /billing/webhook — Stripe webhook ─────────
   // NOTE: This route must NOT have authentication middleware
   app.post('/billing/webhook', {
-    // `rawBody` is provided by the fastify-raw-body plugin but isn't on the
-    // FastifyContextConfig type by default — cast keeps Fastify happy.
+    // `rawBody: true` chiede al parser JSON di app.ts di conservare il corpo
+    // originale in `request.rawBody`. Non e' nel tipo FastifyContextConfig,
+    // da qui il cast.
     config: { rawBody: true } as Record<string, unknown>,
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     if (!isStripeConfigured()) {
@@ -353,14 +376,19 @@ export async function billingRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Missing signature' });
     }
 
+    // La firma si verifica sul corpo ESATTO ricevuto da Stripe. Lo conserva
+    // il parser JSON di app.ts per le rotte con `config.rawBody`: prima si
+    // contava su un plugin fastify-raw-body mai installato, `rawBody` era
+    // undefined e ogni evento veniva respinto come firma non valida.
+    const rawBody = (request as unknown as { rawBody?: string }).rawBody;
+    if (typeof rawBody !== 'string') {
+      request.log.error('Stripe webhook: raw body not captured');
+      return reply.status(400).send({ error: 'Missing raw body' });
+    }
+
     let event: Stripe.Event;
     try {
-      const rawBody = (request as unknown as { rawBody: string | Buffer }).rawBody;
-      event = stripe.webhooks.constructEvent(
-        typeof rawBody === 'string' ? rawBody : rawBody.toString(),
-        sig,
-        webhookSecret,
-      );
+      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (err) {
       request.log.error({ err }, 'Stripe webhook signature verification failed');
       return reply.status(400).send({ error: 'Invalid signature' });

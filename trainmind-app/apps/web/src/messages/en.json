@@ -2296,6 +2296,8 @@
     "INVALID_INVITE": "Invalid or expired invitation.",
     "NO_SEAT_AVAILABLE": "The organization has run out of seats. Contact whoever invited you.",
     "EMAIL_ALREADY_REGISTERED": "This address is already registered. Sign in instead of creating a new account.",
+    "LAST_ADMIN": "At least one active administrator must remain: appoint another administrator first.",
+    "CANNOT_DISABLE_SELF": "You cannot deactivate your own account.",
     "PRISMA_CLIENT_OUTDATED": "The Prisma client is out of date: run `pnpm db:generate` and `pnpm db:push`, then restart the API."
   },
   "dailyReport": {

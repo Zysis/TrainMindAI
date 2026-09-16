@@ -2296,6 +2296,8 @@
     "INVALID_INVITE": "Invito non valido o scaduto.",
     "NO_SEAT_AVAILABLE": "L'organizzazione ha esaurito i posti disponibili. Contatta chi ti ha invitato.",
     "EMAIL_ALREADY_REGISTERED": "Questo indirizzo è già registrato. Accedi, invece di creare un nuovo account.",
+    "LAST_ADMIN": "Deve restare almeno un amministratore attivo: nomina prima un altro amministratore.",
+    "CANNOT_DISABLE_SELF": "Non puoi disattivare il tuo stesso account.",
     "PRISMA_CLIENT_OUTDATED": "Il client Prisma non è aggiornato: esegui `pnpm db:generate` e `pnpm db:push`, poi riavvia l'API."
   },
   "dailyReport": {
