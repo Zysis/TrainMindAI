@@ -39,7 +39,7 @@ check('switch IT: titolo', q('h1').textContent.includes('performance reale'))
 check('anno footer aggiornato', q('[data-year]').textContent === String(new Date().getFullYear()), q('[data-year]').textContent)
 // il link email compare solo se in pagina c'è la sezione contatti
 const mail = q('a[data-link="email"]')
-if (mail) check('mailto applicato', mail.getAttribute('href').startsWith('mailto:info@lab21.it'))
+if (mail) check('mailto applicato', mail.getAttribute('href').startsWith('mailto:info@lab21sport.com'))
 const senzaHref = [...window.document.querySelectorAll('[data-link]')]
   .filter(el => !el.getAttribute('href'))
   .map(el => el.dataset.link)

@@ -1,0 +1,68 @@
+/* ── HERO a tutta pagina con foto ────────────────────────── */
+.hero{position:relative;min-height:100vh;display:flex;align-items:flex-end;padding-bottom:clamp(48px,7vw,96px);overflow:hidden;background:var(--ink)}
+.hero-media{position:absolute;inset:0;z-index:0;isolation:isolate}
+.hero-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.06)}
+.hero-media img.alt{opacity:0}
+
+/* Livello delle particelle: sta sopra la virata verde (z-index 1) e sotto i
+   gradienti di leggibilita' (z-index 3). Tempi, durate e densita' dei punti
+   si regolano in src/js/hero-morph.js; i punti si rigenerano dalle immagini
+   con  python3 tools/extract-points.py  */
+.hero-fx{position:absolute;inset:0;z-index:2;pointer-events:none}
+
+/* Classe "tint" sul div .hero-media: vira tutta la foto sul colore --acc
+   mantenendo le luci dell'originale (monocromatico). Cambiando --acc in
+   tokens.css cambia anche la foto. In uso ora:
+       <div class="hero-media tint">
+
+   Alternativa per virare solo i blu lasciando gli accenti caldi:
+       python3 tools/tint-hero.py <sorgente> <destinazione>
+   e poi togliere la classe "tint". */
+.hero-media.tint::before{content:'';position:absolute;inset:0;z-index:1;
+  background:var(--acc);mix-blend-mode:color;pointer-events:none}
+.hero-media.tint img{filter:contrast(1.12) brightness(1.05) saturate(1.2)}
+
+/* Classe "wire" (in uso ora): per disegni al tratto scuro su fondo bianco.
+   Inverte l'immagine — tratto chiaro su fondo nero — e moltiplica il verde
+   --acc sopra: il fondo resta nero, le linee diventano verde LAB21.
+       <div class="hero-media wire">
+   Serve "multiply" e non "color" perche' su bianco e nero puri la fusione
+   per colore non attacca. */
+.hero-media.wire{background:#000}
+.hero-media.wire img{filter:invert(1)}
+.hero-media.wire::before{content:'';position:absolute;inset:0;z-index:1;
+  background:var(--acc);mix-blend-mode:multiply;pointer-events:none}
+/* Il fondo nero qui sopra NON è decorativo: "multiply" si fonde con quello
+   che sta sotto, e quando le due immagini sono trasparenti (durante il
+   morphing a particelle) sotto non c'è niente e il verde coprirebbe tutto
+   lo schermo. Con il nero sotto, verde × nero = nero. */
+
+.hero-media::after{content:'';position:absolute;inset:0;z-index:3;
+  background:linear-gradient(180deg,rgba(7,16,14,.40) 0%,rgba(7,16,14,.06) 38%,rgba(7,16,14,.92) 100%),
+             radial-gradient(70% 55% at 76% 20%,rgba(0,201,167,.22),transparent 64%)}
+.hero-in{position:relative;z-index:2;width:100%;color:#fff}
+.hero-flex{display:flex;justify-content:space-between;align-items:flex-end;gap:70px;flex-wrap:wrap}
+.hero-copy{flex:1;min-width:min(560px,100%)}
+.pill{display:inline-flex;align-items:center;gap:11px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);backdrop-filter:blur(10px);padding:9px 18px;border-radius:999px;margin-bottom:30px;color:#fff}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,201,167,.6)}50%{box-shadow:0 0 0 8px rgba(0,201,167,0)}}
+.hero h1{font-size:clamp(44px,6.6vw,104px);max-width:17ch;color:#fff}
+.hero h1 em{font-style:normal;color:var(--acc)}
+.hero p{font-size:clamp(16px,1.35vw,19px);line-height:1.7;max-width:52ch;margin-top:30px;color:rgba(255,255,255,.78);font-weight:300}
+.hcta{display:flex;gap:13px;margin-top:40px;flex-wrap:wrap}
+
+/* pannello dati "live" */
+.live{width:min(400px,100%);border:1px solid rgba(255,255,255,.18);border-radius:20px;background:rgba(7,16,14,.55);backdrop-filter:blur(18px);padding:22px;color:#fff}
+.live-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.live-h b{font-family:var(--font-display);font-size:15px;font-weight:600}
+.chip-live{display:inline-flex;align-items:center;gap:7px;background:rgba(0,201,167,.16);color:var(--acc);padding:5px 11px;border-radius:999px;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em}
+.chip-live i{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:pulse 1.6s infinite}
+.live svg{width:100%;height:96px;display:block}
+.live-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.live-row div{background:rgba(255,255,255,.06);border-radius:11px;padding:12px}
+.live-row b{display:block;font-family:var(--font-display);font-size:21px;font-weight:600}
+.live-row span{font-size:10.5px;color:rgba(255,255,255,.55);display:block;margin-top:3px}
+
+.scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:3;color:rgba(255,255,255,.55);display:flex;flex-direction:column;align-items:center;gap:9px}
+.scroll-hint span{width:1px;height:38px;background:linear-gradient(rgba(255,255,255,.5),transparent);animation:dr 1.9s infinite}
+@keyframes dr{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}

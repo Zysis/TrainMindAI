@@ -15,6 +15,7 @@ import { z } from 'zod';
 import cronParser from 'cron-parser';
 import { requireMinRole } from '../middleware/rbac.js';
 import { runScheduleNow } from '../services/report-scheduler-worker.js';
+import { reportAudienceSchema } from './reports.js';
 
 // ─── Validation schemas ───────────────────────────────────
 
@@ -32,7 +33,8 @@ const cronExpressionSchema = z.string().refine(
 
 const createScheduleSchema = z.object({
   name: z.string().min(1).max(120),
-  audience: z.enum(['STAFF', 'MEDICAL', 'TRAINER']),
+  // TRAINER (report "Preparatore") e' confluito in STAFF
+  audience: reportAudienceSchema,
   format: z.enum(['JSON', 'PDF', 'DOCX']).default('PDF'),
   cronExpression: cronExpressionSchema,
   timezone: z.string().default('Europe/Rome'),

@@ -63,6 +63,10 @@ enum OrganizationTier {
 enum ReportAudience {
   STAFF
   MEDICAL
+  MANAGEMENT
+  /// Dismesso il 17/9/2026: confluito in STAFF. Resta nell'enum solo perche'
+  /// togliere un valore da un tipo Postgres vuol dire ricrearlo; nessuna riga
+  /// lo usa piu' dopo la migration 20260917090000_report_audience_management.
   TRAINER
 }
 

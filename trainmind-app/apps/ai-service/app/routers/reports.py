@@ -2,7 +2,8 @@
 Endpoint per la generazione di riassunti narrativi di report periodici.
 
 POST /ai/generate-report-summary - Genera un riassunto testuale breve (2-4 frasi)
-da un payload di dati aggregati per le 3 audience: STAFF, MEDICAL, TRAINER.
+da un payload di dati aggregati per le audience: STAFF, MEDICAL, MANAGEMENT
+(TRAINER e' ancora accettato e trattato come STAFF).
 
 Sprint 4.1.2b: Report Engine - AI narrative summary.
 """
@@ -31,7 +32,7 @@ def _build_user_payload(request: ReportSummaryRequest) -> str:
         f"Audience: {request.audience}\n\n"
         f"Dati aggregati del report (JSON):\n"
         f"{json.dumps(request.data, ensure_ascii=False, indent=2)[:6000]}\n\n"
-        f"Genera un riassunto in italiano secondo le regole del system prompt. "
+        f"Genera il riassunto secondo le regole del system prompt, nella lingua indicata. "
         f"Rispondi ESCLUSIVAMENTE con un JSON valido nel formato "
         f'{{"summary": "...", "highlights": ["...", "..."]}}'
     )
@@ -42,7 +43,8 @@ def _fallback_summary(request: ReportSummaryRequest) -> ReportSummaryResponse:
     audience_labels = {
         "STAFF": "Staff tecnico",
         "MEDICAL": "Staff medico",
-        "TRAINER": "Preparazione atletica",
+        "MANAGEMENT": "Dirigenza",
+        "TRAINER": "Staff tecnico",
     }
     label = audience_labels.get(request.audience, "Staff")
     data = request.data or {}
@@ -96,7 +98,7 @@ def _build_cache_key(request: ReportSummaryRequest) -> str:
     """Costruisce una chiave cache deterministica per il report summary."""
     import hashlib
 
-    payload = f"{request.audience}|{request.organization_name}|{request.period_from}|{request.period_to}|{request.model or ''}|{json.dumps(request.data, sort_keys=True, ensure_ascii=False)}"
+    payload = f"{request.audience}|{request.language}|{request.organization_name}|{request.period_from}|{request.period_to}|{request.model or ''}|{json.dumps(request.data, sort_keys=True, ensure_ascii=False)}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
 
 
@@ -129,7 +131,7 @@ async def generate_report_summary(
             logger.info("Report summary served from cache")
             return ReportSummaryResponse(**cached)
 
-        system_prompt = get_report_prompt(request.audience)
+        system_prompt = get_report_prompt(request.audience, request.language)
         user_payload = _build_user_payload(request)
 
         messages = [
@@ -145,7 +147,7 @@ async def generate_report_summary(
                 messages=messages,
                 model=request.model,
                 temperature=0.4,
-                max_tokens=600,
+                max_tokens=900,
             )
             raw_response = llm_result.content
         except Exception as exc:

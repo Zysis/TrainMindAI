@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FileText, Download, Eye, Loader2, CalendarClock, ClipboardList, Trophy } from 'lucide-react';
+import { FileText, Download, Eye, Loader2, CalendarClock, ClipboardList, Trophy, ChevronRight } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,14 @@ import { getAccessToken } from '@/lib/auth/api';
 import { API_BASE_URL, API_PREFIX } from '@/lib/constants';
 import { useTeam } from '@/hooks/use-team';
 
-type Audience = 'STAFF' | 'MEDICAL' | 'TRAINER';
+type Audience = 'STAFF' | 'MEDICAL' | 'MANAGEMENT';
+
+/** Nome del file scaricato: uguale a quello che mette l'API */
+const AUDIENCE_SLUG: Record<Audience, string> = {
+  STAFF: 'staff-tecnico',
+  MEDICAL: 'staff-medico',
+  MANAGEMENT: 'dirigenza',
+};
 type Format = 'JSON' | 'PDF' | 'DOCX';
 
 interface AthleteOption {
@@ -44,6 +51,7 @@ interface ReportPreview {
     athleteName?: string;
   };
   summary?: string;
+  highlights?: string[];
   kpis?: Array<{ label: string; value: string | number; trend?: string }>;
 }
 
@@ -60,13 +68,18 @@ async function readApiError(res: Response): Promise<string> {
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
+  // Le descrizioni delle due schede sono i sottotitoli delle pagine stesse
+  const tGame = useTranslations('gameReport');
+  const tDaily = useTranslations('dailyReport');
   const apiError = useApiError();
 
   const AUDIENCE_OPTIONS = [
     { value: 'STAFF', label: t('audienceStaff') },
     { value: 'MEDICAL', label: t('audienceMedical') },
-    { value: 'TRAINER', label: t('audienceTrainer') },
+    { value: 'MANAGEMENT', label: t('audienceManagement') },
   ];
+  const audienceLabel = (value: string) =>
+    AUDIENCE_OPTIONS.find((o) => o.value === value)?.label ?? value;
   const { toast } = useToast();
   const { teams } = useTeam();
   const [teamId, setTeamId] = useState<string>('');
@@ -107,7 +120,8 @@ export default function ReportsPage() {
       periodFrom,
       periodTo,
       format,
-      includeAISummary,
+      // Per la dirigenza il commento è sempre incluso (lo impone anche l'API)
+      includeAISummary: audience === 'MANAGEMENT' ? true : includeAISummary,
       ...(teamId ? { teamId } : {}),
       ...(athleteId ? { athleteId } : {}),
     });
@@ -169,7 +183,7 @@ export default function ReportsPage() {
       const athleteSlug = athlete
         ? `-${`${athlete.lastName}_${athlete.firstName}`.toLowerCase().replace(/\s+/g, '_')}`
         : '';
-      a.download = `report-${audience.toLowerCase()}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}.${format.toLowerCase()}`;
+      a.download = `report-${AUDIENCE_SLUG[audience]}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}.${format.toLowerCase()}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -193,20 +207,6 @@ export default function ReportsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/dashboard/reports/game"
-            className="inline-flex items-center gap-2 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/30 px-4 py-2.5 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50"
-          >
-            <Trophy className="h-4 w-4" />
-            {t('gameReport')}
-          </Link>
-          <Link
-            href="/dashboard/reports/daily"
-            className="inline-flex items-center gap-2 rounded-lg border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/30 px-4 py-2.5 text-sm font-semibold text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/50"
-          >
-            <ClipboardList className="h-4 w-4" />
-            {t('dailyReport')}
-          </Link>
-          <Link
             href="/dashboard/reports/schedules"
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
@@ -214,6 +214,36 @@ export default function ReportsPage() {
             {t('schedules')}
           </Link>
         </div>
+      </div>
+
+      {/* ─── Report singoli: partita e giornata ───────── */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Link
+          href="/dashboard/reports/game"
+          className="group flex min-w-0 items-center gap-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 p-5 transition hover:border-purple-400 hover:shadow-sm dark:hover:border-purple-600"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white">
+            <Trophy className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-purple-900 dark:text-purple-100">{t('gameReport')}</span>
+            <span className="block text-sm text-purple-700 dark:text-purple-300">{tGame('subtitle')}</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-purple-400 transition group-hover:translate-x-0.5" />
+        </Link>
+        <Link
+          href="/dashboard/reports/daily"
+          className="group flex min-w-0 items-center gap-4 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20 p-5 transition hover:border-teal-400 hover:shadow-sm dark:hover:border-teal-600"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white">
+            <ClipboardList className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-teal-900 dark:text-teal-100">{t('dailyReport')}</span>
+            <span className="block text-sm text-teal-700 dark:text-teal-300">{tDaily('subtitle')}</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-teal-400 transition group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {/* ─── Form ─────────────────────────────────────── */}
@@ -266,17 +296,22 @@ export default function ReportsPage() {
         {athleteId && (
           <p className="text-xs text-slate-500 dark:text-slate-400">{t('athleteReportHint')}</p>
         )}
+        {audience === 'MANAGEMENT' && (
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('managementHint')}</p>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={includeAISummary}
-              onChange={(e) => setIncludeAISummary(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
-            />
-            {t('includeAISummary')}
-          </label>
+          {audience !== 'MANAGEMENT' && (
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={includeAISummary}
+                onChange={(e) => setIncludeAISummary(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
+              />
+              {t('includeAISummary')}
+            </label>
+          )}
           <div className="flex-1" />
           <button
             type="button"
@@ -336,7 +371,7 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-xs uppercase text-slate-500 dark:text-slate-400">{t('audience')}</p>
-                <p className="font-medium text-slate-900 dark:text-white">{preview.metadata.audience}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{audienceLabel(preview.metadata.audience)}</p>
               </div>
               {preview.metadata.teamName && (
                 <div>
@@ -364,9 +399,21 @@ export default function ReportsPage() {
           </div>
 
           {preview.summary && (
-            <div className="rounded-lg border-l-4 border-indigo-500 bg-indigo-50 p-4">
-              <p className="text-xs font-semibold uppercase text-indigo-700">{t('aiSummary')}</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{preview.summary}</p>
+            <div className="rounded-lg border-l-4 border-indigo-500 bg-indigo-50 p-4 dark:bg-indigo-900/20">
+              <p className="text-xs font-semibold uppercase text-indigo-700 dark:text-indigo-300">
+                {preview.metadata.audience === 'MANAGEMENT' ? t('managementSummary') : t('aiSummary')}
+              </p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-300">{preview.summary}</p>
+              {preview.highlights && preview.highlights.length > 0 && (
+                <>
+                  <p className="mt-3 text-xs font-semibold uppercase text-indigo-700 dark:text-indigo-300">{t('keyPoints')}</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
+                    {preview.highlights.map((h, i) => (
+                      <li key={i}>{h}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
 

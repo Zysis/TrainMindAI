@@ -16,7 +16,7 @@ import type {
   ReportData,
   StaffReportData,
   MedicalReportData,
-  TrainerReportData,
+  ManagementReportData,
   ReportKPI,
   ReportTable,
   ReportChart,
@@ -152,7 +152,7 @@ const CSS = `
   }
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
     margin: 10px 0 18px 0;
   }
@@ -177,13 +177,26 @@ const CSS = `
   tbody td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
   tbody tr:nth-child(even) td { background: #f8fafc; }
   .footnote { font-size: 9px; color: #64748b; margin-top: 4px; font-style: italic; }
-  .chart-wrap { margin: 8px 0 16px 0; }
+  .chart-wrap { margin: 8px 0 16px 0; break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
   .chart-wrap .chart-title { font-size: 11px; font-weight: 600; color: #334155; margin-bottom: 4px; }
   .legend { display: flex; gap: 12px; font-size: 9px; color: #475569; margin-top: 4px; }
   .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
   .distribution-bar { display: flex; width: 100%; height: 22px; border-radius: 4px; overflow: hidden; border: 1px solid #e2e8f0; margin: 4px 0 12px 0; }
   .distribution-bar .seg { display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 600; }
   .distribution-legend { display: flex; gap: 12px; font-size: 9px; color: #475569; margin-bottom: 10px; }
+  .narrative { font-size: 13px; line-height: 1.7; color: #1e293b; margin: 14px 0 10px 0; }
+  .keypoints { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px 10px 30px; margin: 0 0 16px 0; font-size: 12px; }
+  .keypoints li { margin: 3px 0; }
+  .keypoints-title { font-size: 10px; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 4px -16px; list-style: none; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 14px 0; }
+  .tile { border-radius: 8px; padding: 12px; color: #fff; }
+  .tile .n { font-size: 28px; font-weight: 800; line-height: 1; }
+  .tile .t { font-size: 11px; margin-top: 4px; opacity: 0.95; }
+  .tile.ok { background: #0d9488; } .tile.mid { background: #f59e0b; } .tile.ko { background: #ef4444; }
+  .explain { font-size: 10px; color: #475569; margin: -4px 0 12px 0; }
+  .empty-note { font-size: 11px; color: #0f766e; font-weight: 600; margin: 6px 0 14px 0; }
+  .avoid-break { break-inside: avoid; }
   .footer-watermark {
     position: fixed;
     bottom: 6mm;
@@ -302,15 +315,20 @@ function renderChart(chart: ReportChart): string {
   const innerH = CHART_H - CHART_PAD.top - CHART_PAD.bottom;
 
   const allValues = chart.datasets.flatMap((d) => d.data);
-  const maxVal = Math.max(1, ...allValues);
+  const maxVal = Math.max(1, chart.yMax ?? 0, ...allValues);
   const minVal = Math.min(0, ...allValues);
   const range = maxVal - minVal || 1;
 
   const n = chart.labels.length;
-  const xStep = n > 1 ? innerW / (n - 1) : innerW;
+  // Le barre stanno al centro di una "fascia" per etichetta: con i punti agli
+  // estremi (come per le linee) la prima e l'ultima uscivano dal grafico e
+  // coprivano i numeri dell'asse.
+  const isBar = chart.type === 'bar';
+  const xStep = isBar ? innerW / n : n > 1 ? innerW / (n - 1) : innerW;
 
   const y = (v: number) => CHART_PAD.top + innerH - ((v - minVal) / range) * innerH;
-  const x = (i: number) => CHART_PAD.left + (n > 1 ? i * xStep : innerW / 2);
+  const x = (i: number) =>
+    CHART_PAD.left + (isBar ? xStep * (i + 0.5) : n > 1 ? i * xStep : innerW / 2);
 
   // Gridlines (4 horizontal)
   const gridLines: string[] = [];
@@ -391,14 +409,18 @@ function renderDistributionBar(
   title: string,
   buckets: { low: number; optimal: number; high: number; danger: number },
 ): string {
-  const total = buckets.low + buckets.optimal + buckets.high + buckets.danger || 1;
+  return renderSegmentBar(title, [
+    ['#60a5fa', buckets.low, 'Basso'],
+    ['#10b981', buckets.optimal, 'Ottimale'],
+    ['#f59e0b', buckets.high, 'Alto'],
+    ['#ef4444', buckets.danger, 'Rischio'],
+  ]);
+}
+
+function renderSegmentBar(title: string, input: Array<[string, number, string]>): string {
+  const total = input.reduce((s, [, n]) => s + n, 0) || 1;
   const pct = (n: number) => (n / total) * 100;
-  const segs: Array<[string, number, string]> = [
-    ['#60a5fa', pct(buckets.low), `Basso (${buckets.low})`],
-    ['#10b981', pct(buckets.optimal), `Ottimale (${buckets.optimal})`],
-    ['#f59e0b', pct(buckets.high), `Alto (${buckets.high})`],
-    ['#ef4444', pct(buckets.danger), `Rischio (${buckets.danger})`],
-  ];
+  const segs: Array<[string, number, string]> = input.map(([color, n, label]) => [color, pct(n), `${label} (${n})`]);
   const bar = segs
     .filter(([, p]) => p > 0)
     .map(
@@ -436,7 +458,7 @@ function renderStaff(r: StaffReportData): string {
       Pianificate: <strong>${r.sessionsCompleted.planned}</strong> ·
       Completate: <strong>${r.sessionsCompleted.completed}</strong> ·
       Cancellate: <strong>${r.sessionsCompleted.cancelled}</strong> ·
-      Tasso completamento: <strong>${r.sessionsCompleted.completionRate.toFixed(1)}%</strong>
+      Tasso completamento: <strong>${(r.sessionsCompleted.completionRate * 100).toFixed(0)}%</strong>
     </div>
 
     <h2>Andamento Wellness Team</h2>
@@ -447,6 +469,12 @@ function renderStaff(r: StaffReportData): string {
 
     <h2>Alert Attivi</h2>
     ${renderTable(r.activeAlerts)}
+
+    ${r.adherenceByAthlete ? `<h2>Aderenza al Piano per Atleta</h2>${renderTable(r.adherenceByAthlete)}` : ''}
+    ${r.performanceTrends ? `<h2>Volume Settimanale</h2>${renderChart(r.performanceTrends)}` : ''}
+    ${r.plannedVsActual ? `<h2>Pianificato vs Reale</h2>${renderChart(r.plannedVsActual)}` : ''}
+    ${r.adaptations ? `<h2>Adattamenti del Piano</h2>${renderTable(r.adaptations)}` : ''}
+    ${r.topMovers && r.topMovers.rows.length > 0 ? `<h2>Atleti con Maggiori Variazioni</h2>${renderTable(r.topMovers)}` : ''}
   `;
 }
 
@@ -474,27 +502,51 @@ function renderMedical(r: MedicalReportData): string {
   `;
 }
 
-function renderTrainer(r: TrainerReportData): string {
+function renderManagement(r: ManagementReportData): string {
+  const a = r.availability;
+  const h = r.teamHealth;
+  const highlights = r.highlights.length
+    ? `<ul class="keypoints"><li class="keypoints-title">Punti chiave</li>${r.highlights.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`
+    : '';
+  const table = r.unavailableAthletes.rows.length
+    ? renderTable(r.unavailableAthletes)
+    : `<p class="empty-note">Tutta la rosa è a disposizione.</p>`;
+  const assessed = h.loadRisk.green + h.loadRisk.yellow + h.loadRisk.red + h.loadRisk.noData;
   return `
-    ${renderHeader(r.metadata, 'Preparazione Atletica')}
-    ${renderSummary(r.summary)}
-    <h2>KPI Tecnici</h2>
+    ${renderHeader(r.metadata, 'Dirigenza')}
+    <div class="narrative">${esc(r.summary)}</div>
+    ${highlights}
+
+    <h2>La squadra in numeri</h2>
     ${renderKpis(r.kpis)}
 
-    <h2>Aderenza per Atleta</h2>
-    ${renderTable(r.adherenceByAthlete)}
+    <div class="avoid-break">
+      <h2>Disponibilità della rosa</h2>
+      <div class="tiles">
+        <div class="tile ok"><div class="n">${a.available}</div><div class="t">a disposizione</div></div>
+        <div class="tile mid"><div class="n">${a.limited}</div><div class="t">in rientro graduale</div></div>
+        <div class="tile ko"><div class="n">${a.unavailable}</div><div class="t">fermi per infortunio</div></div>
+      </div>
+      <p class="explain">Situazione al ${formatDate(a.asOf)} su ${a.total} atleti.</p>
+      ${renderChart(r.availabilityTrend)}
+    </div>
+    ${table}
 
-    <h2>Trend di Performance</h2>
-    ${renderChart(r.performanceTrends)}
-
-    <h2>Pianificato vs Reale</h2>
-    ${renderChart(r.plannedVsActual)}
-
-    <h2>Adattamenti del Piano</h2>
-    ${renderTable(r.adaptations)}
-
-    <h2>Top Mover</h2>
-    ${renderTable(r.topMovers)}
+    <div class="avoid-break">
+      <h2>Salute della squadra</h2>
+      ${h.wellnessTrend.labels.length ? renderChart(h.wellnessTrend) : '<p class="explain">Nessun questionario di benessere compilato nel periodo.</p>'}
+      <p class="explain">Il benessere è la media dei questionari giornalieri dei giocatori (sonno, fatica, dolori, stress, umore): sopra 70 è buono, sotto 55 va approfondito.</p>
+    </div>
+    ${assessed > 0 ? `
+    <div class="avoid-break">
+      ${renderSegmentBar('Carico di lavoro degli atleti a disposizione', [
+        ['#10b981', h.loadRisk.green, 'In equilibrio'],
+        ['#f59e0b', h.loadRisk.yellow, 'Da monitorare'],
+        ['#ef4444', h.loadRisk.red, 'Zona di rischio'],
+        ['#cbd5e1', h.loadRisk.noData, 'Dati insufficienti'],
+      ])}
+      <p class="explain">Confronta il lavoro dell'ultima settimana con quello delle tre precedenti: un aumento o un calo troppo bruschi espongono di più agli infortuni.</p>
+    </div>` : ''}
   `;
 }
 
@@ -502,7 +554,7 @@ function buildHtml(report: ReportData): string {
   let body: string;
   if (report.audience === 'STAFF') body = renderStaff(report);
   else if (report.audience === 'MEDICAL') body = renderMedical(report);
-  else body = renderTrainer(report);
+  else body = renderManagement(report);
 
   return `<!DOCTYPE html>
 <html lang="it">
@@ -513,15 +565,47 @@ function buildHtml(report: ReportData): string {
 </head>
 <body>
   ${body}
-  <div class="footer-watermark">
-    <span>TrainMind · Report ${esc(report.audience)}</span>
-    <span>${esc(report.metadata.organizationName)} · ${formatDate(report.metadata.generatedAt)}</span>
-  </div>
 </body>
 </html>`;
 }
 
+export const AUDIENCE_LABELS: Record<string, string> = {
+  STAFF: 'Staff tecnico',
+  MEDICAL: 'Staff medico',
+  MANAGEMENT: 'Dirigenza',
+};
+
 // ─── Public API ──────────────────────────────────────────────
+
+/**
+ * Un grafico come PNG, per il Word (che non legge SVG). Stesso disegno del
+ * PDF, fotografato da Chrome. Restituisce null se Chrome non c'e': chi chiama
+ * ripiega sulla tabella dei valori.
+ */
+export async function renderChartPng(
+  chart: ReportChart,
+): Promise<{ data: Buffer; width: number; height: number } | null> {
+  try {
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+    try {
+      await page.setViewport({ width: 720, height: 400, deviceScaleFactor: 2 });
+      await page.setContent(
+        `<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>${CSS} body{padding:8px;background:#fff}</style></head><body>${renderChart(chart)}</body></html>`,
+        { waitUntil: 'networkidle0' },
+      );
+      const el = await page.$('.chart-wrap');
+      if (!el) return null;
+      const box = await el.boundingBox();
+      const shot = await el.screenshot({ type: 'png' });
+      return { data: Buffer.from(shot), width: Math.round(box?.width ?? 700), height: Math.round(box?.height ?? 300) };
+    } finally {
+      await page.close().catch(() => {});
+    }
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Render a ReportData object to a PDF buffer.
@@ -533,11 +617,16 @@ export async function renderReportPdf(report: ReportData): Promise<Buffer> {
   const page = await browser.newPage();
   try {
     await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Il piè di pagina lo disegna Chrome nel margine: il vecchio div
+    // `position: fixed` finiva sopra i grafici in fondo alla pagina.
+    const footerStyle = 'width:100%;font-size:7px;color:#94a3b8;padding:0 14mm;display:flex;justify-content:space-between;font-family:Helvetica,Arial,sans-serif;';
     const pdfBytes = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '18mm', right: '14mm', bottom: '22mm', left: '14mm' },
-      displayHeaderFooter: false,
+      displayHeaderFooter: true,
+      headerTemplate: '<span></span>',
+      footerTemplate: `<div style="${footerStyle}"><span>TrainMind · Report ${esc(AUDIENCE_LABELS[report.audience] ?? report.audience)} · ${esc(report.metadata.organizationName)}</span><span>${formatDate(report.metadata.generatedAt)} · pagina <span class="pageNumber"></span> di <span class="totalPages"></span></span></div>`,
     });
     return Buffer.from(pdfBytes);
   } finally {

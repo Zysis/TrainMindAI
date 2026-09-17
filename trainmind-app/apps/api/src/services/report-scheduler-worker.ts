@@ -81,7 +81,8 @@ async function executeSchedule(
       app,
       organizationId: schedule.organizationId,
       userId: schedule.createdById,
-      audience: schedule.audience as 'STAFF' | 'MEDICAL' | 'TRAINER',
+      // TRAINER: schedulazione precedente al 17/9/2026, generateReport la tratta come STAFF
+      audience: schedule.audience as 'STAFF' | 'MEDICAL' | 'MANAGEMENT' | 'TRAINER',
       periodFrom: from,
       periodTo: to,
       format: schedule.format as 'JSON' | 'PDF' | 'DOCX',

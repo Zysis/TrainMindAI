@@ -176,6 +176,11 @@ export function buildPasswordResetEmailHtml(opts: {
 /**
  * Build the HTML body for a scheduled report email.
  */
+/** Il riassunto arriva dall'AI: va trattato come testo, non come HTML */
+function escapeSummary(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export function buildReportEmailHtml(opts: {
   organizationName: string;
   audience: string;
@@ -186,7 +191,8 @@ export function buildReportEmailHtml(opts: {
   const audienceLabel = {
     STAFF: 'Coaching staff',
     MEDICAL: 'Medical staff',
-    TRAINER: 'Strength and conditioning',
+    MANAGEMENT: 'Management',
+    TRAINER: 'Coaching staff',
   }[opts.audience] || opts.audience;
 
   return `<!DOCTYPE html>
@@ -196,7 +202,7 @@ export function buildReportEmailHtml(opts: {
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
     <h1 style="color: #0f172a; margin: 0 0 8px 0; font-size: 22px;">${audienceLabel} report</h1>
     <p style="color: #64748b; margin: 0 0 24px 0; font-size: 14px;">${opts.organizationName} · ${opts.periodFrom} to ${opts.periodTo}</p>
-    ${opts.summary ? `<div style="background: #f8fafc; border-left: 3px solid #6366f1; padding: 16px; border-radius: 6px; margin-bottom: 24px;"><p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.6;">${opts.summary}</p></div>` : ''}
+    ${opts.summary ? `<div style="background: #f8fafc; border-left: 3px solid #6366f1; padding: 16px; border-radius: 6px; margin-bottom: 24px;"><p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.6;">${escapeSummary(opts.summary)}</p></div>` : ''}
     <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">The full report is attached in the requested format. The document was generated automatically by TrainMind according to the configured schedule.</p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
     <p style="color: #94a3b8; font-size: 12px; margin: 0;">This email was sent automatically by TrainMind. To change or turn off the schedule, sign in to your dashboard.</p>

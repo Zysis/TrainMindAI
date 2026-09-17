@@ -1,0 +1,1677 @@
+diff -ruN a/src/app.ts b/src/app.ts
+--- a/src/app.ts	2026-09-16 13:00:17.342359334 +0000
++++ b/src/app.ts	2026-09-16 13:00:17.348080425 +0000
+@@ -35,7 +35,31 @@
+ import auditPlugin from './plugins/audit.js';
+ import { errorHandler } from './lib/error-handler.js';
+ 
++/**
++ * Il plugin di autenticazione ripiega su un segreto di sviluppo scritto nel
++ * codice quando JWT_SECRET manca. Il file di deploy passa `${JWT_SECRET}`
++ * senza `:?`, quindi una riga dimenticata in `.env.deploy` produceva una
++ * stringa vuota e, in silenzio, token firmati con un segreto pubblico:
++ * chiunque avesse letto il repository poteva fabbricarsi un accesso ADMIN a
++ * qualunque organizzazione. In produzione ci si rifiuta di partire.
++ */
++const KNOWN_WEAK_SECRETS = [
++  'dev-secret-must-be-at-least-32-chars-long',
++  'CAMBIAMI_stringa_casuale_di_almeno_32_caratteri',
++];
++
++export function assertProductionSecrets(env: NodeJS.ProcessEnv = process.env): void {
++  if (env.NODE_ENV !== 'production') return;
++  const secret = env.JWT_SECRET ?? '';
++  if (secret.length < 32 || KNOWN_WEAK_SECRETS.includes(secret)) {
++    throw new Error(
++      'JWT_SECRET mancante, troppo corto (< 32 caratteri) o uguale al valore di esempio: impostalo in .env.deploy',
++    );
++  }
++}
++
+ export async function buildApp() {
++  assertProductionSecrets();
+   const app = Fastify({
+     logger: {
+       level: process.env.LOG_LEVEL || 'info',
+@@ -143,7 +167,15 @@
+   app.addContentTypeParser(
+     'application/json',
+     { parseAs: 'string' },
+-    (_req, body: string, done) => {
++    (req, body: string, done) => {
++      // Le rotte che devono verificare una firma sul corpo (il webhook di
++      // Stripe) lo chiedono con `config: { rawBody: true }`: il testo
++      // originale resta in `request.rawBody`, perche' riserializzare l'oggetto
++      // non restituisce gli stessi byte e la firma non tornerebbe.
++      const routeConfig = req.routeOptions?.config as { rawBody?: boolean } | undefined;
++      if (routeConfig?.rawBody) {
++        (req as unknown as { rawBody?: string }).rawBody = body;
++      }
+       if (!body || body.trim() === '') return done(null, {});
+       try {
+         done(null, JSON.parse(body));
+diff -ruN a/src/lib/refresh-tokens.ts b/src/lib/refresh-tokens.ts
+--- a/src/lib/refresh-tokens.ts	2026-09-16 13:00:17.342695524 +0000
++++ b/src/lib/refresh-tokens.ts	2026-09-16 13:00:17.348395282 +0000
+@@ -96,10 +96,14 @@
+   return { userId: row.userId, refreshToken: next };
+ }
+ 
+-/** Chiude una sola sessione (logout dal dispositivo corrente). */
+-export async function revokeRefreshToken(db: Db, token: string): Promise<void> {
++/**
++ * Chiude una sola sessione (logout dal dispositivo corrente). Con `userId`
++ * la chiude solo se appartiene a quell'utente: il logout di Mario non deve
++ * poter chiudere la sessione di un altro, qualunque token gli arrivi.
++ */
++export async function revokeRefreshToken(db: Db, token: string, userId?: string): Promise<void> {
+   await db.refreshToken.updateMany({
+-    where: { tokenHash: hash(token), revokedAt: null },
++    where: { tokenHash: hash(token), revokedAt: null, ...(userId ? { userId } : {}) },
+     data: { revokedAt: new Date() },
+   });
+ }
+diff -ruN a/src/routes/athlete.ts b/src/routes/athlete.ts
+--- a/src/routes/athlete.ts	2026-09-16 13:00:17.343065419 +0000
++++ b/src/routes/athlete.ts	2026-09-16 13:00:17.348897048 +0000
+@@ -1,4 +1,5 @@
+ import type { FastifyInstance } from 'fastify';
++import { Prisma } from '@trainmind/db';
+ import { requireMinRole } from '../middleware/rbac.js';
+ import { requireAthlete } from '../middleware/rbac.js';
+ import {
+@@ -9,13 +10,59 @@
+   athleteSessionsQuerySchema,
+   athleteWellnessQuerySchema,
+   pushSubscriptionSchema,
++  markNotificationsReadSchema,
+ } from '../schemas/athlete.js';
+ import bcrypt from 'bcrypt';
++import crypto from 'node:crypto';
+ import { issueRefreshToken } from '../lib/refresh-tokens.js';
+ import { LEGAL_VERSIONS } from '../lib/legal.js';
+ import { athleteAppUrl } from '../lib/app-url.js';
+ import { sendEmail } from '../services/email-service.js';
+ 
++/**
++ * Le sessioni che un atleta puo' vedere: quelle assegnate a lui e quelle dei
++ * piani delle sue squadre, dentro la sua organizzazione.
++ *
++ * Un solo posto per la regola, usato dall'elenco, dal dettaglio e dal
++ * registro RPE. Fino al 16/9/2026 la usava solo l'elenco: il dettaglio
++ * leggeva la sessione per id senza altri filtri e il registro scriveva su
++ * qualunque id ricevuto, quindi un atleta poteva leggere — e annotare —
++ * sessioni di altri atleti e di altre organizzazioni.
++ */
++async function loadAthleteScope(
++  app: FastifyInstance,
++  userId: string,
++): Promise<{ athleteId: string; where: Prisma.TrainingSessionWhereInput } | null> {
++  const user = await app.prisma.user.findUnique({
++    where: { id: userId },
++    select: {
++      athleteId: true,
++      organizationId: true,
++      athlete: { select: { athleteTeams: { select: { teamId: true } } } },
++    },
++  });
++  if (!user?.athleteId) return null;
++
++  const teamIds = user.athlete?.athleteTeams.map((at) => at.teamId) ?? [];
++  return {
++    athleteId: user.athleteId,
++    where: {
++      organizationId: user.organizationId,
++      OR: [
++        { athleteId: user.athleteId },
++        { week: { trainingPlan: { teamId: { in: teamIds } } } },
++      ],
++    },
++  };
++}
++
++class InviteAlreadyUsedError extends Error {}
++
++const athleteProfileNotFound = {
++  success: false,
++  error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
++} as const;
++
+ export async function athleteRoutes(app: FastifyInstance) {
+   // ═══════════════════════════════════════════════════════════
+   // INVITE MANAGEMENT (Trainer/Admin side)
+@@ -83,6 +130,11 @@
+         athleteId,
+         email,
+         invitedById: userId,
++        // Token dal generatore crittografico e non dal default `cuid()` dello
++        // schema: un cuid e' fatto di data, contatore e impronta della
++        // macchina, con una parte casuale corta, e la documentazione stessa
++        // lo sconsiglia per i segreti. Questo token da' accesso a un account.
++        token: crypto.randomBytes(32).toString('base64url'),
+         organizationId,
+         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+       },
+@@ -193,7 +245,10 @@
+   });
+ 
+   // ─── POST /athlete/register — Complete registration ───────
+-  app.post('/athlete/register', async (request, reply) => {
++  // Stesso limite di /staff/register: e' una rotta pubblica che crea account.
++  app.post('/athlete/register', {
++    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
++  }, async (request, reply) => {
+     const parsed = registerFromInviteSchema.safeParse(request.body);
+     if (!parsed.success) {
+       return reply.status(400).send({
+@@ -229,38 +284,58 @@
+ 
+     const passwordHash = await bcrypt.hash(password, 12);
+ 
+-    // Create user + accept invite in transaction
+-    const user = await app.prisma.$transaction(async (tx) => {
+-      const newUser = await tx.user.create({
+-        data: {
+-          email: invite.email,
+-          passwordHash,
+-          firstName: invite.athlete.firstName,
+-          lastName: invite.athlete.lastName,
+-          role: 'ATHLETE',
+-          organizationId: invite.organizationId,
+-          athleteId: invite.athleteId,
+-        },
+-      });
+-
+-      // Registra le accettazioni versionate (ToS, informativa atleti,
+-      // consenso esplicito art. 9 GDPR ai dati sanitari, dichiarazione età)
+-      await tx.consentRecord.createMany({
+-        data: [
+-          { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ipAddress: request.ip },
+-          { userId: newUser.id, docType: 'PRIVACY_ATHLETE_ACK', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
+-          { userId: newUser.id, docType: 'HEALTH_DATA', docVersion: LEGAL_VERSIONS.HEALTH_DATA, ipAddress: request.ip },
+-          { userId: newUser.id, docType: 'AGE_DECLARATION', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
+-        ],
+-      });
+-
+-      await tx.athleteInvite.update({
+-        where: { id: invite.id },
+-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+-      });
++    // Create user + accept invite in transaction. L'invito si prende per
++    // primo con un update condizionato: di due registrazioni concorrenti con
++    // lo stesso link ne passa una, l'altra riceve 410 e non un 500.
++    let user;
++    try {
++      user = await app.prisma.$transaction(async (tx) => {
++        const claimed = await tx.athleteInvite.updateMany({
++          where: { id: invite.id, status: 'PENDING' },
++          data: { status: 'ACCEPTED', acceptedAt: new Date() },
++        });
++        if (claimed.count === 0) throw new InviteAlreadyUsedError();
++
++        const newUser = await tx.user.create({
++          data: {
++            email: invite.email,
++            passwordHash,
++            firstName: invite.athlete.firstName,
++            lastName: invite.athlete.lastName,
++            role: 'ATHLETE',
++            organizationId: invite.organizationId,
++            athleteId: invite.athleteId,
++          },
++        });
+ 
+-      return newUser;
+-    });
++        // Registra le accettazioni versionate (ToS, informativa atleti,
++        // consenso esplicito art. 9 GDPR ai dati sanitari, dichiarazione età)
++        await tx.consentRecord.createMany({
++          data: [
++            { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ipAddress: request.ip },
++            { userId: newUser.id, docType: 'PRIVACY_ATHLETE_ACK', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
++            { userId: newUser.id, docType: 'HEALTH_DATA', docVersion: LEGAL_VERSIONS.HEALTH_DATA, ipAddress: request.ip },
++            { userId: newUser.id, docType: 'AGE_DECLARATION', docVersion: LEGAL_VERSIONS.PRIVACY_ATHLETE, ipAddress: request.ip },
++          ],
++        });
++
++        return newUser;
++      });
++    } catch (err) {
++      if (err instanceof InviteAlreadyUsedError) {
++        return reply.status(410).send({
++          success: false,
++          error: { code: 'INVALID_INVITE', message: 'Invito non valido o scaduto' },
++        });
++      }
++      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
++        return reply.status(409).send({
++          success: false,
++          error: { code: 'CONFLICT', message: 'Email già registrata' },
++        });
++      }
++      throw err;
++    }
+ 
+     // Generate JWT
+     const tokenPayload: {
+@@ -373,48 +448,17 @@
+     const { userId } = request.user;
+     const query = athleteSessionsQuerySchema.parse(request.query);
+ 
+-    // Get athlete profile to find athleteId and teams
+-    const user = await app.prisma.user.findUnique({
+-      where: { id: userId },
+-      select: {
+-        athleteId: true,
+-        athlete: {
+-          select: {
+-            athleteTeams: { select: { teamId: true } },
+-          },
+-        },
+-      },
+-    });
+-
+-    if (!user?.athleteId) {
+-      return reply.status(404).send({
+-        success: false,
+-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
+-      });
+-    }
+-
+-    const teamIds = user.athlete?.athleteTeams.map((at) => at.teamId) || [];
+-
+-    // Build where: sessions assigned to this athlete OR to their teams
+-    const where: Record<string, unknown> = {
+-      OR: [
+-        { athleteId: user.athleteId },
+-        // Sessions in plans assigned to athlete's teams
+-        {
+-          week: {
+-            trainingPlan: {
+-              teamId: { in: teamIds },
+-            },
+-          },
+-        },
+-      ],
+-    };
++    const scope = await loadAthleteScope(app, userId);
++    if (!scope) return reply.status(404).send(athleteProfileNotFound);
++    const myAthleteId = scope.athleteId;
+ 
++    const where: Prisma.TrainingSessionWhereInput = { ...scope.where };
+     if (query.status) where.status = query.status;
+     if (query.from || query.to) {
+-      where.date = {};
+-      if (query.from) (where.date as Record<string, unknown>).gte = new Date(query.from);
+-      if (query.to) (where.date as Record<string, unknown>).lte = new Date(query.to);
++      where.date = {
++        ...(query.from ? { gte: new Date(query.from) } : {}),
++        ...(query.to ? { lte: new Date(query.to) } : {}),
++      };
+     }
+ 
+     const [sessions, total] = await Promise.all([
+@@ -430,7 +474,7 @@
+             orderBy: { orderIndex: 'asc' },
+           },
+           sessionLogs: {
+-            where: { athleteId: user.athleteId },
++            where: { athleteId: myAthleteId },
+             take: 1,
+           },
+         },
+@@ -462,20 +506,14 @@
+     const { userId } = request.user;
+     const { id } = request.params;
+ 
+-    const user = await app.prisma.user.findUnique({
+-      where: { id: userId },
+-      select: { athleteId: true },
+-    });
+-
+-    if (!user?.athleteId) {
+-      return reply.status(404).send({
+-        success: false,
+-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
+-      });
+-    }
+-
+-    const session = await app.prisma.trainingSession.findUnique({
+-      where: { id },
++    const scope = await loadAthleteScope(app, userId);
++    if (!scope) return reply.status(404).send(athleteProfileNotFound);
++    const myAthleteId = scope.athleteId;
++
++    // findFirst con il perimetro dell'atleta: una sessione che non gli
++    // appartiene risponde 404 come una che non esiste, senza rivelare nulla.
++    const session = await app.prisma.trainingSession.findFirst({
++      where: { AND: [{ id }, scope.where] },
+       include: {
+         sessionExercises: {
+           include: {
+@@ -498,12 +536,13 @@
+       });
+     }
+ 
+-    // Mark as viewed (upsert SessionLog with viewedAt)
+-    await app.prisma.sessionLog.upsert({
++    // Mark as viewed (upsert SessionLog with viewedAt). L'upsert restituisce
++    // gia' la riga aggiornata: rileggerla era una query in piu'.
++    const myLog = await app.prisma.sessionLog.upsert({
+       where: {
+         trainingSessionId_athleteId: {
+           trainingSessionId: id,
+-          athleteId: user.athleteId,
++          athleteId: myAthleteId,
+         },
+       },
+       update: {
+@@ -511,20 +550,11 @@
+       },
+       create: {
+         trainingSessionId: id,
+-        athleteId: user.athleteId,
++        athleteId: myAthleteId,
+         viewedAt: new Date(),
+       },
+     });
+ 
+-    const myLog = await app.prisma.sessionLog.findUnique({
+-      where: {
+-        trainingSessionId_athleteId: {
+-          trainingSessionId: id,
+-          athleteId: user.athleteId,
+-        },
+-      },
+-    });
+-
+     return reply.send({
+       success: true,
+       data: { ...session, myLog },
+@@ -544,25 +574,27 @@
+     }
+ 
+     const { userId } = request.user;
+-    const user = await app.prisma.user.findUnique({
+-      where: { id: userId },
+-      select: { athleteId: true },
+-    });
++    const scope = await loadAthleteScope(app, userId);
++    if (!scope) return reply.status(404).send(athleteProfileNotFound);
++    const myAthleteId = scope.athleteId;
+ 
+-    if (!user?.athleteId) {
++    const { trainingSessionId, actualRpe, notes, exerciseChecks } = parsed.data;
++
++    const visible = await app.prisma.trainingSession.count({
++      where: { AND: [{ id: trainingSessionId }, scope.where] },
++    });
++    if (visible === 0) {
+       return reply.status(404).send({
+         success: false,
+-        error: { code: 'NOT_FOUND', message: 'Profilo atleta non trovato' },
++        error: { code: 'NOT_FOUND', message: 'Sessione non trovata' },
+       });
+     }
+ 
+-    const { trainingSessionId, actualRpe, notes, exerciseChecks } = parsed.data;
+-
+     const log = await app.prisma.sessionLog.upsert({
+       where: {
+         trainingSessionId_athleteId: {
+           trainingSessionId,
+-          athleteId: user.athleteId,
++          athleteId: myAthleteId,
+         },
+       },
+       update: {
+@@ -572,7 +604,7 @@
+       },
+       create: {
+         trainingSessionId,
+-        athleteId: user.athleteId,
++        athleteId: myAthleteId,
+         actualRpe,
+         notes,
+         exerciseChecks: exerciseChecks || undefined,
+@@ -692,11 +724,20 @@
+   });
+ 
+   // ─── POST /athlete/notifications/read — Mark as read ──────
+-  app.post<{ Body: { ids: string[] } }>('/athlete/notifications/read', {
++  app.post('/athlete/notifications/read', {
+     preHandler: [app.authenticate, requireAthlete()],
+   }, async (request, reply) => {
+     const { userId } = request.user;
+-    const { ids } = request.body as { ids: string[] };
++    // Senza validazione un corpo senza `ids` arrivava a Prisma come
++    // `{ in: undefined }` e un valore non-array faceva rispondere 500.
++    const parsed = markNotificationsReadSchema.safeParse(request.body);
++    if (!parsed.success) {
++      return reply.status(400).send({
++        success: false,
++        error: { code: 'VALIDATION_ERROR', message: 'Dati non validi', details: parsed.error.flatten().fieldErrors },
++      });
++    }
++    const { ids } = parsed.data;
+ 
+     await app.prisma.notification.updateMany({
+       where: { id: { in: ids }, userId },
+diff -ruN a/src/routes/auth.ts b/src/routes/auth.ts
+--- a/src/routes/auth.ts	2026-09-16 13:00:17.343113260 +0000
++++ b/src/routes/auth.ts	2026-09-16 13:00:17.348946491 +0000
+@@ -31,6 +31,12 @@
+ 
+ const SALT_ROUNDS = 12;
+ 
++/**
++ * Hash bcrypt (costo 12) di una stringa casuale buttata: serve solo a far
++ * durare il login di un'email inesistente quanto quello di una vera.
++ */
++const TIMING_DUMMY_HASH = '$2b$12$xz0YTYbBW2Bx5wRNTmJFqOkPlXh77NAdnA4l67i3b9R/BMwKX.o9K';
++
+ /** Validita' del link di reset. Breve per limitare la finestra di attacco. */
+ const RESET_TOKEN_TTL_MINUTES = 60;
+ 
+@@ -357,19 +363,12 @@
+         },
+       },
+     });
+-    if (!user || !user.isActive) {
+-      return reply.status(401).send({
+-        success: false,
+-        error: {
+-          code: 'INVALID_CREDENTIALS',
+-          message: 'Email o password non corretti',
+-        },
+-      });
+-    }
+-
+-    // Verify password
+-    const validPassword = await bcrypt.compare(password, user.passwordHash);
+-    if (!validPassword) {
++    // bcrypt si esegue SEMPRE, anche quando l'account non c'e'. Rispondere
++    // subito a un'email sconosciuta e dopo ~250 ms a una registrata lasciava
++    // capire dai tempi quali indirizzi hanno un account, nonostante il
++    // messaggio identico nei due casi.
++    const validPassword = await bcrypt.compare(password, user?.passwordHash ?? TIMING_DUMMY_HASH);
++    if (!user || !user.isActive || !validPassword) {
+       return reply.status(401).send({
+         success: false,
+         error: {
+@@ -575,7 +574,7 @@
+       // portatile. Senza token si chiude tutto, come prima.
+       const token = request.body?.refreshToken;
+       if (token) {
+-        await revokeRefreshToken(app.prisma, token);
++        await revokeRefreshToken(app.prisma, token, userId);
+       } else {
+         await revokeAllRefreshTokens(app.prisma, userId);
+       }
+diff -ruN a/src/routes/billing.ts b/src/routes/billing.ts
+--- a/src/routes/billing.ts	2026-09-16 13:00:17.343141267 +0000
++++ b/src/routes/billing.ts	2026-09-16 13:00:17.348971349 +0000
+@@ -85,6 +85,24 @@
+   ultra: 'ULTRA',
+ };
+ 
++/**
++ * URL di ritorno da Stripe: quello chiesto dal client solo se punta alla
++ * nostra applicazione, altrimenti quello di default.
++ *
++ * Senza questo controllo `successUrl` era un redirect aperto: una pagina di
++ * pagamento autentica di Stripe che, finito il pagamento, rimanda dove vuole
++ * chi ha costruito la richiesta. I client attuali non mandano questi campi,
++ * quindi il default e' anche il comportamento di oggi.
++ */
++export function sameOriginOr(requested: string | undefined, fallback: string): string {
++  if (!requested) return fallback;
++  try {
++    return new URL(requested).origin === new URL(fallback).origin ? requested : fallback;
++  } catch {
++    return fallback;
++  }
++}
++
+ // ─── Schemas ───────────────────────────────────────────
+ 
+ const checkoutSchema = z.object({
+@@ -119,8 +137,10 @@
+   });
+ 
+   // ─── POST /billing/checkout — Create checkout session ──
++  // Solo ADMIN, come /billing/seats: cambiare il piano impegna la societa'
++  // a pagare, e fino al 16/9/2026 poteva farlo anche un osservatore.
+   app.post('/billing/checkout', {
+-    preHandler: [app.authenticate],
++    preHandler: [app.authenticate, requireRole('ADMIN')],
+   }, async (request: FastifyRequest, reply: FastifyReply) => {
+     if (!isStripeConfigured()) {
+       return reply.status(503).send({
+@@ -169,8 +189,8 @@
+       customer: customerId,
+       mode: 'subscription',
+       line_items: [{ price: tier.priceId, quantity: 1 }],
+-      success_url: parsed.data.successUrl || `${appUrl}/dashboard/settings?billing=success`,
+-      cancel_url: parsed.data.cancelUrl || `${appUrl}/dashboard/settings?billing=cancelled`,
++      success_url: sameOriginOr(parsed.data.successUrl, `${appUrl}/dashboard/settings?billing=success`),
++      cancel_url: sameOriginOr(parsed.data.cancelUrl, `${appUrl}/dashboard/settings?billing=cancelled`),
+       metadata: { organizationId, userId, tier: parsed.data.tier },
+       subscription_data: {
+         metadata: { organizationId, tier: parsed.data.tier },
+@@ -244,8 +264,8 @@
+       customer: customerId,
+       mode: 'subscription',
+       line_items: [{ price: priceId, quantity }],
+-      success_url: parsed.data.successUrl || `${appUrl}/dashboard/settings?seats=success`,
+-      cancel_url: parsed.data.cancelUrl || `${appUrl}/dashboard/settings?seats=cancelled`,
++      success_url: sameOriginOr(parsed.data.successUrl, `${appUrl}/dashboard/settings?seats=success`),
++      cancel_url: sameOriginOr(parsed.data.cancelUrl, `${appUrl}/dashboard/settings?seats=cancelled`),
+       // `kind` e' cio' che distingue questo acquisto da un cambio di piano
+       // quando il webhook rilegge la sessione: senza, comprare due posti
+       // verrebbe interpretato come un passaggio al piano Starter.
+@@ -270,8 +290,10 @@
+   });
+ 
+   // ─── POST /billing/portal — Customer portal ─────────
++  // Solo ADMIN: dal portale Stripe si disdice l'abbonamento, si cambia la
++  // carta e si scaricano le fatture della societa'.
+   app.post('/billing/portal', {
+-    preHandler: [app.authenticate],
++    preHandler: [app.authenticate, requireRole('ADMIN')],
+   }, async (request: FastifyRequest, reply: FastifyReply) => {
+     if (!isStripeConfigured()) {
+       return reply.status(503).send({
+@@ -336,8 +358,9 @@
+   // ─── POST /billing/webhook — Stripe webhook ─────────
+   // NOTE: This route must NOT have authentication middleware
+   app.post('/billing/webhook', {
+-    // `rawBody` is provided by the fastify-raw-body plugin but isn't on the
+-    // FastifyContextConfig type by default — cast keeps Fastify happy.
++    // `rawBody: true` chiede al parser JSON di app.ts di conservare il corpo
++    // originale in `request.rawBody`. Non e' nel tipo FastifyContextConfig,
++    // da qui il cast.
+     config: { rawBody: true } as Record<string, unknown>,
+   }, async (request: FastifyRequest, reply: FastifyReply) => {
+     if (!isStripeConfigured()) {
+@@ -353,14 +376,19 @@
+       return reply.status(400).send({ error: 'Missing signature' });
+     }
+ 
++    // La firma si verifica sul corpo ESATTO ricevuto da Stripe. Lo conserva
++    // il parser JSON di app.ts per le rotte con `config.rawBody`: prima si
++    // contava su un plugin fastify-raw-body mai installato, `rawBody` era
++    // undefined e ogni evento veniva respinto come firma non valida.
++    const rawBody = (request as unknown as { rawBody?: string }).rawBody;
++    if (typeof rawBody !== 'string') {
++      request.log.error('Stripe webhook: raw body not captured');
++      return reply.status(400).send({ error: 'Missing raw body' });
++    }
++
+     let event: Stripe.Event;
+     try {
+-      const rawBody = (request as unknown as { rawBody: string | Buffer }).rawBody;
+-      event = stripe.webhooks.constructEvent(
+-        typeof rawBody === 'string' ? rawBody : rawBody.toString(),
+-        sig,
+-        webhookSecret,
+-      );
++      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+     } catch (err) {
+       request.log.error({ err }, 'Stripe webhook signature verification failed');
+       return reply.status(400).send({ error: 'Invalid signature' });
+diff -ruN a/src/routes/field-training.ts b/src/routes/field-training.ts
+--- a/src/routes/field-training.ts	2026-09-16 13:00:17.343319031 +0000
++++ b/src/routes/field-training.ts	2026-09-16 13:00:17.349088855 +0000
+@@ -714,11 +714,21 @@
+ 
+       const { organizationId } = request.user;
+ 
+-      // Mark as completed
+-      await app.prisma.fieldTrainingSession.update({
+-        where: { id: session.id },
++      // Chiusura idempotente. Ogni chiusura crea una TrainingSession per
++      // giocatore, cioe' carico che entra nell'ACWR: una seconda chiamata —
++      // doppio click, due schede, un retry di rete della PWA — duplicava
++      // tutte le righe e raddoppiava il carico di quel giorno. L'update
++      // condizionato e' atomico: di due richieste concorrenti ne passa una.
++      const closed = await app.prisma.fieldTrainingSession.updateMany({
++        where: { id: session.id, status: { not: 'COMPLETED' } },
+         data: { status: 'COMPLETED', completedAt: new Date() },
+       });
++      if (closed.count === 0) {
++        return reply.status(409).send({
++          success: false,
++          error: { code: 'SESSION_ALREADY_COMPLETED', message: 'Sessione gia\' completata' },
++        });
++      }
+ 
+       const presentEntries = session.entries.filter((e) => e.status === 'PRESENT');
+ 
+diff -ruN a/src/routes/game-tracking.ts b/src/routes/game-tracking.ts
+--- a/src/routes/game-tracking.ts	2026-09-16 13:00:17.343367916 +0000
++++ b/src/routes/game-tracking.ts	2026-09-16 13:00:17.349188223 +0000
+@@ -430,10 +430,21 @@
+ 
+       const { organizationId } = request.user;
+ 
+-      await app.prisma.gameSession.update({
+-        where: { id: session.id },
++      // Chiusura idempotente. Ogni chiusura crea una TrainingSession per
++      // giocatore, cioe' carico che entra nell'ACWR: una seconda chiamata —
++      // doppio click, due schede, un retry di rete della PWA — duplicava
++      // tutte le righe e raddoppiava il carico di quel giorno. L'update
++      // condizionato e' atomico: di due richieste concorrenti ne passa una.
++      const closed = await app.prisma.gameSession.updateMany({
++        where: { id: session.id, status: { not: 'COMPLETED' } },
+         data: { status: 'COMPLETED', completedAt: new Date() },
+       });
++      if (closed.count === 0) {
++        return reply.status(409).send({
++          success: false,
++          error: { code: 'SESSION_ALREADY_COMPLETED', message: 'Partita gia\' completata' },
++        });
++      }
+ 
+       // Una TrainingSession per giocatore, come per l'allenamento sul campo.
+       // Con l'RPE del singolo la riga porta anche il carico (sRPE = RPE x
+diff -ruN a/src/routes/gdpr.ts b/src/routes/gdpr.ts
+--- a/src/routes/gdpr.ts	2026-09-16 13:00:17.343389715 +0000
++++ b/src/routes/gdpr.ts	2026-09-16 13:00:17.349235783 +0000
+@@ -11,6 +11,7 @@
+ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+ import { z } from 'zod';
+ import bcrypt from 'bcrypt';
++import { Prisma } from '@trainmind/db';
+ import { requireMinRole } from '../middleware/rbac.js';
+ 
+ const consentSchema = z.object({
+@@ -29,7 +30,32 @@
+ 
+   // ─── GET /gdpr/export — Data portability (Art. 20) ────
+   app.get('/gdpr/export', async (request: FastifyRequest, reply: FastifyReply) => {
+-    const { userId, organizationId } = request.user;
++    const { userId, organizationId, role } = request.user;
++
++    // Perimetro dell'esportazione.
++    //
++    // Lo staff esporta i dati della propria organizzazione, che vede gia'
++    // tutti dall'applicazione. Un ATHLETE invece passa di qui perche' /gdpr/*
++    // e' fra i prefissi che il plugin di autenticazione gli lascia aperti,
++    // e fino al 16/9/2026 riceveva anche lui l'organizzazione intera:
++    // anagrafiche, wellness e infortuni dei compagni di squadra, cioe' dati
++    // sanitari altrui. All'atleta spettano solo i suoi.
++    let athleteScope: { organizationId: string } | { organizationId: string; id: string };
++    let sessionScope: Record<string, unknown>;
++    if (role === 'ATHLETE') {
++      const self = await app.prisma.user.findUnique({
++        where: { id: userId },
++        select: { athleteId: true },
++      });
++      // Un atleta senza anagrafica collegata non ha dati sanitari da
++      // esportare: l'id impossibile fa restituire elenchi vuoti.
++      const ownAthleteId = self?.athleteId ?? '__none__';
++      athleteScope = { organizationId, id: ownAthleteId };
++      sessionScope = { organizationId, athleteId: ownAthleteId };
++    } else {
++      athleteScope = { organizationId };
++      sessionScope = { week: { trainingPlan: { organizationId } } };
++    }
+ 
+     const [user, athletes, wellnessLogs, trainingSessions, injuries] = await Promise.all([
+       app.prisma.user.findUnique({
+@@ -40,14 +66,14 @@
+         },
+       }),
+       app.prisma.athlete.findMany({
+-        where: { organizationId },
++        where: athleteScope,
+         select: {
+           id: true, firstName: true, lastName: true, dateOfBirth: true,
+           position: true, height: true, weight: true, createdAt: true,
+         },
+       }),
+       app.prisma.wellnessLog.findMany({
+-        where: { athlete: { organizationId } },
++        where: { athlete: athleteScope },
+         select: {
+           id: true, athleteId: true, date: true, sleepHours: true, sleepQuality: true,
+           fatigue: true, soreness: true, stress: true, mood: true, notes: true, createdAt: true,
+@@ -56,7 +82,7 @@
+         take: 1000,
+       }),
+       app.prisma.trainingSession.findMany({
+-        where: { week: { trainingPlan: { organizationId } } },
++        where: sessionScope,
+         select: {
+           id: true, title: true, date: true, status: true,
+           duration: true, notes: true, createdAt: true,
+@@ -65,7 +91,7 @@
+         take: 500,
+       }),
+       app.prisma.injury.findMany({
+-        where: { athlete: { organizationId } },
++        where: { athlete: athleteScope },
+         select: {
+           id: true, athleteId: true, type: true, location: true, severity: true,
+           status: true, dateOccurred: true, dateResolved: true, notes: true,
+@@ -122,6 +148,42 @@
+       });
+     }
+ 
++    // Stessa regola di /staff/members/:id/disable: l'ultimo amministratore
++    // non puo' andarsene lasciando dentro altri colleghi, perche' nessuno
++    // potrebbe piu' invitare, disattivare o gestire l'abbonamento. Se invece
++    // e' rimasto da solo, l'organizzazione e' sua e puo' chiuderla.
++    if (user.role === 'ADMIN') {
++      const [otherAdmins, otherStaff] = await Promise.all([
++        app.prisma.user.count({
++          where: {
++            organizationId: user.organizationId,
++            role: 'ADMIN',
++            isActive: true,
++            deletedAt: null,
++            id: { not: userId },
++          },
++        }),
++        app.prisma.user.count({
++          where: {
++            organizationId: user.organizationId,
++            role: { not: 'ATHLETE' },
++            isActive: true,
++            deletedAt: null,
++            id: { not: userId },
++          },
++        }),
++      ]);
++      if (otherAdmins === 0 && otherStaff > 0) {
++        return reply.status(409).send({
++          success: false,
++          error: {
++            code: 'LAST_ADMIN',
++            message: 'Deve restare almeno un amministratore attivo: nomina un altro amministratore prima di eliminare il tuo account',
++          },
++        });
++      }
++    }
++
+     // Soft-delete + anonimizzazione: preserva l'integrità referenziale
+     // (ConsentRecord, AuditLog, invites) senza mantenere dati identificativi.
+     // I dati sanitari collegati vengono cancellati subito solo per atleti.
+@@ -145,12 +207,17 @@
+           firstName: 'Rimosso',
+           lastName: 'Rimosso',
+           passwordHash: '!disabled',
+-          refreshToken: null,
+           isActive: false,
+           deletedAt: new Date(),
+-          pushSubscription: undefined,
++          // `undefined` lasciava la sottoscrizione dov'era: per un campo Json
++          // l'azzeramento si scrive con Prisma.DbNull.
++          pushSubscription: Prisma.DbNull,
+         },
+       });
++      // Le sessioni stanno in refresh_tokens dal 10/9/2026. Prima qui si
++      // scriveva `refreshToken: null` su una colonna che non esiste piu', e
++      // Prisma rifiutava l'intera update: la cancellazione rispondeva 500.
++      await tx.refreshToken.deleteMany({ where: { userId } });
+     });
+ 
+     request.log.info({ userId, role: user.role }, 'GDPR account erasure completed');
+@@ -207,11 +274,12 @@
+               firstName: 'Rimosso',
+               lastName: 'Rimosso',
+               passwordHash: '!disabled',
+-              refreshToken: null,
+               isActive: false,
+               deletedAt: new Date(),
++              pushSubscription: Prisma.DbNull,
+             },
+           });
++          await tx.refreshToken.deleteMany({ where: { userId: linkedUser.id } });
+         }
+ 
+         // Anonimizza l'anagrafica dell'atleta ma la conserva per integrità
+diff -ruN a/src/routes/staff.ts b/src/routes/staff.ts
+--- a/src/routes/staff.ts	2026-09-16 13:00:17.343602606 +0000
++++ b/src/routes/staff.ts	2026-09-16 13:00:17.349526399 +0000
+@@ -19,6 +19,7 @@
+ import type { FastifyInstance } from 'fastify';
+ import { Prisma } from '@trainmind/db';
+ import bcrypt from 'bcrypt';
++import crypto from 'node:crypto';
+ import { requireRole } from '../middleware/rbac.js';
+ import { createStaffInviteSchema, staffRegisterSchema } from '../schemas/staff.js';
+ import {
+@@ -153,6 +154,11 @@
+           email,
+           role,
+           invitedById: userId,
++          // Token dal generatore crittografico e non dal default `cuid()` dello
++          // schema: un cuid e' fatto di data, contatore e impronta della
++          // macchina, con una parte casuale corta, e la documentazione stessa
++          // lo sconsiglia per i segreti. Questo token da' accesso a un account.
++          token: crypto.randomBytes(32).toString('base64url'),
+           organizationId,
+           expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000),
+         },
+@@ -418,62 +424,73 @@
+     const userAgent = request.headers['user-agent'] ?? null;
+     const baseAudit = { ipAddress: request.ip, userAgent, language: uiLanguage };
+ 
+-    const user = await app.prisma.$transaction(async (tx) => {
+-      const newUser = await tx.user.create({
+-        data: {
+-          email: invite.email,
+-          passwordHash,
+-          firstName,
+-          lastName,
+-          role: invite.role,
+-          organizationId: invite.organizationId,
+-          locale: uiLanguage,
+-        },
+-      });
++    let user;
++    try {
++      user = await app.prisma.$transaction(async (tx) => {
++        // L'invito si "prende" per primo, con un update condizionato: di due
++        // registrazioni concorrenti con lo stesso link ne passa una sola, e
++        // l'altra riceve 410 invece di un 500 dal vincolo di unicita'.
++        const claimed = await tx.staffInvite.updateMany({
++          where: { id: invite.id, status: 'PENDING' },
++          data: { status: 'ACCEPTED', acceptedAt: new Date() },
++        });
++        if (claimed.count === 0) throw new InviteAlreadyUsedError();
+ 
+-      const consents: Array<{
+-        userId: string;
+-        docType: string;
+-        docVersion: string;
+-        ipAddress: string | null;
+-        userAgent: string | null;
+-        language: string | null;
+-        metadata?: Prisma.InputJsonValue;
+-      }> = [
+-        { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ...baseAudit },
+-        { userId: newUser.id, docType: 'PRIVACY_ACK', docVersion: LEGAL_VERSIONS.PRIVACY, ...baseAudit },
+-        {
+-          userId: newUser.id,
+-          docType: 'AGE_DECLARATION',
+-          docVersion: LEGAL_VERSIONS.PRIVACY,
+-          ...baseAudit,
+-          metadata: { dateOfBirth } as Prisma.InputJsonValue,
+-        },
+-        {
+-          userId: newUser.id,
+-          docType: 'HEALTH_DATA',
+-          docVersion: LEGAL_VERSIONS.HEALTH_DATA,
+-          ...baseAudit,
+-          metadata: { granted: consentHealthData } as Prisma.InputJsonValue,
+-        },
+-      ];
+-      if (acceptMarketing) {
+-        consents.push({
+-          userId: newUser.id,
+-          docType: 'MARKETING',
+-          docVersion: LEGAL_VERSIONS.MARKETING,
+-          ...baseAudit,
++        const newUser = await tx.user.create({
++          data: {
++            email: invite.email,
++            passwordHash,
++            firstName,
++            lastName,
++            role: invite.role,
++            organizationId: invite.organizationId,
++            locale: uiLanguage,
++          },
+         });
+-      }
+-      await tx.consentRecord.createMany({ data: consents });
+ 
+-      await tx.staffInvite.update({
+-        where: { id: invite.id },
+-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+-      });
++        const consents: Array<{
++          userId: string;
++          docType: string;
++          docVersion: string;
++          ipAddress: string | null;
++          userAgent: string | null;
++          language: string | null;
++          metadata?: Prisma.InputJsonValue;
++        }> = [
++          { userId: newUser.id, docType: 'TERMS', docVersion: LEGAL_VERSIONS.TERMS, ...baseAudit },
++          { userId: newUser.id, docType: 'PRIVACY_ACK', docVersion: LEGAL_VERSIONS.PRIVACY, ...baseAudit },
++          {
++            userId: newUser.id,
++            docType: 'AGE_DECLARATION',
++            docVersion: LEGAL_VERSIONS.PRIVACY,
++            ...baseAudit,
++            metadata: { dateOfBirth } as Prisma.InputJsonValue,
++          },
++          {
++            userId: newUser.id,
++            docType: 'HEALTH_DATA',
++            docVersion: LEGAL_VERSIONS.HEALTH_DATA,
++            ...baseAudit,
++            metadata: { granted: consentHealthData } as Prisma.InputJsonValue,
++          },
++        ];
++        if (acceptMarketing) {
++          consents.push({
++            userId: newUser.id,
++            docType: 'MARKETING',
++            docVersion: LEGAL_VERSIONS.MARKETING,
++            ...baseAudit,
++          });
++        }
++        await tx.consentRecord.createMany({ data: consents });
+ 
+-      return newUser;
+-    });
++        return newUser;
++      });
++    } catch (err) {
++      const conflict = registrationConflict(err);
++      if (conflict) return reply.status(conflict.status).send({ success: false, error: conflict.error });
++      throw err;
++    }
+ 
+     const accessToken = app.jwt.sign({
+       userId: user.id,
+@@ -519,6 +536,26 @@
+   });
+ }
+ 
++// ─── Concorrenza sulla registrazione ────────────────────
++
++class InviteAlreadyUsedError extends Error {}
++
++/** Traduce le due corse possibili in una risposta, o `null` per gli altri errori. */
++function registrationConflict(
++  err: unknown,
++): { status: number; error: { code: string; message: string } } | null {
++  if (err instanceof InviteAlreadyUsedError) {
++    return { status: 410, error: { code: 'INVALID_INVITE', message: 'Invito non valido o scaduto' } };
++  }
++  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
++    return {
++      status: 409,
++      error: { code: 'EMAIL_ALREADY_REGISTERED', message: 'Email gia\' registrata' },
++    };
++  }
++  return null;
++}
++
+ // ─── Email ───────────────────────────────────────────────
+ 
+ const ROLE_LABELS: Record<string, string> = {
+diff -ruN a/src/schemas/athlete.ts b/src/schemas/athlete.ts
+--- a/src/schemas/athlete.ts	2026-09-16 13:00:17.343888216 +0000
++++ b/src/schemas/athlete.ts	2026-09-16 13:00:17.349688641 +0000
+@@ -21,30 +21,46 @@
+ });
+ 
+ // ─── Wellness (athlete self-report) ─────────────────────
++/**
++ * Una data che `new Date()` sa leggere. Con un semplice `z.string()` un
++ * valore come "ieri" diventava Invalid Date e Prisma rispondeva 500.
++ */
++const parsableDate = z
++  .string()
++  .refine((v) => !Number.isNaN(new Date(v).getTime()), 'Data non valida');
++
+ export const athleteWellnessSchema = z.object({
+-  date: z.string(), // ISO date
++  date: parsableDate, // ISO date
+   sleepHours: z.number().min(0).max(24),
+   sleepQuality: z.number().int().min(1).max(5),
+   fatigue: z.number().int().min(1).max(5),
+   soreness: z.number().int().min(1).max(5),
+   stress: z.number().int().min(1).max(5),
+   mood: z.number().int().min(1).max(5),
+-  notes: z.string().optional(),
+-  mediaUrls: z.array(z.string().url()).optional(),
++  notes: z.string().max(2000).optional(),
++  mediaUrls: z
++    .array(
++      // `z.string().url()` accetta anche `javascript:...`: se un giorno questi
++      // link finiscono in un <a href> sullo schermo del preparatore, sarebbe
++      // uno script eseguito nella sua sessione. Solo http(s).
++      z.string().url().refine((v) => /^https?:\/\//i.test(v), 'Sono ammessi solo link http(s)'),
++    )
++    .max(10)
++    .optional(),
+ });
+ 
+ // ─── Session Log (RPE + notes + exercise checks) ────────
+ export const athleteSessionLogSchema = z.object({
+   trainingSessionId: z.string().min(1),
+   actualRpe: z.number().int().min(1).max(10).optional(),
+-  notes: z.string().optional(),
++  notes: z.string().max(2000).optional(),
+   exerciseChecks: z.record(z.string(), z.boolean()).optional(), // { exerciseId: true/false }
+ });
+ 
+ // ─── Sessions query ─────────────────────────────────────
+ export const athleteSessionsQuerySchema = z.object({
+-  from: z.string().optional(),
+-  to: z.string().optional(),
++  from: parsableDate.optional(),
++  to: parsableDate.optional(),
+   status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+   page: z.coerce.number().int().min(1).default(1),
+   limit: z.coerce.number().int().min(1).max(100).default(20),
+@@ -52,8 +68,8 @@
+ 
+ // ─── Wellness query ─────────────────────────────────────
+ export const athleteWellnessQuerySchema = z.object({
+-  from: z.string().optional(),
+-  to: z.string().optional(),
++  from: parsableDate.optional(),
++  to: parsableDate.optional(),
+   page: z.coerce.number().int().min(1).default(1),
+   limit: z.coerce.number().int().min(1).max(100).default(30),
+ });
+@@ -66,3 +82,8 @@
+     auth: z.string(),
+   }),
+ });
++
++// ─── Notifications read ────────────────────────────────
++export const markNotificationsReadSchema = z.object({
++  ids: z.array(z.string().min(1)).min(1).max(200),
++});
+diff -ruN a/test/security-helpers.test.ts b/test/security-helpers.test.ts
+--- a/test/security-helpers.test.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/test/security-helpers.test.ts	2026-09-16 13:00:17.353705553 +0000
+@@ -0,0 +1,60 @@
++/**
++ * Revisione del 16/9/2026 — le due regole pure, senza database.
++ *
++ * - `assertProductionSecrets`: in produzione l'API non deve partire con un
++ *   JWT_SECRET vuoto o uguale a un valore pubblico (quello di sviluppo scritto
++ *   nel plugin, o il segnaposto di `.env.deploy.example`).
++ * - `sameOriginOr`: gli URL di ritorno da Stripe restano sulla nostra origine.
++ */
++
++import { describe, expect, it } from 'vitest';
++import { assertProductionSecrets } from '../src/app.js';
++import { sameOriginOr } from '../src/routes/billing.js';
++
++describe('assertProductionSecrets', () => {
++  const strong = 'k'.repeat(48);
++
++  it('in sviluppo e nei test non blocca nulla', () => {
++    expect(() => assertProductionSecrets({ NODE_ENV: 'development' })).not.toThrow();
++    expect(() => assertProductionSecrets({ NODE_ENV: 'test', JWT_SECRET: '' })).not.toThrow();
++  });
++
++  it('in produzione rifiuta un segreto mancante, vuoto o corto', () => {
++    expect(() => assertProductionSecrets({ NODE_ENV: 'production' })).toThrow(/JWT_SECRET/);
++    expect(() => assertProductionSecrets({ NODE_ENV: 'production', JWT_SECRET: '' })).toThrow(/JWT_SECRET/);
++    expect(() => assertProductionSecrets({ NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(31) })).toThrow(/JWT_SECRET/);
++  });
++
++  it('in produzione rifiuta i valori pubblici', () => {
++    expect(() =>
++      assertProductionSecrets({ NODE_ENV: 'production', JWT_SECRET: 'dev-secret-must-be-at-least-32-chars-long' }),
++    ).toThrow(/JWT_SECRET/);
++    expect(() =>
++      assertProductionSecrets({ NODE_ENV: 'production', JWT_SECRET: 'CAMBIAMI_stringa_casuale_di_almeno_32_caratteri' }),
++    ).toThrow(/JWT_SECRET/);
++  });
++
++  it('in produzione accetta un segreto vero', () => {
++    expect(() => assertProductionSecrets({ NODE_ENV: 'production', JWT_SECRET: strong })).not.toThrow();
++  });
++});
++
++describe('sameOriginOr', () => {
++  const fallback = 'https://lab21sport.com/app/dashboard/settings?billing=success';
++
++  it('senza richiesta usa il default', () => {
++    expect(sameOriginOr(undefined, fallback)).toBe(fallback);
++  });
++
++  it('accetta un percorso sulla stessa origine', () => {
++    const same = 'https://lab21sport.com/app/dashboard/billing?ok=1';
++    expect(sameOriginOr(same, fallback)).toBe(same);
++  });
++
++  it('scarta un dominio esterno, un sottodominio e uno schema diverso', () => {
++    expect(sameOriginOr('https://evil.example/phish', fallback)).toBe(fallback);
++    expect(sameOriginOr('https://lab21sport.com.evil.example/x', fallback)).toBe(fallback);
++    expect(sameOriginOr('http://lab21sport.com/app', fallback)).toBe(fallback);
++    expect(sameOriginOr('javascript:alert(1)', fallback)).toBe(fallback);
++  });
++});
+diff -ruN a/test/security-review-20260916.test.ts b/test/security-review-20260916.test.ts
+--- a/test/security-review-20260916.test.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/test/security-review-20260916.test.ts	2026-09-16 13:00:17.353730461 +0000
+@@ -0,0 +1,523 @@
++/**
++ * Revisione del 16/9/2026 — regressioni dei difetti corretti.
++ *
++ * Ogni blocco copre un difetto trovato leggendo il codice, con il caso che lo
++ * dimostrava e il caso legittimo che deve continuare a funzionare:
++ *
++ *  1. GDPR: la cancellazione rispondeva 500 (scriveva `refreshToken`, colonna
++ *     eliminata dalla migrazione del 10/9).
++ *  2. GDPR: un ATHLETE esportava i dati sanitari di tutta l'organizzazione.
++ *  3. App atleti: dettaglio sessione e registro RPE non controllavano a chi
++ *     appartenesse la sessione.
++ *  4. Chiusura del foglio presenze non idempotente: il carico raddoppiava.
++ *  5. Billing: un VIEWER apriva il portale Stripe; il webhook non poteva
++ *     verificare nessuna firma.
++ *  6. Notifiche atleta: un corpo malformato rispondeva 500.
++ *
++ * Come gli altri test col database, si autoesclude senza DATABASE_URL: una
++ * suite saltata non e' una suite verde, va detto quando si riporta l'esito.
++ */
++
++import { afterAll, beforeAll, describe, expect, it } from 'vitest';
++import type { FastifyInstance, InjectOptions } from 'fastify';
++import bcrypt from 'bcrypt';
++import crypto from 'node:crypto';
++import Stripe from 'stripe';
++import { buildApp } from '../src/app.js';
++
++let app: FastifyInstance;
++let dbAvailable = true;
++
++const stamp = Date.now();
++const PASSWORD = 'TestPassword123!';
++const mail = (who: string) => `sec-${who}-${stamp}@trainmind.test`;
++
++const org = { A: { id: '', adminId: '', adminToken: '' }, B: { id: '', adminId: '' } };
++
++const f = {
++  teamId: '',
++  meAthleteId: '',
++  mateAthleteId: '',
++  erasedAthleteId: '',
++  meUserId: '',
++  erasedUserId: '',
++  trainerUserId: '',
++  meToken: '',
++  viewerToken: '',
++  trainerToken: '',
++  mySessionId: '',
++  mateSessionId: '',
++  bSessionId: '',
++  sheetId: '',
++};
++
++// ─── Helper ─────────────────────────────────────────────
++
++async function inject<T = any>(opts: InjectOptions) {
++  const res = await app.inject(opts);
++  let body: T;
++  try { body = res.json() as T; } catch { body = res.body as unknown as T; }
++  return { status: res.statusCode, body };
++}
++
++const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
++
++async function registerOrg(who: 'A' | 'B') {
++  const { status, body } = await inject<any>({
++    method: 'POST',
++    url: '/api/v1/auth/register',
++    payload: {
++      email: mail(`admin-${who}`),
++      password: PASSWORD,
++      firstName: 'Admin',
++      lastName: `Societa${who}`,
++      organizationName: `Sec ${who} ${stamp}`,
++      dateOfBirth: '1990-05-15',
++      acceptTerms: true,
++      acceptPrivacy: true,
++    },
++  });
++  if (status !== 201) throw new Error(`Registrazione ${who} fallita (${status}): ${JSON.stringify(body)}`);
++  return {
++    id: body.data.user.organizationId as string,
++    adminId: body.data.user.id as string,
++    adminToken: body.data.tokens.accessToken as string,
++  };
++}
++
++/** Crea un utente con Prisma e ne fa il login dall'API, come farebbe l'app. */
++async function createUserAndLogin(data: {
++  who: string;
++  role: 'ATHLETE' | 'VIEWER' | 'TRAINER';
++  organizationId: string;
++  athleteId?: string;
++}) {
++  const user = await app.prisma.user.create({
++    data: {
++      email: mail(data.who),
++      // Costo basso: il test verifica i permessi, non bcrypt.
++      passwordHash: await bcrypt.hash(PASSWORD, 4),
++      firstName: 'Utente',
++      lastName: data.who,
++      role: data.role,
++      organizationId: data.organizationId,
++      athleteId: data.athleteId,
++    },
++  });
++  const { status, body } = await inject<any>({
++    method: 'POST',
++    url: '/api/v1/auth/login',
++    payload: { email: user.email, password: PASSWORD },
++  });
++  if (status !== 200) throw new Error(`Login ${data.who} fallito (${status}): ${JSON.stringify(body)}`);
++  return { userId: user.id, token: body.data.tokens.accessToken as string };
++}
++
++// ─── Setup ──────────────────────────────────────────────
++
++beforeAll(async () => {
++  if (!process.env.DATABASE_URL) {
++    dbAvailable = false;
++    console.warn('[security-review] Saltato: DATABASE_URL non impostata');
++    return;
++  }
++  try {
++    app = await buildApp();
++    await app.ready();
++  } catch (err) {
++    dbAvailable = false;
++    console.warn('[security-review] Saltato: buildApp fallita', err);
++    return;
++  }
++
++  org.A = await registerOrg('A');
++  const b = await registerOrg('B');
++  org.B = { id: b.id, adminId: b.adminId };
++
++  const p = app.prisma;
++  const A = org.A.id;
++
++  const team = await p.team.create({ data: { name: 'Squadra Sec', organizationId: A } });
++  f.teamId = team.id;
++
++  const mkAthlete = (lastName: string) =>
++    p.athlete.create({
++      data: { firstName: 'Atleta', lastName, dateOfBirth: new Date('2004-03-01'), position: 'PG', organizationId: A },
++    });
++  const me = await mkAthlete('Io');
++  const mate = await mkAthlete('Compagno');
++  const erased = await mkAthlete('DaCancellare');
++  f.meAthleteId = me.id;
++  f.mateAthleteId = mate.id;
++  f.erasedAthleteId = erased.id;
++  for (const a of [me, mate]) {
++    await p.athleteTeam.create({ data: { athleteId: a.id, teamId: team.id } });
++  }
++
++  const day = new Date(Date.now() - 86400000);
++  for (const a of [me, mate]) {
++    await p.wellnessLog.create({
++      data: {
++        athleteId: a.id, date: day, sleepHours: 7, sleepQuality: 4,
++        fatigue: 4, soreness: 4, stress: 4, mood: 4, notes: `wellness-${a.lastName}`,
++      },
++    });
++  }
++  await p.injury.create({
++    data: {
++      athleteId: mate.id, type: 'muscular', location: 'knee_r', severity: 3,
++      dateOccurred: day, notes: 'infortunio-del-compagno',
++    },
++  });
++
++  const meLogin = await createUserAndLogin({ who: 'atleta', role: 'ATHLETE', organizationId: A, athleteId: me.id });
++  f.meUserId = meLogin.userId;
++  f.meToken = meLogin.token;
++
++  const viewer = await createUserAndLogin({ who: 'viewer', role: 'VIEWER', organizationId: A });
++  f.viewerToken = viewer.token;
++
++  const trainer = await createUserAndLogin({ who: 'trainer', role: 'TRAINER', organizationId: A });
++  f.trainerUserId = trainer.userId;
++  f.trainerToken = trainer.token;
++
++  // Account atleta da cancellare, con una sessione di rinnovo aperta.
++  const erasedUser = await p.user.create({
++    data: {
++      email: mail('erased'), passwordHash: '!', firstName: 'X', lastName: 'Y',
++      role: 'ATHLETE', organizationId: A, athleteId: erased.id,
++    },
++  });
++  f.erasedUserId = erasedUser.id;
++  await p.refreshToken.create({
++    data: {
++      tokenHash: crypto.randomBytes(32).toString('hex'),
++      userId: erasedUser.id,
++      expiresAt: new Date(Date.now() + 86400000),
++    },
++  });
++
++  const mySession = await p.trainingSession.create({
++    data: { title: 'Sessione mia', duration: 60, organizationId: A, athleteId: me.id, date: new Date() },
++  });
++  const mateSession = await p.trainingSession.create({
++    data: { title: 'Sessione del compagno', duration: 60, organizationId: A, athleteId: mate.id, date: new Date() },
++  });
++  const bSession = await p.trainingSession.create({
++    data: { title: 'Sessione di B', duration: 60, organizationId: org.B.id, date: new Date() },
++  });
++  f.mySessionId = mySession.id;
++  f.mateSessionId = mateSession.id;
++  f.bSessionId = bSession.id;
++
++  const event = await p.calendarEvent.create({
++    data: {
++      title: 'Allenamento Sec', type: 'basket', userId: org.A.adminId, organizationId: A, teamId: team.id,
++      startTime: new Date(Date.now() - 7200000), endTime: new Date(Date.now() - 3600000),
++    },
++  });
++  const sheet = await p.fieldTrainingSession.create({
++    data: {
++      calendarEventId: event.id, organizationId: A, teamId: team.id,
++      durationMinutes: 60, sessionRpe: 6,
++      entries: { create: [{ athleteId: me.id, status: 'PRESENT' }, { athleteId: mate.id, status: 'PRESENT', rpe: 8 }] },
++    },
++  });
++  f.sheetId = sheet.id;
++}, 60_000);
++
++afterAll(async () => {
++  if (!app) return;
++  const p = app.prisma;
++  for (const orgId of [org.A.id, org.B.id].filter(Boolean)) {
++    try {
++      await p.sessionLog.deleteMany({ where: { trainingSession: { organizationId: orgId } } });
++      await p.fieldTrainingSession.deleteMany({ where: { organizationId: orgId } });
++      await p.trainingSession.deleteMany({ where: { organizationId: orgId } });
++      await p.wellnessLog.deleteMany({ where: { athlete: { organizationId: orgId } } });
++      await p.injury.deleteMany({ where: { athlete: { organizationId: orgId } } });
++      await p.athleteTeam.deleteMany({ where: { athlete: { organizationId: orgId } } });
++      await p.calendarEvent.deleteMany({ where: { organizationId: orgId } });
++      await p.consentRecord.deleteMany({ where: { user: { organizationId: orgId } } });
++      await p.auditLog.deleteMany({ where: { user: { organizationId: orgId } } });
++      await p.user.deleteMany({ where: { organizationId: orgId } });
++      await p.athlete.deleteMany({ where: { organizationId: orgId } });
++      await p.team.deleteMany({ where: { organizationId: orgId } });
++      await p.exercise.deleteMany({ where: { organizationId: orgId } });
++      await p.organization.delete({ where: { id: orgId } });
++    } catch { /* pulizia best-effort */ }
++  }
++  await app.close();
++}, 60_000);
++
++// ─── 1-2. GDPR ──────────────────────────────────────────
++
++describe.sequential('GDPR', () => {
++  it("l'export di un ATHLETE contiene solo i suoi dati", async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'GET', url: '/api/v1/gdpr/export', headers: bearer(f.meToken),
++    });
++    expect(status).toBe(200);
++    expect(body.athletes.map((a: { id: string }) => a.id)).toEqual([f.meAthleteId]);
++    expect(body.wellnessLogs.every((w: { athleteId: string }) => w.athleteId === f.meAthleteId)).toBe(true);
++    expect(body.injuries).toEqual([]);
++    const raw = JSON.stringify(body);
++    expect(raw).not.toContain('wellness-Compagno');
++    expect(raw).not.toContain('infortunio-del-compagno');
++    expect(raw).not.toContain('Sessione del compagno');
++  });
++
++  it("l'export dello staff resta quello dell'organizzazione", async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'GET', url: '/api/v1/gdpr/export', headers: bearer(org.A.adminToken),
++    });
++    expect(status).toBe(200);
++    const ids = body.athletes.map((a: { id: string }) => a.id);
++    expect(ids).toEqual(expect.arrayContaining([f.meAthleteId, f.mateAthleteId]));
++    expect(JSON.stringify(body)).toContain('infortunio-del-compagno');
++  });
++
++  it('la cancellazione GDPR di un atleta riesce e chiude le sue sessioni', async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'POST',
++      url: `/api/v1/gdpr/erase-athlete/${f.erasedAthleteId}`,
++      headers: bearer(org.A.adminToken),
++      payload: { reason: 'test' },
++    });
++    expect(status).toBe(200);
++    const user = await app.prisma.user.findUnique({ where: { id: f.erasedUserId } });
++    expect(user?.isActive).toBe(false);
++    expect(user?.email).toContain('@removed.local');
++    expect(await app.prisma.refreshToken.count({ where: { userId: f.erasedUserId } })).toBe(0);
++  });
++
++  it("l'ultimo amministratore con colleghi attivi non puo' cancellarsi", async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'DELETE',
++      url: '/api/v1/gdpr/delete-account',
++      headers: bearer(org.A.adminToken),
++      payload: { confirmation: 'DELETE_MY_ACCOUNT', password: PASSWORD },
++    });
++    expect(status).toBe(409);
++    expect(body.error.code).toBe('LAST_ADMIN');
++  });
++
++  it('un preparatore cancella il proprio account', async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'DELETE',
++      url: '/api/v1/gdpr/delete-account',
++      headers: bearer(f.trainerToken),
++      payload: { confirmation: 'DELETE_MY_ACCOUNT', password: PASSWORD },
++    });
++    expect(status).toBe(200);
++    const user = await app.prisma.user.findUnique({ where: { id: f.trainerUserId } });
++    expect(user?.isActive).toBe(false);
++    expect(user?.deletedAt).not.toBeNull();
++  });
++});
++
++// ─── 3. App atleti: perimetro delle sessioni ────────────
++
++describe.sequential('app atleti — sessioni', () => {
++  it("il dettaglio della sessione di un compagno risponde 404 e non lascia tracce", async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject({
++      method: 'GET', url: `/api/v1/athlete/sessions/${f.mateSessionId}`, headers: bearer(f.meToken),
++    });
++    expect(status).toBe(404);
++    expect(JSON.stringify(body)).not.toContain('Sessione del compagno');
++    expect(await app.prisma.sessionLog.count({ where: { trainingSessionId: f.mateSessionId } })).toBe(0);
++  });
++
++  it("il dettaglio di una sessione di un'altra organizzazione risponde 404", async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'GET', url: `/api/v1/athlete/sessions/${f.bSessionId}`, headers: bearer(f.meToken),
++    });
++    expect(status).toBe(404);
++  });
++
++  it('il dettaglio della propria sessione funziona e segna la visualizzazione', async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'GET', url: `/api/v1/athlete/sessions/${f.mySessionId}`, headers: bearer(f.meToken),
++    });
++    expect(status).toBe(200);
++    expect(body.data.title).toBe('Sessione mia');
++    expect(body.data.myLog?.viewedAt).toBeTruthy();
++  });
++
++  it("il registro RPE rifiuta la sessione di un'altra organizzazione", async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'POST',
++      url: '/api/v1/athlete/session-log',
++      headers: bearer(f.meToken),
++      payload: { trainingSessionId: f.bSessionId, actualRpe: 9, notes: 'intruso' },
++    });
++    expect(status).toBe(404);
++    expect(await app.prisma.sessionLog.count({ where: { trainingSessionId: f.bSessionId } })).toBe(0);
++  });
++
++  it('il registro RPE sulla propria sessione funziona', async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'POST',
++      url: '/api/v1/athlete/session-log',
++      headers: bearer(f.meToken),
++      payload: { trainingSessionId: f.mySessionId, actualRpe: 7 },
++    });
++    expect(status).toBe(201);
++    expect(body.data.actualRpe).toBe(7);
++  });
++
++  it("l'elenco contiene la propria sessione e non quella del compagno", async () => {
++    if (!dbAvailable) return;
++    const { status, body } = await inject<any>({
++      method: 'GET', url: '/api/v1/athlete/sessions', headers: bearer(f.meToken),
++    });
++    expect(status).toBe(200);
++    const ids = body.data.map((s: { id: string }) => s.id);
++    expect(ids).toContain(f.mySessionId);
++    expect(ids).not.toContain(f.mateSessionId);
++  });
++
++  it('una data illeggibile risponde 400, non 500', async () => {
++    if (!dbAvailable) return;
++    const list = await inject({
++      method: 'GET', url: '/api/v1/athlete/sessions?from=ieri', headers: bearer(f.meToken),
++    });
++    expect(list.status).toBe(400);
++    const wellness = await inject({
++      method: 'POST',
++      url: '/api/v1/athlete/wellness',
++      headers: bearer(f.meToken),
++      payload: { date: 'ieri', sleepHours: 7, sleepQuality: 4, fatigue: 4, soreness: 4, stress: 4, mood: 4 },
++    });
++    expect(wellness.status).toBe(400);
++  });
++
++  it('un link javascript: fra gli allegati del wellness viene rifiutato', async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'POST',
++      url: '/api/v1/athlete/wellness',
++      headers: bearer(f.meToken),
++      payload: {
++        date: new Date().toISOString().slice(0, 10),
++        sleepHours: 7, sleepQuality: 4, fatigue: 4, soreness: 4, stress: 4, mood: 4,
++        mediaUrls: ['javascript:alert(1)'],
++      },
++    });
++    expect(status).toBe(400);
++  });
++});
++
++// ─── 4. Chiusura del foglio presenze ────────────────────
++
++describe.sequential('foglio presenze — chiusura idempotente', () => {
++  it('la prima chiusura crea le righe di carico, la seconda risponde 409 senza duplicarle', async () => {
++    if (!dbAvailable) return;
++    const countLoad = () =>
++      app.prisma.trainingSession.count({
++        where: { organizationId: org.A.id, athleteId: { in: [f.meAthleteId, f.mateAthleteId] }, status: 'COMPLETED' },
++      });
++    const before = await countLoad();
++
++    const first = await inject<any>({
++      method: 'PUT', url: `/api/v1/field-training/${f.sheetId}/complete`,
++      headers: bearer(org.A.adminToken), payload: {},
++    });
++    expect(first.status).toBe(200);
++    expect(first.body.data.trainingSessions).toBe(2);
++    expect(await countLoad()).toBe(before + 2);
++
++    const second = await inject<any>({
++      method: 'PUT', url: `/api/v1/field-training/${f.sheetId}/complete`,
++      headers: bearer(org.A.adminToken), payload: {},
++    });
++    expect(second.status).toBe(409);
++    expect(second.body.error.code).toBe('SESSION_ALREADY_COMPLETED');
++    expect(await countLoad()).toBe(before + 2);
++  });
++});
++
++// ─── 5. Billing ─────────────────────────────────────────
++
++describe.sequential('billing', () => {
++  it('un VIEWER non apre il portale ne\' avvia un checkout', async () => {
++    if (!dbAvailable) return;
++    const portal = await inject({ method: 'POST', url: '/api/v1/billing/portal', headers: bearer(f.viewerToken) });
++    expect(portal.status).toBe(403);
++    const checkout = await inject({
++      method: 'POST', url: '/api/v1/billing/checkout', headers: bearer(f.viewerToken),
++      payload: { tier: 'ultra' },
++    });
++    expect(checkout.status).toBe(403);
++  });
++
++  it('il webhook verifica la firma sul corpo originale', async () => {
++    if (!dbAvailable) return;
++    const saved = {
++      key: process.env.STRIPE_SECRET_KEY,
++      secret: process.env.STRIPE_WEBHOOK_SECRET,
++    };
++    const secret = 'whsec_test_' + crypto.randomBytes(16).toString('hex');
++    // Chiave finta ma "configurata": il webhook non chiama Stripe, verifica
++    // solo la firma in locale.
++    process.env.STRIPE_SECRET_KEY = 'sk_test_review_' + 'a'.repeat(32);
++    process.env.STRIPE_WEBHOOK_SECRET = secret;
++    try {
++      // Spazi e ordine delle chiavi voluti: riserializzare l'oggetto non
++      // restituirebbe questi byte, e la firma non tornerebbe.
++      const payload = '{ "id": "evt_test_review",  "object": "event", "type": "test.review_20260916", "data": { "object": {} } }';
++      const header = Stripe.webhooks.generateTestHeaderString({ payload, secret });
++
++      const ok = await inject({
++        method: 'POST', url: '/api/v1/billing/webhook',
++        headers: { 'content-type': 'application/json', 'stripe-signature': header },
++        payload,
++      });
++      expect(ok.status).toBe(200);
++
++      const forged = await inject({
++        method: 'POST', url: '/api/v1/billing/webhook',
++        headers: { 'content-type': 'application/json', 'stripe-signature': header },
++        payload: payload.replace('test.review_20260916', 'checkout.session.completed'),
++      });
++      expect(forged.status).toBe(400);
++    } finally {
++      if (saved.key === undefined) delete process.env.STRIPE_SECRET_KEY;
++      else process.env.STRIPE_SECRET_KEY = saved.key;
++      if (saved.secret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
++      else process.env.STRIPE_WEBHOOK_SECRET = saved.secret;
++    }
++  });
++});
++
++// ─── 6. Notifiche atleta ────────────────────────────────
++
++describe.sequential('app atleti — notifiche', () => {
++  it('un corpo senza ids risponde 400, non 500', async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'POST', url: '/api/v1/athlete/notifications/read',
++      headers: bearer(f.meToken), payload: { ids: 'tutte' },
++    });
++    expect(status).toBe(400);
++  });
++
++  it('con ids validi risponde 200', async () => {
++    if (!dbAvailable) return;
++    const { status } = await inject({
++      method: 'POST', url: '/api/v1/athlete/notifications/read',
++      headers: bearer(f.meToken), payload: { ids: ['non-esiste'] },
++    });
++    expect(status).toBe(200);
++  });
++});

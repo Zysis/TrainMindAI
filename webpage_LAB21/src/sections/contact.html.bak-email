@@ -1,0 +1,17 @@
+<!-- ══ LISTA D'ATTESA ══ -->
+<section class="cta bleed" id="contact">
+  <div class="cta-bg"><img src="/assets/img/cta-gym.jpg" alt=""></div>
+  <div class="inner cta-in">
+    <span class="kick mono rv" style="justify-content:center" data-i18n="contact.kicker">04 — Lista d'attesa</span>
+    <h2 class="rv d1" data-i18n="contact.title">TrainMind apre ai primi preparatori.</h2>
+    <p class="rv d2" data-i18n="contact.lead">Lascia il contatto: ti scriviamo quando apriamo gli accessi. Intanto ricevi subito un report di esempio — quattro pagine, una squadra con nomi di fantasia, il commento dell'assistente. Nessuna telefonata.</p>
+    <div class="cta-row rv d3">
+      <a href="#" data-link="waitlist" class="btn btn-lg" data-i18n="contact.cta1">Entra nella lista d'attesa</a>
+    </div>
+    <div class="cinfo">
+      <div class="rv"><span class="mono" data-i18n="contact.emailLabel">Scrivici</span><strong><a href="#" data-link="email" data-text="email">info@lab21.it</a></strong></div>
+      <div class="rv d1"><span class="mono" data-i18n="contact.officeLabel">Per chi</span><strong data-i18n="contact.office">Basket italiano, dalla B Interregionale all'A2</strong></div>
+      <div class="rv d2"><span class="mono" data-i18n="contact.responseLabel">Risposta</span><strong data-i18n="contact.response">entro 24 ore, per iscritto</strong></div>
+    </div>
+  </div>
+</section>

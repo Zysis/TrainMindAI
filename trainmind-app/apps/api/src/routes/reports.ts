@@ -7,12 +7,14 @@
  * calls the Python ai-service to produce a narrative summary, and returns
  * either a ReportData JSON (for in-browser preview), a PDF, or a DOCX.
  *
- * Audiences: STAFF | MEDICAL | TRAINER
+ * Audiences: STAFF | MEDICAL | MANAGEMENT
+ * (TRAINER e' accettato ancora in ingresso e trattato come STAFF: il report
+ * "Preparatore" e' confluito nello Staff tecnico il 17/9/2026.)
  *
  * The heavy aggregation (Prisma queries, ACWR bucketing, adherence math)
  * lives here. The AI service only handles the narrative synthesis — it
- * receives the already-aggregated payload and returns a 2-3 sentence
- * Italian summary.
+ * receives the already-aggregated payload and returns a short summary in the
+ * language of the user who generates the report.
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -25,12 +27,15 @@ import type {
   ReportMetadata,
   StaffReportData,
   MedicalReportData,
-  TrainerReportData,
+  ManagementReportData,
+  TrainerSectionsData,
   ReportKPI,
   ReportTable,
   ReportChart,
 } from '@trainmind/types';
-import { calculateWellnessScore } from '@trainmind/utils';
+import { calculateWellnessScore, computeAcwr } from '@trainmind/utils';
+import { acwrLoadPoints } from '../lib/acwr-loads.js';
+import { aggregateManagement, buildManagementNarrative } from '../services/report-management.js';
 import { renderReportPdf } from '../services/report-renderer-pdf.js';
 import { renderReportDocx } from '../services/report-renderer-docx.js';
 
@@ -38,8 +43,16 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3004';
 
 // ─── Request schema ─────────────────────────────────────
 
+export type ReportAudienceInput = 'STAFF' | 'MEDICAL' | 'MANAGEMENT';
+
+/** Il vecchio "Preparatore" arriva ancora da client e schedulazioni non aggiornati */
+export const reportAudienceSchema = z.preprocess(
+  (v) => (v === 'TRAINER' ? 'STAFF' : v),
+  z.enum(['STAFF', 'MEDICAL', 'MANAGEMENT']),
+);
+
 const generateReportSchema = z.object({
-  audience: z.enum(['STAFF', 'MEDICAL', 'TRAINER']),
+  audience: reportAudienceSchema,
   periodFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   periodTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   format: z.enum(['PDF', 'DOCX', 'JSON']).default('JSON'),
@@ -68,30 +81,11 @@ function formatPct(n: number): string {
  */
 const computeWellnessScore = calculateWellnessScore;
 
-/**
- * ACWR = acute load (7 days) / chronic load (28 days / 4).
- * sRPE = rpe × duration (minutes).
- */
-function computeAcwr(logs: Array<{ rpe: number; duration: number; date: Date }>, at: Date): number | null {
-  const acuteCutoff = new Date(at.getTime() - 7 * 24 * 3600 * 1000);
-  const chronicCutoff = new Date(at.getTime() - 28 * 24 * 3600 * 1000);
-  let acute = 0;
-  let chronic = 0;
-  for (const l of logs) {
-    if (l.date < chronicCutoff) continue;
-    const sRpe = l.rpe * l.duration;
-    if (l.date >= acuteCutoff) acute += sRpe;
-    chronic += sRpe;
-  }
-  if (chronic === 0) return null;
-  return acute / (chronic / 4);
-}
+type ReportLanguage = 'it' | 'en' | 'es';
 
-function acwrBucket(acwr: number): 'low' | 'optimal' | 'high' | 'danger' {
-  if (acwr < 0.8) return 'low';
-  if (acwr <= 1.3) return 'optimal';
-  if (acwr <= 1.5) return 'high';
-  return 'danger';
+interface AiSummary {
+  summary: string;
+  highlights: string[];
 }
 
 async function callAiSummary(
@@ -105,7 +99,8 @@ async function callAiSummary(
     period_to: string;
     data: unknown;
   },
-): Promise<string | null> {
+  language: ReportLanguage,
+): Promise<AiSummary | null> {
   // Il riassunto di un report è testo breve e schematico: va sul modello
   // economico. Il modello va passato esplicitamente all'ai-service.
   const model = getModelForOperation('REPORT');
@@ -115,7 +110,7 @@ async function callAiSummary(
     const res = await fetch(`${AI_SERVICE_URL}/ai/generate-report-summary`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, language: 'it', model }),
+      body: JSON.stringify({ ...payload, language, model }),
       signal: AbortSignal.timeout(30_000),
     });
 
@@ -133,7 +128,7 @@ async function callAiSummary(
       return null;
     }
 
-    const body = (await res.json()) as { summary?: string };
+    const body = (await res.json()) as { summary?: string; highlights?: string[]; model?: string };
     void recordAiUsage(app, {
       organizationId,
       userId,
@@ -143,7 +138,13 @@ async function callAiSummary(
       usage: extractUsage(body),
       durationMs: Date.now() - startedAt,
     });
-    return body.summary ?? null;
+    // Se il modello non risponde, l'ai-service restituisce un testo generico
+    // marcato `fallback`: meglio il nostro, costruito sui numeri del report.
+    if (!body.summary || body.model === 'fallback') return null;
+    return {
+      summary: body.summary,
+      highlights: Array.isArray(body.highlights) ? body.highlights.filter((h) => typeof h === 'string' && h.trim()) : [],
+    };
   } catch (err) {
     void recordAiUsage(app, {
       organizationId,
@@ -268,13 +269,14 @@ async function aggregateStaff(
     }
   }
 
-  // ACWR distribution
+  // ACWR distribution — stessa regola della dashboard e di Analisi
+  // (finestra cronica 21 giorni, sedute senza RPE escluse): prima qui c'era
+  // una copia a 28 giorni con RPE 5 d'ufficio, e il report dava zone diverse.
   const acwrDist = { low: 0, optimal: 0, high: 0, danger: 0 };
+  const acwrPoints = await acwrLoadPoints(prisma, athleteIds, to);
   for (const a of athletes) {
-    const athleteLogs = sessionLogs.filter((l) => l.athleteId === a.id);
-    const acwr = computeAcwr(athleteLogs, to);
-    if (acwr === null) continue;
-    acwrDist[acwrBucket(acwr)]++;
+    const { zone } = computeAcwr(acwrPoints.get(a.id) ?? [], to);
+    if (zone) acwrDist[zone]++;
   }
 
   // Sessions completed in the period (plan-based + standalone field/game)
@@ -405,6 +407,11 @@ async function aggregateStaff(
     },
   ];
 
+  // Aderenza, pianificato vs reale, adattamenti: erano il report "Preparatore"
+  const trainer = await aggregateTrainerSections(app, organizationId, from, to, teamId, athleteId);
+  const adherenceKpi = trainer.kpis.find((k) => k.label === 'Aderenza globale');
+  if (adherenceKpi) kpis.push(adherenceKpi);
+
   return {
     audience: 'STAFF',
     metadata,
@@ -415,6 +422,11 @@ async function aggregateStaff(
     activeAlerts,
     wellnessTrend,
     loadTrend,
+    adherenceByAthlete: trainer.adherenceByAthlete,
+    performanceTrends: trainer.performanceTrends,
+    plannedVsActual: trainer.plannedVsActual,
+    adaptations: trainer.adaptations,
+    topMovers: trainer.topMovers,
   };
 }
 
@@ -717,15 +729,14 @@ async function aggregateMedical(
   };
 }
 
-async function aggregateTrainer(
+async function aggregateTrainerSections(
   app: FastifyInstance,
   organizationId: string,
   from: Date,
   to: Date,
-  metadata: ReportMetadata,
   teamId?: string,
   athleteId?: string,
-): Promise<TrainerReportData> {
+): Promise<TrainerSectionsData> {
   const prisma = app.prisma;
 
   let athletes;
@@ -995,9 +1006,6 @@ async function aggregateTrainer(
   ];
 
   return {
-    audience: 'TRAINER',
-    metadata,
-    summary: '',
     kpis,
     adherenceByAthlete,
     performanceTrends,
@@ -1066,7 +1074,8 @@ export interface GenerateReportInput {
   app: FastifyInstance;
   organizationId: string;
   userId: string;
-  audience: 'STAFF' | 'MEDICAL' | 'TRAINER';
+  /** 'TRAINER' = schedulazione non ancora migrata: vale come STAFF */
+  audience: ReportAudienceInput | 'TRAINER';
   periodFrom: string; // YYYY-MM-DD
   periodTo: string;   // YYYY-MM-DD
   format: 'JSON' | 'PDF' | 'DOCX';
@@ -1084,7 +1093,10 @@ export interface GenerateReportOutput {
 }
 
 export async function generateReport(input: GenerateReportInput): Promise<GenerateReportOutput> {
-  const { app, organizationId, userId, audience, periodFrom, periodTo, format, includeAISummary, teamId, athleteId } = input;
+  const { app, organizationId, userId, periodFrom, periodTo, format, teamId, athleteId } = input;
+  const audience: ReportAudienceInput = input.audience === 'TRAINER' ? 'STAFF' : input.audience;
+  // Per la dirigenza il commento discorsivo e' il cuore del report: sempre.
+  const includeAISummary = audience === 'MANAGEMENT' ? true : input.includeAISummary;
 
   const from = new Date(periodFrom + 'T00:00:00Z');
   const to = new Date(periodTo + 'T23:59:59Z');
@@ -1094,7 +1106,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
   const [org, user, team, athlete] = await Promise.all([
     app.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
-    app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+    app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true, locale: true } }),
     teamId ? app.prisma.team.findUnique({ where: { id: teamId }, select: { name: true } }) : null,
     athleteId
       ? app.prisma.athlete.findFirst({
@@ -1125,27 +1137,43 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
   } else if (audience === 'MEDICAL') {
     report = await aggregateMedical(app, organizationId, from, to, metadata, teamId, athleteId);
   } else {
-    report = await aggregateTrainer(app, organizationId, from, to, metadata, teamId, athleteId);
+    report = await aggregateManagement(app, organizationId, from, to, metadata, teamId, athleteId);
   }
 
-  if (includeAISummary) {
-    const aiSummary = await callAiSummary(app, organizationId, userId, {
-      audience,
-      organization_name: metadata.organizationName,
-      period_from: metadata.periodFrom,
-      period_to: metadata.periodTo,
-      data: report,
-    });
-    report.summary = aiSummary || buildFallbackSummary(report);
+  // La sintesi AI segue la lingua di chi genera il report (per i report
+  // programmati: di chi ha creato la schedulazione).
+  const language: ReportLanguage = user?.locale === 'en' || user?.locale === 'es' ? user.locale : 'it';
+
+  const aiSummary = includeAISummary
+    ? await callAiSummary(
+        app,
+        organizationId,
+        userId,
+        {
+          audience,
+          organization_name: metadata.organizationName,
+          period_from: metadata.periodFrom,
+          period_to: metadata.periodTo,
+          data: report,
+        },
+        language,
+      )
+    : null;
+
+  if (report.audience === 'MANAGEMENT') {
+    const fallback = buildManagementNarrative(report);
+    report.summary = aiSummary?.summary || fallback.summary;
+    report.highlights = aiSummary && aiSummary.highlights.length > 0 ? aiSummary.highlights.slice(0, 4) : fallback.highlights;
   } else {
-    report.summary = buildFallbackSummary(report);
+    report.summary = aiSummary?.summary || buildFallbackSummary(report);
   }
 
   const teamSlug = team?.name ? `-${team.name.toLowerCase().replace(/\s+/g, '_')}` : '';
   const athleteSlug = athlete
     ? `-${`${athlete.lastName}_${athlete.firstName}`.toLowerCase().replace(/\s+/g, '_')}`
     : '';
-  const baseFilename = `report-${audience.toLowerCase()}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}`;
+  const audienceSlug = { STAFF: 'staff-tecnico', MEDICAL: 'staff-medico', MANAGEMENT: 'dirigenza' }[audience];
+  const baseFilename = `report-${audienceSlug}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}`;
 
   if (format === 'JSON') {
     return {
@@ -1185,7 +1213,8 @@ function buildFallbackSummary(report: ReportData): string {
   if (report.audience === 'STAFF') {
     const r = report as StaffReportData;
     const red = r.acwrDistribution.high + r.acwrDistribution.danger;
-    return `Nel periodo ${periodLabel}, il team ha completato ${formatPct(r.sessionsCompleted.completionRate)} delle sessioni pianificate. ${red > 0 ? `${red} atleti presentano ACWR in zona di rischio e richiedono monitoraggio.` : 'La distribuzione del carico risulta ottimale per tutti gli atleti monitorati.'} Totale alert generati: ${r.activeAlerts.rows.length}.`;
+    const adherence = r.kpis.find((k) => k.label === 'Aderenza globale')?.value;
+    return `Nel periodo ${periodLabel}, il team ha completato ${formatPct(r.sessionsCompleted.completionRate)} delle sessioni pianificate${adherence !== undefined ? ` (aderenza al piano ${adherence})` : ''}. ${red > 0 ? `${red} atleti presentano ACWR in zona di rischio e richiedono monitoraggio.` : 'La distribuzione del carico risulta ottimale per tutti gli atleti monitorati.'} Totale alert generati: ${r.activeAlerts.rows.length}.${r.adaptations && r.adaptations.rows.length > 0 ? ` Adattamenti AI proposti: ${r.adaptations.rows.length}.` : ''}`;
   }
 
   if (report.audience === 'MEDICAL') {
@@ -1194,7 +1223,6 @@ function buildFallbackSummary(report: ReportData): string {
     return `Nel periodo ${periodLabel}, sono stati monitorati ${r.injuredAthletes.rows.length} atleti infortunati (${active} casi ancora attivi). ${r.wellnessFlags.rows.length > 0 ? `${r.wellnessFlags.rows.length} atleti presentano segnali wellness critici da monitorare.` : 'I dati wellness non mostrano criticità aggiuntive.'}`;
   }
 
-  const r = report as TrainerReportData;
-  const adherenceKpi = r.kpis.find((k) => k.label === 'Aderenza globale');
-  return `Nel periodo ${periodLabel}, l'aderenza globale al piano è pari a ${adherenceKpi?.value ?? '—'}. ${r.adaptations.rows.length > 0 ? `Sono stati proposti ${r.adaptations.rows.length} adattamenti AI, di cui ${r.kpis.find((k) => k.label === 'Adattamenti applicati')?.value ?? 0} applicati.` : 'Nessun adattamento AI è stato necessario nel periodo.'}`;
+  // MANAGEMENT ha il suo testo (buildManagementNarrative), qui non arriva
+  return buildManagementNarrative(report as ManagementReportData).summary;
 }

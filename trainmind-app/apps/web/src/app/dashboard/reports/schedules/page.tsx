@@ -99,8 +99,11 @@ export default function SchedulesPage() {
   const AUDIENCE_OPTIONS = [
     { value: 'STAFF', label: t('audienceStaff') },
     { value: 'MEDICAL', label: t('audienceMedical') },
-    { value: 'TRAINER', label: t('audienceTrainer') },
+    { value: 'MANAGEMENT', label: t('audienceManagement') },
   ];
+  // TRAINER = schedulazione "Preparatore" non ancora migrata: si mostra come Staff tecnico
+  const audienceLabel = (value: string) =>
+    value === 'TRAINER' ? t('audienceStaff') : AUDIENCE_OPTIONS.find((a) => a.value === value)?.label ?? value;
 
   const FORMAT_OPTIONS = [
     { value: 'PDF', label: 'PDF' },
@@ -198,7 +201,7 @@ export default function SchedulesPage() {
     setUseCustomCron(!isPreset);
     setForm({
       name: s.name,
-      audience: s.audience,
+      audience: s.audience === 'TRAINER' ? 'STAFF' : s.audience,
       format: s.format,
       cronExpression: s.cronExpression,
       timezone: s.timezone,
@@ -381,7 +384,7 @@ export default function SchedulesPage() {
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    {AUDIENCE_OPTIONS.find((a) => a.value === s.audience)?.label ?? s.audience}
+                    {audienceLabel(s.audience)}
                   </td>
                   <td className="px-4 py-3 text-xs">{cronToHuman(s.cronExpression)}</td>
                   <td className="px-4 py-3">
@@ -528,15 +531,17 @@ export default function SchedulesPage() {
           />
 
           <div className="flex items-center gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={form.includeAISummary}
-                onChange={(e) => setField('includeAISummary', e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
-              />
-              Includi riassunto AI
-            </label>
+            {form.audience !== 'MANAGEMENT' && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.includeAISummary}
+                  onChange={(e) => setField('includeAISummary', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
+                />
+                {t('includeAISummary')}
+              </label>
+            )}
             <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <input
                 type="checkbox"
@@ -544,7 +549,7 @@ export default function SchedulesPage() {
                 onChange={(e) => setField('isActive', e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
               />
-              Attiva subito
+              {t('activeImmediately')}
             </label>
           </div>
         </div>

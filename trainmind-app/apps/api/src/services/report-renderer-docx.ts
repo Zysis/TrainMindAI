@@ -15,11 +15,12 @@
  *      colored shading cells (using the Table cell shading API).
  */
 
+import { renderChartPng, AUDIENCE_LABELS } from './report-renderer-pdf.js';
 import type {
   ReportData,
   StaffReportData,
   MedicalReportData,
-  TrainerReportData,
+  ManagementReportData,
   ReportKPI,
   ReportTable,
   ReportChart,
@@ -533,6 +534,15 @@ function makeAcwrDistribution(
   title: string,
   buckets: { low: number; optimal: number; high: number; danger: number },
 ) {
+  return makeSegmentTable(d, title, [
+    ['Basso (<0.8)', buckets.low, '60A5FA'],
+    ['Ottimale (0.8-1.3)', buckets.optimal, GREEN],
+    ['Alto (1.3-1.5)', buckets.high, AMBER],
+    ['Rischio (>1.5)', buckets.danger, RED],
+  ]);
+}
+
+function makeSegmentTable(d: D, title: string, rows: Array<[string, number, string]>) {
   const {
     Paragraph,
     TextRun,
@@ -544,13 +554,7 @@ function makeAcwrDistribution(
     ShadingType,
   } = d;
 
-  const total = buckets.low + buckets.optimal + buckets.high + buckets.danger || 1;
-  const rows: Array<[string, number, string]> = [
-    ['Basso (<0.8)', buckets.low, '60A5FA'],
-    ['Ottimale (0.8-1.3)', buckets.optimal, GREEN],
-    ['Alto (1.3-1.5)', buckets.high, AMBER],
-    ['Rischio (>1.5)', buckets.danger, RED],
-  ];
+  const total = rows.reduce((s, [, n]) => s + n, 0) || 1;
 
   const border = {
     top: { style: BorderStyle.SINGLE, size: 4, color: SLATE_200 },
@@ -643,7 +647,7 @@ function bodyStaff(d: D, r: StaffReportData): unknown[] {
         new TextRun({ text: String(r.sessionsCompleted.cancelled), bold: true, size: 20 }),
         new TextRun({ text: ' · Tasso completamento: ', size: 20 }),
         new TextRun({
-          text: `${r.sessionsCompleted.completionRate.toFixed(1)}%`,
+          text: `${(r.sessionsCompleted.completionRate * 100).toFixed(0)}%`,
           bold: true,
           size: 20,
           color: TEAL,
@@ -657,6 +661,13 @@ function bodyStaff(d: D, r: StaffReportData): unknown[] {
     ...makeChartAsTable(d, r.loadTrend),
     makeH2(d, 'Alert Attivi'),
     ...makeDataTable(d, r.activeAlerts),
+    ...(r.adherenceByAthlete ? [makeH2(d, 'Aderenza al Piano per Atleta'), ...makeDataTable(d, r.adherenceByAthlete)] : []),
+    ...(r.performanceTrends ? [makeH2(d, 'Volume Settimanale'), ...makeChartAsTable(d, r.performanceTrends)] : []),
+    ...(r.plannedVsActual ? [makeH2(d, 'Pianificato vs Reale'), ...makeChartAsTable(d, r.plannedVsActual)] : []),
+    ...(r.adaptations ? [makeH2(d, 'Adattamenti del Piano'), ...makeDataTable(d, r.adaptations)] : []),
+    ...(r.topMovers && r.topMovers.rows.length > 0
+      ? [makeH2(d, 'Atleti con Maggiori Variazioni'), ...makeDataTable(d, r.topMovers)]
+      : []),
   ];
 }
 
@@ -691,23 +702,89 @@ function bodyMedical(d: D, r: MedicalReportData): unknown[] {
   return sections;
 }
 
-function bodyTrainer(d: D, r: TrainerReportData): unknown[] {
+type ChartImage = Awaited<ReturnType<typeof renderChartPng>>;
+
+/** Il grafico come immagine; se Chrome non c'e', come tabella di valori */
+function makeChartImage(d: D, chart: ReportChart, img: ChartImage): unknown[] {
+  if (!img) return makeChartAsTable(d, chart);
+  const { Paragraph, ImageRun } = d;
+  const width = 600;
+  const height = Math.round((img.height / img.width) * width);
   return [
-    ...makeHeader(d, r.metadata, 'Preparazione Atletica'),
-    makeSummaryBox(d, r.summary),
-    makeH2(d, 'KPI Tecnici'),
-    makeKpiTable(d, r.kpis),
-    makeH2(d, 'Aderenza per Atleta'),
-    ...makeDataTable(d, r.adherenceByAthlete),
-    makeH2(d, 'Trend di Performance'),
-    ...makeChartAsTable(d, r.performanceTrends),
-    makeH2(d, 'Pianificato vs Reale'),
-    ...makeChartAsTable(d, r.plannedVsActual),
-    makeH2(d, 'Adattamenti del Piano'),
-    ...makeDataTable(d, r.adaptations),
-    makeH2(d, 'Top Mover'),
-    ...makeDataTable(d, r.topMovers),
+    new Paragraph({
+      children: [new ImageRun({ type: 'png', data: img.data, transformation: { width, height } })],
+      spacing: { after: 160 },
+    }),
   ];
+}
+
+function bodyManagement(
+  d: D,
+  r: ManagementReportData,
+  images: { availability: ChartImage; wellness: ChartImage },
+): unknown[] {
+  const { Paragraph, TextRun } = d;
+  const a = r.availability;
+  const h = r.teamHealth;
+  const note = (text: string) =>
+    new Paragraph({ children: [new TextRun({ text, size: 18, color: SLATE_500 })], spacing: { after: 160 } });
+
+  const out: unknown[] = [
+    ...makeHeader(d, r.metadata, 'Dirigenza'),
+    new Paragraph({
+      children: [new TextRun({ text: r.summary, size: 24 })],
+      spacing: { before: 160, after: 200, line: 360 },
+    }),
+  ];
+  if (r.highlights.length) {
+    out.push(
+      new Paragraph({ children: [new TextRun({ text: 'PUNTI CHIAVE', bold: true, size: 18, color: TEAL })] }),
+      ...r.highlights.map(
+        (x) => new Paragraph({ children: [new TextRun({ text: x, size: 22 })], bullet: { level: 0 } }),
+      ),
+    );
+  }
+  out.push(
+    makeH2(d, 'La squadra in numeri'),
+    makeKpiTable(d, r.kpis),
+    makeH2(d, 'Disponibilità della rosa'),
+    ...makeSegmentTable(d, `Situazione al ${formatDate(a.asOf)} su ${a.total} atleti`, [
+      ['A disposizione', a.available, GREEN],
+      ['In rientro graduale', a.limited, AMBER],
+      ['Fermi per infortunio', a.unavailable, RED],
+    ]),
+    // Il titolo del grafico e' dentro l'immagine (o nella tabella di ripiego)
+    ...makeChartImage(d, r.availabilityTrend, images.availability),
+  );
+  if (r.unavailableAthletes.rows.length) out.push(...makeDataTable(d, r.unavailableAthletes));
+  else out.push(note('Tutta la rosa è a disposizione.'));
+
+  out.push(makeH2(d, 'Salute della squadra'));
+  if (h.wellnessTrend.labels.length) {
+    out.push(...makeChartImage(d, h.wellnessTrend, images.wellness));
+  } else {
+    out.push(note('Nessun questionario di benessere compilato nel periodo.'));
+  }
+  out.push(
+    note(
+      'Il benessere è la media dei questionari giornalieri dei giocatori (sonno, fatica, dolori, stress, umore): sopra 70 è buono, sotto 55 va approfondito.',
+    ),
+  );
+  const assessed = h.loadRisk.green + h.loadRisk.yellow + h.loadRisk.red + h.loadRisk.noData;
+  if (assessed > 0) {
+    out.push(
+      ...makeSegmentTable(d, 'Carico di lavoro degli atleti a disposizione', [
+        ['In equilibrio', h.loadRisk.green, GREEN],
+        ['Da monitorare', h.loadRisk.yellow, AMBER],
+        ['Zona di rischio', h.loadRisk.red, RED],
+        ['Dati insufficienti', h.loadRisk.noData, 'CBD5E1'],
+      ]),
+      note(
+        "Confronta il lavoro dell'ultima settimana con quello delle tre precedenti: un aumento o un calo troppo bruschi espongono di più agli infortuni.",
+      ),
+    );
+  }
+  return out;
 }
 
 // ─── Public API ──────────────────────────────────────────────
@@ -719,7 +796,14 @@ export async function renderReportDocx(report: ReportData): Promise<Buffer> {
   let children: unknown[];
   if (report.audience === 'STAFF') children = bodyStaff(d, report);
   else if (report.audience === 'MEDICAL') children = bodyMedical(d, report);
-  else children = bodyTrainer(d, report);
+  else {
+    const [availability, wellness] = await Promise.all([
+      renderChartPng(report.availabilityTrend),
+      report.teamHealth.wellnessTrend.labels.length ? renderChartPng(report.teamHealth.wellnessTrend) : null,
+    ]);
+    children = bodyManagement(d, report, { availability, wellness });
+  }
+  const audienceLabel = AUDIENCE_LABELS[report.audience] ?? report.audience;
 
   const footer = new Footer({
     children: [
@@ -727,7 +811,7 @@ export async function renderReportDocx(report: ReportData): Promise<Buffer> {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `TrainMind · ${report.metadata.organizationName} · Report ${report.audience} · pagina `,
+            text: `TrainMind · ${report.metadata.organizationName} · Report ${audienceLabel} · pagina `,
             size: 14,
             color: SLATE_500,
           }),
@@ -741,7 +825,7 @@ export async function renderReportDocx(report: ReportData): Promise<Buffer> {
 
   const doc = new Document({
     creator: 'TrainMind',
-    title: `Report ${report.audience} - ${report.metadata.organizationName}`,
+    title: `Report ${audienceLabel} - ${report.metadata.organizationName}`,
     description: `Report periodico ${report.metadata.periodFrom} / ${report.metadata.periodTo}`,
     styles: {
       default: {

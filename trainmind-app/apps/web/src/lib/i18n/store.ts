@@ -38,9 +38,37 @@ export function isLocale(value: unknown): value is Locale {
  */
 function getInitialLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
+  const fromSite = localeFromLink();
+  if (fromSite) return fromSite;
   const stored = localStorage.getItem(STORAGE_KEY);
   if (isLocale(stored)) return stored;
   return DEFAULT_LOCALE;
+}
+
+/**
+ * Lingua passata dal sito vetrina LAB21 nel link (`?lang=es`): chi arriva da
+ * li' trova TrainMind nella lingua in cui stava leggendo. Viene salvata come
+ * le altre, quindi resta anche su /login e /register.
+ *
+ * `lang_set=1` vuol dire che il visitatore l'ha scelta a mano sul sito: vale
+ * come un click sullo switcher e, per chi ha un account, prevale sulla lingua
+ * del profilo. Senza, e' solo l'inglese di default della vetrina e il profilo
+ * resta libero di imporre la sua (vedi syncLocaleWithUser).
+ */
+function localeFromLink(): Locale | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get('lang');
+    if (!isLocale(lang)) return null;
+    const chosen = params.get('lang_set') === '1';
+    persistLocale(lang, chosen);
+    // Una scelta fatta in passato qui dentro non deve trasformare l'inglese
+    // di default della vetrina in una preferenza da scrivere sul profilo.
+    if (!chosen) localStorage.removeItem(EXPLICIT_KEY);
+    return lang;
+  } catch {
+    return null;
+  }
 }
 
 /** Lingua corrente leggibile fuori da React (es. al momento del login). */

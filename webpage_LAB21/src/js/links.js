@@ -1,4 +1,5 @@
 import { site } from './config.js'
+import { langChosen } from './i18n.js'
 
 /**
  * Parametri di campagna da tramandare a TrainMind.
@@ -49,6 +50,16 @@ function campaignParams() {
   // Da quale pagina del sito e' partito il clic.
   out.set('landing', window.location.pathname.slice(0, 500))
 
+  // La lingua della vetrina: TrainMind si apre nella stessa. `lang_set`
+  // distingue la scelta fatta a mano dall'inglese di default, cosi' per chi
+  // ha gia' un account la lingua del profilo vince sul default ma non su una
+  // scelta esplicita.
+  const lang = document.documentElement.lang
+  if (lang) {
+    out.set('lang', lang)
+    if (langChosen()) out.set('lang_set', '1')
+  }
+
   return out.toString()
 }
 
@@ -64,6 +75,23 @@ function withCampaign(href) {
  * Aggiorna anche l'anno nel footer (data-year).
  */
 export function applyLinks() {
+  applyHrefs()
+
+  document.querySelectorAll('[data-text]').forEach((el) => {
+    const key = el.dataset.text
+    if (key === 'email') el.textContent = site.email
+    if (key === 'vat') el.textContent = site.vat
+  })
+
+  document.querySelectorAll('[data-year]').forEach((el) => {
+    el.textContent = new Date().getFullYear()
+  })
+
+  // Cambio lingua dallo switcher: il link verso TrainMind va riscritto
+  window.addEventListener('lab21:lang', applyHrefs)
+}
+
+function applyHrefs() {
   const mailto = `mailto:${site.email}?subject=${encodeURIComponent(site.emailSubject)}`
 
   document.querySelectorAll('[data-link]').forEach((el) => {
@@ -82,15 +110,5 @@ export function applyLinks() {
       el.setAttribute('target', '_blank')
       el.setAttribute('rel', 'noopener')
     }
-  })
-
-  document.querySelectorAll('[data-text]').forEach((el) => {
-    const key = el.dataset.text
-    if (key === 'email') el.textContent = site.email
-    if (key === 'vat') el.textContent = site.vat
-  })
-
-  document.querySelectorAll('[data-year]').forEach((el) => {
-    el.textContent = new Date().getFullYear()
   })
 }

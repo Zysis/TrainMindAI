@@ -1,0 +1,64 @@
+LOCALE
+             email             |  role   | isActive |       lastLoginAt       |         org         |     tier
+-------------------------------+---------+----------+-------------------------+---------------------+--------------
+ avispa@pro.com                | ADMIN   | t        | 2026-09-14 14:05:19.969 | Pro Demo Basket     | PROFESSIONAL
+ avispa@starter.com            | ADMIN   | t        |                         | Starter Demo Basket | STARTER
+ coach@example.com             | ADMIN   | t        | 2026-09-15 13:34:19.595 | TrainMind Demo      | ULTRA
+ nicola.bortolotti@example.com | ATHLETE | t        | 2026-09-15 13:33:30.841 | TrainMind Demo      | ULTRA
+
+
+SERVER
+              email               |  role   | isActive |       lastLoginAt       |     org     | tier
+----------------------------------+---------+----------+-------------------------+-------------+-------
+ alessandro.vispa@gmail.com       | ADMIN   | t        | 2026-09-16 08:16:51.71  | AAZZ        | ULTRA
+ andrea.giottoli@demo.com         | ADMIN   | t        | 2026-09-15 03:40:26.899 | AG          | ULTRA
+ mario.minieri@demo.com           | ADMIN   | t        | 2026-09-16 17:34:38.658 | MM          | ULTRA
+ mario.minieritl@gmail.com        | ATHLETE | t        | 2026-09-06 08:44:43.533 | MM          | ULTRA
+ marmominieri@gmail.com           | ATHLETE | t        | 2026-08-19 13:39:06.364 | MM          | ULTRA
+ raffaele.parretta@demo.com       | ADMIN   | t        | 2026-07-22 06:11:48.872 | RP          | ULTRA
+ preparatore1.test@trainmind.demo | TRAINER | t        | 2026-09-08 09:57:56.202 | Test Deploy | ULTRA
+ preparatore2.test@trainmind.demo | TRAINER | t        | 2026-09-03 15:16:08.684 | Test Deploy | ULTRA
+ pispi29@hotmail.it               | ATHLETE | t        | 2026-09-14 10:00:13.981 | Test Deploy | ULTRA
+ valerio.delbianco@demo.com       | ADMIN   | t        | 2026-09-04 10:28:06.663 | VDB         | ULTRA
+
+
+------------------------------------------
+Produzione:
+Account					Ruolo
+preparatore1.test@trainmind.demo	TRAINER
+preparatore2.test@trainmind.demo	TRAINER
+
+LOCALE
+Pro Demo Basket (PROFESSIONAL, 2 posti) → avispa@pro.com - TrainMind2024! (avispa@pro.com / TrainMind2024! - pro)
+	-> Mario Rossi - mario.rossi@prodemo.test - Admin123!
+Starter Demo Basket (STARTER, 1 posto) → avispa@starter.com - TrainMind2024! (avispa@starter.com / TrainMind2024! - starter)
+app - coach@example.com - Admin123!
+athlete - nicola.bortolotti@example.com - Admin123!
+
+------------------------------------------
+
+IONOS
+user: pispi29@hotmail.it
+passw: Trainmind26!
+PASSWSERVER: Trainmind2
+
+mail IONOS: info@lab21sport.com
+passw mail IONOS: InfoLab21Trainmind26!
+
+ssh root@31.70.77.212
+
+-------------------------------------------
+
+POSTGRES_PASSWORD: df05cb4c79662f04e53e3dbecab0778d7a3cf7271ad8eadf
+JWT_SECRET: 61eca4256ead7996838ff9873cc174afe4013a2bf3593af372d6d4df98e0fd77
+
+RUNPOD
+user: pispi29@hotmail.it
+passw: Trainmind26!
+
+------------------------------------------
+
+INSTAGRAM + LINKEDIN
+
+user: info@lab21sport.com
+passw: Admin123!

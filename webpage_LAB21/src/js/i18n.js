@@ -7,6 +7,13 @@ import es from '../i18n/es.json'
    in src/sections/nav.html. */
 const dict = { it, en, es }
 const STORAGE_KEY = 'lab21.lang'
+/** Presente solo se il visitatore ha cliccato lo switcher (non per il default) */
+const CHOSEN_KEY = 'lab21.lang.chosen'
+
+/** true se la lingua corrente e' stata scelta a mano dal visitatore */
+export function langChosen() {
+  try { return localStorage.getItem(CHOSEN_KEY) === '1' } catch (_) { return false }
+}
 /** Lingua con cui si presenta il sito a chi non ha ancora scelto. */
 const DEFAULT_LANG = 'en'
 
@@ -31,6 +38,9 @@ export function setLang(lang) {
   })
 
   try { localStorage.setItem(STORAGE_KEY, lang) } catch (_) {}
+
+  // I link verso TrainMind portano con se' la lingua: li aggiorna links.js
+  window.dispatchEvent(new CustomEvent('lab21:lang', { detail: lang }))
 }
 
 /**
@@ -47,6 +57,9 @@ export function initLang() {
   setLang(dict[saved] ? saved : DEFAULT_LANG)
 
   document.querySelectorAll('.lang button').forEach((b) => {
-    b.addEventListener('click', () => setLang(b.dataset.lang))
+    b.addEventListener('click', () => {
+      try { localStorage.setItem(CHOSEN_KEY, '1') } catch (_) {}
+      setLang(b.dataset.lang)
+    })
   })
 }

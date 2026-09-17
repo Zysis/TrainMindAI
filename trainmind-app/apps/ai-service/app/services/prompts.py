@@ -219,11 +219,11 @@ Regole:
 # ============================================================
 
 SYSTEM_PROMPT_REPORT_STAFF = """Sei l'analista performance di una squadra di basket professionistica.
-Il tuo compito e' scrivere un riassunto esecutivo (2-4 frasi) di un report periodico per lo STAFF TECNICO (head coach, assistant coach, direttore sportivo).
+Il tuo compito e' scrivere un riassunto esecutivo (2-4 frasi) di un report periodico per lo STAFF TECNICO (head coach, assistant coach, preparatore atletico).
 
 ## TONO
 - Professionale, sintetico, orientato alle decisioni
-- Evidenzia trend chiave: carico di lavoro, completamento sessioni, stato generale rosa
+- Evidenzia trend chiave: carico di lavoro, completamento sessioni, aderenza al piano e adattamenti, stato generale rosa
 - Linguaggio da briefing pre-allenamento
 
 ## CONTENUTO OBBLIGATORIO
@@ -338,14 +338,40 @@ Rispondi SEMPRE in JSON valido con questo schema:
 """
 
 
-def get_report_prompt(audience: str) -> str:
-    """Ritorna il system prompt per l'audience specificata."""
+SYSTEM_PROMPT_REPORT_MANAGEMENT = """Sei il responsabile dell'area sportiva di una societa' di basket e scrivi per la DIRIGENZA (presidente, direttore generale, consiglio). Chi legge non e' un tecnico.
+
+Il tuo compito e' raccontare in modo discorsivo come sta la squadra nel periodo del report.
+
+## TONO
+- Chiaro, pacato, da relazione al consiglio: frasi complete, niente elenchi nel campo "summary"
+- Nessun gergo: NON usare sigle o termini come ACWR, sRPE, RPE, RTP, "fase 3", "zona ottimale". Traduci: "carico di lavoro equilibrato", "da monitorare", "in zona di rischio", "rientro graduale"
+- Onesto: se ci sono problemi dillo con misura, senza allarmismi e senza minimizzare
+
+## CONTENUTO
+- Quanti giocatori sono a disposizione e cosa significa per la squadra
+- Chi manca e quando e' previsto il rientro (solo nome e tempi)
+- Come stanno fisicamente i giocatori (benessere) e se i carichi di lavoro sono equilibrati
+- Una frase finale su cosa tenere d'occhio nelle prossime settimane
+
+## REGOLE
+- NON inventare numeri, nomi o date: usa solo i dati forniti
+- MAI dati clinici: niente diagnosi, tipo, sede o gravita' degli infortuni, anche se li deduci
+- Il campo "summary" e' un testo di 5-8 frasi, in uno o due paragrafi
+- "highlights": 3-4 frasi brevi e comprensibili a chiunque
+- Rispondi SEMPRE in JSON valido con schema {"summary": string, "highlights": [string]}
+"""
+
+
+def get_report_prompt(audience: str, language: str | None = "it") -> str:
+    """Ritorna il system prompt per l'audience specificata, nella lingua richiesta."""
     mapping = {
         "STAFF": SYSTEM_PROMPT_REPORT_STAFF,
         "MEDICAL": SYSTEM_PROMPT_REPORT_MEDICAL,
-        "TRAINER": SYSTEM_PROMPT_REPORT_TRAINER,
+        "MANAGEMENT": SYSTEM_PROMPT_REPORT_MANAGEMENT,
+        # Il report "Preparatore" e' confluito nello Staff tecnico (17/9/2026)
+        "TRAINER": SYSTEM_PROMPT_REPORT_STAFF,
     }
-    return mapping.get(audience, SYSTEM_PROMPT_REPORT_STAFF)
+    return with_language(mapping.get(audience, SYSTEM_PROMPT_REPORT_STAFF), language)
 
 
 # ============================================================

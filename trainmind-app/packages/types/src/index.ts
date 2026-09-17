@@ -186,10 +186,17 @@ export interface RegisterRequest {
 // ============================================
 
 export const ReportAudience = {
-  STAFF: 'STAFF',           // Technical staff — team readiness, ACWR distribution
+  STAFF: 'STAFF',           // Staff tecnico — carico, ACWR, wellness, aderenza al piano
   MEDICAL: 'MEDICAL',       // Medical — injured athletes, RTP progress, recovery
-  TRAINER: 'TRAINER',       // Preparatore — plan adherence, performance trends
+  MANAGEMENT: 'MANAGEMENT', // Dirigenza — disponibilità rosa e salute squadra, testo discorsivo
 } as const;
+/**
+ * `TRAINER` (il vecchio report "Preparatore") non esiste più: il suo contenuto
+ * è confluito nello Staff tecnico. L'API lo accetta ancora in ingresso e lo
+ * tratta come `STAFF`, così un client vecchio o una schedulazione non migrata
+ * non si rompono.
+ */
+export const LEGACY_REPORT_AUDIENCE_TRAINER = 'TRAINER';
 export type ReportAudience = (typeof ReportAudience)[keyof typeof ReportAudience];
 
 export const ReportFormat = {
@@ -228,6 +235,8 @@ export interface ReportChart {
   }>;
   yAxisLabel?: string;
   xAxisLabel?: string;
+  /** Fondo scala fisso (es. 100 per le percentuali); senza, la scala segue il valore massimo */
+  yMax?: number;
 }
 
 /** Common metadata present in every report */
@@ -266,6 +275,13 @@ export interface StaffReportData {
   activeAlerts: ReportTable;         // severity × athlete × metric × value
   wellnessTrend: ReportChart;        // team avg wellness over period
   loadTrend: ReportChart;            // team acute/chronic load
+  // Sezioni ereditate dal vecchio report "Preparatore" (facoltative: un JSON
+  // generato prima dell'unificazione non le ha)
+  adherenceByAthlete?: ReportTable;  // athlete × planned × completed × adherence%
+  performanceTrends?: ReportChart;   // volume settimanale
+  plannedVsActual?: ReportChart;     // planned load vs actual load
+  adaptations?: ReportTable;         // recent PlanAdaptation history
+  topMovers?: ReportTable;           // athletes with biggest volume/intensity deltas
 }
 
 /** Medical report — injury and RTP focus */
@@ -284,12 +300,9 @@ export interface MedicalReportData {
   loadVsInjuries?: ReportChart;      // load vs injuries correlation
 }
 
-/** Trainer report — plan adherence and performance */
-export interface TrainerReportData {
-  audience: 'TRAINER';
-  metadata: ReportMetadata;
-  summary: string;
-  kpis: ReportKPI[];                 // adherence %, avg RPE deviation, adaptations applied, PRs
+/** Sezioni di aderenza e performance, parte del report Staff tecnico */
+export interface TrainerSectionsData {
+  kpis: ReportKPI[];                 // adherence %, sessions completed, adaptations applied
   adherenceByAthlete: ReportTable;   // athlete × planned × completed × adherence%
   performanceTrends: ReportChart;    // avg volume/intensity over period
   plannedVsActual: ReportChart;      // planned load vs actual load
@@ -297,7 +310,35 @@ export interface TrainerReportData {
   topMovers: ReportTable;            // athletes with biggest volume/intensity deltas
 }
 
-export type ReportData = StaffReportData | MedicalReportData | TrainerReportData;
+/**
+ * Report per la dirigenza — discorsivo, pochi grafici, niente gergo tecnico e
+ * niente dati clinici: dei singoli atleti compaiono solo nome, disponibilità e
+ * rientro previsto (mai diagnosi, tipo o sede dell'infortunio).
+ */
+export interface ManagementReportData {
+  audience: 'MANAGEMENT';
+  metadata: ReportMetadata;
+  summary: string;                   // testo discorsivo (AI o costruito dai dati)
+  highlights: string[];              // 3-4 punti chiave
+  kpis: ReportKPI[];
+  availability: {
+    total: number;
+    available: number;
+    limited: number;                 // rientro graduale in corso
+    unavailable: number;
+    daysLost: number;                // giornate-atleta perse nel periodo
+    asOf: string;                    // ISO date della fotografia
+  };
+  availabilityTrend: ReportChart;    // % rosa disponibile per settimana
+  unavailableAthletes: ReportTable;  // Atleta × Stato × Rientro previsto
+  teamHealth: {
+    wellnessTrend: ReportChart;      // benessere medio per settimana (0-100)
+    wellnessAverage: number | null;  // media ultimi 7 giorni
+    loadRisk: { green: number; yellow: number; red: number; noData: number };
+  };
+}
+
+export type ReportData = StaffReportData | MedicalReportData | ManagementReportData;
 
 // ============================================
 // === Daily report (foglio di fine giornata) ===

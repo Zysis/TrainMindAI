@@ -1350,7 +1350,7 @@
     "audience": "Destinatario",
     "audienceStaff": "Staff tecnico",
     "audienceMedical": "Staff medico",
-    "audienceTrainer": "Preparatore",
+    "audienceManagement": "Dirigenza",
     "team": "Squadra",
     "allTeams": "Tutte le squadre",
     "athlete": "Atleta",
@@ -1367,6 +1367,8 @@
     "periodLabel": "Periodo",
     "generatedBy": "Generato da",
     "aiSummary": "Sintesi AI",
+    "managementSummary": "Commento",
+    "keyPoints": "Punti chiave",
     "viewFullJson": "Vedi il JSON completo",
     "toastPreviewGenerated": "Anteprima generata",
     "toastDownloaded": "File {format} scaricato",
@@ -1383,7 +1385,9 @@
     "cronExpression": "Espressione cron (5 campi)",
     "recipients": "Destinatari (email separate da virgola)",
     "dailyReport": "Report giornaliero",
-    "gameReport": "Report post-partita"
+    "gameReport": "Report post-partita",
+    "managementHint": "Report discorsivo per la dirigenza: disponibilità della rosa, salute della squadra e commento. Nessun dato clinico, il commento è sempre incluso.",
+    "activeImmediately": "Attiva subito"
   },
   "alerts": {
     "title": "Alert e Notifiche",

@@ -211,7 +211,7 @@ class HealthCheckResponse(BaseModel):
 class ReportSummaryRequest(BaseModel):
     """Richiesta per la generazione di un riassunto narrativo di un report."""
 
-    audience: Literal["STAFF", "MEDICAL", "TRAINER"] = Field(
+    audience: Literal["STAFF", "MEDICAL", "MANAGEMENT", "TRAINER"] = Field(
         ..., description="Audience del report (determina il tono e gli aspetti enfatizzati)"
     )
     organization_name: str = Field(..., description="Nome dell'organizzazione/squadra")
@@ -220,7 +220,7 @@ class ReportSummaryRequest(BaseModel):
     data: dict = Field(
         ..., description="Dati aggregati del report (KPI, tabelle, distribuzioni)"
     )
-    language: Literal["it", "en"] = Field("it", description="Lingua del riassunto")
+    language: Literal["it", "en", "es"] = Field("it", description="Lingua del riassunto")
     model: Optional[str] = Field(
         None,
         description="Override del modello. Passato da apps/api in base all'operazione.",

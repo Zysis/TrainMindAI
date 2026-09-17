@@ -4,7 +4,7 @@
    Tutti i link nell'HTML usano data-link="<chiave>".
    ============================================================ */
 export const site = {
-  email: 'info@lab21.it',
+  email: 'info@lab21sport.com',
   emailSubject: 'Richiesta informazioni — LAB21',
   vat: '00000000000',
 
