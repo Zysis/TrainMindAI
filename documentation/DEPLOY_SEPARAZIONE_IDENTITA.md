@@ -338,3 +338,51 @@ dc exec -T postgres psql -U trainmind -d trainmind_db < ~/backup-pre-identity-<d
 - Passo successivo naturale: cifratura AES-GCM delle cinque colonne di
   `athlete_identities`. Ora è un intervento su una tabella sola con un solo
   punto di lettura — prima erano quindici query e una ricerca.
+
+---
+
+## Appendice — Backup cifrati (fatto il 21/09/2026)
+
+I dump di Postgres contengono nomi, email e date di nascita in chiaro: sono
+esattamente cio' che la separazione delle identita' protegge dentro il
+database, e che uscirebbe intatto da un backup lasciato in chiaro.
+
+**La trappola da conoscere.** Con `--pinentry-mode loopback` gpg chiede la
+passphrase **una volta sola e senza conferma**: un errore di battitura in fase
+di creazione produce un file che nessuno potra' mai aprire, e lo si scopre solo
+al primo tentativo di ripristino. Il `loopback` pero' serve, perche' senza gpg
+non riesce a chiedere la passphrase quando sta in fondo a una pipe
+(`Inappropriate ioctl for device`). La soluzione e' digitarla una volta sola e
+usare la stessa stringa per cifrare e per verificare:
+
+```bash
+cd /opt/trainmind/trainmind-app
+export GPG_TTY=$(tty)           # utile metterlo in ~/.bashrc
+umask 077
+read -rsp 'Passphrase: ' PP; echo
+printf '%s' "$PP" > /dev/shm/pp   # /dev/shm e' in RAM: non tocca il disco
+unset PP
+
+dc exec -T postgres pg_dump -U trainmind trainmind_db -Fc \
+  | gpg --symmetric --cipher-algo AES256 --batch --pinentry-mode loopback \
+        --passphrase-file /dev/shm/pp -o ~/backup_$(date +%Y%m%d_%H%M).dump.gpg
+
+# Verifica SEMPRE nella stessa sessione: pg_restore -l legge l'indice
+# dell'archivio, quindi conferma l'integrita', non solo i primi byte.
+gpg --decrypt --batch --pinentry-mode loopback --passphrase-file /dev/shm/pp \
+      ~/backup_$(date +%Y%m%d)_*.dump.gpg | dc exec -T postgres pg_restore -l | head -5
+
+shred -u /dev/shm/pp
+```
+
+`gpg: error writing to '-': Broken pipe` alla fine della verifica e' normale:
+lo produce `head -5` che chiude la pipe dopo cinque righe.
+
+Il dump in chiaro non deve mai finire su disco. Se per qualche motivo ci
+finisce, si cancella con `shred -u`, non con `rm`.
+
+**Automazione in cron:** servirebbe `--passphrase-file` su un file permanente
+`chmod 400`. A quel punto pero' la passphrase vive sulla stessa macchina del
+database, e il backup cifrato protegge solo chi se lo porta via, non chi entra
+nel server. E' lo stesso problema della chiave di cifratura delle colonne: va
+deciso una volta sola per entrambi.
