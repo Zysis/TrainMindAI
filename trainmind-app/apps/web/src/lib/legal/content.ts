@@ -963,7 +963,7 @@ export const LEGAL_CONTENT: Record<LegalDocKey, Record<LegalLocale, LegalDoc>> =
             },
             {
               type: "p",
-              text: "Ove siano utilizzati fornitori terzi di IA (es. **[FORNITORE/I IA]**), questi agiscono come responsabili del trattamento ex art. 28 GDPR e **hanno il divieto contrattuale di utilizzare i tuoi dati per addestrare i propri modelli**; ove necessario i dati sono minimizzati o pseudonimizzati prima dell'invio. Puoi richiedere una revisione umana o contestare qualsiasi output che ti riguardi in modo significativo scrivendo a **[EMAIL PRIVACY]**."
+              text: "Ove siano utilizzati fornitori terzi di IA (es. **[FORNITORE/I IA]**), questi agiscono come responsabili del trattamento ex art. 28 GDPR e **hanno il divieto contrattuale di utilizzare i tuoi dati per addestrare i propri modelli**; i dati sono pseudonimizzati prima dell'invio: il riepilogo che trasmettiamo non contiene nome, cognome né altri dati identificativi diretti dell'atleta, indicato invece con uno pseudonimo valido per la singola richiesta. Fa eccezione il testo che scrivi tu stesso in chat: se ci inserisci un nome, quel nome viene trasmesso. Puoi richiedere una revisione umana o contestare qualsiasi output che ti riguardi in modo significativo scrivendo a **[EMAIL PRIVACY]**."
             },
             {
               type: "p",
@@ -1187,7 +1187,7 @@ export const LEGAL_CONTENT: Record<LegalDocKey, Record<LegalLocale, LegalDoc>> =
             },
             {
               type: "p",
-              text: "Where third-party AI providers are used (e.g. **[AI PROVIDER(S)]**), they act as processors under Art. 28 GDPR and **are contractually prohibited from using your data to train their models**; where necessary, data is minimised or pseudonymised before submission. You may request human review of, or contest, any output that significantly affects you by writing to **[PRIVACY CONTACT EMAIL]**."
+              text: "Where third-party AI providers are used (e.g. **[AI PROVIDER(S)]**), they act as processors under Art. 28 GDPR and **are contractually prohibited from using your data to train their models**; data is pseudonymised before submission: the summary we transmit contains no name, surname or other direct identifiers of the athlete, who is instead referred to by a pseudonym valid for that single request. The exception is text you type yourself in the chat: if you include a name there, that name is transmitted. You may request human review of, or contest, any output that significantly affects you by writing to **[PRIVACY CONTACT EMAIL]**."
             },
             {
               type: "p",
@@ -1411,7 +1411,7 @@ export const LEGAL_CONTENT: Record<LegalDocKey, Record<LegalLocale, LegalDoc>> =
             },
             {
               type: "p",
-              text: "Cuando se utilicen proveedores externos de IA (p. ej. **[PROVEEDOR/ES DE IA]**), estos actúan como encargados del tratamiento conforme al art. 28 RGPD y **tienen prohibido contractualmente utilizar tus datos para entrenar sus modelos**; cuando sea necesario, los datos se minimizan o seudonimizan antes del envío. Puedes solicitar una revisión humana o impugnar cualquier resultado que te afecte de modo significativo escribiendo a **[EMAIL DE PRIVACIDAD]**."
+              text: "Cuando se utilicen proveedores externos de IA (p. ej. **[PROVEEDOR/ES DE IA]**), estos actúan como encargados del tratamiento conforme al art. 28 RGPD y **tienen prohibido contractualmente utilizar tus datos para entrenar sus modelos**; los datos se seudonimizan antes del envío: el resumen que transmitimos no contiene nombre, apellidos ni otros datos identificativos directos del atleta, que se identifica mediante un seudónimo válido para cada solicitud. La excepción es el texto que escribes tú mismo en el chat: si incluyes un nombre, ese nombre se transmite. Puedes solicitar una revisión humana o impugnar cualquier resultado que te afecte de modo significativo escribiendo a **[EMAIL DE PRIVACIDAD]**."
             },
             {
               type: "p",

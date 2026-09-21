@@ -39,6 +39,7 @@ import { aggregateManagement, buildManagementNarrative } from '../services/repor
 import { renderReportPdf } from '../services/report-renderer-pdf.js';
 import { renderReportDocx } from '../services/report-renderer-docx.js';
 import { fullName, sortName } from '../lib/identity.js';
+import { createPseudonymizer, type Pseudonymizer } from '../lib/pseudonym.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3004';
 
@@ -87,6 +88,66 @@ type ReportLanguage = 'it' | 'en' | 'es';
 interface AiSummary {
   summary: string;
   highlights: string[];
+}
+
+/**
+ * De-identificazione del report prima di mandarlo al modello
+ * ==========================================================
+ *
+ * Il riassunto automatico ("Genera Insight") spediva al fornitore del modello
+ * l'intero oggetto `report`, e dentro le tabelle i nomi ci sono per forza:
+ * aderenza per atleta, adattamenti, atleti con maggiori variazioni. Anche
+ * `metadata.athleteName` e `metadata.generatedBy` erano nomi e cognomi veri.
+ *
+ * Al modello serve sapere che A3 ha il 62% di aderenza, non come si chiama A3.
+ * Qui ogni nome noto diventa un'etichetta prima della partenza, e le etichette
+ * tornano nomi nella risposta mostrata all'utente. Stessa meccanica gia' usata
+ * su chat e coach, applicata all'oggetto JSON invece che a un prompt di testo.
+ *
+ * La mappa vive in memoria per la durata della singola richiesta.
+ */
+type IdentityHolder = { id?: string; identity?: { firstName: string; lastName: string } | null } | null | undefined;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function deIdentifyPayload<T>(payload: T, people: IdentityHolder[]): { payload: T; pseudonymizer: Pseudonymizer } {
+  const pseudonymizer = createPseudonymizer();
+
+  // Nome intero -> etichetta. Prima i nomi piu' lunghi: sostituendo prima
+  // "Marco Rossi" si evita che un omonimo parziale rompa la stringa.
+  const pairs: Array<[string, string]> = [];
+  for (const person of people) {
+    const real = fullName(person);
+    if (!real) continue;
+    const label = pseudonymizer.label(person);
+    pairs.push([real, label]);
+  }
+  pairs.sort((a, b) => b[0].length - a[0].length);
+
+  if (pairs.length === 0) return { payload, pseudonymizer };
+
+  const replaceIn = (text: string): string => {
+    let out = text;
+    for (const [real, label] of pairs) {
+      out = out.replace(new RegExp(`\\b${escapeRegExp(real)}\\b`, 'gi'), label);
+    }
+    return out;
+  };
+
+  const walk = (value: unknown): unknown => {
+    if (typeof value === 'string') return replaceIn(value);
+    if (Array.isArray(value)) return value.map(walk);
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = walk(v);
+      return out;
+    }
+    return value;
+  };
+
+  return { payload: walk(payload) as T, pseudonymizer };
 }
 
 async function callAiSummary(
@@ -1145,21 +1206,44 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
   // programmati: di chi ha creato la schedulazione).
   const language: ReportLanguage = user?.locale === 'en' || user?.locale === 'es' ? user.locale : 'it';
 
-  const aiSummary = includeAISummary
-    ? await callAiSummary(
-        app,
-        organizationId,
-        userId,
-        {
-          audience,
-          organization_name: metadata.organizationName,
-          period_from: metadata.periodFrom,
-          period_to: metadata.periodTo,
-          data: report,
-        },
-        language,
-      )
-    : null;
+  // Nessun nome di atleta (ne' dello staff che genera il report) deve
+  // raggiungere il fornitore del modello: si sostituiscono con etichette prima
+  // della partenza e si rimettono nella risposta mostrata all'utente.
+  let aiSummary: AiSummary | null = null;
+  if (includeAISummary) {
+    const orgAthletes = await app.prisma.athlete.findMany({
+      where: { organizationId },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
+    });
+    const people: IdentityHolder[] = [...orgAthletes, user ? { id: userId, identity: user.identity } : null];
+    const { payload: safeReport, pseudonymizer } = deIdentifyPayload(report, people);
+
+    const raw = await callAiSummary(
+      app,
+      organizationId,
+      userId,
+      {
+        audience,
+        organization_name: metadata.organizationName,
+        period_from: metadata.periodFrom,
+        period_to: metadata.periodTo,
+        data: safeReport,
+      },
+      language,
+    );
+
+    aiSummary = raw
+      ? {
+          summary: pseudonymizer.restore(raw.summary),
+          highlights: raw.highlights.map((h) => pseudonymizer.restore(h)),
+        }
+      : null;
+
+    app.log.info(
+      { organizationId, audience, pseudonimi: pseudonymizer.size() },
+      'report: riassunto AI richiesto con nomi sostituiti',
+    );
+  }
 
   if (report.audience === 'MANAGEMENT') {
     const fallback = buildManagementNarrative(report);
