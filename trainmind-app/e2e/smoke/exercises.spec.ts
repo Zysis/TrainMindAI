@@ -13,8 +13,9 @@ test.describe('Exercises - Smoke Tests', () => {
     await page.goto('/dashboard/exercises');
     await page.waitForTimeout(2000);
 
-    // Sub-heading "X esercizi disponibili"
-    await expect(page.locator('text=/\\d+ esercizi disponibili/')).toBeVisible();
+    // Il sottotitolo non porta piu' un conteggio: e'
+    // "Gestisci il database di esercizi disponibili".
+    await expect(page.getByText(/esercizi disponibili/).first()).toBeVisible();
   });
 
   test('exercises are displayed grouped by category', async ({ page }) => {

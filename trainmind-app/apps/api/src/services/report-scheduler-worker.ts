@@ -64,7 +64,7 @@ async function executeSchedule(
   // Resolve a "system user" for the report metadata: prefer the creator
   const creator = await app.prisma.user.findUnique({
     where: { id: schedule.createdById },
-    select: { id: true, firstName: true, lastName: true },
+    select: { id: true, identity: { select: { firstName: true, lastName: true } } },
   });
   if (!creator) {
     log.warn('Schedule creator no longer exists, skipping');

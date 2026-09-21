@@ -1,12 +1,22 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { Sparkles, Trash2, AlertCircle, WifiOff, Zap } from 'lucide-react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Sparkles, Trash2, AlertCircle, WifiOff, Zap, User } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
 import { MessageBubble, ChatInput, SourcesPanel, TypingIndicator } from '@/components/chat';
 import { useTranslations } from 'next-intl';
+import { apiFetch } from '@/lib/auth/fetch';
 
-export default function ChatPage() {
+function ChatPageInner() {
+  // L'atleta arriva nell'URL (pulsante sulla scheda atleta). Senza passarlo
+  // all'hook, `athlete_id` non raggiunge l'API e l'ai-service non costruisce
+  // il contesto: la chat rispondeva "non ho informazioni su questo atleta"
+  // anche aperta dalla sua scheda.
+  const params = useSearchParams();
+  const athleteId = params.get('athlete') ?? undefined;
+  const [athleteName, setAthleteName] = useState<string | null>(null);
+
   const {
     messages,
     input,
@@ -20,6 +30,7 @@ export default function ChatPage() {
     isServiceAvailable,
   } = useChat({
     namespaces: ['protocols', 'exercises', 'periodization', 'references'],
+    athleteId,
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -32,6 +43,28 @@ export default function ChatPage() {
     t('suggestion3'),
     t('suggestion4'),
   ];
+
+  // Il nome si chiede all'API, non all'URL: in barra degli indirizzi (e
+  // quindi in cronologia, log e referrer) resta il solo id.
+  useEffect(() => {
+    if (!athleteId) {
+      setAthleteName(null);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<{ data: { firstName: string; lastName: string } }>(`/athletes/${athleteId}`)
+      .then((res) => {
+        if (!cancelled) {
+          setAthleteName(`${res.data.firstName} ${res.data.lastName}`.trim());
+        }
+      })
+      .catch(() => {
+        // L'etichetta e' decorativa: se non arriva, la chat funziona lo stesso.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [athleteId]);
 
   // Auto-scroll to bottom on new messages or streaming updates
   useEffect(() => {
@@ -66,6 +99,13 @@ export default function ChatPage() {
               )}
             </div>
           </div>
+
+          {athleteName && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+              <User className="h-3.5 w-3.5" />
+              {athleteName}
+            </span>
+          )}
         </div>
 
         {/* Clear chat button */}
@@ -147,5 +187,15 @@ export default function ChatPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  // useSearchParams va isolato dentro un confine Suspense, come nelle altre
+  // pagine che leggono la query string.
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
   );
 }

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { calculateWellnessScore } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
+import { fullName, sortName } from '../lib/identity.js';
 
 // ═══════════════════════════════════════════════════════════
 // NOTIFICATIONS & ALERT RULES — Sprint 3.3
@@ -121,7 +122,7 @@ export async function notificationRoutes(app: FastifyInstance) {
     const rules = await app.prisma.alertRule.findMany({
       where: { organizationId },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         _count: { select: { notifications: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -199,13 +200,13 @@ export async function notificationRoutes(app: FastifyInstance) {
     // Get active rules
     const rules = await app.prisma.alertRule.findMany({
       where: { organizationId, isActive: true },
-      include: { athlete: { select: { id: true, firstName: true, lastName: true } } },
+      include: { athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } } },
     });
 
     // Get all athletes if needed
     const athletes = await app.prisma.athlete.findMany({
       where: { organizationId, isActive: true },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
 
     // Get recent data for checks
@@ -296,7 +297,7 @@ export async function notificationRoutes(app: FastifyInstance) {
               ? myLoads.reduce((sum, s) => sum + s.load, 0) / 3
               : 0;
             metricValue = chronicLoad > 0 ? Math.round((acuteLoad / chronicLoad) * 100) / 100 : 0;
-            message = `ACWR di ${athlete.firstName} ${athlete.lastName}: ${metricValue} (soglia: ${condition.operator} ${condition.threshold})`;
+            message = `ACWR di ${fullName(athlete)}: ${metricValue} (soglia: ${condition.operator} ${condition.threshold})`;
             break;
           }
           case 'wellness_score': {
@@ -304,7 +305,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             if (athleteWellness.length > 0) {
               const latest = athleteWellness[0];
               metricValue = calculateWellnessScore(latest);
-              message = `Wellness score di ${athlete.firstName} ${athlete.lastName}: ${metricValue}% (soglia: ${condition.operator} ${condition.threshold})`;
+              message = `Wellness score di ${fullName(athlete)}: ${metricValue}% (soglia: ${condition.operator} ${condition.threshold})`;
             }
             break;
           }
@@ -312,7 +313,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             const athleteWellness = recentWellness.filter((w) => w.athleteId === athlete.id);
             if (athleteWellness.length > 0) {
               metricValue = athleteWellness[0].fatigue;
-              message = `Fatica di ${athlete.firstName} ${athlete.lastName}: ${metricValue}/5 (soglia: ${condition.operator} ${condition.threshold})`;
+              message = `Fatica di ${fullName(athlete)}: ${metricValue}/5 (soglia: ${condition.operator} ${condition.threshold})`;
             }
             break;
           }
@@ -320,7 +321,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             const athleteWellness = recentWellness.filter((w) => w.athleteId === athlete.id);
             if (athleteWellness.length > 0) {
               metricValue = athleteWellness[0].soreness;
-              message = `Dolore muscolare di ${athlete.firstName} ${athlete.lastName}: ${metricValue}/5 (soglia: ${condition.operator} ${condition.threshold})`;
+              message = `Dolore muscolare di ${fullName(athlete)}: ${metricValue}/5 (soglia: ${condition.operator} ${condition.threshold})`;
             }
             break;
           }
@@ -345,7 +346,7 @@ export async function notificationRoutes(app: FastifyInstance) {
             severity: rule.severity,
             title: rule.name,
             message,
-            data: { athleteId: athlete.id, athleteName: `${athlete.firstName} ${athlete.lastName}`, metricValue, ruleType: rule.type },
+            data: { athleteId: athlete.id, athleteName: fullName(athlete), metricValue, ruleType: rule.type },
           });
         }
       }
@@ -415,9 +416,9 @@ export async function notificationRoutes(app: FastifyInstance) {
     if (eventAthleteIds.length > 0) {
       const eventAthletes = await app.prisma.athlete.findMany({
         where: { id: { in: eventAthleteIds }, organizationId: request.user.organizationId },
-        select: { id: true, firstName: true, lastName: true },
+        select: { id: true, identity: { select: { firstName: true, lastName: true } } },
       });
-      for (const a of eventAthletes) athleteNameById.set(a.id, `${a.lastName} ${a.firstName}`);
+      for (const a of eventAthletes) athleteNameById.set(a.id, sortName(a));
     }
 
     // Stato dell'allenamento: un evento di calendario non ce l'ha, ce l'ha il
@@ -470,7 +471,7 @@ export async function notificationRoutes(app: FastifyInstance) {
       where: sessionWhere,
       select: {
         id: true, title: true, date: true, duration: true, status: true, aiModified: true,
-        athlete: { select: { firstName: true, lastName: true } },
+        athlete: { select: { identity: { select: { firstName: true, lastName: true } } } },
         week: { select: { trainingPlan: { select: { team: { select: { id: true, name: true, color: true } } } } } },
       },
       orderBy: { date: 'asc' },
@@ -482,7 +483,7 @@ export async function notificationRoutes(app: FastifyInstance) {
       return ({
       id: `session-${s.id}`,
       title: s.title,
-      description: s.athlete ? `${s.athlete.firstName} ${s.athlete.lastName}` : null,
+      description: s.athlete ? fullName(s.athlete) : null,
       startTime: base,
       endTime: new Date(base.getTime() + (s.duration || 60) * 60000),
       allDay: false,

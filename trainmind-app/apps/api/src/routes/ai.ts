@@ -4,6 +4,9 @@ import { requireMinRole } from '../middleware/rbac.js';
 import { openAIGenerate, openAIChat, isOpenAIFallbackAvailable } from '../lib/openai-fallback.js';
 import { getModelForOperation, getModelRouting } from '../lib/ai-models.js';
 import { recordAiUsage, extractUsage, parseUsageFromSseChunk } from '../services/ai-usage.js';
+import { fullName } from '../lib/identity.js';
+import { createPseudonymizer, maskSelectedAthleteName } from '../lib/pseudonym.js';
+import { buildAthleteContext } from '../lib/athlete-context.js';
 
 /**
  * AI Service URL (Python FastAPI on port 3002)
@@ -176,12 +179,50 @@ export async function aiRoutes(app: FastifyInstance) {
           : 'it';
     }
 
+    // Il contesto dell'atleta lo costruisce l'ai-service a partire da
+    // `athlete_id`, e non contiene piu' il nome. Se il preparatore lo scrive
+    // nella domanda, qui viene tolto: il modello ha comunque i dati giusti
+    // davanti, e il nome non lascia l'infrastruttura.
+    let chatPayload: Record<string, unknown> = parsed.data;
+    if (parsed.data.athlete_id) {
+      const [selected, athleteContext] = await Promise.all([
+        app.prisma.athlete.findFirst({
+          where: { id: parsed.data.athlete_id, organizationId },
+          select: { identity: { select: { firstName: true, lastName: true } } },
+        }),
+        buildAthleteContext(app, parsed.data.athlete_id, organizationId),
+      ]);
+      // Una riga per capire, dai log, se il contesto e' partito davvero: e'
+      // la domanda che ci si fa ogni volta che l'AI risponde "non ho dati".
+      request.log.info(
+        { athleteId: parsed.data.athlete_id, contextChars: athleteContext?.length ?? 0 },
+        'chat: contesto atleta',
+      );
+
+      chatPayload = {
+        ...parsed.data,
+        // Atleta di un'altra societa' (o inesistente): il contesto e' nullo e
+        // l'id non deve proseguire verso l'ai-service, che altrimenti proverebbe
+        // a recuperarlo per conto suo.
+        ...(athleteContext ? { athlete_context: athleteContext } : { athlete_id: undefined }),
+        ...(selected?.identity
+          ? {
+              messages: parsed.data.messages.map((m) =>
+                m.role === 'user'
+                  ? { ...m, content: maskSelectedAthleteName(m.content, selected.identity) }
+                  : m,
+              ),
+            }
+          : {}),
+      };
+    }
+
     const chatModel = getModelForOperation('CHAT');
     const startedAt = Date.now();
 
     try {
       const response = await proxyToAI('/ai/chat', {
-        ...parsed.data,
+        ...chatPayload,
         model: chatModel,
         language: chatLanguage,
       });
@@ -359,13 +400,35 @@ export async function aiRoutes(app: FastifyInstance) {
     const language: 'it' | 'en' | 'es' =
       requester?.locale === 'en' || requester?.locale === 'es' ? requester.locale : 'it';
 
+    // Come per la chat: se il nome dell'atleta selezionato compare nella
+    // domanda, non parte insieme ad essa.
+    let coachQuestion = parsed.data.question;
+    let coachAthleteContext: string | null = null;
+    let coachPayload: Record<string, unknown> = parsed.data;
+    if (parsed.data.athlete_id) {
+      const [selected, athleteContext] = await Promise.all([
+        app.prisma.athlete.findFirst({
+          where: { id: parsed.data.athlete_id, organizationId },
+          select: { identity: { select: { firstName: true, lastName: true } } },
+        }),
+        buildAthleteContext(app, parsed.data.athlete_id, organizationId),
+      ]);
+      coachAthleteContext = athleteContext;
+      // Stesso motivo della chat: senza contesto, l'id non viaggia.
+      if (!athleteContext) coachPayload = { ...parsed.data, athlete_id: undefined };
+      if (selected?.identity) {
+        coachQuestion = maskSelectedAthleteName(coachQuestion, selected.identity);
+      }
+    }
+
     const coachModel = getModelForOperation('COACH');
     const startedAt = Date.now();
 
     try {
       const response = await proxyToAI('/ai/coach', {
-        ...parsed.data,
-        question: parsed.data.question + exerciseContext,
+        ...coachPayload,
+        question: coachQuestion + exerciseContext,
+        ...(coachAthleteContext ? { athlete_context: coachAthleteContext } : {}),
         model: coachModel,
         language,
       });
@@ -628,7 +691,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
       const wellnessLogs = await app.prisma.wellnessLog.findMany({
         where,
-        include: { athlete: { select: { firstName: true, lastName: true, position: true } } },
+        include: { athlete: { select: { position: true, identity: { select: { firstName: true, lastName: true } } } } },
         orderBy: { date: 'desc' },
         take: 100,
       });
@@ -644,10 +707,15 @@ export async function aiRoutes(app: FastifyInstance) {
         });
       }
 
-      // Build a summary for the AI coach
+      // Build a summary for the AI coach.
+      // I nomi non escono da qui: al modello vanno etichette (A1, A2, ...) e
+      // la risposta viene ri-mappata sui nomi veri. Vedi lib/pseudonym.ts.
+      const pseudo = createPseudonymizer();
       const summary = wellnessLogs.map((log: Record<string, unknown>) => {
-        const athlete = log.athlete as { firstName: string; lastName: string; position: string } | null;
-        const name = athlete ? `${athlete.firstName} ${athlete.lastName}` : 'Sconosciuto';
+        const athlete = log.athlete as
+          | { id?: string; position: string; identity: { firstName: string; lastName: string } | null }
+          | null;
+        const name = athlete ? pseudo.label(athlete) : 'Sconosciuto';
         return `${name} (${(log.date as Date).toISOString().slice(0, 10)}): Sonno=${log.sleepQuality}/5, Fatica=${log.fatigue}/5, Dolore=${log.soreness}/5, Stress=${log.stress}/5, Umore=${log.mood}/5`;
       }).join('\n');
 
@@ -690,6 +758,11 @@ export async function aiRoutes(app: FastifyInstance) {
       }
 
       const data = await response.json();
+      // Il preparatore rilegge i nomi veri: la sostituzione avviene qui, dopo
+      // che la risposta e' tornata.
+      if (data && typeof data.answer === 'string') {
+        data.answer = pseudo.restore(data.answer);
+      }
       void recordAiUsage(app, {
         organizationId,
         userId: request.user.userId,
@@ -737,7 +810,7 @@ export async function aiRoutes(app: FastifyInstance) {
         where: { id: protocol_id, athlete: { organizationId } },
         include: {
           injury: true,
-          athlete: { select: { firstName: true, lastName: true, position: true, dateOfBirth: true } },
+          athlete: { select: { position: true, identity: { select: { firstName: true, lastName: true, dateOfBirth: true } } } },
           criteria: { orderBy: { phase: 'asc' } },
           phaseLogs: { orderBy: { createdAt: 'desc' }, take: 10 },
         },
@@ -767,6 +840,9 @@ export async function aiRoutes(app: FastifyInstance) {
     );
     const metInPhase = currentPhaseCriteria.filter((c: { isMet: boolean }) => c.isMet).length;
 
+    // Anche qui il nome resta dentro l'API: al modello va un'etichetta.
+    const rtpPseudo = createPseudonymizer();
+
     const phaseNames: Record<string, string> = {
       PHASE_1: 'Fase 1 — Controllo dolore',
       PHASE_2: 'Fase 2 — Mobilità',
@@ -792,7 +868,7 @@ export async function aiRoutes(app: FastifyInstance) {
 4. TIMELINE STIMATA: Stima di quando l'atleta potrebbe essere pronto per la fase successiva.
 
 DATI PROTOCOLLO:
-- Atleta: ${athlete.firstName} ${athlete.lastName} (${athlete.position})
+- Atleta: ${rtpPseudo.label(athlete)} (${athlete.position})
 - Infortunio: ${injury.type} — ${injury.location} (severità: ${injury.severity}/5)
 - Data infortunio: ${injury.dateOccurred}
 - Fase attuale: ${currentPhaseName} (${metInPhase}/${currentPhaseCriteria.length} criteri soddisfatti)
@@ -837,6 +913,9 @@ Rispondi in italiano, in modo strutturato e professionale.`;
       }
 
       const data = await response.json();
+      if (data && typeof data.answer === 'string') {
+        data.answer = rtpPseudo.restore(data.answer);
+      }
       void recordAiUsage(app, {
         organizationId,
         userId: request.user.userId,
@@ -877,9 +956,9 @@ Rispondi in italiano, in modo strutturato e professionale.`;
 
       let fallbackAnswer: string;
       if (allMet) {
-        fallbackAnswer = `✅ VALUTAZIONE: Tutti i ${metInPhase} criteri della ${currentPhaseName} sono soddisfatti. L'atleta ${athlete.firstName} ${athlete.lastName} è pronto per avanzare alla fase successiva.\n\n⚠️ NOTA: Suggerimento generato automaticamente (servizio AI non disponibile). Per un'analisi più approfondita, riprova quando il servizio AI è attivo.`;
+        fallbackAnswer = `✅ VALUTAZIONE: Tutti i ${metInPhase} criteri della ${currentPhaseName} sono soddisfatti. L'atleta ${fullName(athlete)} è pronto per avanzare alla fase successiva.\n\n⚠️ NOTA: Suggerimento generato automaticamente (servizio AI non disponibile). Per un'analisi più approfondita, riprova quando il servizio AI è attivo.`;
       } else {
-        fallbackAnswer = `📋 VALUTAZIONE: ${metInPhase}/${currentPhaseCriteria.length} criteri soddisfatti nella ${currentPhaseName}. L'atleta ${athlete.firstName} ${athlete.lastName} non è ancora pronto per avanzare.\n\n❌ CRITERI DA COMPLETARE:\n${unmetCriteria.map((c: string) => `• ${c}`).join('\n')}\n\n⚠️ NOTA: Suggerimento generato automaticamente (servizio AI non disponibile). Per esercizi consigliati e analisi dettagliata, riprova quando il servizio AI è attivo.`;
+        fallbackAnswer = `📋 VALUTAZIONE: ${metInPhase}/${currentPhaseCriteria.length} criteri soddisfatti nella ${currentPhaseName}. L'atleta ${fullName(athlete)} non è ancora pronto per avanzare.\n\n❌ CRITERI DA COMPLETARE:\n${unmetCriteria.map((c: string) => `• ${c}`).join('\n')}\n\n⚠️ NOTA: Suggerimento generato automaticamente (servizio AI non disponibile). Per esercizi consigliati e analisi dettagliata, riprova quando il servizio AI è attivo.`;
       }
 
       return reply.send({

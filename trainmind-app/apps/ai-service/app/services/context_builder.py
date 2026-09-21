@@ -126,10 +126,13 @@ class ContextBuilder:
         """Formatta il profilo atleta in testo leggibile."""
         parts = []
 
-        name = data.get("name", data.get("firstName", ""))
-        surname = data.get("surname", data.get("lastName", ""))
-        if name or surname:
-            parts.append(f"Nome: {name} {surname}".strip())
+        # Il nome NON entra nel contesto mandato al modello: l'API puo'
+        # ancora restituirlo (serve alla web app), ma qui si ferma. Al posto
+        # suo va un'etichetta neutra, che basta al modello per riferirsi
+        # all'atleta senza sapere chi sia.
+        # Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+        label = data.get("id") or data.get("athleteId") or "atleta"
+        parts.append(f"Atleta: {str(label)[-6:]}")
 
         if data.get("position"):
             parts.append(f"Posizione: {data['position']}")
@@ -287,6 +290,7 @@ class ContextBuilder:
         athlete_id: Optional[str] = None,
         namespaces: Optional[list[str]] = None,
         top_k: int = 5,
+        athlete_context: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Costruisce un contesto combinato da multiple fonti.
@@ -315,8 +319,13 @@ class ContextBuilder:
                 "high_relevance_count": 0,
             }
 
-            # Recupera contesto atleta se richiesto
-            if athlete_id:
+            # Contesto atleta gia' pronto: e' apps/api a costruirlo, con i dati
+            # che ha gia' in mano e senza identificatori. E' la strada normale.
+            # Il recupero via HTTP qui sotto resta solo per compatibilita' con
+            # chiamanti che non lo passano.
+            if athlete_context:
+                result["athlete_context"] = athlete_context
+            elif athlete_id:
                 try:
                     result["athlete_context"] = await self.get_athlete_context(athlete_id)
                 except Exception as e:

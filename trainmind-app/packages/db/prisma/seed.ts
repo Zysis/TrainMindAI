@@ -9,6 +9,21 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+/**
+ * Nome, cognome e data di nascita degli atleti vivono in `AthleteIdentity`
+ * dal 20/09/2026: un create piatto non compila piu'.
+ * Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+ */
+function toAthleteCreate<T extends { firstName: string; lastName: string; dateOfBirth: Date }>(a: T) {
+  const { firstName, lastName, dateOfBirth, ...core } = a;
+  return {
+    ...core,
+    birthYear: dateOfBirth.getFullYear(),
+    identity: { create: { firstName, lastName, dateOfBirth } },
+  };
+}
+
+
 const prisma = new PrismaClient();
 
 // ─── Helpers ────────────────────────────────────────────
@@ -70,14 +85,13 @@ async function main() {
     create: {
       email: 'trainer@trainmind.demo',
       passwordHash,
-      firstName: 'Marco',
-      lastName: 'Rossi',
+      identity: { create: { firstName: 'Marco', lastName: 'Rossi' } },
       role: 'ADMIN',
       organizationId: org.id,
       isActive: true,
     },
   });
-  console.log(`✓ User: ${user.firstName} ${user.lastName} (${user.email})`);
+  console.log(`✓ User: Marco Rossi (${user.email})`);
 
   // Medical staff user
   const medUser = await prisma.user.upsert({
@@ -86,14 +100,13 @@ async function main() {
     create: {
       email: 'medico@trainmind.demo',
       passwordHash,
-      firstName: 'Laura',
-      lastName: 'Verdi',
+      identity: { create: { firstName: 'Laura', lastName: 'Verdi' } },
       role: 'MEDICAL',
       organizationId: org.id,
       isActive: true,
     },
   });
-  console.log(`✓ User: ${medUser.firstName} ${medUser.lastName} (${medUser.email})`);
+  console.log(`✓ User: Laura Verdi (${medUser.email})`);
 
   // Viewer user
   const viewerUser = await prisma.user.upsert({
@@ -102,14 +115,13 @@ async function main() {
     create: {
       email: 'viewer@trainmind.demo',
       passwordHash,
-      firstName: 'Paolo',
-      lastName: 'Neri',
+      identity: { create: { firstName: 'Paolo', lastName: 'Neri' } },
       role: 'VIEWER',
       organizationId: org.id,
       isActive: true,
     },
   });
-  console.log(`✓ User: ${viewerUser.firstName} ${viewerUser.lastName} (${viewerUser.email})`);
+  console.log(`✓ User: Paolo Neri (${viewerUser.email})`);
 
   // ─── Athletes (10) ─────────────────────────────────
   const athletesData = [
@@ -132,7 +144,7 @@ async function main() {
       update: {},
       create: {
         id: `seed-athlete-${data.jerseyNumber}`,
-        ...data,
+        ...toAthleteCreate(data),
         organizationId: org.id,
         isActive: true,
       },
@@ -305,7 +317,7 @@ async function main() {
     update: {},
     create: {
       id: 'seed-plan-athlete-1',
-      name: `Scheda Personalizzata - ${athletes[0].firstName} ${athletes[0].lastName}`,
+      name: `Scheda Personalizzata - ${athletesData[0].firstName} ${athletesData[0].lastName}`,
       description: 'Piano individualizzato per migliorare esplosivita e gestione del carico',
       startDate: planStart,
       endDate: planEnd,

@@ -34,6 +34,7 @@ import { startReportSchedulerWorker } from './services/report-scheduler-worker.j
 import { startRetentionWorker } from './services/retention-worker.js';
 import auditPlugin from './plugins/audit.js';
 import { errorHandler } from './lib/error-handler.js';
+import { flattenIdentities } from './lib/identity.js';
 
 /**
  * Il plugin di autenticazione ripiega su un segreto di sviluppo scritto nel
@@ -192,6 +193,12 @@ export async function buildApp() {
   await app.register(auditPlugin);
 
   // ─── Error Handler ────────────────────────────────────
+  // ─── Identita' appiattite prima di serializzare ───────────
+  // Le anagrafiche arrivano dal database annidate sotto `identity` (vedi
+  // lib/identity.ts). Qui tornano piatte, cosi' la forma del JSON e' identica
+  // a quella di prima della separazione e nessun client va aggiornato.
+  app.addHook('preSerialization', async (_request, _reply, payload) => flattenIdentities(payload));
+
   app.setErrorHandler(errorHandler);
 
   // ─── Routes ───────────────────────────────────────────

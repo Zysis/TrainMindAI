@@ -18,6 +18,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { Prisma } from '@trainmind/db';
 import { requireMinRole } from '../middleware/rbac.js';
+import { fullName } from '../lib/identity.js';
 
 export async function fieldTrainingRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
@@ -50,7 +51,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           : { trainingSessionId, organizationId },
         include: {
           entries: {
-            include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
+            include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
           },
         },
       });
@@ -173,8 +174,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           },
           include: {
             entries: {
-              include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -189,8 +190,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
             : { trainingSessionId, organizationId },
           include: {
             entries: {
-              include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -331,8 +332,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           where: { calendarEventId: request.params.eventId },
           include: {
             entries: {
-              include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -350,8 +351,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
             where: { id: session.id },
             include: {
               entries: {
-                include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-                orderBy: { athlete: { lastName: 'asc' } },
+                include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+                orderBy: { athlete: { identity: { lastName: 'asc' } } },
               },
               team: { select: { id: true, name: true, color: true } },
               calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -381,8 +382,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           where: { trainingSessionId: request.params.sessionId },
           include: {
             entries: {
-              include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             trainingSession: { select: { id: true, title: true, date: true, duration: true } },
@@ -399,8 +400,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
             where: { id: session.id },
             include: {
               entries: {
-                include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-                orderBy: { athlete: { lastName: 'asc' } },
+                include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+                orderBy: { athlete: { identity: { lastName: 'asc' } } },
               },
               team: { select: { id: true, name: true, color: true } },
               calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -428,8 +429,8 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
           entries: {
-            include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
-            orderBy: { athlete: { lastName: 'asc' } },
+            include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
+            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
@@ -647,7 +648,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       // Check athlete exists in org
       const athlete = await app.prisma.athlete.findFirst({
         where: { id: parsed.data.athleteId, organizationId: request.user.organizationId },
-        select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true },
+        select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } },
       });
       if (!athlete) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Atleta non trovato' } });
@@ -667,7 +668,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           totalActiveMs: 0,
           laps: [],
         },
-        include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true } } },
+        include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
       });
 
       return reply.send({ success: true, data: { entry } });
@@ -703,7 +704,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       const session = await app.prisma.fieldTrainingSession.findFirst({
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
-          entries: { include: { athlete: { select: { id: true, firstName: true, lastName: true } } } },
+          entries: { include: { athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } } } },
           calendarEvent: { select: { title: true, startTime: true, endTime: true } },
           trainingSession: { select: { id: true, title: true, date: true, duration: true } },
         },
@@ -763,7 +764,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
         const ts = await app.prisma.trainingSession.create({
           data: {
-            title: `${sessionTitle} — ${entry.athlete.firstName} ${entry.athlete.lastName}`,
+            title: `${sessionTitle} — ${fullName(entry.athlete)}`,
             date: sessionDate,
             duration: durationMinutes,
             rpe,

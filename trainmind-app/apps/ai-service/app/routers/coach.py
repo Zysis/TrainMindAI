@@ -52,6 +52,7 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
             athlete_id=request.athlete_id,
             model=request.model,
             language=request.language,
+            athlete_context=request.athlete_context,
         )
         cached = cache_get("response", cache_key)
         if cached:
@@ -68,6 +69,7 @@ async def coach_consultation(request: CoachRequest) -> CoachResponse:
             athlete_id=request.athlete_id,
             namespaces=request.namespaces,
             top_k=request.top_k,
+            athlete_context=request.athlete_context,
         )
 
         sources = combined.get("sources", [])

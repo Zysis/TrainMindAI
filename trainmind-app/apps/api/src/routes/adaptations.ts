@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { calculateWellnessScore } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
+import { fullName } from '../lib/identity.js';
 
 // ═══════════════════════════════════════════════════════════
 // PLAN ADAPTATIONS — Sprint 3.4
@@ -478,6 +479,8 @@ export async function adaptationRoutes(app: FastifyInstance) {
     // ─── INDIVIDUAL MODE ────────────────────────────────────
     const athlete = await app.prisma.athlete.findFirst({
       where: { id: athleteId!, organizationId },
+      // Serve il nome per il titolo della notifica: va chiesto al caveau.
+      include: { identity: { select: { firstName: true, lastName: true } } },
     });
     if (!athlete) {
       return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Atleta non trovato' } });
@@ -588,7 +591,7 @@ export async function adaptationRoutes(app: FastifyInstance) {
         userId,
         type: 'ai_insight',
         severity: proposal.severity,
-        title: `Adattamento proposto per ${athlete.firstName} ${athlete.lastName}`,
+        title: `Adattamento proposto per ${fullName(athlete)}`,
         message: proposal.reason,
         data: { adaptationId: adaptation.id, athleteId: athleteId!, sessionId: targetSession.id } as any,
       },
@@ -623,9 +626,9 @@ export async function adaptationRoutes(app: FastifyInstance) {
         take: query.limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          athlete: { select: { id: true, firstName: true, lastName: true } },
-          proposedBy: { select: { id: true, firstName: true, lastName: true } },
-          reviewedBy: { select: { id: true, firstName: true, lastName: true } },
+          athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
+          proposedBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
+          reviewedBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         },
       }),
       app.prisma.planAdaptation.count({ where }),
@@ -682,9 +685,9 @@ export async function adaptationRoutes(app: FastifyInstance) {
     const adaptation = await app.prisma.planAdaptation.findFirst({
       where: { id, organizationId: request.user.organizationId },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
-        proposedBy: { select: { id: true, firstName: true, lastName: true } },
-        reviewedBy: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
+        proposedBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
+        reviewedBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
       },
     });
 

@@ -6,12 +6,23 @@ const authDir = path.join(__dirname, '../.auth');
 const authFile = path.join(authDir, 'user.json');
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Amministratore di "TrainMind Demo", la societa' popolata da
+// packages/db/prisma/seed-guida.ts: squadre, atleti, wellness, infortuni e i
+// 108 esercizi di default. Serve una societa' con dei dati, altrimenti meta'
+// dei test verifica elenchi vuoti.
+//
+// Prima qui c'era `trainer@trainmind.demo`, del vecchio seed, rimosso dal
+// database locale il 17/09/2026: da quel giorno la suite non e' piu' partita.
 const CREDENTIALS = {
-  email: 'trainer@trainmind.demo',
-  password: 'TrainMind2024!',
+  email: 'coach@example.com',
+  password: 'Admin123!',
 };
 
 test('authenticate and save session', async ({ browser }) => {
+  // Il riscaldamento delle rotte (in fondo) compila mezza applicazione: con i
+  // 60 secondi del profilo comune questo passo morirebbe a meta'.
+  test.setTimeout(300_000);
+
   // Create .auth directory
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
@@ -55,6 +66,43 @@ test('authenticate and save session', async ({ browser }) => {
   await page.goto('/dashboard');
   await expect(page).toHaveURL('/dashboard');
 
+  // ─── Riscaldamento delle rotte ────────────────────────────
+  //
+  // In locale la suite gira contro `pnpm dev`, che compila ogni rotta alla
+  // prima richiesta: la prima visita a una pagina mai aperta puo' superare i
+  // 20 secondi, e faceva fallire il primo test di ogni file — sempre uno
+  // diverso, a seconda di cosa il server aveva gia' compilato. Non era mai un
+  // difetto dell'applicazione, ma costava un giro a capirlo ogni volta.
+  //
+  // Qui le rotte si visitano una volta, prima che i test comincino. Il primo
+  // giro paga la compilazione, tutti gli altri partono a freddo zero.
+  const routes = [
+    '/dashboard',
+    '/dashboard/calendar',
+    '/dashboard/teams',
+    '/dashboard/training',
+    '/dashboard/exercises',
+    '/dashboard/periodization',
+    '/dashboard/wellness',
+    '/dashboard/injuries',
+    '/dashboard/analytics',
+    '/dashboard/reports',
+    '/dashboard/alerts',
+    '/dashboard/chat',
+    '/dashboard/adaptations',
+    '/dashboard/settings',
+  ];
+
+  for (const route of routes) {
+    try {
+      await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    } catch {
+      // Una rotta che non risponde la segnalera' il suo test, con il suo
+      // messaggio: qui interessa solo che sia stata compilata.
+    }
+  }
+
   await context.close();
   console.log('Auth tokens saved to', authFile);
+  console.log(`Rotte precompilate: ${routes.length}`);
 });

@@ -16,6 +16,9 @@ export default defineConfig({
   ],
   use: {
     baseURL,
+    // L'app segue la lingua del browser sulle pagine pre-autenticazione: senza
+    // questo, il login esce in inglese e i test che cercano "Accedi" falliscono.
+    locale: 'it-IT',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -84,6 +87,9 @@ export default defineConfig({
         },
       ],
 
-  timeout: 30000,
-  expect: { timeout: 10000 },
+  // In locale la suite gira contro `pnpm dev`, che compila la rotta alla prima
+  // richiesta: la prima navigazione verso una pagina mai visitata puo' superare
+  // i 10 secondi. Erano sette test falliti per questo, tutti primi del loro file.
+  timeout: 60000,
+  expect: { timeout: 20000 },
 });

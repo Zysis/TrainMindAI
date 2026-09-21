@@ -8,12 +8,10 @@ import { apiFetch } from '@/lib/auth/fetch';
 import { useApiError } from '@/lib/i18n/api-error';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Modal } from '@/components/ui/modal';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { useTeam } from '@/hooks/use-team';
 import { POSITION_OPTIONS, positionShort } from '@/lib/constants/positions';
+import { AthleteFormModal } from '@/components/athletes/athlete-form-modal';
 import type { Athlete, AthleteListResponse } from '@/types';
 
 const positions = [{ value: '', label: '' }, ...POSITION_OPTIONS];
@@ -41,7 +39,7 @@ export function AthleteDirectory({ refreshKey = 0, onChanged }: Props) {
   const t = useTranslations('athletes');
   const apiError = useApiError();
   const { toast } = useToast();
-  const { selectedTeamId } = useTeam();
+  const { selectedTeamId, selectedTeam } = useTeam();
 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [search, setSearch] = useState('');
@@ -53,7 +51,6 @@ export function AthleteDirectory({ refreshKey = 0, onChanged }: Props) {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [showArchived, setShowArchived] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   // Aperta di default: nasconderla al primo accesso vorrebbe dire non farla
   // trovare. Una volta chiusa pero' resta chiusa.
@@ -78,10 +75,6 @@ export function AthleteDirectory({ refreshKey = 0, onChanged }: Props) {
     });
   };
 
-  const [form, setForm] = useState({
-    firstName: '', lastName: '', dateOfBirth: '', position: 'PG',
-    jerseyNumber: '', height: '', weight: '', email: '',
-  });
 
   const loadAthletes = useCallback(async () => {
     if (!open) return; // chiusa: niente da mostrare, niente da chiedere
@@ -120,37 +113,11 @@ export function AthleteDirectory({ refreshKey = 0, onChanged }: Props) {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreating(true);
-    try {
-      await apiFetch('/athletes', {
-        method: 'POST',
-        body: JSON.stringify({
-          firstName: form.firstName,
-          lastName: form.lastName,
-          dateOfBirth: form.dateOfBirth,
-          position: form.position,
-          jerseyNumber: form.jerseyNumber ? Number(form.jerseyNumber) : undefined,
-          height: form.height ? Number(form.height) : undefined,
-          weight: form.weight ? Number(form.weight) : undefined,
-          email: form.email || undefined,
-        }),
-      });
-      toast('success', t('athleteCreated'));
-      setShowCreate(false);
-      setForm({ firstName: '', lastName: '', dateOfBirth: '', position: 'PG', jerseyNumber: '', height: '', weight: '', email: '' });
-      loadAthletes();
-      onChanged?.();
-    } catch (err) {
-      toast('error', apiError(err, t('createError')));
-    } finally {
-      setCreating(false);
-    }
-  };
 
   return (
-    <div className="space-y-4">
+    // Il data-testid distingue le schede ATLETA da quelle delle squadre, che
+    // stanno nella stessa pagina e hanno le stesse classi.
+    <div className="space-y-4" data-testid="athlete-directory">
       {/* Intestazione */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -346,43 +313,24 @@ export function AthleteDirectory({ refreshKey = 0, onChanged }: Props) {
       </>
       )}
 
-      {/* Nuovo atleta */}
-      <Modal
+      {/* Questa lista e' filtrata dalla squadra selezionata in barra laterale.
+          Un atleta creato senza squadra non comparirebbe mai qui: sembra non
+          creato, ed e' invece invisibile. Quindi nasce nella squadra che stai
+          guardando; senza squadra selezionata, nasce senza squadra e la lista
+          non filtrata lo mostra. */}
+      <AthleteFormModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title={t('newAthlete')}
-        size="lg"
-        footer={
-          <>
-            <button
-              onClick={() => setShowCreate(false)}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              {t('cancel')}
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
-            >
-              {creating ? t('creating') : t('createAthlete')}
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
-          <Input label={t('firstName')} required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-          <Input label={t('lastName')} required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-          <div className="col-span-2">
-            <Input label={t('email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('emailPlaceholder')} />
-          </div>
-          <Input label={t('birthDate')} type="date" required value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
-          <Select label={t('position')} options={positions.slice(1)} value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} />
-          <Input label={t('jerseyNumber')} type="number" value={form.jerseyNumber} onChange={(e) => setForm({ ...form, jerseyNumber: e.target.value })} />
-          <Input label={t('heightCm')} type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} />
-          <Input label={t('weightKg')} type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
-        </form>
-      </Modal>
+        teamId={selectedTeamId ?? undefined}
+        teamName={selectedTeam?.name}
+        onCreated={() => {
+          // Dopo una creazione si torna in prima pagina: restare sulla terza
+          // pagina di un elenco appena cambiato non aiuta a trovare nulla.
+          setPage(1);
+          loadAthletes();
+          onChanged?.();
+        }}
+      />
     </div>
   );
 }

@@ -32,6 +32,7 @@ import { issueRefreshToken, revokeAllRefreshTokens } from '../lib/refresh-tokens
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { sendEmail } from '../services/email-service.js';
 import { appPublicUrl } from '../lib/app-url.js';
+import { fullName } from '../lib/identity.js';
 
 const SALT_ROUNDS = 12;
 const INVITE_TTL_DAYS = 7;
@@ -56,16 +57,7 @@ export async function staffRoutes(app: FastifyInstance) {
           deletedAt: null,
           role: { in: [...SEAT_ROLES] },
         },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          lastLoginAt: true,
-          createdAt: true,
-        },
+        select: { id: true, email: true, role: true, isActive: true, lastLoginAt: true, createdAt: true, identity: { select: { firstName: true, lastName: true } } },
         orderBy: [{ isActive: 'desc' }, { createdAt: 'asc' }],
       }),
       app.prisma.staffInvite.findMany({
@@ -177,11 +169,11 @@ export async function staffRoutes(app: FastifyInstance) {
       }),
       app.prisma.user.findUnique({
         where: { id: userId },
-        select: { firstName: true, lastName: true },
+        select: { identity: { select: { firstName: true, lastName: true } } },
       }),
     ]);
     const orgName = org?.name || 'TrainMind';
-    const inviterName = inviter ? `${inviter.firstName} ${inviter.lastName}`.trim() : orgName;
+    const inviterName = inviter ? fullName(inviter) : orgName;
 
     sendEmail(
       {
@@ -437,11 +429,11 @@ export async function staffRoutes(app: FastifyInstance) {
         if (claimed.count === 0) throw new InviteAlreadyUsedError();
 
         const newUser = await tx.user.create({
+          include: { identity: true },
           data: {
             email: invite.email,
             passwordHash,
-            firstName,
-            lastName,
+            identity: { create: { firstName, lastName } },
             role: invite.role,
             organizationId: invite.organizationId,
             locale: uiLanguage,
@@ -517,8 +509,8 @@ export async function staffRoutes(app: FastifyInstance) {
         user: {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          firstName: user.identity?.firstName ?? '',
+          lastName: user.identity?.lastName ?? '',
           role: user.role,
           locale: user.locale ?? undefined,
           organizationId: user.organizationId,

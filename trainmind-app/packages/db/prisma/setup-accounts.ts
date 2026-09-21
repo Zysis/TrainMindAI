@@ -22,6 +22,21 @@ import { PrismaClient } from '@prisma/client';
 // @ts-expect-error — bcrypt has no bundled types
 import bcrypt from 'bcrypt';
 
+/**
+ * Nome, cognome e data di nascita degli atleti vivono in `AthleteIdentity`
+ * dal 20/09/2026: un create piatto non compila piu'.
+ * Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+ */
+function toAthleteCreate<T extends { firstName: string; lastName: string; dateOfBirth: Date }>(a: T) {
+  const { firstName, lastName, dateOfBirth, ...core } = a;
+  return {
+    ...core,
+    birthYear: dateOfBirth.getFullYear(),
+    identity: { create: { firstName, lastName, dateOfBirth } },
+  };
+}
+
+
 const prisma = new PrismaClient();
 
 const PASSWORD = 'TrainMind2024!';
@@ -128,14 +143,13 @@ async function createDemoOrg(spec: OrgSpec) {
     create: {
       email: spec.email,
       passwordHash,
-      firstName: spec.firstName,
-      lastName: spec.lastName,
+      identity: { create: { firstName: spec.firstName, lastName: spec.lastName } },
       role: 'ADMIN',
       organizationId: org.id,
       isActive: true,
     },
   });
-  console.log(`✓ Admin: ${user.firstName} ${user.lastName} (${user.email})`);
+  console.log(`✓ Admin: ${spec.firstName} ${spec.lastName} (${user.email})`);
 
   // Teams
   const teams: { id: string; name: string }[] = [];
@@ -165,7 +179,7 @@ async function createDemoOrg(spec: OrgSpec) {
       update: {},
       create: {
         id,
-        ...a,
+        ...toAthleteCreate(a),
         organizationId: org.id,
         isActive: true,
       },

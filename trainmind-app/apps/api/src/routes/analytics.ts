@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { computeAcwr, calculateWellnessScore } from '@trainmind/utils';
+import { fullName } from '../lib/identity.js';
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS ROUTES — Sprint 3.2
@@ -157,10 +158,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
       const athleteNames = new Map<string, string>();
       const athleteRecords = await app.prisma.athlete.findMany({
         where: { organizationId, isActive: true },
-        select: { id: true, firstName: true, lastName: true },
+        select: { id: true, identity: { select: { firstName: true, lastName: true } } },
       });
       for (const a of athleteRecords) {
-        athleteNames.set(a.id, `${a.firstName} ${a.lastName}`);
+        athleteNames.set(a.id, fullName(a));
       }
 
       // Re-iterate sessions for per-athlete stats
@@ -229,14 +230,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const wellnessLogs = await app.prisma.wellnessLog.findMany({
       where,
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
       },
       orderBy: { date: 'asc' },
     });
 
     const heatmapData = wellnessLogs.map((log) => ({
       athleteId: log.athleteId,
-      athleteName: `${log.athlete.firstName} ${log.athlete.lastName}`,
+      athleteName: fullName(log.athlete),
       date: new Date(log.date).toISOString().slice(0, 10),
       sleepQuality: log.sleepQuality,
       fatigue: log.fatigue,
@@ -303,7 +304,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
         rpe: true,
         detailedByAttendance: true,
         athleteId: true,
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         week: {
           select: {
             trainingPlan: {
@@ -321,11 +322,11 @@ export async function analyticsRoutes(app: FastifyInstance) {
     // Also get all athletes for name resolution
     const allAthletes = await app.prisma.athlete.findMany({
       where: { organizationId, isActive: true },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
     const athleteNameMap: Record<string, string> = {};
     for (const a of allAthletes) {
-      athleteNameMap[a.id] = `${a.firstName} ${a.lastName}`;
+      athleteNameMap[a.id] = fullName(a);
     }
 
     // Build per-athlete session loads, attributing team sessions to all team members
@@ -454,7 +455,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
             athleteId: true,
             status: true,
             rpe: true,
-            athlete: { select: { id: true, firstName: true, lastName: true } },
+            athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
           },
         },
       },
@@ -474,7 +475,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
       trainings: 0, present: 0, unavailable: 0, absent: 0, rpeSum: 0, rpeCount: 0, load: 0,
     });
 
-    const athleteNames: Record<string, { id: string; firstName: string; lastName: string }> = {};
+    const athleteNames: Record<
+      string,
+      { id: string; identity: { firstName: string; lastName: string } | null }
+    > = {};
     const totals: Record<string, Bucket> = {};
     const byType: Record<string, Record<string, Bucket>> = {};
     const typeTotals: Record<string, number> = {};
@@ -535,8 +539,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const athletes = Object.keys(totals)
       .map((id) => ({
         athleteId: id,
-        firstName: athleteNames[id]?.firstName || '',
-        lastName: athleteNames[id]?.lastName || '',
+        firstName: athleteNames[id]?.identity?.firstName || '',
+        lastName: athleteNames[id]?.identity?.lastName || '',
         ...shape(totals[id]),
         byType: Object.fromEntries(
           Object.entries(byType[id] || {}).map(([type, b]) => [type, shape(b)]),
@@ -582,7 +586,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     }
     const athletes = await app.prisma.athlete.findMany({
       where: athleteWhere,
-      select: { id: true, firstName: true, lastName: true, position: true },
+      select: { id: true, position: true, identity: { select: { firstName: true, lastName: true } } },
     });
     const athleteIds = athletes.map((a) => a.id);
 

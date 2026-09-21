@@ -60,19 +60,10 @@ export async function teamRoutes(app: FastifyInstance) {
         athleteTeams: {
           include: {
             athlete: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                position: true,
-                jerseyNumber: true,
-                photoUrl: true,
-                isActive: true,
-                dateOfBirth: true,
-              },
+              select: { id: true, position: true, jerseyNumber: true, isActive: true, identity: { select: { firstName: true, lastName: true, photoUrl: true, dateOfBirth: true } } },
             },
           },
-          orderBy: { athlete: { lastName: 'asc' } },
+          orderBy: { athlete: { identity: { lastName: 'asc' } } },
         },
         _count: {
           select: {

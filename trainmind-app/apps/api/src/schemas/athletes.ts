@@ -36,9 +36,15 @@ export const createAthleteSchema = z.object({
   email: z.string().email('Email non valida').optional(),
   team: z.string().max(100).optional(),
   photoUrl: z.string().optional(),
+  // Squadra a cui iscrivere l'atleta appena creato. Prima il client faceva due
+  // chiamate (crea, poi assegna): se la seconda falliva restava un atleta senza
+  // squadra e un messaggio d'errore che faceva pensare a una creazione mancata.
+  teamId: z.string().optional(),
 });
 
-export const updateAthleteSchema = createAthleteSchema.partial();
+// `teamId` vale solo alla creazione: per spostare un atleta di squadra ci sono
+// le rotte di /teams.
+export const updateAthleteSchema = createAthleteSchema.omit({ teamId: true }).partial();
 
 export const athleteQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

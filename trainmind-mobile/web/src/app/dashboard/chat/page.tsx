@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { Sparkles, Trash2, AlertCircle, WifiOff, Zap } from 'lucide-react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Sparkles, Trash2, AlertCircle, WifiOff, Zap, User } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
 import { MessageBubble, ChatInput, SourcesPanel, TypingIndicator } from '@/components/chat';
 import { useTranslations } from 'next-intl';
+import { apiFetch } from '@/lib/auth/fetch';
 
-export default function ChatPage() {
+function ChatPageInner() {
+  // Senza passare l'atleta all'hook, `athlete_id` non raggiunge l'API e
+  // l'ai-service non costruisce il contesto.
+  const params = useSearchParams();
+  const athleteId = params.get('athlete') ?? undefined;
+  const [athleteName, setAthleteName] = useState<string | null>(null);
+
   const {
     messages,
     input,
@@ -23,10 +31,32 @@ export default function ChatPage() {
     // and the actual ai-service URL is configured server-side via AI_INTERNAL_URL.
     aiBaseUrl: '/api/ai-svc',
     namespaces: ['protocols', 'exercises', 'periodization', 'references'],
+    athleteId,
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('chat');
+
+  // Il nome si chiede all'API, non all'URL.
+  useEffect(() => {
+    if (!athleteId) {
+      setAthleteName(null);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<{ data: { firstName: string; lastName: string } }>(`/athletes/${athleteId}`)
+      .then((res) => {
+        if (!cancelled) {
+          setAthleteName(`${res.data.firstName} ${res.data.lastName}`.trim());
+        }
+      })
+      .catch(() => {
+        /* etichetta decorativa */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [athleteId]);
 
   // Auto-scroll to bottom on new messages or streaming updates
   useEffect(() => {
@@ -61,6 +91,13 @@ export default function ChatPage() {
               )}
             </div>
           </div>
+
+          {athleteName && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+              <User className="h-3.5 w-3.5" />
+              {athleteName}
+            </span>
+          )}
         </div>
 
         {/* Clear chat button */}
@@ -147,5 +184,13 @@ export default function ChatPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
   );
 }

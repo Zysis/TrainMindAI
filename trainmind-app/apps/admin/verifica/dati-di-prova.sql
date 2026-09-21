@@ -12,12 +12,20 @@ VALUES ('A','Basket Alfa','alfa','basketball','STARTER',now()-interval '60 days'
        ('C','Basket Gamma','gamma','basketball','ULTRA',now()-interval '3 days',now(),'ultra','inactive'),
        ('D','Pro Demo Basket','demo','basketball','PROFESSIONAL',now()-interval '90 days',now(),'professional','inactive');
 
-INSERT INTO users (id,email,"passwordHash","firstName","lastName",role,"isActive",locale,"organizationId","createdAt","updatedAt","lastLoginAt")
-VALUES ('ua','a@reale.it','x','Anna','Rossi','ADMIN',true,'it','A',now()-interval '60 days',now(),now()-interval '2 days'),
-       ('ua2','t@reale.it','x','Tino','Verdi','TRAINER',true,'it','A',now()-interval '59 days',now(),now()-interval '5 days'),
-       ('ub','b@reale.it','x','Bruno','Bianchi','ADMIN',true,'en','B',now()-interval '20 days',now(),now()-interval '15 days'),
-       ('uc','c@reale.it','x','Carla','Neri','ADMIN',true,'es','C',now()-interval '3 days',now(),now()-interval '1 day'),
-       ('ud','avispa@pro.com','x','Demo','Utente','ADMIN',true,'it','D',now()-interval '90 days',now(),now());
+-- Dal 20/09/2026 nome e cognome stanno in `user_identities`, e la console li
+-- legge da li' con una JOIN. Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+INSERT INTO users (id,email,"passwordHash",role,"isActive",locale,"organizationId","createdAt","updatedAt","lastLoginAt")
+VALUES ('ua','a@reale.it','x','ADMIN',true,'it','A',now()-interval '60 days',now(),now()-interval '2 days'),
+       ('ua2','t@reale.it','x','TRAINER',true,'it','A',now()-interval '59 days',now(),now()-interval '5 days'),
+       ('ub','b@reale.it','x','ADMIN',true,'en','B',now()-interval '20 days',now(),now()-interval '15 days'),
+       ('uc','c@reale.it','x','ADMIN',true,'es','C',now()-interval '3 days',now(),now()-interval '1 day'),
+       ('ud','avispa@pro.com','x','ADMIN',true,'it','D',now()-interval '90 days',now(),now());
+INSERT INTO user_identities ("userId","firstName","lastName")
+VALUES ('ua','Anna','Rossi'),
+       ('ua2','Tino','Verdi'),
+       ('ub','Bruno','Bianchi'),
+       ('uc','Carla','Neri'),
+       ('ud','Demo','Utente');
 
 -- Consensi: TERMS per tutti; MARKETING solo Anna (attivo) e Bruno (revocato).
 -- Bruno serve a verificare che una revoca lo faccia sparire dall'elenco contatti.
@@ -35,8 +43,10 @@ VALUES ('c6','ub','MARKETING','2026-01-v1',now()-interval '20 days','en',now()-i
 INSERT INTO teams (id,name,"organizationId","createdAt","updatedAt")
 VALUES ('t1','Prima Squadra','A',now()-interval '59 days',now()),
        ('t2','Under 16','B',now()-interval '19 days',now());
-INSERT INTO athletes (id,"firstName","lastName","dateOfBirth",position,"isActive","organizationId","createdAt","updatedAt")
-VALUES ('at1','Luca','Mari','2000-01-01','PG',true,'A',now()-interval '58 days',now());
+INSERT INTO athletes (id,"birthYear",position,"isActive","organizationId","createdAt","updatedAt")
+VALUES ('at1',2000,'PG',true,'A',now()-interval '58 days',now());
+INSERT INTO athlete_identities ("athleteId","firstName","lastName","dateOfBirth")
+VALUES ('at1','Luca','Mari','2000-01-01');
 INSERT INTO training_sessions (id,title,duration,status,"isTemplate","aiModified","detailedByAttendance","organizationId","createdAt","updatedAt")
 VALUES ('s1','Allenamento 1',90,'COMPLETED',false,false,false,'A',now()-interval '57 days',now());
 INSERT INTO wellness_logs (id,"athleteId",date,"sleepHours","sleepQuality",fatigue,soreness,stress,mood,"mediaUrls","createdAt","updatedAt")

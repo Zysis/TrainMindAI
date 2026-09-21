@@ -29,14 +29,18 @@ export async function listMarketingContacts(): Promise<Contact[]> {
     WITH ${REAL_ORGS_CTE}
     SELECT
       u.email,
-      u."firstName",
-      u."lastName",
+      -- Nome e cognome stanno in user_identities dal 20/09/2026: la console
+      -- mantiene il permesso di lettura su QUESTA tabella (non su quella degli
+      -- atleti). Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+      ui."firstName",
+      ui."lastName",
       o.name AS organization,
       o.tier::text AS tier,
       u.locale,
       c."acceptedAt" AS consented_at,
       c."docVersion"
     FROM users u
+    JOIN user_identities ui ON ui."userId" = u.id
     JOIN organizations o ON o.id = u."organizationId"
     JOIN LATERAL (
       SELECT c."acceptedAt", c."docVersion"

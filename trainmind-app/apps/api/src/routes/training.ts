@@ -45,8 +45,8 @@ export async function trainingRoutes(app: FastifyInstance) {
     }
 
     const includeObj: Record<string, unknown> = {
-      athlete: { select: { id: true, firstName: true, lastName: true, position: true } },
-      createdBy: { select: { id: true, firstName: true, lastName: true } },
+      athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true } } } },
+      createdBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
       _count: { select: { weeks: true } },
     };
 
@@ -89,8 +89,8 @@ export async function trainingRoutes(app: FastifyInstance) {
     const plan = await app.prisma.trainingPlan.findFirst({
       where: { id, organizationId },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
-        createdBy: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } },
+        createdBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         periodizationPlan: { select: { id: true, name: true, type: true } },
         weeks: {
           orderBy: { weekNumber: 'asc' },
@@ -105,7 +105,7 @@ export async function trainingRoutes(app: FastifyInstance) {
             trainingSessions: {
               orderBy: { date: 'asc' },
               include: {
-                athlete: { select: { id: true, firstName: true, lastName: true } },
+                athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
                 _count: { select: { sessionExercises: true } },
               },
             },
@@ -172,7 +172,7 @@ export async function trainingRoutes(app: FastifyInstance) {
         },
       },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         weeks: { orderBy: { weekNumber: 'asc' } },
         _count: { select: { weeks: true } },
       },
@@ -391,8 +391,8 @@ export async function trainingRoutes(app: FastifyInstance) {
       const fullPlan = await app.prisma.trainingPlan.findUnique({
         where: { id: result.id },
         include: {
-          athlete: { select: { id: true, firstName: true, lastName: true, position: true } },
-          createdBy: { select: { id: true, firstName: true, lastName: true } },
+          athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true } } } },
+          createdBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
           _count: { select: { weeks: true } },
         },
       });
@@ -637,7 +637,7 @@ export async function trainingRoutes(app: FastifyInstance) {
               trainingPlan: { select: { id: true, name: true, teamId: true, team: { select: { name: true, color: true } } } },
             },
           },
-          athlete: { select: { id: true, firstName: true, lastName: true, position: true } },
+          athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true } } } },
           sessionExercises: { include: { exercise: { select: { id: true, name: true, category: true } } }, orderBy: { orderIndex: 'asc' } },
           _count: { select: { sessionExercises: true } },
         },
@@ -670,7 +670,7 @@ export async function trainingRoutes(app: FastifyInstance) {
         ],
       },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true, position: true } },
+        athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true } } } },
         week: {
           select: {
             id: true,
@@ -742,7 +742,7 @@ export async function trainingRoutes(app: FastifyInstance) {
         status: 'PLANNED',
       },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
       },
     });
 

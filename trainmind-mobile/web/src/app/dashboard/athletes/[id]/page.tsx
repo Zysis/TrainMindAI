@@ -192,10 +192,10 @@ export default function AthleteProfilePage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => router.push(`/dashboard/chat?athlete=${athlete.id}&name=${encodeURIComponent(`${athlete.firstName} ${athlete.lastName}`)}`)}
+              onClick={() => router.push(`/dashboard/chat?athlete=${athlete.id}`)}
               className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
             >
-              <Sparkles className="h-4 w-4" /> {t('createAISheet')}
+              <Sparkles className="h-4 w-4" /> {t('aiAssistant')}
             </button>
             <button onClick={openEditModal} className="rounded-lg border border-slate-300 dark:border-slate-600 p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700">
               <Edit2 className="h-4 w-4" />

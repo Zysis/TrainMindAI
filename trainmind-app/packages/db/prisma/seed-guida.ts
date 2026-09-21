@@ -321,10 +321,9 @@ async function seedOrg(adminEmail: string) {
   for (const p of roster) {
     const a = await prisma.athlete.create({
       data: {
-        firstName: p.first,
-        lastName: p.last,
+        identity: { create: { firstName: p.first, lastName: p.last, dateOfBirth: new Date(p.dob) } },
+        birthYear: new Date(p.dob).getFullYear(),
         position: p.pos,
-        dateOfBirth: new Date(p.dob),
         height: p.h,
         weight: p.w,
         jerseyNumber: p.jersey,

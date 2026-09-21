@@ -1,12 +1,16 @@
 import { test, expect } from '../fixtures/auth';
 
 test.describe('Athletes - Smoke Tests', () => {
+  // `/dashboard/athletes` e' un redirect verso la scheda Squadre dal 26/8/2026:
+  // l'elenco atleti vive in fondo a quella pagina (athlete-directory.tsx).
+  // Il titolo di primo livello e' quindi "Squadre", e "Atleti" e' l'intestazione
+  // della sezione.
   test('athletes list page loads with heading', async ({ page }) => {
     await page.goto('/dashboard/athletes');
-    await expect(page).toHaveURL('/dashboard/athletes');
+    await expect(page).toHaveURL('/dashboard/teams');
 
-    // Heading "Atleti" (inside main content, not sidebar)
-    await expect(page.locator('main h1, [class*="space-y"] > div h1').first()).toContainText('Atleti');
+    await expect(page.locator('main h1, [class*="space-y"] > div h1').first()).toContainText('Squadre');
+    await expect(page.getByText(/Atleti/).first()).toBeVisible();
   });
 
   test('athletes are displayed in grid or table', async ({ page }) => {
@@ -37,7 +41,7 @@ test.describe('Athletes - Smoke Tests', () => {
     // Debounce 300ms + API call
     await page.waitForTimeout(1000);
 
-    await expect(page).toHaveURL('/dashboard/athletes');
+    await expect(page).toHaveURL('/dashboard/teams');
   });
 
   test('position filter dropdown exists', async ({ page }) => {
@@ -74,8 +78,12 @@ test.describe('Athletes - Smoke Tests', () => {
     const count = await cards.count();
 
     if (count > 0) {
-      await cards.first().click();
-      // Should navigate to athlete detail (CUID ID pattern)
+      // La prima `.card-hover` della pagina e' una SQUADRA: cliccarla
+      // seleziona la squadra e resta su /dashboard/teams. Le schede atleta
+      // stanno nell'elenco in fondo, che ha il proprio contenitore.
+      const athleteCards = page.locator('[data-testid="athlete-directory"] .card-hover.cursor-pointer');
+      if ((await athleteCards.count()) === 0) test.skip();
+      await athleteCards.first().click();
       await expect(page).toHaveURL(/\/dashboard\/athletes\/.+/);
     }
   });
@@ -97,7 +105,9 @@ test.describe('Athletes - Smoke Tests', () => {
     await page.goto('/dashboard/athletes');
     await page.waitForTimeout(2000);
 
-    // Sub-heading shows "X atleti nel roster"
-    await expect(page.locator('text=/\\d+ atleti nel roster/')).toBeVisible();
+    // L'intestazione della sezione mostra "Atleti (N)" con il sottotitolo
+    // "Gestisci il roster degli atleti". La vecchia stringa "N atleti nel
+    // roster" non esiste piu'.
+    await expect(page.getByText(/Atleti\s*\(\d+\)/).first()).toBeVisible();
   });
 });

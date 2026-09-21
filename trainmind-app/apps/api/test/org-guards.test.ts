@@ -126,7 +126,8 @@ beforeAll(async () => {
 
   const bAthlete = await p.athlete.create({
     data: {
-      firstName: 'Atleta', lastName: 'DiB', dateOfBirth: new Date('2004-03-01'),
+      identity: { create: { firstName: 'Atleta', lastName: 'DiB', dateOfBirth: new Date('2004-03-01') } },
+      birthYear: 2004,
       position: 'GUARD', organizationId: B.orgId,
     },
   });
@@ -193,7 +194,8 @@ beforeAll(async () => {
 
   const aAthlete = await p.athlete.create({
     data: {
-      firstName: 'Atleta', lastName: 'DiA', dateOfBirth: new Date('2003-09-10'),
+      identity: { create: { firstName: 'Atleta', lastName: 'DiA', dateOfBirth: new Date('2003-09-10') } },
+      birthYear: 2003,
       position: 'FORWARD', organizationId: A.orgId,
     },
   });

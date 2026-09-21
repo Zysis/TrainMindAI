@@ -342,7 +342,7 @@ async function main() {
   // 1. Find user
   const user = await prisma.user.findUnique({
     where: { email: 'alessandro.vispa@gmail.com' },
-    include: { organization: true },
+    include: { organization: true, identity: true },
   });
 
   if (!user) {
@@ -352,7 +352,7 @@ async function main() {
 
   const orgId = user.organizationId;
   const userId = user.id;
-  console.log(`✅ User: ${user.firstName} ${user.lastName} (org: ${user.organization.name})\n`);
+  console.log(`✅ User: ${user.identity?.firstName ?? ''} ${user.identity?.lastName ?? ''} (org: ${user.organization.name})\n`);
 
   // 2. Clean existing demo data
   console.log('🧹 Cleaning existing data...');
@@ -408,8 +408,9 @@ async function main() {
     for (const p of players) {
       const a = await prisma.athlete.create({
         data: {
-          firstName: p.first, lastName: p.last, position: p.pos,
-          dateOfBirth: new Date(p.dob), height: p.h, weight: p.w,
+          identity: { create: { firstName: p.first, lastName: p.last, dateOfBirth: new Date(p.dob) } },
+          birthYear: new Date(p.dob).getFullYear(),
+          position: p.pos, height: p.h, weight: p.w,
           jerseyNumber: p.jersey, organizationId: orgId,
         },
       });

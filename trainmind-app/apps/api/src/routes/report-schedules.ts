@@ -70,7 +70,7 @@ export async function reportScheduleRoutes(app: FastifyInstance) {
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
       include: {
-        createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        createdBy: { select: { id: true, email: true, identity: { select: { firstName: true, lastName: true } } } },
         _count: { select: { runs: true } },
       },
     });
@@ -127,7 +127,7 @@ export async function reportScheduleRoutes(app: FastifyInstance) {
       const schedule = await app.prisma.reportSchedule.findFirst({
         where: { id, organizationId },
         include: {
-          createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+          createdBy: { select: { id: true, email: true, identity: { select: { firstName: true, lastName: true } } } },
           runs: { orderBy: { startedAt: 'desc' }, take: 10 },
         },
       });

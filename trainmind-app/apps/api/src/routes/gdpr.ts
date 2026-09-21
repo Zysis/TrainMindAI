@@ -60,17 +60,11 @@ export async function gdprRoutes(app: FastifyInstance) {
     const [user, athletes, wellnessLogs, trainingSessions, injuries] = await Promise.all([
       app.prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true, email: true, firstName: true, lastName: true, role: true,
-          createdAt: true, updatedAt: true,
-        },
+        select: { id: true, email: true, role: true, createdAt: true, updatedAt: true, identity: { select: { firstName: true, lastName: true } } },
       }),
       app.prisma.athlete.findMany({
         where: athleteScope,
-        select: {
-          id: true, firstName: true, lastName: true, dateOfBirth: true,
-          position: true, height: true, weight: true, createdAt: true,
-        },
+        select: { id: true, position: true, height: true, weight: true, createdAt: true, identity: { select: { firstName: true, lastName: true, dateOfBirth: true } } },
       }),
       app.prisma.wellnessLog.findMany({
         where: { athlete: athleteScope },
@@ -204,8 +198,8 @@ export async function gdprRoutes(app: FastifyInstance) {
         where: { id: userId },
         data: {
           email: `deleted-${userId}@removed.local`,
-          firstName: 'Rimosso',
-          lastName: 'Rimosso',
+          // L'anagrafica sta nel caveau: si anonimizza li'.
+          identity: { update: { firstName: 'Rimosso', lastName: 'Rimosso' } },
           passwordHash: '!disabled',
           isActive: false,
           deletedAt: new Date(),
@@ -271,8 +265,7 @@ export async function gdprRoutes(app: FastifyInstance) {
             where: { id: linkedUser.id },
             data: {
               email: `deleted-${linkedUser.id}@removed.local`,
-              firstName: 'Rimosso',
-              lastName: 'Rimosso',
+              identity: { update: { firstName: 'Rimosso', lastName: 'Rimosso' } },
               passwordHash: '!disabled',
               isActive: false,
               deletedAt: new Date(),
@@ -287,11 +280,17 @@ export async function gdprRoutes(app: FastifyInstance) {
         await tx.athlete.update({
           where: { id: athleteId },
           data: {
-            firstName: 'Rimosso',
-            lastName: 'Rimosso',
-            email: null,
-            photoUrl: null,
             isActive: false,
+            // Nome, email e foto stavano sulla riga dell'atleta; ora stanno nel
+            // caveau, che e' anche l'unico posto da ripulire.
+            identity: {
+              update: {
+                firstName: 'Rimosso',
+                lastName: 'Rimosso',
+                email: null,
+                photoUrl: null,
+              },
+            },
           },
         });
       });

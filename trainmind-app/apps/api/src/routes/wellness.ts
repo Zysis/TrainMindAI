@@ -56,7 +56,7 @@ export async function wellnessRoutes(app: FastifyInstance) {
     const [logs, total] = await Promise.all([
       app.prisma.wellnessLog.findMany({
         where,
-        include: { athlete: { select: { firstName: true, lastName: true } } },
+        include: { athlete: { select: { identity: { select: { firstName: true, lastName: true } } } } },
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { date: 'desc' },
@@ -108,7 +108,7 @@ export async function wellnessRoutes(app: FastifyInstance) {
     const [metrics, total] = await Promise.all([
       app.prisma.metric.findMany({
         where,
-        include: { athlete: { select: { firstName: true, lastName: true } } },
+        include: { athlete: { select: { identity: { select: { firstName: true, lastName: true } } } } },
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { date: 'desc' },

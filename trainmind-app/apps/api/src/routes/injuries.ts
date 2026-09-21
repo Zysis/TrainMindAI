@@ -51,12 +51,12 @@ const PROTOCOL_INCLUDE = {
   // Il `code` del template di sistema e' la chiave con cui il frontend traduce
   // fasi e criteri: le righe copiate nel protocollo restano in italiano.
   template: { select: { code: true } },
-  athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
+  athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } },
   phases: { orderBy: { order: 'asc' as const } },
   criteria: { orderBy: [{ phase: 'asc' as const }, { order: 'asc' as const }, { createdAt: 'asc' as const }] },
   phaseLogs: {
     orderBy: { createdAt: 'desc' as const },
-    include: { changedBy: { select: { firstName: true, lastName: true } } },
+    include: { changedBy: { select: { identity: { select: { firstName: true, lastName: true } } } } },
   },
 };
 
@@ -389,7 +389,7 @@ export async function injuryRoutes(app: FastifyInstance) {
       },
       include: {
         injury: { select: { type: true, location: true, severity: true, dateOccurred: true } },
-        athlete: { select: { id: true, firstName: true, lastName: true, position: true, photoUrl: true } },
+        athlete: { select: { id: true, position: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } },
         phases: { orderBy: { order: 'asc' }, select: { phase: true, order: true, name: true } },
         template: { select: { code: true } },
         _count: { select: { criteria: true, phaseLogs: true } },

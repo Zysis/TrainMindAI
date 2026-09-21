@@ -97,8 +97,7 @@ async function createUserAndLogin(data: {
       email: mail(data.who),
       // Costo basso: il test verifica i permessi, non bcrypt.
       passwordHash: await bcrypt.hash(PASSWORD, 4),
-      firstName: 'Utente',
-      lastName: data.who,
+      identity: { create: { firstName: 'Utente', lastName: data.who } },
       role: data.role,
       organizationId: data.organizationId,
       athleteId: data.athleteId,
@@ -142,7 +141,13 @@ beforeAll(async () => {
 
   const mkAthlete = (lastName: string) =>
     p.athlete.create({
-      data: { firstName: 'Atleta', lastName, dateOfBirth: new Date('2004-03-01'), position: 'PG', organizationId: A },
+      data: {
+        identity: { create: { firstName: 'Atleta', lastName, dateOfBirth: new Date('2004-03-01') } },
+        birthYear: 2004,
+        position: 'PG',
+        organizationId: A,
+      },
+      include: { identity: true },
     });
   const me = await mkAthlete('Io');
   const mate = await mkAthlete('Compagno');
@@ -159,7 +164,7 @@ beforeAll(async () => {
     await p.wellnessLog.create({
       data: {
         athleteId: a.id, date: day, sleepHours: 7, sleepQuality: 4,
-        fatigue: 4, soreness: 4, stress: 4, mood: 4, notes: `wellness-${a.lastName}`,
+        fatigue: 4, soreness: 4, stress: 4, mood: 4, notes: `wellness-${a.identity?.lastName ?? ''}`,
       },
     });
   }
@@ -184,7 +189,8 @@ beforeAll(async () => {
   // Account atleta da cancellare, con una sessione di rinnovo aperta.
   const erasedUser = await p.user.create({
     data: {
-      email: mail('erased'), passwordHash: '!', firstName: 'X', lastName: 'Y',
+      email: mail('erased'), passwordHash: '!',
+      identity: { create: { firstName: 'X', lastName: 'Y' } },
       role: 'ATHLETE', organizationId: A, athleteId: erased.id,
     },
   });

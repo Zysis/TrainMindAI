@@ -98,6 +98,15 @@ class CoachRequest(BaseModel):
 
     question: str = Field(..., description="Domanda per il coach")
     athlete_id: Optional[str] = Field(None, description="ID dell'atleta per personalizzazione")
+    athlete_context: Optional[str] = Field(
+        None,
+        description=(
+            "Riepilogo dell'atleta gia' pronto e de-identificato, costruito da apps/api. "
+            "Quando c'e', l'ai-service NON richiama l'API all'indietro: i dati arrivano "
+            "con la richiesta. Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md"
+        ),
+    )
+
     category: Optional[str] = Field(
         None,
         description="Categoria della domanda (es: form, nutrition, recovery, programming)",
@@ -163,6 +172,15 @@ class ChatRequest(BaseModel):
 
     messages: list[ChatMessage] = Field(..., description="Cronologia dei messaggi")
     athlete_id: Optional[str] = Field(None, description="ID dell'atleta per personalizzazione")
+    athlete_context: Optional[str] = Field(
+        None,
+        description=(
+            "Riepilogo dell'atleta gia' pronto e de-identificato, costruito da apps/api. "
+            "Quando c'e', l'ai-service NON richiama l'API all'indietro: i dati arrivano "
+            "con la richiesta. Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md"
+        ),
+    )
+
     stream: bool = Field(False, description="Se True, risposta in streaming SSE")
     temperature: float = Field(0.7, ge=0.0, le=2.0, description="Temperatura del modello")
     max_tokens: int = Field(2048, ge=100, le=4096, description="Max token nella risposta")

@@ -24,10 +24,14 @@ import type {
 } from '@trainmind/types';
 import { calculateWellnessScore, computeAcwr } from '@trainmind/utils';
 import { acwrLoadPoints } from '../lib/acwr-loads.js';
+import { sortName } from '../lib/identity.js';
 
 const DAY_MS = 86_400_000;
 
-type AthleteRow = { id: string; firstName: string; lastName: string };
+type AthleteRow = {
+  id: string;
+  identity: { firstName: string; lastName: string } | null;
+};
 
 type InjuryRow = {
   athleteId: string;
@@ -87,7 +91,7 @@ async function scopeAthletes(
   teamId?: string,
   athleteId?: string,
 ): Promise<AthleteRow[]> {
-  const select = { id: true, firstName: true, lastName: true } as const;
+  const select = { id: true, identity: { select: { firstName: true, lastName: true } } } as const;
   if (athleteId) {
     return app.prisma.athlete.findMany({ where: { id: athleteId, organizationId }, select });
   }
@@ -182,7 +186,7 @@ export async function aggregateManagement(
       ret = target < asOf ? 'In valutazione' : `${longDate(target)} (${when})`;
     }
     unavailableRows.push([
-      `${a.lastName} ${a.firstName}`,
+      sortName(a),
       s === 'unavailable' ? 'Non disponibile' : 'Rientro graduale in corso',
       ret,
     ]);

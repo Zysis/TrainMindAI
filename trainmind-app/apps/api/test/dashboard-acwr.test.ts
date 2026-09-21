@@ -93,7 +93,8 @@ beforeAll(async () => {
   // ── Atleta 1: scalino di carico, storico abbondante ──
   const spike = await p.athlete.create({
     data: {
-      firstName: 'Picco', lastName: 'DiCarico', dateOfBirth: new Date('2002-01-20'),
+      identity: { create: { firstName: 'Picco', lastName: 'DiCarico', dateOfBirth: new Date('2002-01-20') } },
+      birthYear: 2002,
       position: 'CENTER', organizationId: orgId,
     },
   });
@@ -117,7 +118,8 @@ beforeAll(async () => {
   // ── Atleta 2: carico c'è, ma lo storico è di 5 giorni ──
   const short = await p.athlete.create({
     data: {
-      firstName: 'Storico', lastName: 'Corto', dateOfBirth: new Date('2005-06-11'),
+      identity: { create: { firstName: 'Storico', lastName: 'Corto', dateOfBirth: new Date('2005-06-11') } },
+      birthYear: 2005,
       position: 'GUARD', organizationId: orgId,
     },
   });
@@ -143,6 +145,10 @@ afterAll(async () => {
     await p.trainingSession.deleteMany({ where: { organizationId: orgId } });
     await p.athlete.deleteMany({ where: { organizationId: orgId } });
     await p.user.deleteMany({ where: { organizationId: orgId } });
+    // I 108 esercizi di default vengono creati alla registrazione: senza
+    // toglierli, la delete dell'organizzazione viola la foreign key e stampa
+    // un errore Prisma a ogni esecuzione. Gli altri test lo facevano gia'.
+    await p.exercise.deleteMany({ where: { organizationId: orgId } });
     await p.organization.delete({ where: { id: orgId } });
   } catch { /* pulizia best-effort */ }
   await app.close();

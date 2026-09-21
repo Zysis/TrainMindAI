@@ -49,7 +49,14 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in"
       onClick={(e) => e.target === overlayRef.current && onClose()}
     >
-      <div className={cn('w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl animate-slide-in', sizeClasses[size])}>
+      {/* `role="dialog"` + `aria-modal`: senza, per un lettore di schermo questa
+          e' una pila di div qualunque. Il titolo fa da nome accessibile. */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={cn('w-full rounded-2xl bg-white dark:bg-slate-800 shadow-xl animate-slide-in', sizeClasses[size])}
+      >
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-700 hover:text-slate-600 dark:text-slate-400">

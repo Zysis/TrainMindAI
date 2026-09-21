@@ -15,7 +15,9 @@ test.describe('Dashboard Home - Smoke Tests', () => {
     const aside = page.locator('aside').first();
     await expect(aside).toBeVisible();
 
-    const navItems = ['Atleti', 'Allenamenti', 'Esercizi', 'Wellness', 'Report'];
+    // Voci di primo livello davvero presenti: vedi il commento in
+    // navigation.spec.ts sulle sotto-voci dei gruppi richiudibili.
+    const navItems = ['Squadre', 'Wellness', 'Alert'];
     for (const item of navItems) {
       const link = aside.locator('a').filter({ hasText: item }).first();
       await expect(link).toBeVisible();

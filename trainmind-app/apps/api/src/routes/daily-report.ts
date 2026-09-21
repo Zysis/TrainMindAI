@@ -47,6 +47,7 @@ import type {
 } from '@trainmind/types';
 import { renderDailyReportPdf } from '../services/daily-report-pdf.js';
 import { renderDailyReportDocx } from '../services/daily-report-docx.js';
+import { fullName, sortName } from '../lib/identity.js';
 
 // ─── Tipi interni ───────────────────────────────────────
 
@@ -329,17 +330,17 @@ export async function dailyReportRoutes(app: FastifyInstance) {
 
     const [org, user, saved, memberships, events, fieldSessions, matchEvents] = await Promise.all([
       app.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, logoUrl: true } }),
-      app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+      app.prisma.user.findUnique({ where: { id: userId }, select: { identity: { select: { firstName: true, lastName: true } } } }),
       app.prisma.dailyReport.findUnique({
         where: { teamId_date: { teamId, date: dateOnly(date) } },
         include: {
-          entries: { include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, photoUrl: true } } } },
-          createdBy: { select: { firstName: true, lastName: true } },
+          entries: { include: { athlete: { select: { id: true, jerseyNumber: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } } } },
+          createdBy: { select: { identity: { select: { firstName: true, lastName: true } } } },
         },
       }),
       app.prisma.athleteTeam.findMany({
         where: { teamId, athlete: { organizationId, isActive: true } },
-        select: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, photoUrl: true } } },
+        select: { athlete: { select: { id: true, jerseyNumber: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } } },
       }),
       app.prisma.calendarEvent.findMany({
         where: { teamId, startTime: { gte: start, lte: end } },
@@ -386,7 +387,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
 
     const roster = memberships
       .map((m) => m.athlete)
-      .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) || a.lastName.localeCompare(b.lastName));
+      .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) || sortName(a).localeCompare(sortName(b)));
 
     // ── Righe giocatore ────────────────────────────────
     let entries: DailyReportEntryData[];
@@ -408,9 +409,9 @@ export async function dailyReportRoutes(app: FastifyInstance) {
         .sort((a, b) => a.orderIndex - b.orderIndex)
         .map((e) => ({
           athleteId: e.athleteId,
-          athleteName: `${e.athlete.lastName} ${e.athlete.firstName}`.trim(),
+          athleteName: sortName(e.athlete),
           jerseyNumber: e.athlete.jerseyNumber,
-          photoUrl: e.athlete.photoUrl,
+          photoUrl: e.athlete.identity?.photoUrl ?? null,
           status: e.status as DailyStatus,
           note: e.note,
           suggestedFrom: null,
@@ -424,9 +425,9 @@ export async function dailyReportRoutes(app: FastifyInstance) {
         ...savedRows,
         ...newcomers.map((a) => ({
           athleteId: a.id,
-          athleteName: `${a.lastName} ${a.firstName}`.trim(),
+          athleteName: sortName(a),
           jerseyNumber: a.jerseyNumber,
-          photoUrl: a.photoUrl,
+          photoUrl: a.identity?.photoUrl ?? null,
           status: (suggested.get(a.id)?.status ?? 5) as DailyStatus,
           note: suggested.get(a.id)?.note ?? null,
           suggestedFrom: suggested.get(a.id)?.from ?? null,
@@ -441,9 +442,9 @@ export async function dailyReportRoutes(app: FastifyInstance) {
       const suggested = await suggestStatuses(roster.map((a) => a.id), end);
       entries = roster.map((a) => ({
         athleteId: a.id,
-        athleteName: `${a.lastName} ${a.firstName}`.trim(),
+        athleteName: sortName(a),
         jerseyNumber: a.jerseyNumber,
-        photoUrl: a.photoUrl,
+        photoUrl: a.identity?.photoUrl ?? null,
         status: (suggested.get(a.id)?.status ?? 5) as DailyStatus,
         note: suggested.get(a.id)?.note ?? null,
         suggestedFrom: suggested.get(a.id)?.from ?? null,
@@ -515,7 +516,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
       },
       select: {
         athleteId: true, duration: true, rpe: true, title: true,
-        athlete: { select: { firstName: true, lastName: true, jerseyNumber: true } },
+        athlete: { select: { jerseyNumber: true, identity: { select: { firstName: true, lastName: true } } } },
       },
     });
 
@@ -525,7 +526,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
       const isGame = /partita|game|partido/i.test(ts.title || '');
       const cur = loadByAthlete.get(ts.athleteId) ?? {
         athleteId: ts.athleteId,
-        athleteName: `${ts.athlete.lastName} ${ts.athlete.firstName}`.trim(),
+        athleteName: sortName(ts.athlete),
         minutes: 0, rpe: null, load: null,
         source: (isGame ? 'GAME' : 'TRAINING') as DailyLoadRow['source'],
         jersey: ts.athlete.jerseyNumber, rpeSum: 0, rpeCount: 0,
@@ -565,8 +566,8 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     }
 
     const filledBy = saved?.createdBy
-      ? `${saved.createdBy.firstName} ${saved.createdBy.lastName}`
-      : user ? `${user.firstName} ${user.lastName}` : '—';
+      ? fullName(saved.createdBy)
+      : user?.identity ? fullName(user) : '—';
 
     return {
       kind: 'DAILY',
@@ -933,7 +934,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
       select: {
         id: true, date: true, teamId: true, updatedAt: true,
         team: { select: { name: true, color: true } },
-        createdBy: { select: { firstName: true, lastName: true } },
+        createdBy: { select: { identity: { select: { firstName: true, lastName: true } } } },
         _count: { select: { entries: true } },
       },
       orderBy: { date: 'desc' },
@@ -949,7 +950,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
         teamColor: r.team.color,
         players: r._count.entries,
         updatedAt: r.updatedAt.toISOString(),
-        filledBy: r.createdBy ? `${r.createdBy.firstName} ${r.createdBy.lastName}` : null,
+        filledBy: r.createdBy ? fullName(r.createdBy) : null,
       })),
     });
   });

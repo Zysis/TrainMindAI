@@ -210,8 +210,8 @@ export async function authRoutes(app: FastifyInstance) {
         data: {
           email,
           passwordHash,
-          firstName,
-          lastName,
+          // Nome e cognome nel caveau, creati nella stessa transazione.
+          identity: { create: { firstName, lastName } },
           role: 'ADMIN',
           organizationId: organization.id,
           // La lingua scelta sulla landing/registrazione diventa la lingua
@@ -316,8 +316,9 @@ export async function authRoutes(app: FastifyInstance) {
         user: {
           id: result.user.id,
           email: result.user.email,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
+          // Valori gia' validati in questo handler: non serve rileggerli.
+          firstName,
+          lastName,
           role: result.user.role,
           locale: result.user.locale ?? undefined,
           organizationId: result.user.organizationId,
@@ -358,6 +359,7 @@ export async function authRoutes(app: FastifyInstance) {
     const user = await app.prisma.user.findUnique({
       where: { email },
       include: {
+        identity: { select: { firstName: true, lastName: true } },
         organization: {
           select: { id: true, name: true, slug: true, sport: true, tier: true },
         },
@@ -414,8 +416,8 @@ export async function authRoutes(app: FastifyInstance) {
         user: {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          firstName: user.identity?.firstName ?? '',
+          lastName: user.identity?.lastName ?? '',
           role: user.role,
           locale: user.locale ?? undefined,
           organizationId: user.organizationId,
@@ -526,8 +528,7 @@ export async function authRoutes(app: FastifyInstance) {
       select: {
         id: true,
         email: true,
-        firstName: true,
-        lastName: true,
+        identity: { select: { firstName: true, lastName: true } },
         role: true,
         avatarUrl: true,
         locale: true,
@@ -716,7 +717,10 @@ export async function authRoutes(app: FastifyInstance) {
       },
     };
 
-    const user = await app.prisma.user.findUnique({ where: { email } });
+    const user = await app.prisma.user.findUnique({
+      where: { email },
+      include: { identity: { select: { firstName: true } } },
+    });
     if (!user || !user.isActive) {
       request.log.info(
         { emailFp: emailFingerprint(email) },
@@ -754,7 +758,7 @@ export async function authRoutes(app: FastifyInstance) {
         to: [user.email],
         subject: 'Reset your password — TrainMind',
         html: buildPasswordResetEmailHtml({
-          firstName: user.firstName,
+          firstName: user.identity?.firstName ?? '',
           resetUrl,
           expiryMinutes: RESET_TOKEN_TTL_MINUTES,
         }),

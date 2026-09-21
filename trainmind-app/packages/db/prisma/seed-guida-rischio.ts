@@ -44,8 +44,8 @@ async function main() {
 
   const athletes = await prisma.athlete.findMany({
     where: { organizationId: org.id, isActive: true },
-    orderBy: { lastName: 'asc' },
-    select: { id: true, firstName: true, lastName: true },
+    orderBy: { identity: { lastName: 'asc' } },
+    select: { id: true, identity: { select: { firstName: true, lastName: true } } },
   });
   if (athletes.length < 2) throw new Error('Servono almeno due atleti: lancia prima seed-guida.ts');
 
@@ -77,7 +77,7 @@ async function main() {
       });
     }
     const load = p.sessions.reduce((a, s) => a + s.rpe * s.min, 0);
-    console.log(`+ ${p.athlete.firstName} ${p.athlete.lastName}: ${p.sessions.length} sedute, carico extra ${load} UA`);
+    console.log(`+ ${p.athlete.identity?.firstName ?? ''} ${p.athlete.identity?.lastName ?? ''}: ${p.sessions.length} sedute, carico extra ${load} UA`);
   }
   console.log('Fatto. Ricarica la Dashboard.');
 }

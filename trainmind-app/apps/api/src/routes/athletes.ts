@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { createAthleteSchema, updateAthleteSchema, athleteQuerySchema } from '../schemas/athletes.js';
 import { requireMinRole } from '../middleware/rbac.js';
-import { sendError, notFound, handleValidation } from '../lib/api-errors.js';
+import { sendError, notFound, handleValidation, AppError } from '../lib/api-errors.js';
 import { findOrgEntity } from '../lib/org-guard.js';
+import { splitAthletePayload } from '../lib/identity.js';
 
 export async function athleteRoutes(app: FastifyInstance) {
   // All routes require authentication
@@ -17,9 +18,12 @@ export async function athleteRoutes(app: FastifyInstance) {
     const where: Record<string, unknown> = { organizationId };
 
     if (search) {
+      // La ricerca per nome passa dal caveau: i nomi non stanno piu' sulla
+      // riga dell'atleta. Restano `contains` e `insensitive`, quindi per chi
+      // cerca non cambia nulla.
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
+        { identity: { firstName: { contains: search, mode: 'insensitive' } } },
+        { identity: { lastName: { contains: search, mode: 'insensitive' } } },
       ];
     }
     if (position) where.position = position;
@@ -34,13 +38,21 @@ export async function athleteRoutes(app: FastifyInstance) {
       where.athleteTeams = { some: { teamId } };
     }
 
+    // Nome e cognome vivono nel caveau: l'ordinamento per quei due campi
+    // passa dalla relazione, gli altri restano sulla riga dell'atleta.
+    const orderBy =
+      sortBy === 'firstName' || sortBy === 'lastName'
+        ? { identity: { [sortBy]: sortOrder } }
+        : { [sortBy]: sortOrder };
+
     const [athletes, total] = await Promise.all([
       app.prisma.athlete.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy,
         include: {
+          identity: true,
           athleteTeams: {
             include: { team: { select: { id: true, name: true, color: true } } },
           },
@@ -64,6 +76,7 @@ export async function athleteRoutes(app: FastifyInstance) {
     const athlete = await app.prisma.athlete.findFirst({
       where: { id, organizationId },
       include: {
+        identity: true,
         wellnessLogs: { orderBy: { date: 'desc' }, take: 7 },
         injuries: { where: { status: { not: 'RESOLVED' } } },
         _count: { select: { trainingSessions: true, wellnessLogs: true, injuries: true } },
@@ -86,15 +99,57 @@ export async function athleteRoutes(app: FastifyInstance) {
     if (!data) return;
 
     const { organizationId } = request.user;
-    const athlete = await app.prisma.athlete.create({
-      data: {
-        ...data,
-        dateOfBirth: new Date(data.dateOfBirth),
-        organizationId,
-      },
-    });
 
-    return reply.status(201).send({ success: true, data: athlete });
+    // Il corpo della richiesta resta piatto (il client non e' cambiato): qui
+    // si divide fra riga dati e caveau. Vedi lib/identity.ts.
+    const { teamId, ...athleteData } = data;
+    const { core } = splitAthletePayload(athleteData);
+    const dateOfBirth = new Date(data.dateOfBirth);
+
+    try {
+      // Creazione e iscrizione alla squadra nella stessa transazione: o
+      // l'atleta nasce gia' in rosa, o non nasce affatto.
+      const athlete = await app.prisma.$transaction(async (tx) => {
+        if (teamId) {
+          const team = await tx.team.findFirst({
+            where: { id: teamId, organizationId },
+            select: { id: true },
+          });
+          if (!team) {
+            throw new AppError(400, 'INVALID_TEAM', 'Squadra non trovata');
+          }
+        }
+
+        const created = await tx.athlete.create({
+          data: {
+            ...core,
+            birthYear: dateOfBirth.getFullYear(),
+            organizationId,
+            identity: {
+              create: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                dateOfBirth,
+                email: data.email,
+                photoUrl: data.photoUrl,
+              },
+            },
+          },
+          include: { identity: true },
+        });
+
+        if (teamId) {
+          await tx.athleteTeam.create({ data: { athleteId: created.id, teamId } });
+        }
+
+        return created;
+      });
+
+      return reply.status(201).send({ success: true, data: athlete });
+    } catch (error) {
+      if (error instanceof AppError) return sendError(reply, error);
+      throw error;
+    }
   });
 
   // ─── PUT /athletes/:id — Update ──────────────────────────
@@ -110,12 +165,20 @@ export async function athleteRoutes(app: FastifyInstance) {
 
     await findOrgEntity(app, 'athlete', id, organizationId);
 
-    const updateData = { ...data } as Record<string, unknown>;
-    if (data.dateOfBirth) {
-      updateData.dateOfBirth = new Date(data.dateOfBirth);
-    }
+    const { core, identity } = splitAthletePayload(data);
+    const dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : undefined;
+    const identityUpdate = { ...identity, ...(dateOfBirth ? { dateOfBirth } : {}) };
 
-    const athlete = await app.prisma.athlete.update({ where: { id }, data: updateData });
+    const athlete = await app.prisma.athlete.update({
+      where: { id },
+      data: {
+        ...core,
+        // L'anno resta anche sulla riga dati: serve alle norme per eta'.
+        ...(dateOfBirth ? { birthYear: dateOfBirth.getFullYear() } : {}),
+        ...(Object.keys(identityUpdate).length > 0 ? { identity: { update: identityUpdate } } : {}),
+      },
+      include: { identity: true },
+    });
     return reply.send({ success: true, data: athlete });
   });
 

@@ -38,6 +38,7 @@ import { acwrLoadPoints } from '../lib/acwr-loads.js';
 import { aggregateManagement, buildManagementNarrative } from '../services/report-management.js';
 import { renderReportPdf } from '../services/report-renderer-pdf.js';
 import { renderReportDocx } from '../services/report-renderer-docx.js';
+import { fullName, sortName } from '../lib/identity.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3004';
 
@@ -179,18 +180,18 @@ async function aggregateStaff(
     // Report del singolo atleta: ogni aggregazione parte da lui solo
     athletes = await prisma.athlete.findMany({
       where: { id: athleteId, organizationId },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
   } else if (teamId) {
     const teamAthletes = await prisma.athleteTeam.findMany({
       where: { teamId },
-      select: { athlete: { select: { id: true, firstName: true, lastName: true } } },
+      select: { athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } } },
     });
     athletes = teamAthletes.map((ta) => ta.athlete);
   } else {
     athletes = await prisma.athlete.findMany({
       where: { organizationId },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
   }
   const athleteIds = athletes.map((a) => a.id);
@@ -317,7 +318,7 @@ async function aggregateStaff(
     take: 50,
   });
   const activeAlertsByAthlete = new Map<string, string>(
-    athletes.map((a) => [a.id, `${a.firstName} ${a.lastName}`]),
+    athletes.map((a) => [a.id, fullName(a)]),
   );
   const activeAlerts: ReportTable = {
     title: 'Alert attivi nel periodo',
@@ -465,7 +466,7 @@ async function aggregateMedical(
       ],
     },
     include: {
-      athlete: { select: { id: true, firstName: true, lastName: true } },
+      athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
     },
     orderBy: { dateOccurred: 'desc' },
   });
@@ -479,7 +480,7 @@ async function aggregateMedical(
         (now.getTime() - new Date(i.dateOccurred).getTime()) / (24 * 3600 * 1000),
       );
       return [
-        `${i.athlete.firstName} ${i.athlete.lastName}`,
+        fullName(i.athlete),
         i.type || '—',
         (i as unknown as { rtpPhase?: string }).rtpPhase || '—',
         daysSince,
@@ -529,14 +530,14 @@ async function aggregateMedical(
     rows: injuries.map((i) => {
       const logs = grouped.get(i.athlete.id) || [];
       if (logs.length === 0) {
-        return [`${i.athlete.firstName} ${i.athlete.lastName}`, '—', '—', '—', '—'];
+        return [fullName(i.athlete), '—', '—', '—', '—'];
       }
       const avg = (k: 'sleepQuality' | 'soreness' | 'fatigue') =>
         logs.reduce((s, l) => s + l[k], 0) / logs.length;
       const wellnessAvg =
         logs.reduce((s, l) => s + computeWellnessScore(l), 0) / logs.length;
       return [
-        `${i.athlete.firstName} ${i.athlete.lastName}`,
+        fullName(i.athlete),
         avg('sleepQuality').toFixed(1),
         avg('soreness').toFixed(1),
         avg('fatigue').toFixed(1),
@@ -551,7 +552,7 @@ async function aggregateMedical(
       organizationId,
       ...(teamAthleteIds ? { id: { in: teamAthleteIds } } : {}),
     },
-    select: { id: true, firstName: true, lastName: true },
+    select: { id: true, identity: { select: { firstName: true, lastName: true } } },
   });
   const recent = await prisma.wellnessLog.findMany({
     where: {
@@ -573,7 +574,7 @@ async function aggregateMedical(
       .map(([athleteId, count]) => {
         const a = orgAthletes.find((x) => x.id === athleteId);
         return [
-          a ? `${a.firstName} ${a.lastName}` : athleteId,
+          a ? fullName(a) : athleteId,
           count,
           count >= 4 ? 'Critico' : 'Monitorare',
         ];
@@ -744,18 +745,18 @@ async function aggregateTrainerSections(
     // Report del singolo atleta: ogni aggregazione parte da lui solo
     athletes = await prisma.athlete.findMany({
       where: { id: athleteId, organizationId },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
   } else if (teamId) {
     const teamAthletes = await prisma.athleteTeam.findMany({
       where: { teamId },
-      select: { athlete: { select: { id: true, firstName: true, lastName: true } } },
+      select: { athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } } },
     });
     athletes = teamAthletes.map((ta) => ta.athlete);
   } else {
     athletes = await prisma.athlete.findMany({
       where: { organizationId },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, identity: { select: { firstName: true, lastName: true } } },
     });
   }
   const athleteIds = athletes.map((a) => a.id);
@@ -827,7 +828,7 @@ async function aggregateTrainerSections(
     if (stats.planned === 0) continue;
     const adherence = stats.completed / stats.planned;
     adherenceRows.push([
-      `${a.firstName} ${a.lastName}`,
+      fullName(a),
       stats.planned,
       stats.completed,
       formatPct(adherence),
@@ -956,7 +957,7 @@ async function aggregateTrainerSections(
       organizationId,
       createdAt: { gte: from, lte: to },
     },
-    include: { athlete: { select: { firstName: true, lastName: true } } },
+    include: { athlete: { select: { identity: { select: { firstName: true, lastName: true } } } } },
     orderBy: { createdAt: 'desc' },
     take: 15,
   });
@@ -965,7 +966,7 @@ async function aggregateTrainerSections(
     columns: ['Data', 'Atleta', 'Δ Volume', 'Δ Intensità', 'Stato'],
     rows: recentAdaptations.map((a) => [
       a.createdAt.toLocaleDateString('it-IT'),
-      `${a.athlete.firstName} ${a.athlete.lastName}`,
+      fullName(a.athlete),
       a.volumeDelta != null ? `${(a.volumeDelta * 100).toFixed(0)}%` : '—',
       a.intensityDelta != null ? `${(a.intensityDelta * 100).toFixed(0)}%` : '—',
       a.status,
@@ -981,7 +982,7 @@ async function aggregateTrainerSections(
     title: 'Atleti con maggiori variazioni',
     columns: ['Atleta', 'Δ Volume', 'Motivo'],
     rows: movers.map((m) => [
-      `${m.athlete.firstName} ${m.athlete.lastName}`,
+      fullName(m.athlete),
       `${(m.volumeDelta! * 100).toFixed(0)}%`,
       m.reason.length > 60 ? m.reason.slice(0, 57) + '…' : m.reason,
     ]),
@@ -1106,12 +1107,12 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
   const [org, user, team, athlete] = await Promise.all([
     app.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
-    app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true, locale: true } }),
+    app.prisma.user.findUnique({ where: { id: userId }, select: { locale: true, identity: { select: { firstName: true, lastName: true } } } }),
     teamId ? app.prisma.team.findUnique({ where: { id: teamId }, select: { name: true } }) : null,
     athleteId
       ? app.prisma.athlete.findFirst({
           where: { id: athleteId, organizationId },
-          select: { firstName: true, lastName: true },
+          select: { identity: { select: { firstName: true, lastName: true } } },
         })
       : null,
   ]);
@@ -1126,9 +1127,9 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
     periodFrom,
     periodTo,
     generatedAt: new Date().toISOString(),
-    generatedBy: user ? `${user.firstName} ${user.lastName}` : '—',
+    generatedBy: user?.identity ? fullName(user) : '—',
     teamName: team?.name,
-    athleteName: athlete ? `${athlete.firstName} ${athlete.lastName}` : undefined,
+    athleteName: athlete ? fullName(athlete) : undefined,
   };
 
   let report: ReportData;
@@ -1170,7 +1171,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
   const teamSlug = team?.name ? `-${team.name.toLowerCase().replace(/\s+/g, '_')}` : '';
   const athleteSlug = athlete
-    ? `-${`${athlete.lastName}_${athlete.firstName}`.toLowerCase().replace(/\s+/g, '_')}`
+    ? `-${sortName(athlete).toLowerCase().replace(/\s+/g, '_')}`
     : '';
   const audienceSlug = { STAFF: 'staff-tecnico', MEDICAL: 'staff-medico', MANAGEMENT: 'dirigenza' }[audience];
   const baseFilename = `report-${audienceSlug}${teamSlug}${athleteSlug}-${periodFrom}_${periodTo}`;

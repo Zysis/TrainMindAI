@@ -47,16 +47,27 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, "updatedAt" = NOW();
 -- ─── Atleti ─────────────────────────────────────────────
 -- Tre bastano: uno serve per l'infortunio all'avambraccio, gli altri due
 -- perche' una rosa di uno solo non fa vedere niente nel foglio presenze.
-INSERT INTO athletes (id, "firstName", "lastName", "dateOfBirth", "position",
+-- Dal 20/09/2026 nome, cognome e data di nascita stanno in
+-- `athlete_identities`: sulla riga dell'atleta resta il solo anno.
+-- Vedi documentation/PIANO_SEPARAZIONE_IDENTITA.md
+INSERT INTO athletes (id, "birthYear", "position",
                       "jerseyNumber", height, weight, "isActive",
                       "organizationId", "createdAt", "updatedAt")
 VALUES
-  ('test_ath_1', 'Luca',   'Prova',    '2009-04-12', 'PG', 4,  178, 70, TRUE, 'test_org_deploy', NOW(), NOW()),
-  ('test_ath_2', 'Marco',  'Collaudo', '2009-09-30', 'SG', 7,  186, 78, TRUE, 'test_org_deploy', NOW(), NOW()),
-  ('test_ath_3', 'Davide', 'Verifica', '2008-01-23', 'C',  11, 201, 95, TRUE, 'test_org_deploy', NOW(), NOW())
-ON CONFLICT (id) DO UPDATE SET "firstName" = EXCLUDED."firstName",
-                               "lastName"  = EXCLUDED."lastName",
+  ('test_ath_1', 2009, 'PG', 4,  178, 70, TRUE, 'test_org_deploy', NOW(), NOW()),
+  ('test_ath_2', 2009, 'SG', 7,  186, 78, TRUE, 'test_org_deploy', NOW(), NOW()),
+  ('test_ath_3', 2008, 'C',  11, 201, 95, TRUE, 'test_org_deploy', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE SET "birthYear" = EXCLUDED."birthYear",
                                "updatedAt" = NOW();
+
+INSERT INTO athlete_identities ("athleteId", "firstName", "lastName", "dateOfBirth")
+VALUES
+  ('test_ath_1', 'Luca',   'Prova',    '2009-04-12'),
+  ('test_ath_2', 'Marco',  'Collaudo', '2009-09-30'),
+  ('test_ath_3', 'Davide', 'Verifica', '2008-01-23')
+ON CONFLICT ("athleteId") DO UPDATE SET "firstName"   = EXCLUDED."firstName",
+                                        "lastName"    = EXCLUDED."lastName",
+                                        "dateOfBirth" = EXCLUDED."dateOfBirth";
 
 INSERT INTO athlete_teams (id, "athleteId", "teamId", "createdAt")
 VALUES
@@ -69,16 +80,16 @@ ON CONFLICT (id) DO NOTHING;
 -- Due TRAINER nella stessa societa': sono loro la prova del calendario
 -- condiviso. Con un utente solo quella verifica non dimostra niente, perche'
 -- i propri eventi si sono sempre visti.
-INSERT INTO users (id, email, "passwordHash", "firstName", "lastName", role,
+INSERT INTO users (id, email, "passwordHash", role,
                    "isActive", locale, "organizationId", "createdAt", "updatedAt",
                    "consentAnalytics", "consentMarketing", "consentThirdParty",
                    "consentUpdatedAt", "passwordChangedAt")
 VALUES
-  ('test_u_admin',  'admin.test@trainmind.demo',        '$2b$12$A3vgfGlmhLBLUUZNodrovOBqvghP8qfod20NT/tU8U.AgfVHxHv22', 'Admin',       'Test', 'ADMIN',   TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
-  ('test_u_prep1',  'preparatore1.test@trainmind.demo', '$2b$12$Z6AECSmmdz7N0/n7hsvqhenFjWoiYazKOsItepMDxulsvREQezWEG', 'Preparatore', 'Uno',  'TRAINER', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
-  ('test_u_prep2',  'preparatore2.test@trainmind.demo', '$2b$12$PbkQIFXFtnrhtxnpsk5mq.VDn4Gun879XbLIf/qBF80Xhz7MNOKGK', 'Preparatore', 'Due',  'TRAINER', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
-  ('test_u_medico', 'medico.test@trainmind.demo',       '$2b$12$.QskLxcc3jY4aUWc0t1Tzur7qXNBEEAdfjjHRLOGQhNJB5cKIDU92', 'Medico',      'Test', 'MEDICAL', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
-  ('test_u_viewer', 'viewer.test@trainmind.demo',       '$2b$12$ElK4EwhhJ7E4HjtY67z1ievi6MrxcFoQ3J236e5y88Ak.T2an733K', 'Viewer',      'Test', 'VIEWER',  TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW())
+  ('test_u_admin',  'admin.test@trainmind.demo',        '$2b$12$A3vgfGlmhLBLUUZNodrovOBqvghP8qfod20NT/tU8U.AgfVHxHv22', 'ADMIN',   TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
+  ('test_u_prep1',  'preparatore1.test@trainmind.demo', '$2b$12$Z6AECSmmdz7N0/n7hsvqhenFjWoiYazKOsItepMDxulsvREQezWEG', 'TRAINER', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
+  ('test_u_prep2',  'preparatore2.test@trainmind.demo', '$2b$12$PbkQIFXFtnrhtxnpsk5mq.VDn4Gun879XbLIf/qBF80Xhz7MNOKGK', 'TRAINER', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
+  ('test_u_medico', 'medico.test@trainmind.demo',       '$2b$12$.QskLxcc3jY4aUWc0t1Tzur7qXNBEEAdfjjHRLOGQhNJB5cKIDU92', 'MEDICAL', TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW()),
+  ('test_u_viewer', 'viewer.test@trainmind.demo',       '$2b$12$ElK4EwhhJ7E4HjtY67z1ievi6MrxcFoQ3J236e5y88Ak.T2an733K', 'VIEWER',  TRUE, 'it', 'test_org_deploy', NOW(), NOW(), FALSE, FALSE, FALSE, NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET
   email            = EXCLUDED.email,
   "passwordHash"   = EXCLUDED."passwordHash",
@@ -88,6 +99,17 @@ ON CONFLICT (id) DO UPDATE SET
   "organizationId" = EXCLUDED."organizationId",
   "updatedAt"      = NOW(),
   "passwordChangedAt" = NOW();
+
+-- Anagrafiche dello staff, nella loro tabella.
+INSERT INTO user_identities ("userId", "firstName", "lastName")
+VALUES
+  ('test_u_admin',  'Admin',       'Test'),
+  ('test_u_prep1',  'Preparatore', 'Uno'),
+  ('test_u_prep2',  'Preparatore', 'Due'),
+  ('test_u_medico', 'Medico',      'Test'),
+  ('test_u_viewer', 'Viewer',      'Test')
+ON CONFLICT ("userId") DO UPDATE SET "firstName" = EXCLUDED."firstName",
+                                     "lastName"  = EXCLUDED."lastName";
 
 COMMIT;
 

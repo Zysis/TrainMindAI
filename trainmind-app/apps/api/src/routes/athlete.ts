@@ -18,6 +18,7 @@ import { issueRefreshToken } from '../lib/refresh-tokens.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { athleteAppUrl } from '../lib/app-url.js';
 import { sendEmail } from '../services/email-service.js';
+import { fullName } from '../lib/identity.js';
 
 /**
  * Le sessioni che un atleta puo' vedere: quelle assegnate a lui e quelle dei
@@ -86,6 +87,8 @@ export async function athleteRoutes(app: FastifyInstance) {
     // Check athlete exists and belongs to same org
     const athlete = await app.prisma.athlete.findFirst({
       where: { id: athleteId, organizationId },
+      // Il nome finisce nell'email di invito.
+      include: { identity: { select: { firstName: true, lastName: true } } },
     });
     if (!athlete) {
       return reply.status(404).send({
@@ -149,7 +152,7 @@ export async function athleteRoutes(app: FastifyInstance) {
       select: { name: true },
     });
     const orgName = orgRow?.name || 'Your team';
-    const athleteName = `${athlete.firstName} ${athlete.lastName}`.trim();
+    const athleteName = fullName(athlete);
 
     // Invio email (asincrono — in log-only mode se RESEND_API_KEY non è configurata)
     sendEmail(
@@ -183,7 +186,7 @@ export async function athleteRoutes(app: FastifyInstance) {
     const invites = await app.prisma.athleteInvite.findMany({
       where: { organizationId },
       include: {
-        athlete: { select: { id: true, firstName: true, lastName: true } },
+        athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -203,7 +206,7 @@ export async function athleteRoutes(app: FastifyInstance) {
     const invite = await app.prisma.athleteInvite.findUnique({
       where: { token },
       include: {
-        athlete: { select: { firstName: true, lastName: true } },
+        athlete: { select: { identity: { select: { firstName: true, lastName: true } } } },
         organization: { select: { name: true, logoUrl: true } },
       },
     });
@@ -237,7 +240,7 @@ export async function athleteRoutes(app: FastifyInstance) {
       success: true,
       data: {
         email: invite.email,
-        athleteName: `${invite.athlete.firstName} ${invite.athlete.lastName}`,
+        athleteName: fullName(invite.athlete),
         organizationName: invite.organization.name,
         organizationLogo: invite.organization.logoUrl,
       },
@@ -261,7 +264,7 @@ export async function athleteRoutes(app: FastifyInstance) {
 
     const invite = await app.prisma.athleteInvite.findUnique({
       where: { token },
-      include: { athlete: true },
+      include: { athlete: { include: { identity: true } } },
     });
 
     if (!invite || invite.status !== 'PENDING' || new Date() > invite.expiresAt) {
@@ -297,11 +300,18 @@ export async function athleteRoutes(app: FastifyInstance) {
         if (claimed.count === 0) throw new InviteAlreadyUsedError();
 
         const newUser = await tx.user.create({
+          // L'account dell'atleta nasce con il nome dell'anagrafica che il
+          // preparatore ha gia' caricato: nel caveau, non sulla riga utente.
+          include: { identity: true },
           data: {
             email: invite.email,
             passwordHash,
-            firstName: invite.athlete.firstName,
-            lastName: invite.athlete.lastName,
+            identity: {
+              create: {
+                firstName: invite.athlete.identity?.firstName ?? '',
+                lastName: invite.athlete.identity?.lastName ?? '',
+              },
+            },
             role: 'ATHLETE',
             organizationId: invite.organizationId,
             athleteId: invite.athleteId,
@@ -374,8 +384,8 @@ export async function athleteRoutes(app: FastifyInstance) {
         user: {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          firstName: user.identity?.firstName ?? '',
+          lastName: user.identity?.lastName ?? '',
           role: user.role,
           athleteId: user.athleteId,
         },
@@ -400,6 +410,7 @@ export async function athleteRoutes(app: FastifyInstance) {
       include: {
         athlete: {
           include: {
+            identity: true,
             athleteTeams: {
               include: { team: { select: { id: true, name: true, color: true } } },
             },
@@ -426,14 +437,14 @@ export async function athleteRoutes(app: FastifyInstance) {
         locale: user.locale ?? undefined,
         athlete: {
           id: user.athlete.id,
-          firstName: user.athlete.firstName,
-          lastName: user.athlete.lastName,
-          dateOfBirth: user.athlete.dateOfBirth,
+          firstName: user.athlete.identity?.firstName ?? '',
+          lastName: user.athlete.identity?.lastName ?? '',
+          dateOfBirth: user.athlete.identity?.dateOfBirth ?? null,
           position: user.athlete.position,
           jerseyNumber: user.athlete.jerseyNumber,
           height: user.athlete.height,
           weight: user.athlete.weight,
-          photoUrl: user.athlete.photoUrl,
+          photoUrl: user.athlete.identity?.photoUrl ?? null,
           teams: user.athlete.athleteTeams.map((at) => at.team),
         },
         organization: user.organization,

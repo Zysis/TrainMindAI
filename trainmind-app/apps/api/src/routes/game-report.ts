@@ -29,6 +29,7 @@ import type {
 } from '@trainmind/types';
 import { renderGameReportPdf } from '../services/game-report-pdf.js';
 import { renderGameReportDocx } from '../services/game-report-docx.js';
+import { fullName, sortName } from '../lib/identity.js';
 
 type Locale = 'it' | 'en' | 'es';
 
@@ -216,7 +217,7 @@ export async function gameReportRoutes(app: FastifyInstance) {
       where: { id: gameSessionId, organizationId },
       include: {
         entries: {
-          include: { athlete: { select: { id: true, firstName: true, lastName: true, jerseyNumber: true, photoUrl: true } } },
+          include: { athlete: { select: { id: true, jerseyNumber: true, identity: { select: { firstName: true, lastName: true, photoUrl: true } } } } },
         },
         team: { select: { id: true, name: true, logoUrl: true } },
         calendarEvent: { select: { id: true, title: true, startTime: true, opponent: true, isHome: true, venue: true } },
@@ -229,7 +230,7 @@ export async function gameReportRoutes(app: FastifyInstance) {
 
     const [org, user] = await Promise.all([
       app.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, logoUrl: true } }),
-      app.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+      app.prisma.user.findUnique({ where: { id: userId }, select: { identity: { select: { firstName: true, lastName: true } } } }),
     ]);
 
     const playedAt = session.calendarEvent?.startTime ?? session.completedAt ?? session.startedAt;
@@ -305,9 +306,9 @@ export async function gameReportRoutes(app: FastifyInstance) {
 
         return {
           athleteId: entry.athleteId,
-          athleteName: `${entry.athlete.lastName} ${entry.athlete.firstName}`.trim(),
+          athleteName: sortName(entry.athlete),
           jerseyNumber: entry.athlete.jerseyNumber,
-          photoUrl: entry.athlete.photoUrl,
+          photoUrl: entry.athlete.identity?.photoUrl ?? null,
           minutes,
           totalPlayingMs: entry.totalPlayingMs,
           msByPeriod,
@@ -370,7 +371,7 @@ export async function gameReportRoutes(app: FastifyInstance) {
         periodFrom: dt.toISOString().slice(0, 10),
         periodTo: dt.toISOString().slice(0, 10),
         generatedAt: new Date().toISOString(),
-        generatedBy: user ? `${user.firstName} ${user.lastName}` : '—',
+        generatedBy: user?.identity ? fullName(user) : '—',
         logoUrl: session.team?.logoUrl || org?.logoUrl || undefined,
         teamName: session.team?.name ?? undefined,
       },

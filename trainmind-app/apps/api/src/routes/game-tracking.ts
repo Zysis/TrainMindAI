@@ -16,11 +16,12 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Prisma } from '@trainmind/db';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
+import { fullName } from '../lib/identity.js';
 
 export async function gameTrackingRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
 
-  const athleteSelect = { id: true, firstName: true, lastName: true, jerseyNumber: true, position: true };
+  const athleteSelect = { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } };
 
   // ─── POST /game/start ──────────────────────────────────
   app.post('/game/start', auth, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -52,7 +53,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
         include: {
           entries: {
             include: { athlete: { select: athleteSelect } },
-            orderBy: { athlete: { lastName: 'asc' } },
+            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
@@ -118,7 +119,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
@@ -131,7 +132,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
@@ -162,7 +163,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { lastName: 'asc' } },
+              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
@@ -192,7 +193,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
         include: {
           entries: {
             include: { athlete: { select: athleteSelect } },
-            orderBy: { athlete: { lastName: 'asc' } },
+            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
@@ -420,7 +421,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
       const session = await app.prisma.gameSession.findFirst({
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
-          entries: { include: { athlete: { select: { id: true, firstName: true, lastName: true } } } },
+          entries: { include: { athlete: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } } } },
           calendarEvent: { select: { title: true, startTime: true } },
         },
       });
@@ -472,7 +473,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
 
         const ts = await app.prisma.trainingSession.create({
           data: {
-            title: `${session.calendarEvent?.title || 'Partita'} — ${entry.athlete.firstName} ${entry.athlete.lastName}`,
+            title: `${session.calendarEvent?.title || 'Partita'} — ${fullName(entry.athlete)}`,
             date: session.calendarEvent?.startTime || session.startedAt,
             duration: durationMinutes,
             rpe,

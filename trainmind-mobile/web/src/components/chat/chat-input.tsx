@@ -57,6 +57,11 @@ export function ChatInput({
         style={{ maxHeight: '120px' }}
       />
       <button
+        type="button"
+        // Il pulsante ha solo un'icona: senza aria-label il suo nome
+        // accessibile e' vuoto (il `title` non basta per tutti i lettori di
+        // schermo), e infatti nemmeno i test riuscivano a trovarlo.
+        aria-label={t('sendTitle')}
         onClick={onSend}
         disabled={!value.trim() || isLoading || disabled}
         className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white transition-all hover:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"

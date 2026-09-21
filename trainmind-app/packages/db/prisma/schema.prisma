@@ -164,8 +164,9 @@ model User {
   id             String   @id @default(cuid())
   email          String   @unique
   passwordHash   String
-  firstName      String
-  lastName       String
+  // Nome e cognome stanno in UserIdentity (stesso motivo degli atleti; la
+  // console li vede ancora, per la lista contatti marketing). L'email resta
+  // qui perche' e' la credenziale di accesso.
   role           UserRole @default(TRAINER)
   avatarUrl      String?
   isActive       Boolean  @default(true)
@@ -202,6 +203,7 @@ model User {
   consentUpdatedAt   DateTime?
 
   organization        Organization       @relation(fields: [organizationId], references: [id])
+  identity            UserIdentity?
   trainingPlans       TrainingPlan[]
   chatConversations   ChatConversation[]
   reports             Report[]
@@ -337,22 +339,28 @@ model AthleteTeam {
 
 model Athlete {
   id             String   @id @default(cuid())
-  firstName      String
-  lastName       String
-  dateOfBirth    DateTime
+
+  // ─── Gli identificatori NON stanno qui ───────────────────
+  // Nome, cognome, data di nascita, email e foto vivono in AthleteIdentity,
+  // fuori dalla portata del ruolo di sola lettura della console e di un dump
+  // del solo schema di allenamento. Vedi
+  // documentation/PIANO_SEPARAZIONE_IDENTITA.md.
+  //
+  // Qui resta il solo anno di nascita: serve alle norme di riferimento per
+  // eta' e, da solo, non identifica nessuno.
+  birthYear      Int
   position       String
   jerseyNumber   Int?
   height         Float? // cm
   weight         Float? // kg
   team           String? // legacy — nome squadra testo libero
-  email          String?
-  photoUrl       String?
   isActive       Boolean  @default(true)
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization     Organization      @relation(fields: [organizationId], references: [id])
+  identity         AthleteIdentity?
   userAccount      User?             @relation("AthleteUser") // linked user account (ATHLETE role)
   athleteTeams     AthleteTeam[]
   trainingPlans    TrainingPlan[]
@@ -1408,4 +1416,40 @@ model DailyReportEntry {
   @@unique([dailyReportId, athleteId])
   @@index([athleteId, date])
   @@map("daily_report_entries")
+}
+
+// ─── Caveau delle identita' ─────────────────────────────────
+// Due tabelle separate dal resto del modello. Non contengono nessun dato di
+// allenamento e nessuna tabella di allenamento contiene un identificatore:
+// chi legge una senza l'altra non sa di chi stia leggendo.
+//
+// I permessi sono la vera barriera, non la struttura:
+//   REVOKE ALL ON athlete_identities FROM trainmind_reporting;
+//   GRANT SELECT ON user_identities  TO   trainmind_reporting;
+// La REVOKE e' dentro la migration perche' reporting-role.sql contiene una
+// ALTER DEFAULT PRIVILEGES che renderebbe leggibile ogni tabella nuova.
+
+model AthleteIdentity {
+  athleteId   String   @id
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+  email       String?
+  photoUrl    String?
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([lastName, firstName])
+  @@map("athlete_identities")
+}
+
+model UserIdentity {
+  userId    String @id
+  firstName String
+  lastName  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lastName, firstName])
+  @@map("user_identities")
 }

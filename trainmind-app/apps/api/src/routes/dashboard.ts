@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { computeAcwr, type AcwrLoadPoint } from '@trainmind/utils';
+import { fullName } from '../lib/identity.js';
 
 export async function dashboardRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
@@ -80,7 +81,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
           sleepQuality: true,
           stress: true,
           date: true,
-          athlete: { select: { firstName: true, lastName: true } },
+          athlete: { select: { identity: { select: { firstName: true, lastName: true } } } },
         },
         orderBy: { date: 'desc' },
         take: 10,
@@ -101,7 +102,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
           id: true,
           currentPhase: true,
           startDate: true,
-          athlete: { select: { firstName: true, lastName: true, position: true } },
+          athlete: { select: { position: true, identity: { select: { firstName: true, lastName: true } } } },
           injury: { select: { type: true, location: true, severity: true } },
         },
         orderBy: { updatedAt: 'desc' },
@@ -235,11 +236,11 @@ export async function dashboardRoutes(app: FastifyInstance) {
       }),
       app.prisma.athlete.findMany({
         where: athleteOrgFilter,
-        select: { id: true, firstName: true, lastName: true },
+        select: { id: true, identity: { select: { firstName: true, lastName: true } } },
       }),
     ]);
 
-    const nameById = new Map(riskAthletes.map((a) => [a.id, `${a.firstName} ${a.lastName}`]));
+    const nameById = new Map(riskAthletes.map((a) => [a.id, fullName(a)]));
 
     // sRPE = RPE x durata. Le finestre e la formula stanno in
     // `computeAcwr` (@trainmind/utils): qui si raggruppano solo le sedute.
@@ -405,7 +406,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
           summary: injurySummary,
           activeRTP: activeRTP.map((p) => ({
             id: p.id,
-            athlete: `${p.athlete.firstName} ${p.athlete.lastName}`,
+            athlete: fullName(p.athlete),
             position: p.athlete.position,
             phase: p.currentPhase,
             injuryType: p.injury.type,

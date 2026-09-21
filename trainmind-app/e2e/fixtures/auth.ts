@@ -4,6 +4,17 @@ import path from 'path';
 
 const authFile = path.join(__dirname, '../../.auth/user.json');
 
+// Le chiavi del consenso cookie si leggono dalla sorgente invece di copiarle:
+// al prossimo bump di CONSENT_VERSION il banner tornerebbe a comparire e
+// nessuno collegherebbe la cosa ai test.
+const consentStore = fs.readFileSync(
+  path.join(__dirname, '../../apps/web/src/lib/cookie-consent/store.ts'),
+  'utf-8',
+);
+const CONSENT_STORAGE_KEY =
+  /CONSENT_STORAGE_KEY = '([^']+)'/.exec(consentStore)?.[1] ?? 'trainmind-cookie-consent';
+const CONSENT_VERSION = /CONSENT_VERSION = '([^']+)'/.exec(consentStore)?.[1] ?? '';
+
 interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -23,6 +34,37 @@ export const test = base.extend({
     }
 
     const context = await browser.newContext();
+
+    // Tour di benvenuto e banner cookie vivono in localStorage, che Playwright
+    // azzera a ogni esecuzione: ricomparivano sempre e coprivano la pagina con
+    // un overlay a tutto schermo (`#tour-mask`) e con un `role="dialog"`, che
+    // intercettavano i click e confondevano i selettori dei modali.
+    // Si dichiarano gia' visti, una volta per contesto.
+    await context.addInitScript(
+      ({ consentKey, consentVersion }) => {
+        try {
+          localStorage.setItem('tm_onboarding_complete', 'true');
+          // La lingua non viene da Accept-Language ma da questo store: senza,
+          // le pagine pre-autenticazione escono in inglese.
+          localStorage.setItem('trainmind-locale', 'it');
+          localStorage.setItem('trainmind-locale-explicit', '1');
+          localStorage.setItem(
+            consentKey,
+            JSON.stringify({
+              version: consentVersion,
+              categories: { necessary: true, analytics: false, marketing: false },
+              decidedAt: new Date().toISOString(),
+              language: 'it',
+              userAgent: 'playwright',
+            }),
+          );
+        } catch {
+          /* storage non disponibile: pazienza, il test fallira' per altro */
+        }
+      },
+      { consentKey: CONSENT_STORAGE_KEY, consentVersion: CONSENT_VERSION },
+    );
+
     const page = await context.newPage();
 
     if (tokens) {

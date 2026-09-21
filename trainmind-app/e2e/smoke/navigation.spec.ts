@@ -12,7 +12,7 @@ test.describe('Navigation - Smoke Tests', () => {
     await expect(page.locator('button[type="submit"]')).toBeVisible();
 
     // Heading says "Accedi"
-    await expect(page.locator('h2')).toContainText('Accedi');
+    await expect(page.locator('h2').first()).toContainText('Accedi');
   });
 
   test('dashboard loads after auth', async ({ page }) => {
@@ -27,19 +27,24 @@ test.describe('Navigation - Smoke Tests', () => {
     await expect(mainContent).toBeVisible();
   });
 
-  // Sidebar nav items from sidebar.tsx:
-  // Dashboard, Atleti, Allenamenti, Esercizi, Calendario, Wellness, Chat AI, Report
-  // Bottom: Impostazioni
-
+  // Solo le voci di PRIMO livello della barra laterale (components/layout/sidebar.tsx).
+  //
+  // La lista precedente era ferma a un'interfaccia che non esiste piu': "Atleti"
+  // e' diventata "Squadre" (la scheda atleti e' un redirect dal 26/8/2026),
+  // mentre "Esercizi", "Report" e "Chat AI" sono sotto-voci di gruppi
+  // richiudibili — non sono nel DOM finche' il gruppo non viene aperto, e i test
+  // aspettavano un link che non poteva comparire. "Impostazioni" non sta nella
+  // barra laterale ma nel menu utente. Anche "Allenamenti" e' fuori: ha delle
+  // sotto-voci, quindi e' un <button> che apre il gruppo, non un <a>.
+  //
+  // Quelle pagine restano coperte dal test "each dashboard page loads with
+  // content", che ci arriva per URL.
   const sidebarPages = [
-    { label: 'Atleti', url: '/dashboard/athletes' },
-    { label: 'Allenamenti', url: '/dashboard/training' },
-    { label: 'Esercizi', url: '/dashboard/exercises' },
     { label: 'Calendario', url: '/dashboard/calendar' },
+    { label: 'Squadre', url: '/dashboard/teams' },
     { label: 'Wellness', url: '/dashboard/wellness' },
-    { label: 'Chat AI', url: '/dashboard/chat' },
-    { label: 'Report', url: '/dashboard/reports' },
-    { label: 'Impostazioni', url: '/dashboard/settings' },
+    { label: 'Infortuni & RTP', url: '/dashboard/injuries' },
+    { label: 'Alert', url: '/dashboard/alerts' },
   ];
 
   for (const { label, url } of sidebarPages) {

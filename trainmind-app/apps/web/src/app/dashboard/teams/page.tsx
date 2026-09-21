@@ -8,12 +8,12 @@ import { apiFetch } from '@/lib/auth/fetch';
 import { useApiError } from '@/lib/i18n/api-error';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { PhotoPicker } from '@/components/ui/photo-picker';
 import { AthleteDirectory } from '@/components/athletes/athlete-directory';
 import { useTeam } from '@/hooks/use-team';
-import { POSITION_OPTIONS, positionShort } from '@/lib/constants/positions';
+import { positionShort } from '@/lib/constants/positions';
+import { AthleteFormModal } from '@/components/athletes/athlete-form-modal';
 import type { Team, TeamDetail } from '@/types';
 
 const PRESET_COLORS = [
@@ -58,12 +58,8 @@ export default function TeamsPage() {
   const [selectedAthleteIds, setSelectedAthleteIds] = useState<string[]>([]);
 
   // Create new athlete modal
+  // Il form vive in AthleteFormModal, condiviso con la lista atleti.
   const [showCreateAthlete, setShowCreateAthlete] = useState(false);
-  const [creatingAthlete, setCreatingAthlete] = useState(false);
-  const [athleteForm, setAthleteForm] = useState({
-    firstName: '', lastName: '', dateOfBirth: '', position: 'PG',
-    jerseyNumber: '', team: '', photoUrl: null as string | null,
-  });
 
   const loadTeams = useCallback(async () => {
     setLoading(true);
@@ -210,45 +206,7 @@ export default function TeamsPage() {
     }
   };
 
-  const openCreateAthlete = () => {
-    setAthleteForm({ firstName: '', lastName: '', dateOfBirth: '', position: 'Point Guard', jerseyNumber: '', team: selectedTeam?.name || '', photoUrl: null });
-    setShowCreateAthlete(true);
-  };
-
-  const handleCreateAthlete = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeam) return;
-    setCreatingAthlete(true);
-    try {
-      const res = await apiFetch<{ data: { id: string } }>('/athletes', {
-        method: 'POST',
-        body: JSON.stringify({
-          firstName: athleteForm.firstName,
-          lastName: athleteForm.lastName,
-          dateOfBirth: athleteForm.dateOfBirth,
-          position: athleteForm.position,
-          jerseyNumber: athleteForm.jerseyNumber ? Number(athleteForm.jerseyNumber) : undefined,
-          team: athleteForm.team || undefined,
-          photoUrl: athleteForm.photoUrl || undefined,
-        }),
-      });
-      // Assign to current team
-      await apiFetch(`/teams/${selectedTeam.id}/athletes`, {
-        method: 'POST',
-        body: JSON.stringify({ athleteIds: [res.data.id] }),
-      });
-      toast('success', t('athleteCreatedAdded'));
-      setShowCreateAthlete(false);
-      loadTeamDetail(selectedTeam.id);
-      loadTeams();
-      bumpRoster();
-      refreshTeams();
-    } catch (err) {
-      toast('error', apiError(err, t('createError')));
-    } finally {
-      setCreatingAthlete(false);
-    }
-  };
+  const openCreateAthlete = () => setShowCreateAthlete(true);
 
   return (
     <div className="space-y-6">
@@ -528,47 +486,18 @@ export default function TeamsPage() {
         </div>
       </Modal>
 
-      {/* Create New Athlete Modal */}
-      <Modal
+      <AthleteFormModal
         open={showCreateAthlete}
         onClose={() => setShowCreateAthlete(false)}
-        title={t('newAthleteModal')}
-        size="lg"
-        footer={
-          <>
-            <button onClick={() => setShowCreateAthlete(false)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-700">
-              {t('cancel')}
-            </button>
-            <button onClick={handleCreateAthlete} disabled={creatingAthlete || !athleteForm.firstName || !athleteForm.lastName || !athleteForm.dateOfBirth} className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50">
-              {creatingAthlete ? t('creating') : t('createAthlete')}
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreateAthlete} className="space-y-4">
-          <div className="flex justify-center">
-            <PhotoPicker
-              value={athleteForm.photoUrl}
-              onChange={(url) => setAthleteForm({ ...athleteForm, photoUrl: url })}
-              label={t('photo')}
-              size={96}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-          <Input label={t('firstName')} required value={athleteForm.firstName} onChange={(e) => setAthleteForm({ ...athleteForm, firstName: e.target.value })} />
-          <Input label={t('lastName')} required value={athleteForm.lastName} onChange={(e) => setAthleteForm({ ...athleteForm, lastName: e.target.value })} />
-          <Input label={t('birthDate')} type="date" required value={athleteForm.dateOfBirth} onChange={(e) => setAthleteForm({ ...athleteForm, dateOfBirth: e.target.value })} />
-          <Select
-            label={t('role')}
-            options={POSITION_OPTIONS}
-            value={athleteForm.position}
-            onChange={(e) => setAthleteForm({ ...athleteForm, position: e.target.value })}
-          />
-          <Input label={t('jerseyNumber')} type="number" value={athleteForm.jerseyNumber} onChange={(e) => setAthleteForm({ ...athleteForm, jerseyNumber: e.target.value })} />
-          <Input label={t('team')} value={athleteForm.team} onChange={(e) => setAthleteForm({ ...athleteForm, team: e.target.value })} />
-          </div>
-        </form>
-      </Modal>
+        teamId={selectedTeam?.id}
+        teamName={selectedTeam?.name}
+        onCreated={() => {
+          if (selectedTeam) loadTeamDetail(selectedTeam.id);
+          loadTeams();
+          bumpRoster();
+          refreshTeams();
+        }}
+      />
     </div>
   );
 }

@@ -493,7 +493,7 @@ export async function periodizationRoutes(app: FastifyInstance) {
       where,
       orderBy,
       include: {
-        createdBy: { select: { id: true, firstName: true, lastName: true } },
+        createdBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
         team: { select: { id: true, name: true, color: true } },
         _count: { select: { mesocycles: true, simulations: true } },
       },
@@ -567,7 +567,7 @@ export async function periodizationRoutes(app: FastifyInstance) {
       const plan = await app.prisma.periodizationPlan.findFirst({
         where: { id, organizationId },
         include: {
-          createdBy: { select: { id: true, firstName: true, lastName: true } },
+          createdBy: { select: { id: true, identity: { select: { firstName: true, lastName: true } } } },
           mesocycles: {
             include: {
               microcycles: {

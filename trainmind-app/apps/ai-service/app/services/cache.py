@@ -227,6 +227,7 @@ def build_response_cache_key(
     athlete_id: Optional[str] = None,
     model: Optional[str] = None,
     language: Optional[str] = None,
+    athlete_context: Optional[str] = None,
 ) -> str:
     """
     Costruisce un identificatore univoco per caching di risposte AI.
@@ -242,6 +243,11 @@ def build_response_cache_key(
         parts.append("|".join(sorted(namespaces)))
     if athlete_id:
         parts.append(athlete_id)
+    if athlete_context:
+        # I dati dell'atleta cambiano ogni giorno: senza la loro impronta nella
+        # chiave, la stessa domanda sullo stesso atleta continuerebbe a servire
+        # l'analisi di ieri.
+        parts.append(hashlib.sha256(athlete_context.encode("utf-8")).hexdigest()[:12])
     if model:
         parts.append(model)
     # La lingua fa parte della chiave: la stessa domanda in inglese non deve

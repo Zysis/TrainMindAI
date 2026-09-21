@@ -138,6 +138,7 @@ async def chat_with_rag(request: ChatRequest):
             athlete_id=request.athlete_id,
             namespaces=request.namespaces,
             top_k=request.top_k,
+            athlete_context=request.athlete_context,
         )
 
         sources = combined.get("sources", [])
