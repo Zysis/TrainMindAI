@@ -375,6 +375,25 @@ andare male.
   permessi `-r--------` root.
 - Impronta (primi 16 caratteri di `sha256sum`) annotata accanto a ogni copia.
   Il valore sta nel password manager, non in questo documento.
+
+  **Attenzione a COSA si passa all'hash — ci sono due impronte diverse dello
+  stesso segreto**, e il 22/09/2026 la cosa ha fatto fermare un deploy a meta':
+
+  | | Su cosa | Comando |
+  | --- | --- | --- |
+  | **Impronta di riferimento** | i **32 byte decodificati** | `base64 -d identity.key \| sha256sum \| cut -c1-16` |
+  | Impronta annotata in origine | i **44 caratteri base64** del file | `sha256sum identity.key \| cut -c1-16` |
+
+  La prima e' quella che `impronta()` calcola e che **l'API stampa nel log a
+  ogni avvio**: e' quindi quella da confrontare, ed e' quella da annotare
+  accanto alle copie. La seconda non e' sbagliata, e' solo un'altra
+  convenzione — ma se si confronta l'una con l'altra non coincidono mai, e la
+  conclusione naturale ("sul server c'e' la chiave sbagliata, la sostituisco")
+  e' il modo piu' rapido per distruggere dei dati con le migliori intenzioni.
+
+  Se un'impronta non torna, prima di toccare qualsiasi cosa si calcolano
+  **tutte** le varianti (testo, byte decodificati, testo con a capo finale,
+  testo in UTF-16LE) e si guarda se il valore atteso compare in una di esse.
 - **Copia nel password manager verificata**: l'impronta ricalcolata dal valore
   salvato lì coincide con quella del server.
 - **Prova di ripristino superata**: chiave rimossa dal server e ricostruita

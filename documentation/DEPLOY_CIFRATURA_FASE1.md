@@ -32,10 +32,31 @@ base64 -d /opt/trainmind/secrets/identity.key | sha256sum | cut -c1-16
 
 Attesi: `-r-------- 1 root root 44`, poi `44`, `32`, e un'impronta di 16
 caratteri esadecimali. **Quell'impronta e' la stessa che l'API stampera' nei
-log all'avvio**, ed e' quella annotata accanto alle due copie della chiave.
-Se non coincide, fermarsi: significa che sul server c'e' una chiave diversa da
-quella custodita, e cifrare con una chiave di cui non si ha copia e' il modo
-piu' diretto per perdere i dati.
+log all'avvio.**
+
+Se non coincide con quella annotata accanto alle copie della chiave, **non**
+concluderne subito che la chiave sia sbagliata: esistono due impronte diverse
+dello stesso segreto, secondo cosa si passa all'hash. Calcolare tutte le
+varianti prima di toccare qualsiasi cosa:
+
+```bash
+K=/opt/trainmind/secrets/identity.key
+echo "a) testo base64 (44 byte):      $(sha256sum "$K" | cut -c1-16)"
+echo "b) byte decodificati (32 byte): $(base64 -d "$K" | sha256sum | cut -c1-16)"
+echo "c) testo base64 + a capo:       $( (cat "$K"; echo) | sha256sum | cut -c1-16)"
+echo "d) testo base64 in UTF-16LE:    $(iconv -f UTF-8 -t UTF-16LE < "$K" | sha256sum | cut -c1-16)"
+```
+
+La `b)` e' il riferimento, ed e' quella che compare nel log. Se il valore
+custodito corrisponde a una qualsiasi delle altre, la chiave e' quella giusta
+e cambia solo la convenzione. Se non corrisponde a nessuna, allora sul server
+c'e' davvero una chiave diversa da quella in custodia: fermarsi e sostituirla
+con la copia buona prima di accendere, perche' cifrare con una chiave di cui
+non si ha copia e' il modo piu' diretto per perdere i dati.
+
+Successo il 22/09/2026: l'impronta annotata era la `a)`, il codice stampa la
+`b)`. Stessa chiave, deploy fermo venti minuti. Vedi
+`PIANO_CIFRATURA_VAULT.md` §5.
 
 ### 0.2 La trappola del montaggio
 
