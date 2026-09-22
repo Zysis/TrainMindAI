@@ -177,6 +177,18 @@ services:
       AUTH_FROM_EMAIL: ${AUTH_FROM_EMAIL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Chiave di cifratura delle anagrafiche atleti. Non e' un valore ma un
+      # PERCORSO: la chiave vera sta nel file montato qui sotto, cosi' non
+      # compare in .env.deploy, in `docker inspect`, nei log, ne' in un
+      # `printenv` dentro il container.
+      # Se manca, in produzione l'API NON parte: e' voluto. Un avvio silenzioso
+      # senza chiave scriverebbe nomi in chiaro in un database che tutti
+      # credono cifrato, ed e' il guasto che non si vede.
+      IDENTITY_KEY_FILE: /run/secrets/identity.key
+    volumes:
+      # Sola lettura, e il solo servizio che la riceve. Web, athlete, admin e
+      # ai-service non la vedono: parlano con l'API, non con il database.
+      - /opt/trainmind/secrets/identity.key:/run/secrets/identity.key:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -272,6 +284,12 @@ services:
     command: ['pnpm', '--filter', '@trainmind/db', 'run', 'migrate:deploy']
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-trainmind}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trainmind_db}
+      # Le migration Prisma non ne hanno bisogno, ma questo servizio e' l'unico
+      # costruito con i sorgenti e le dipendenze complete (target: builder), ed
+      # e' da qui che gira lo script di travaso della Fase 2, che cifra in Node.
+      IDENTITY_KEY_FILE: /run/secrets/identity.key
+    volumes:
+      - /opt/trainmind/secrets/identity.key:/run/secrets/identity.key:ro
     depends_on:
       postgres:
         condition: service_healthy
