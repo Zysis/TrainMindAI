@@ -440,6 +440,37 @@ SELECT "athleteId", left("lastName", 20) FROM athlete_identities LIMIT 5;
 Più la verifica che conta davvero: aprire la lista atleti, cercare per mezzo
 cognome, aprire una scheda, generare un report PDF, guardare la console admin.
 
+### Esito — Fasi 1, 2 e 3 eseguite il 22/09/2026
+
+| | |
+| --- | --- |
+| Fase 1 in produzione | API riavviata alle 16:5x con `[db] cifratura anagrafiche ATTIVA — impronta chiave 114614883a57430d` |
+| Prima scrittura cifrata | un atleta di prova: `76 totale, 1 cifrata`. Le 75 righe preesistenti intatte e in chiaro |
+| Fase 2 (travaso) | 75 righe, **152 campi** (150 nomi e cognomi, 2 email). Una transazione |
+| Verifica sui byte salvati | 152 campi riletti dal database, riaperti con la chiave, **identici agli originali** |
+| Fase 3 | `SELECT count(*) ... WHERE "lastName" NOT LIKE 'v1:%'` → **0** |
+| Verifica a schermo | lista atleti, ricerca per cognome, scheda atleta, **rosa di squadra in ordine alfabetico** (la correzione del §7.1), foglio presenze, tracking partita |
+
+Lo script del travaso e' `packages/db/prisma/manutenzione/travaso-anagrafiche.ts`.
+Senza argomenti non scrive niente: la prova a vuoto e' il valore predefinito, e
+`--esegui` e' l'unica strada per una scrittura. Quattro reti in fila:
+
+1. legge con il client **grezzo**, senza estensioni — vede i byte, non cio' che
+   l'API fa vedere;
+2. cifra ogni valore **e lo riapre subito in memoria**, confrontandolo con
+   l'originale: un solo campo che non torna ferma tutto *prima* di scrivere;
+3. scrive in transazione;
+4. dopo il commit rilegge dal database e ridecifra, perche' la verifica che
+   conta e' sui byte davvero salvati, non su quelli che si credeva di scrivere.
+
+Nei messaggi non compare mai un nome: solo id e conteggi.
+
+**Nota sull'impronta**, che ha fermato il deploy per venti minuti: vedi §5. Il
+codice stampa lo sha256 dei **32 byte decodificati**; l'impronta annotata in
+origine era quella del **testo base64**. Stessa chiave, due convenzioni.
+
+---
+
 **Fase 4 — `dateOfBirth`.** La conversione di tipo è l'unica migration SQL
 vera, e va per ultima, quando tutto il resto è verificato.
 
