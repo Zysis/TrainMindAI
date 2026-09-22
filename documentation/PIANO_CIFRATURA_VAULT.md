@@ -20,11 +20,31 @@ una linea precisa:
 | Ruolo `trainmind_reporting` | non vede le anagrafiche | invariato |
 | Fornitori di modelli IA | non ricevono nomi | invariato |
 | Chi ottiene le credenziali del database | legge tutto | legge stringhe illeggibili |
-| Chi ruba un backup o uno snapshot del disco | legge tutto | legge stringhe illeggibili |
+| Chi ruba un backup | già cifrato dal 22/09 | invariato |
+| **Chi accede al disco o a uno snapshot** (dismissione, manutenzione, personale del provider) | **legge tutto** | legge stringhe illeggibili |
 | SQL injection che sfugga a Prisma | legge tutto | legge stringhe illeggibili |
 | Chi amministra il DB senza amministrare l'app | legge tutto | legge stringhe illeggibili |
 | **Chi ottiene root sul VPS** | legge tutto | **legge tutto** |
 | Chi compromette il processo API | legge tutto | legge tutto |
+
+> **Aggiornamento del 22/09/2026 — questo cambia il peso della decisione.**
+> Interrogato per iscritto, IONOS ha risposto che «la cifratura a riposo dei dati presenti nei volumi
+> del VPS non è una funzionalità di impostazione predefinita e può essere implementata
+> dall'amministratore del sistema». Il disco **non è cifrato**.
+>
+> Nel frattempo i backup lo sono diventati (vedi `BACKUP_E_DATI_RISERVATI.md`). Lo scenario «backup
+> rubato», che era la motivazione principale di questo lavoro, è quindi già coperto altrove — mentre
+> resta **completamente scoperto** l'accesso al supporto di memorizzazione: un disco dismesso, una
+> manutenzione dell'infrastruttura, uno snapshot lato provider.
+>
+> La cifratura applicativa delle colonne non è più una misura ridondante rispetto ai backup: è
+> l'**unica** che copre quello scenario. DPIA e Registro sono stati corretti di conseguenza.
+>
+> Nota sulla cifratura di volume (LUKS) come alternativa: su un VPS remoto richiede di sbloccare il
+> disco a ogni avvio, quindi o una passphrase digitata a mano dopo ogni riavvio, o un meccanismo di
+> sblocco in rete. E una volta avviata la macchina la chiave resta in memoria, quindi protegge dallo
+> stesso identico scenario — il supporto fisico — al prezzo di un riavvio che può bloccarsi. Per
+> un'infrastruttura gestita da una persona sola, la cifratura applicativa è più mirata e meno fragile.
 
 L'ultima riga non è aggirabile su una macchina sola: l'API deve poter decifrare
 per mostrare i nomi, quindi la chiave le è raggiungibile, quindi è raggiungibile
