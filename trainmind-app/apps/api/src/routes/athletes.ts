@@ -17,15 +17,6 @@ export async function athleteRoutes(app: FastifyInstance) {
 
     const where: Record<string, unknown> = { organizationId };
 
-    if (search) {
-      // La ricerca per nome passa dal caveau: i nomi non stanno piu' sulla
-      // riga dell'atleta. Restano `contains` e `insensitive`, quindi per chi
-      // cerca non cambia nulla.
-      where.OR = [
-        { identity: { firstName: { contains: search, mode: 'insensitive' } } },
-        { identity: { lastName: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
     if (position) where.position = position;
     // Un atleta archiviato non deve comparire da nessuna parte: liste, filtri,
     // menu a tendina, "Aggiungi Esistente". Chi lo vuole vedere lo chiede.
@@ -38,19 +29,71 @@ export async function athleteRoutes(app: FastifyInstance) {
       where.athleteTeams = { some: { teamId } };
     }
 
-    // Nome e cognome vivono nel caveau: l'ordinamento per quei due campi
-    // passa dalla relazione, gli altri restano sulla riga dell'atleta.
-    const orderBy =
-      sortBy === 'firstName' || sortBy === 'lastName'
-        ? { identity: { [sortBy]: sortOrder } }
-        : { [sortBy]: sortOrder };
+    const perNome = sortBy === 'firstName' || sortBy === 'lastName';
 
+    // Ricerca e ordinamento per nome NON possono passare da SQL: nome e cognome
+    // sono cifrati, e un `contains` su testo cifrato non trova niente mentre un
+    // `orderBy` ordina per ciphertext. Entrambi darebbero un risultato sbagliato
+    // senza alcun errore. Si caricano quindi le anagrafiche della sola
+    // organizzazione — decifrate dal client — e si filtra e ordina in memoria.
+    //
+    // Questo percorso si usa SEMPRE, anche quando la cifratura non e' attiva.
+    // Farlo dipendere dalla chiave significherebbe che in sviluppo gira un
+    // ramo e in produzione un altro, e quello di produzione arriverebbe agli
+    // utenti senza essere mai stato eseguito dai test.
+    if (search || perNome) {
+      const tutti = await app.prisma.athlete.findMany({
+        where,
+        select: { id: true, identity: { select: { firstName: true, lastName: true } } },
+      });
+
+      const ago = search?.trim().toLowerCase();
+      const filtrati = ago
+        ? tutti.filter((a) => {
+            const n = (a.identity?.firstName ?? '').toLowerCase();
+            const c = (a.identity?.lastName ?? '').toLowerCase();
+            return n.includes(ago) || c.includes(ago) || `${n} ${c}`.includes(ago);
+          })
+        : tutti;
+
+      const verso = sortOrder === 'desc' ? -1 : 1;
+      const chiave = (a: (typeof filtrati)[number]) =>
+        perNome
+          ? `${a.identity?.[sortBy as 'firstName' | 'lastName'] ?? ''}`
+          : '';
+      filtrati.sort((x, y) => verso * chiave(x).localeCompare(chiave(y), 'it', { sensitivity: 'base' }));
+
+      const total = filtrati.length;
+      const idPagina = filtrati.slice((page - 1) * limit, page * limit).map((a) => a.id);
+
+      const righe = await app.prisma.athlete.findMany({
+        where: { id: { in: idPagina } },
+        include: {
+          identity: true,
+          athleteTeams: {
+            include: { team: { select: { id: true, name: true, color: true } } },
+          },
+        },
+      });
+
+      // `in` non garantisce l'ordine: si rimette quello calcolato sopra.
+      const perId = new Map(righe.map((r) => [r.id, r]));
+      const athletes = idPagina.map((id) => perId.get(id)).filter(Boolean);
+
+      return reply.send({
+        success: true,
+        data: athletes,
+        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
+    }
+
+    // Nessun nome di mezzo: l'ordinamento e la paginazione restano a SQL.
     const [athletes, total] = await Promise.all([
       app.prisma.athlete.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy,
+        orderBy: { [sortBy]: sortOrder },
         include: {
           identity: true,
           athleteTeams: {
@@ -120,21 +163,35 @@ export async function athleteRoutes(app: FastifyInstance) {
           }
         }
 
-        const created = await tx.athlete.create({
+        // Due passi invece di uno, dentro la transazione che c'era gia'.
+        //
+        // L'anagrafica e' cifrata con l'athleteId come dato associato (AAD),
+        // che lega il cifrato alla sua riga. In un `create` annidato l'id non
+        // esiste ancora — lo genera il motore da `@default(cuid())` — quindi
+        // l'AAD non sarebbe calcolabile. Si crea prima l'atleta, poi
+        // l'anagrafica con l'id appena ottenuto. La transazione garantisce che
+        // o ci sono entrambi o non c'e' nessuno dei due, come prima.
+        const atleta = await tx.athlete.create({
           data: {
             ...core,
             birthYear: dateOfBirth.getFullYear(),
             organizationId,
-            identity: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                dateOfBirth,
-                email: data.email,
-                photoUrl: data.photoUrl,
-              },
-            },
           },
+        });
+
+        await tx.athleteIdentity.create({
+          data: {
+            athleteId: atleta.id,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            dateOfBirth,
+            email: data.email,
+            photoUrl: data.photoUrl,
+          },
+        });
+
+        const created = await tx.athlete.findUniqueOrThrow({
+          where: { id: atleta.id },
           include: { identity: true },
         });
 

@@ -3,6 +3,7 @@ import { createTeamSchema, updateTeamSchema, teamQuerySchema, addAthletesSchema 
 import { requireMinRole } from '../middleware/rbac.js';
 import { sendError, notFound, duplicate, handleValidation, AppError } from '../lib/api-errors.js';
 import { findOrgEntity } from '../lib/org-guard.js';
+import { ordinaPerCognome } from '../lib/identity.js';
 
 // ─── Routes ─────────────────────────────────────────────
 
@@ -63,7 +64,6 @@ export async function teamRoutes(app: FastifyInstance) {
               select: { id: true, position: true, jerseyNumber: true, isActive: true, identity: { select: { firstName: true, lastName: true, photoUrl: true, dateOfBirth: true } } },
             },
           },
-          orderBy: { athlete: { identity: { lastName: 'asc' } } },
         },
         _count: {
           select: {
@@ -82,6 +82,9 @@ export async function teamRoutes(app: FastifyInstance) {
 
     // Flatten athletes from join table
     const { athleteTeams, ...teamData } = team;
+    // L'ordine alfabetico si fa qui e non in SQL: il cognome e' cifrato, e un
+    // ORDER BY sulla colonna ordinerebbe i ciphertext, in silenzio.
+    ordinaPerCognome(athleteTeams, (at) => at.athlete?.identity);
     const athletes = athleteTeams.map((at) => at.athlete);
 
     return reply.send({ success: true, data: { ...teamData, athletes } });

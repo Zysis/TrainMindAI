@@ -406,12 +406,19 @@ async function main() {
 
   async function createAthletes(players: typeof TEAM_A_PLAYERS, teamKey: string, team: typeof teamA) {
     for (const p of players) {
+      // Anagrafica in un secondo passo: e' cifrata con l'athleteId come dato
+      // associato, e in un create annidato quell'id non esiste ancora.
       const a = await prisma.athlete.create({
         data: {
-          identity: { create: { firstName: p.first, lastName: p.last, dateOfBirth: new Date(p.dob) } },
           birthYear: new Date(p.dob).getFullYear(),
           position: p.pos, height: p.h, weight: p.w,
           jerseyNumber: p.jersey, organizationId: orgId,
+        },
+      });
+      await prisma.athleteIdentity.create({
+        data: {
+          athleteId: a.id,
+          firstName: p.first, lastName: p.last, dateOfBirth: new Date(p.dob),
         },
       });
       await prisma.athleteTeam.create({ data: { athleteId: a.id, teamId: team.id } });

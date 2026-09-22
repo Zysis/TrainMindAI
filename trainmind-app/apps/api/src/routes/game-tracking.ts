@@ -16,7 +16,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Prisma } from '@trainmind/db';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
-import { fullName } from '../lib/identity.js';
+import { fullName, ordinaVoci } from '../lib/identity.js';
 
 export async function gameTrackingRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
@@ -48,17 +48,16 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
       // sessione completa (nomi degli atleti, numeri di maglia, avversario)
       // a chiunque conoscesse un calendarEventId, anche di un'altra societa'.
       // Il controllo c'era gia' venti righe piu' sotto, in GET /game/by-event.
-      const existing = await app.prisma.gameSession.findFirst({
+      const existing = ordinaVoci(await app.prisma.gameSession.findFirst({
         where: { calendarEventId, organizationId },
         include: {
           entries: {
             include: { athlete: { select: athleteSelect } },
-            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
         },
-      });
+      }));
       if (existing) {
         return reply.send({ success: true, data: { session: existing, created: false } });
       }
@@ -100,7 +99,7 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
 
       let session;
       try {
-        session = await app.prisma.gameSession.create({
+        session = ordinaVoci(await app.prisma.gameSession.create({
           data: {
             calendarEventId,
             teamId: effectiveTeamId || null,
@@ -119,25 +118,23 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
-        });
+        }));
       } catch (createErr) {
         // Race condition
-        const raceSession = await app.prisma.gameSession.findFirst({
+        const raceSession = ordinaVoci(await app.prisma.gameSession.findFirst({
           where: { calendarEventId, organizationId },
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
-        });
+        }));
         if (raceSession) {
           return reply.send({ success: true, data: { session: raceSession, created: false } });
         }
@@ -158,17 +155,16 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
     auth,
     async (request, reply) => {
       try {
-        const session = await app.prisma.gameSession.findUnique({
+        const session = ordinaVoci(await app.prisma.gameSession.findUnique({
           where: { calendarEventId: request.params.eventId },
           include: {
             entries: {
               include: { athlete: { select: athleteSelect } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
           },
-        });
+        }));
 
         if (!session || session.organizationId !== request.user.organizationId) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione partita non trovata' } });
@@ -188,17 +184,16 @@ export async function gameTrackingRoutes(app: FastifyInstance) {
     '/game/:id',
     auth,
     async (request, reply) => {
-      const session = await app.prisma.gameSession.findFirst({
+      const session = ordinaVoci(await app.prisma.gameSession.findFirst({
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
           entries: {
             include: { athlete: { select: athleteSelect } },
-            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true, opponent: true, isHome: true, venue: true } },
         },
-      });
+      }));
 
       if (!session) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione partita non trovata' } });

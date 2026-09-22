@@ -118,6 +118,53 @@ esecutivo:**
    una relazione a due livelli come `injury.findMany({ include: { athlete: { include: { identity: true } } } })`.
 3. Tutte e quattro devono restituire il valore trasformato.
 
+### 3.2 Esito degli spike — 22/09/2026: **entrambi superati**
+
+Eseguiti sul database di sviluppo, nessuna scrittura.
+Script conservati in `packages/db/spike-cifratura.mjs` e
+`packages/db/spike-cifratura-scritture.mjs`.
+
+**Lettura — estensione `result` su `AthleteIdentity`.** Quattro forme su
+quattro. Prisma 5.18 permette di sovrascrivere un campo scalare esistente, e la
+trasformazione arriva ovunque:
+
+| Forma di query | Esito |
+| --- | --- |
+| `athleteIdentity.findFirst` diretta | OK |
+| `athlete.findFirst({ include: { identity: true } })` | OK |
+| `athlete.findFirst({ select: { identity: { select: … } } })` | OK |
+| `injury → athlete → identity` (due livelli) | OK |
+
+Una variante alternativa (estensione `query` su `$allModels` che attraversa il
+risultato) è stata provata e scartata: fallisce sulla query diretta, perché
+l'oggetto restituito non ha una chiave `identity` da riconoscere.
+
+**Scrittura — estensione `query` su `$allModels`.** Cinque forme su cinque.
+L'estensione viene invocata e riceve il cognome negli argomenti, con questi
+percorsi:
+
+```
+Athlete.update          args.data.identity.update.lastName
+AthleteIdentity.update  args.data.lastName
+Athlete.create          args.data.identity.create.lastName
+Athlete.update          args.data.identity.upsert.create.lastName
+User.update             args.data.identity.update.lastName
+```
+
+**Due conseguenze di progetto, emerse dagli esiti:**
+
+1. **La funzione di cifratura in scrittura deve guardare il MODELLO, non solo
+   il nome del campo.** `User.update` presenta `identity.update.lastName`
+   identico ad `Athlete.update`, ma `user_identities` **non va cifrata** (la
+   console admin la legge con il ruolo di reportistica). Cifrare per nome di
+   campo romperebbe i Contatti.
+2. **Un `where` che filtra su `lastName` non va cifrato: va fatto fallire.**
+   Su testo cifrato un `contains` non può funzionare, e restituirebbe
+   silenziosamente zero risultati. L'estensione deve lanciare un'eccezione
+   esplicita se incontra un filtro sulle colonne cifrate, così un punto del
+   codice non ancora adeguato si manifesta subito invece di sembrare "nessun
+   atleta trovato".
+
 - **Se passano tutte** → si procede come scritto qui sotto.
 - **Se una fallisce** → l'estensione non basta, e il lavoro cambia natura: serve
   un audit dei 134 punti con un helper esplicito. Costo molto più alto, rischio
@@ -321,6 +368,23 @@ verifica. Finche' non e' fatto, aggiungere la cifratura delle colonne aumenta
 il numero di cose che devono andare bene senza aver ridotto quelle che possono
 andare male.
 
+### 5.5 Esito — chiave generata e verificata il 22/09/2026
+
+- Chiave AES-256 generata sul VPS in `/opt/trainmind/secrets/identity.key`,
+  **44 byte, senza a capo finale** (`openssl rand -base64 32 | tr -d '\n'`),
+  permessi `-r--------` root.
+- Impronta (primi 16 caratteri di `sha256sum`) annotata accanto a ogni copia.
+  Il valore sta nel password manager, non in questo documento.
+- **Copia nel password manager verificata**: l'impronta ricalcolata dal valore
+  salvato lì coincide con quella del server.
+- **Prova di ripristino superata**: chiave rimossa dal server e ricostruita
+  dalla sola copia esterna; `cmp` conferma che i due file sono identici byte
+  per byte. Eseguita quando le righe cifrate erano ancora zero, quindi a
+  rischio nullo.
+
+Nota per PowerShell 5.1: `[Security.Cryptography.SHA256]::HashData()` non
+esiste (è .NET 5+). Serve `::Create()` più `ComputeHash()`.
+
 ### Rotazione
 
 Non serve una colonna `key_version`: il prefisso basta. Si tiene la vecchia
@@ -376,6 +440,61 @@ vera, e va per ultima, quando tutto il resto è verificato.
 | Backup | Contengono testo cifrato: è il guadagno. **Ma un backup senza la chiave è carta straccia** — la copia della chiave diventa parte della procedura di backup |
 | Prestazioni | Trascurabili a questa scala. AES-GCM su qualche centinaio di stringhe è nell'ordine dei microsecondi |
 
+### 7.1 L'ordinamento che nessuno aveva visto — 22/09/2026
+
+Il §7 diceva «ordinamento per cognome: in memoria», e in `athletes.ts` era
+stato fatto. Ma l'accensione della cifratura in locale ha mostrato nel log
+del server una query che non ci si aspettava:
+
+```sql
+SELECT athlete_teams... LEFT JOIN athlete_identities AS "orderby_2"
+  ... ORDER BY "orderby_2"."lastName" ASC
+```
+
+Veniva da `GET /teams/:id`, cioè dalla scheda squadra. In tutto erano
+**tredici** query fatte così, in tre file: `teams.ts` (1), `field-training.ts`
+(7, i fogli presenze) e `game-tracking.ts` (5, il tracking partita). Tutte
+nella stessa forma:
+
+```ts
+orderBy: { athlete: { identity: { lastName: 'asc' } } }
+```
+
+**Perché la guardia non le aveva fermate.** Il controllo scritto insieme al
+client guardava `args.where` e `args.orderBy` del modello in cima alla query,
+e solo per `Athlete` e `AthleteIdentity`. Qui il modello in cima è `Team`, o
+`FieldTrainingSession`, e l'ordinamento è annidato due livelli sotto, dentro
+un `include`. Passava indisturbato.
+
+**Cosa sarebbe successo.** Niente di visibile. Nessun errore, nessun log:
+dopo il travaso della Fase 2 le rose delle squadre e i fogli presenze
+sarebbero comparsi in ordine casuale — l'ordine alfabetico dei ciphertext.
+Un preparatore l'avrebbe chiamato un capriccio dell'applicazione, non un
+difetto, e sarebbe rimasto lì.
+
+**Correzione, in due tempi.**
+
+1. Le tredici query non ordinano più in SQL. `lib/identity.ts` espone
+   `ordinaPerCognome()` — collazione italiana, `sensitivity: 'base'`, cognome
+   poi nome — e `ordinaVoci()`, che si usa avvolgendo la query:
+   `const s = ordinaVoci(await prisma.gameSession.findFirst({...}))`. In
+   questa forma sta sulla stessa riga della query che prima portava
+   l'`orderBy`, ed è difficile dimenticarla.
+2. La guardia ora cerca l'ordinamento **ovunque** negli argomenti, a
+   qualunque profondità e per qualunque modello, riconoscendolo dal nome
+   della relazione (`athlete`). Sta in `packages/db/src/identity-guardie.ts`,
+   modulo puro senza Prisma, con undici test propri. Le anagrafiche dello
+   staff (`user_identities`, non cifrate) restano libere di ordinarsi in SQL.
+
+**La lezione.** Una guardia che conosce solo la forma del difetto che hai in
+mente non è una guardia. Questa cercava sul modello sbagliato, e il difetto
+vero arrivava dal modello accanto. Il log delle query SQL a cifratura accesa
+ha trovato in dieci minuti quello che una `grep` sul codice non aveva trovato
+in due giorni — perché mostra cosa il database **fa**, non cosa il codice
+sembra dire.
+
+---
+
 ---
 
 ## 8. Rollback
@@ -402,6 +521,8 @@ Il rollback impossibile è uno solo: chiave persa. Vedi §5.
 4. Estensione del client Prisma
 5. Adeguamento di ricerca, ordinamento e paginazione in `athletes.ts`
 6. `pnpm type-check`, `pnpm test`, `pnpm test:e2e` in locale
+6b. **Accensione in locale con `IDENTITY_KEY_FILE`** e giro sull'app vera,
+    leggendo il log delle query SQL: è così che è venuto fuori il §7.1
 7. Deploy Fase 1, con backup prima
 8. Travaso (Fase 2) e verifica (Fase 3)
 9. `dateOfBirth` (Fase 4)

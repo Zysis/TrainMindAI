@@ -2,7 +2,7 @@
 // Seed default exercises for a new organization
 // ============================================
 
-import type { PrismaClient } from '@trainmind/db';
+import type { DbClient } from '@trainmind/db';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -61,7 +61,7 @@ function loadExercises(): ExerciseSeed[] {
  * Runs in the background — does not block the registration response.
  */
 export async function seedDefaultExercises(
-  prisma: PrismaClient,
+  prisma: DbClient,
   organizationId: string,
 ): Promise<void> {
   const exercises = loadExercises();

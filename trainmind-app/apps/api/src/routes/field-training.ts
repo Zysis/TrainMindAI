@@ -18,7 +18,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { Prisma } from '@trainmind/db';
 import { requireMinRole } from '../middleware/rbac.js';
-import { fullName } from '../lib/identity.js';
+import { fullName, ordinaVoci } from '../lib/identity.js';
 
 export async function fieldTrainingRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
@@ -154,7 +154,7 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
       // Create session + entries for each athlete
       let session;
       try {
-        session = await app.prisma.fieldTrainingSession.create({
+        session = ordinaVoci(await app.prisma.fieldTrainingSession.create({
           data: {
             calendarEventId: calendarEventId || null,
             trainingSessionId: trainingSessionId || null,
@@ -175,29 +175,27 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
           include: {
             entries: {
               include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
             trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
-        });
+        }));
       } catch (createErr) {
         // Race condition: session was created between findUnique and create
-        const raceSession = await app.prisma.fieldTrainingSession.findFirst({
+        const raceSession = ordinaVoci(await app.prisma.fieldTrainingSession.findFirst({
           where: calendarEventId
             ? { calendarEventId, organizationId }
             : { trainingSessionId, organizationId },
           include: {
             entries: {
               include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
             trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
-        });
+        }));
         if (raceSession) {
           return reply.send({ success: true, data: { session: raceSession, created: false } });
         }
@@ -328,18 +326,17 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
     auth,
     async (request, reply) => {
       try {
-        const session = await app.prisma.fieldTrainingSession.findUnique({
+        const session = ordinaVoci(await app.prisma.fieldTrainingSession.findUnique({
           where: { calendarEventId: request.params.eventId },
           include: {
             entries: {
               include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
             trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
-        });
+        }));
 
         if (!session || session.organizationId !== request.user.organizationId) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
@@ -347,18 +344,17 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
         // Foglio nato vuoto? Prova a completarlo, poi rileggilo.
         if (await backfillSheet(session.id, request.user.organizationId)) {
-          const repaired = await app.prisma.fieldTrainingSession.findUnique({
+          const repaired = ordinaVoci(await app.prisma.fieldTrainingSession.findUnique({
             where: { id: session.id },
             include: {
               entries: {
                 include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-                orderBy: { athlete: { identity: { lastName: 'asc' } } },
               },
               team: { select: { id: true, name: true, color: true } },
               calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
               trainingSession: { select: { id: true, title: true, date: true, duration: true } },
             },
-          });
+          }));
           if (repaired) return reply.send({ success: true, data: { session: repaired } });
         }
 
@@ -378,17 +374,16 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
     auth,
     async (request, reply) => {
       try {
-        const session = await app.prisma.fieldTrainingSession.findFirst({
+        const session = ordinaVoci(await app.prisma.fieldTrainingSession.findFirst({
           where: { trainingSessionId: request.params.sessionId },
           include: {
             entries: {
               include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-              orderBy: { athlete: { identity: { lastName: 'asc' } } },
             },
             team: { select: { id: true, name: true, color: true } },
             trainingSession: { select: { id: true, title: true, date: true, duration: true } },
           },
-        });
+        }));
 
         if (!session || session.organizationId !== request.user.organizationId) {
           return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });
@@ -396,18 +391,17 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
 
         // Foglio nato vuoto? Prova a completarlo, poi rileggilo.
         if (await backfillSheet(session.id, request.user.organizationId)) {
-          const repaired = await app.prisma.fieldTrainingSession.findUnique({
+          const repaired = ordinaVoci(await app.prisma.fieldTrainingSession.findUnique({
             where: { id: session.id },
             include: {
               entries: {
                 include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-                orderBy: { athlete: { identity: { lastName: 'asc' } } },
               },
               team: { select: { id: true, name: true, color: true } },
               calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
               trainingSession: { select: { id: true, title: true, date: true, duration: true } },
             },
-          });
+          }));
           if (repaired) return reply.send({ success: true, data: { session: repaired } });
         }
 
@@ -425,17 +419,16 @@ export async function fieldTrainingRoutes(app: FastifyInstance) {
     '/field-training/:id',
     auth,
     async (request, reply) => {
-      const session = await app.prisma.fieldTrainingSession.findFirst({
+      const session = ordinaVoci(await app.prisma.fieldTrainingSession.findFirst({
         where: { id: request.params.id, organizationId: request.user.organizationId },
         include: {
           entries: {
             include: { athlete: { select: { id: true, jerseyNumber: true, position: true, identity: { select: { firstName: true, lastName: true } } } } },
-            orderBy: { athlete: { identity: { lastName: 'asc' } } },
           },
           team: { select: { id: true, name: true, color: true } },
           calendarEvent: { select: { id: true, title: true, startTime: true, endTime: true, type: true } },
         },
-      });
+      }));
 
       if (!session) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Sessione non trovata' } });

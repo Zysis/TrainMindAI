@@ -6,7 +6,7 @@
  * Environment vars: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
  */
 
-import type { PrismaClient } from '@trainmind/db';
+import type { DbClient } from '@trainmind/db';
 import { Prisma } from '@trainmind/db';
 
 // Lazy-import web-push (optional dependency)
@@ -43,7 +43,7 @@ interface PushPayload {
  * Send push notification to a specific user.
  */
 export async function sendPushToUser(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   payload: PushPayload,
 ): Promise<boolean> {
@@ -82,7 +82,7 @@ export async function sendPushToUser(
  * (Usually 1:1, but handles edge cases.)
  */
 export async function sendPushToAthlete(
-  prisma: PrismaClient,
+  prisma: DbClient,
   athleteId: string,
   payload: PushPayload,
 ): Promise<void> {
@@ -99,7 +99,7 @@ export async function sendPushToAthlete(
  * Call this from training routes when sessions are created/updated.
  */
 export async function notifySessionAssigned(
-  prisma: PrismaClient,
+  prisma: DbClient,
   sessionTitle: string,
   sessionDate: string,
   athleteIds: string[],
@@ -119,7 +119,7 @@ export async function notifySessionAssigned(
  * Notify athlete when a session is modified.
  */
 export async function notifySessionModified(
-  prisma: PrismaClient,
+  prisma: DbClient,
   sessionTitle: string,
   athleteIds: string[],
 ): Promise<void> {
@@ -138,7 +138,7 @@ export async function notifySessionModified(
  * Send wellness reminder to athletes who haven't submitted today.
  * Intended to be called by a cron job or scheduled worker.
  */
-export async function sendWellnessReminders(prisma: PrismaClient): Promise<number> {
+export async function sendWellnessReminders(prisma: DbClient): Promise<number> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

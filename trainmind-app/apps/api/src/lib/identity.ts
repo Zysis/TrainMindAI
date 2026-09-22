@@ -61,10 +61,53 @@ export const userNameSelect = {
   },
 } as const;
 
-/** Ordinamento per cognome, che ora passa dalla tabella delle identita'. */
-export const orderByAthleteLastName = {
-  identity: { lastName: 'asc' },
-} as const;
+/**
+ * Ordinamento per cognome, in memoria.
+ *
+ * NON si puo' ordinare per cognome in SQL: la colonna e' cifrata, e
+ * `ORDER BY last_name` metterebbe in fila i ciphertext — cioe' un ordine
+ * casuale, senza alcun errore che lo segnali. Il guasto peggiore e' quello
+ * muto: una lista di atleti in ordine sbagliato non sembra un difetto, sembra
+ * un capriccio dell'applicazione.
+ *
+ * Quindi si carica e si ordina qui, dopo che l'estensione Prisma ha decifrato.
+ * Il costo e' irrilevante: sono le voci di una squadra, non di un archivio.
+ *
+ * Collazione italiana con `sensitivity: 'base'`, la stessa della lista atleti,
+ * cosi' "D'Angelo" e "D'angelo" finiscono vicini e le accentate al posto loro.
+ */
+const collatore = new Intl.Collator('it', { sensitivity: 'base' });
+
+type Anagrafica = { firstName?: string | null; lastName?: string | null } | null | undefined;
+
+export function ordinaPerCognome<T>(
+  righe: T[] | null | undefined,
+  anagrafica: (riga: T) => Anagrafica,
+): void {
+  if (!Array.isArray(righe)) return;
+  righe.sort((a, b) => {
+    const x = anagrafica(a);
+    const y = anagrafica(b);
+    const perCognome = collatore.compare(x?.lastName ?? '', y?.lastName ?? '');
+    // A parita' di cognome si passa al nome: due Rossi non devono ballare
+    // di posizione da una richiesta all'altra.
+    return perCognome !== 0 ? perCognome : collatore.compare(x?.firstName ?? '', y?.firstName ?? '');
+  });
+}
+
+/**
+ * Ordina le voci (`entries`) di un foglio presenze o di una partita.
+ *
+ * Si usa avvolgendo la query: `const s = ordinaVoci(await prisma...)`. In
+ * questa forma e' difficile dimenticarla, perche' sta sulla stessa riga della
+ * query che prima portava l'`orderBy`.
+ */
+type Voce = { athlete?: { identity?: Anagrafica } | null };
+
+export function ordinaVoci<T extends { entries: Voce[] } | null>(sessione: T): T {
+  if (sessione) ordinaPerCognome(sessione.entries, (v) => v.athlete?.identity);
+  return sessione;
+}
 
 /** I campi che, in una query, vanno chiesti al caveau e non alla riga dati. */
 const IDENTITY_KEYS = ['firstName', 'lastName', 'dateOfBirth', 'email', 'photoUrl'] as const;

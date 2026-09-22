@@ -57,3 +57,7 @@ documentation/login*
 .env.*
 !.env.example
 !.env.deploy.example
+
+# chiave di cifratura anagrafiche (solo sviluppo, MAI quella di produzione)
+.dev-identity.key
+*.identity.key
