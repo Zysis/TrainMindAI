@@ -1,0 +1,15 @@
+Link dal quale puoi accedere al sito web:
+https://lab21sport.com/
+
+Link per accedere alla web-app:
+https://lab21sport.com/app
+
+Ho creato un account demo:
+Email: camilla.coresi@demo.com
+Password: CamillaCoresi01
+
+Puoi accedere dal pulsante in alto a destra "Login" e poi inserire Email e Password.
+Nell'account è stata simulata e caricata una squadra ad esempio.
+
+Attualmente può essere usato solo via PC.
+Se servono spiegazioni scrivimi pure.

@@ -20,7 +20,7 @@ SERVER
  preparatore2.test@trainmind.demo | TRAINER | t        | 2026-09-03 15:16:08.684 | Test Deploy | ULTRA
  pispi29@hotmail.it               | ATHLETE | t        | 2026-09-14 10:00:13.981 | Test Deploy | ULTRA
  valerio.delbianco@demo.com       | ADMIN   | t        | 2026-09-04 10:28:06.663 | VDB         | ULTRA
-
+ camilla.coresi@demo.com	  | ADMIN   | t        | 2026-09-29 09:00:00:000 | CC Demo     | ULTRA	
 
 ------------------------------------------
 Produzione:
