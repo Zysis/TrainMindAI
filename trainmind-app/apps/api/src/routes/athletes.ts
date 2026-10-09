@@ -4,6 +4,14 @@ import { requireMinRole } from '../middleware/rbac.js';
 import { sendError, notFound, handleValidation, AppError } from '../lib/api-errors.js';
 import { findOrgEntity } from '../lib/org-guard.js';
 import { splitAthletePayload } from '../lib/identity.js';
+import {
+  assertOrganizationHasRoom,
+  assertReactivationAllowed,
+  assertTeamHasRoom,
+  PlanLimitError,
+  recordReactivation,
+  sendPlanError,
+} from '../lib/plans.js';
 
 export async function athleteRoutes(app: FastifyInstance) {
   // All routes require authentication
@@ -149,6 +157,18 @@ export async function athleteRoutes(app: FastifyInstance) {
     const { core } = splitAthletePayload(athleteData);
     const dateOfBirth = new Date(data.dateOfBirth);
 
+    // Limiti del piano: atleti attivi nell'organizzazione e, se l'atleta
+    // nasce gia' in una squadra, posti in quella squadra. No-op a piano non
+    // applicato. Il controllo sulla squadra usa un id fittizio: l'atleta non
+    // esiste ancora, e conta come un arrivo in piu'.
+    try {
+      await assertOrganizationHasRoom(app.prisma, organizationId, 1);
+      if (teamId) await assertTeamHasRoom(app.prisma, organizationId, teamId, ['__nuovo__']);
+    } catch (err) {
+      if (err instanceof PlanLimitError) return sendPlanError(reply, err);
+      throw err;
+    }
+
     try {
       // Creazione e iscrizione alla squadra nella stessa transazione: o
       // l'atleta nasce gia' in rosa, o non nasce affatto.
@@ -267,14 +287,29 @@ export async function athleteRoutes(app: FastifyInstance) {
     preHandler: [requireMinRole('TRAINER')],
   }, async (request, reply) => {
     const { id } = request.params;
-    const { organizationId } = request.user;
+    const { organizationId, userId } = request.user;
 
-    await findOrgEntity(app, 'athlete', id, organizationId);
+    const existing = (await findOrgEntity(app, 'athlete', id, organizationId)) as { isActive?: boolean };
+
+    // Solo un ripristino vero (archiviato -> attivo) conta: richiamare la
+    // rotta su un atleta gia' attivo non consuma niente.
+    const reactivating = existing?.isActive === false;
+    if (reactivating) {
+      try {
+        await assertReactivationAllowed(app.prisma, organizationId);
+        await assertOrganizationHasRoom(app.prisma, organizationId, 1);
+      } catch (err) {
+        if (err instanceof PlanLimitError) return sendPlanError(reply, err);
+        throw err;
+      }
+    }
 
     const athlete = await app.prisma.athlete.update({
       where: { id },
       data: { isActive: true },
     });
+
+    if (reactivating) await recordReactivation(app, organizationId, id, userId ?? null);
 
     request.log.info({ athleteId: id }, 'athlete restored');
     return reply.send({ success: true, data: athlete });

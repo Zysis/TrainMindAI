@@ -11,6 +11,7 @@ import {
   Rocket,
   X,
 } from 'lucide-react';
+import { useFeatureAvailable } from '@/lib/plan/context';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -59,6 +60,13 @@ function saveState(state: ChecklistState) {
 
 export function OnboardingChecklist() {
   const t = useTranslations('onboarding');
+  // Senza AI o senza report nel piano (prova gratuita, Starter) quei passi
+  // non si possono completare: si tolgono dalla lista.
+  const hasAi = useFeatureAvailable('ai');
+  const hasReports = useFeatureAvailable('reports');
+  const items = ITEMS.filter(
+    (i) => (i.id !== 'create_plan' || hasAi) && (i.id !== 'gen_report' || hasReports),
+  );
   const [state, setState] = useState<ChecklistState>({ completed: [] });
   const [expanded, setExpanded] = useState(true);
   const [dismissed, setDismissed] = useState(true); // start hidden to avoid flash
@@ -102,8 +110,8 @@ export function OnboardingChecklist() {
 
   if (!mounted || dismissed) return null;
 
-  const completedCount = state.completed.length;
-  const total = ITEMS.length;
+  const completedCount = items.filter((i) => state.completed.includes(i.id)).length;
+  const total = items.length;
   const pct = Math.round((completedCount / total) * 100);
 
   return (
@@ -181,7 +189,7 @@ export function OnboardingChecklist() {
       {expanded && (
         <div className="border-t border-slate-100 dark:border-slate-700 px-5 py-3">
           <ul className="space-y-1">
-            {ITEMS.map((item) => {
+            {items.map((item) => {
               const done = state.completed.includes(item.id);
               return (
                 <li key={item.id} className="flex items-center gap-3">

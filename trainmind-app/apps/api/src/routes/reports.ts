@@ -21,6 +21,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
 import { getModelForOperation } from '../lib/ai-models.js';
+import { isAiAvailable, requirePlanFeature } from '../lib/plans.js';
 import { recordAiUsage, extractUsage } from '../services/ai-usage.js';
 import type {
   ReportData,
@@ -163,6 +164,10 @@ async function callAiSummary(
   },
   language: ReportLanguage,
 ): Promise<AiSummary | null> {
+  // Piano senza AI o crediti del mese finiti: niente chiamata, e il report
+  // usa il testo costruito sui numeri, come quando l'AI non risponde.
+  if (!(await isAiAvailable(app.prisma, organizationId, 'REPORT'))) return null;
+
   // Il riassunto di un report è testo breve e schematico: va sul modello
   // economico. Il modello va passato esplicitamente all'ai-service.
   const model = getModelForOperation('REPORT');
@@ -1083,7 +1088,7 @@ export async function reportRoutes(app: FastifyInstance) {
   // ─── POST /ai/report ─────────────────────────────────
   app.post(
     '/ai/report',
-    { preHandler: [app.authenticate, requireMinRole('TRAINER')] },
+    { preHandler: [app.authenticate, requireMinRole('TRAINER'), requirePlanFeature(app, 'reports')] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = generateReportSchema.safeParse(request.body);
       if (!parsed.success) {

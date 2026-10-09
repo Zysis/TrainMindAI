@@ -147,45 +147,64 @@ const T = {
 
     'pricing.kick': 'Prezzi',
     'pricing.h2': 'Piani e prezzi',
-    'pricing.sub': 'Scegli il piano più adatto alle tue esigenze. Entra in TrainMind.',
+    'pricing.sub': 'Due offerte: una per lo Strength and Conditioning Coach, una per il club. Prezzi IVA inclusa.',
     'pricing.toggle.monthly': 'Mensile',
     'pricing.toggle.yearly': 'Annuale',
-    'pricing.toggle.save': 'Risparmia fino all’11%',
-    'pricing.popular': 'Più popolare',
+    'pricing.toggle.save': '2 mesi gratis con l’annuale',
+    'pricing.toggle.badge': '−17%',
+    'pricing.popular': 'Consigliato',
     'pricing.period.month': '/mese',
     'pricing.period.year': '/anno',
     'pricing.equivalent': 'equivalenti a {price}/mese',
+    'pricing.individual.title': 'Strength and Conditioning Coach',
+    'pricing.individual.sub': 'Per il preparatore atletico che segue una o più squadre.',
+    'pricing.club.title': 'Club e società',
+    'pricing.club.sub': 'Un piano unico per lo staff di una società.',
+    'pricing.trial.title': 'Prova gratuita di 15 giorni',
+    'pricing.trial.sub': 'Senza carta e senza addebito automatico. 1 squadra fino a 12 atleti: allenamenti, wellness, infortuni, Analytics e un report giornaliero di prova. Gli altri report e l’AI con i piani a pagamento.',
+    'pricing.trial.cta': 'Inizia la prova gratuita',
+    'pricing.ext': 'Con Ultra e Club puoi crescere quando serve: squadra aggiuntiva 8 €/mese, 5 atleti in più 2 €/mese, utente aggiuntivo 10 €/mese.',
+    'pricing.vat': 'Tutti i prezzi sono IVA inclusa.',
 
     'plan.starter.name': 'Starter',
-    'plan.starter.tagline': 'Per chi parte e vuole le basi.',
-    'plan.starter.cta': 'Registrati',
-    'plan.starter.feat.1': '1 squadra (12 atleti)',
-    'plan.starter.feat.2': 'Report base',
-    'plan.starter.feat.3': 'Wellness tracking',
-    'plan.starter.feat.4': 'Calendario',
+    'plan.starter.tagline': 'Per partire con una squadra e le funzioni base.',
+    'plan.starter.cta': 'Acquista',
+    'plan.starter.feat.1': '1 squadra · 12 atleti',
+    'plan.starter.feat.2': '1 utente',
+    'plan.starter.feat.3': 'Report base',
+    'plan.starter.feat.4': 'Wellness e calendario',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'Per i preparatori che vogliono fare sul serio.',
-    'plan.pro.cta': 'Registrati',
-    'plan.pro.feat.1': '3 squadre (12 atleti per squadra)',
-    'plan.pro.feat.2': 'Report avanzati',
-    'plan.pro.feat.3': 'AI Assistant',
-    'plan.pro.feat.4': 'Periodizzazione',
-    'plan.pro.feat.5': 'RTP',
-    'plan.pro.feat.6': 'Analytics',
+    'plan.pro.tagline': 'Funzioni avanzate e AI per due squadre.',
+    'plan.pro.cta': 'Acquista',
+    'plan.pro.feat.1': '2 squadre · 14 atleti per squadra',
+    'plan.pro.feat.2': '1 utente',
+    'plan.pro.feat.3': 'Report giornaliero e post-partita',
+    'plan.pro.feat.4': 'AI Assistant · 200 crediti al mese',
+    'plan.pro.feat.5': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'La tua piattaforma, senza limiti.',
-    'plan.ultra.cta': 'Registrati',
-    'plan.ultra.feat.1': 'Squadre e atleti illimitati',
-    'plan.ultra.feat.2': 'Tutto Professional',
-    'plan.ultra.feat.3': 'API access',
-    'plan.ultra.feat.4': 'Supporto prioritario',
+    'plan.ultra.tagline': 'Più squadre, più atleti e un collaboratore.',
+    'plan.ultra.cta': 'Acquista',
+    'plan.ultra.feat.1': '4 squadre · 20 atleti per squadra',
+    'plan.ultra.feat.2': 'Fino a 2 utenti',
+    'plan.ultra.feat.3': 'Tutto Professional',
+    'plan.ultra.feat.4': 'AI Assistant · 500 crediti al mese',
+    'plan.ultra.feat.5': 'Squadre, atleti e utenti aggiuntivi',
+
+    'plan.club.name': 'Club',
+    'plan.club.tagline': 'Lo staff della società lavora insieme, fino a 6 squadre.',
+    'plan.club.cta': 'Acquista',
+    'plan.club.feat.1': '6 squadre · 20 atleti per squadra',
+    'plan.club.feat.2': 'Fino a 4 utenti dello staff',
+    'plan.club.feat.3': 'Report avanzati e Analytics',
+    'plan.club.feat.4': 'AI Assistant · 750 crediti al mese',
+    'plan.club.feat.5': 'Squadre, atleti e utenti aggiuntivi',
 
     'cta.h2': 'Pronto a trasformare la tua preparazione atletica?',
     'cta.sub':
       'Unisciti ai preparatori fisici che usano TrainMind per prendere decisioni migliori, più velocemente.',
-    'cta.button': 'Crea un account',
+    'cta.button': 'Prova gratis per 15 giorni',
 
     'cta.kick': 'Iniziamo',
     'footer.copyright': 'Tutti i diritti riservati.',
@@ -272,45 +291,64 @@ const T = {
 
     'pricing.kick': 'Pricing',
     'pricing.h2': 'Plans & pricing',
-    'pricing.sub': 'Choose the plan that fits you best. Join TrainMind.',
+    'pricing.sub': 'Two offers: one for the Strength and Conditioning Coach, one for the club. Prices include VAT.',
     'pricing.toggle.monthly': 'Monthly',
     'pricing.toggle.yearly': 'Yearly',
-    'pricing.toggle.save': 'Save up to 11%',
-    'pricing.popular': 'Most popular',
+    'pricing.toggle.save': '2 months free with yearly billing',
+    'pricing.toggle.badge': '−17%',
+    'pricing.popular': 'Recommended',
     'pricing.period.month': '/month',
     'pricing.period.year': '/year',
     'pricing.equivalent': 'equivalent to {price}/month',
+    'pricing.individual.title': 'Strength and Conditioning Coach',
+    'pricing.individual.sub': 'For the S&C coach working with one or more teams.',
+    'pricing.club.title': 'Clubs',
+    'pricing.club.sub': 'A single plan for a club’s staff.',
+    'pricing.trial.title': '15-day free trial',
+    'pricing.trial.sub': 'No card, no automatic charge. 1 team of up to 12 athletes: training, wellness, injuries, Analytics and one trial daily report. Other reports and AI come with the paid plans.',
+    'pricing.trial.cta': 'Start the free trial',
+    'pricing.ext': 'With Ultra and Club you grow when you need to: extra team €8/month, 5 more athletes €2/month, extra user €10/month.',
+    'pricing.vat': 'All prices include VAT.',
 
     'plan.starter.name': 'Starter',
-    'plan.starter.tagline': 'For anyone starting out who just wants the basics.',
-    'plan.starter.cta': 'Sign up',
-    'plan.starter.feat.1': '1 team (12 athletes)',
-    'plan.starter.feat.2': 'Basic reports',
-    'plan.starter.feat.3': 'Wellness tracking',
-    'plan.starter.feat.4': 'Calendar',
+    'plan.starter.tagline': 'Get started with one team and the core features.',
+    'plan.starter.cta': 'Buy',
+    'plan.starter.feat.1': '1 team · 12 athletes',
+    'plan.starter.feat.2': '1 user',
+    'plan.starter.feat.3': 'Basic reports',
+    'plan.starter.feat.4': 'Wellness and calendar',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'For strength coaches who mean business.',
-    'plan.pro.cta': 'Sign up',
-    'plan.pro.feat.1': '3 teams (12 athletes per team)',
-    'plan.pro.feat.2': 'Advanced reports',
-    'plan.pro.feat.3': 'AI Assistant',
-    'plan.pro.feat.4': 'Periodization',
-    'plan.pro.feat.5': 'RTP',
-    'plan.pro.feat.6': 'Analytics',
+    'plan.pro.tagline': 'Advanced features and AI for two teams.',
+    'plan.pro.cta': 'Buy',
+    'plan.pro.feat.1': '2 teams · 14 athletes per team',
+    'plan.pro.feat.2': '1 user',
+    'plan.pro.feat.3': 'Daily and post-game reports',
+    'plan.pro.feat.4': 'AI Assistant · 200 credits a month',
+    'plan.pro.feat.5': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'Your platform, no limits.',
-    'plan.ultra.cta': 'Sign up',
-    'plan.ultra.feat.1': 'Unlimited teams and athletes',
-    'plan.ultra.feat.2': 'Everything in Professional',
-    'plan.ultra.feat.3': 'API access',
-    'plan.ultra.feat.4': 'Priority support',
+    'plan.ultra.tagline': 'More teams, more athletes and a colleague.',
+    'plan.ultra.cta': 'Buy',
+    'plan.ultra.feat.1': '4 teams · 20 athletes per team',
+    'plan.ultra.feat.2': 'Up to 2 users',
+    'plan.ultra.feat.3': 'Everything in Professional',
+    'plan.ultra.feat.4': 'AI Assistant · 500 credits a month',
+    'plan.ultra.feat.5': 'Extra teams, athletes and users',
+
+    'plan.club.name': 'Club',
+    'plan.club.tagline': 'The club’s staff working together, up to 6 teams.',
+    'plan.club.cta': 'Buy',
+    'plan.club.feat.1': '6 teams · 20 athletes per team',
+    'plan.club.feat.2': 'Up to 4 staff users',
+    'plan.club.feat.3': 'Advanced reports and Analytics',
+    'plan.club.feat.4': 'AI Assistant · 750 credits a month',
+    'plan.club.feat.5': 'Extra teams, athletes and users',
 
     'cta.h2': 'Ready to transform your strength and conditioning?',
     'cta.sub':
       'Join the strength coaches who use TrainMind to make better decisions, faster.',
-    'cta.button': 'Create an account',
+    'cta.button': 'Try it free for 15 days',
 
     'cta.kick': 'Get started',
     'footer.copyright': 'All rights reserved.',
@@ -397,45 +435,64 @@ const T = {
 
     'pricing.kick': 'Precios',
     'pricing.h2': 'Planes y precios',
-    'pricing.sub': 'Elige el plan que mejor se adapte a ti. Entra en TrainMind.',
+    'pricing.sub': 'Dos ofertas: una para el Strength and Conditioning Coach y otra para el club. Precios con IVA incluido.',
     'pricing.toggle.monthly': 'Mensual',
     'pricing.toggle.yearly': 'Anual',
-    'pricing.toggle.save': 'Ahorra hasta el 11%',
-    'pricing.popular': 'Más popular',
+    'pricing.toggle.save': '2 meses gratis con el plan anual',
+    'pricing.toggle.badge': '−17%',
+    'pricing.popular': 'Recomendado',
     'pricing.period.month': '/mes',
     'pricing.period.year': '/año',
     'pricing.equivalent': 'equivalente a {price}/mes',
+    'pricing.individual.title': 'Strength and Conditioning Coach',
+    'pricing.individual.sub': 'Para el preparador físico que trabaja con uno o más equipos.',
+    'pricing.club.title': 'Clubes',
+    'pricing.club.sub': 'Un plan único para el staff de un club.',
+    'pricing.trial.title': 'Prueba gratuita de 15 días',
+    'pricing.trial.sub': 'Sin tarjeta y sin cargo automático. 1 equipo de hasta 12 atletas: entrenamientos, wellness, lesiones, Analytics y un informe diario de prueba. Los demás informes y la IA con los planes de pago.',
+    'pricing.trial.cta': 'Empezar la prueba gratuita',
+    'pricing.ext': 'Con Ultra y Club creces cuando lo necesitas: equipo adicional 8 €/mes, 5 atletas más 2 €/mes, usuario adicional 10 €/mes.',
+    'pricing.vat': 'Todos los precios incluyen IVA.',
 
     'plan.starter.name': 'Starter',
-    'plan.starter.tagline': 'Para quien empieza y quiere lo esencial.',
-    'plan.starter.cta': 'Regístrate',
-    'plan.starter.feat.1': '1 equipo (12 atletas)',
-    'plan.starter.feat.2': 'Informes básicos',
-    'plan.starter.feat.3': 'Wellness tracking',
-    'plan.starter.feat.4': 'Calendario',
+    'plan.starter.tagline': 'Para empezar con un equipo y las funciones básicas.',
+    'plan.starter.cta': 'Comprar',
+    'plan.starter.feat.1': '1 equipo · 12 atletas',
+    'plan.starter.feat.2': '1 usuario',
+    'plan.starter.feat.3': 'Informes básicos',
+    'plan.starter.feat.4': 'Wellness y calendario',
 
     'plan.pro.name': 'Professional',
-    'plan.pro.tagline': 'Para preparadores que van en serio.',
-    'plan.pro.cta': 'Regístrate',
-    'plan.pro.feat.1': '3 equipos (12 atletas por equipo)',
-    'plan.pro.feat.2': 'Informes avanzados',
-    'plan.pro.feat.3': 'AI Assistant',
-    'plan.pro.feat.4': 'Periodización',
-    'plan.pro.feat.5': 'RTP',
-    'plan.pro.feat.6': 'Analytics',
+    'plan.pro.tagline': 'Funciones avanzadas e IA para dos equipos.',
+    'plan.pro.cta': 'Comprar',
+    'plan.pro.feat.1': '2 equipos · 14 atletas por equipo',
+    'plan.pro.feat.2': '1 usuario',
+    'plan.pro.feat.3': 'Informe diario y post-partido',
+    'plan.pro.feat.4': 'AI Assistant · 200 créditos al mes',
+    'plan.pro.feat.5': 'Analytics',
 
     'plan.ultra.name': 'Ultra',
-    'plan.ultra.tagline': 'Tu plataforma, sin límites.',
-    'plan.ultra.cta': 'Regístrate',
-    'plan.ultra.feat.1': 'Equipos y atletas ilimitados',
-    'plan.ultra.feat.2': 'Todo lo de Professional',
-    'plan.ultra.feat.3': 'Acceso API',
-    'plan.ultra.feat.4': 'Soporte prioritario',
+    'plan.ultra.tagline': 'Más equipos, más atletas y un colaborador.',
+    'plan.ultra.cta': 'Comprar',
+    'plan.ultra.feat.1': '4 equipos · 20 atletas por equipo',
+    'plan.ultra.feat.2': 'Hasta 2 usuarios',
+    'plan.ultra.feat.3': 'Todo Professional',
+    'plan.ultra.feat.4': 'AI Assistant · 500 créditos al mes',
+    'plan.ultra.feat.5': 'Equipos, atletas y usuarios adicionales',
+
+    'plan.club.name': 'Club',
+    'plan.club.tagline': 'El staff del club trabaja unido, hasta 6 equipos.',
+    'plan.club.cta': 'Comprar',
+    'plan.club.feat.1': '6 equipos · 20 atletas por equipo',
+    'plan.club.feat.2': 'Hasta 4 usuarios del staff',
+    'plan.club.feat.3': 'Informes avanzados y Analytics',
+    'plan.club.feat.4': 'AI Assistant · 750 créditos al mes',
+    'plan.club.feat.5': 'Equipos, atletas y usuarios adicionales',
 
     'cta.h2': '¿Listo para transformar tu preparación física?',
     'cta.sub':
       'Únete a los preparadores físicos que usan TrainMind para tomar mejores decisiones, más rápido.',
-    'cta.button': 'Crea una cuenta',
+    'cta.button': 'Pruébalo gratis 15 días',
 
     'cta.kick': 'Empecemos',
     'footer.copyright': 'Todos los derechos reservados.',
@@ -458,23 +515,28 @@ type TKey = keyof (typeof T)['it'];
  * ───────────────────────────────────────────────────────── */
 type Plan = {
   /** Chiave usata nelle traduzioni ('pro' abbrevia 'professional'). */
-  key: 'starter' | 'pro' | 'ultra';
+  key: 'starter' | 'pro' | 'ultra' | 'club';
   /** Valore accettato dall'API, passato a /register come ?plan= */
-  planId: 'starter' | 'professional' | 'ultra';
+  planId: 'starter' | 'professional' | 'ultra' | 'club';
   /** Slug brand mostrato anche come badge in alto a destra dell'app. */
-  slug: 'START' | 'PRO' | 'ULTRA';
+  slug: 'START' | 'PRO' | 'ULTRA' | 'CLUB';
   monthly: number;
   yearly: number;
   features: TKey[];
   popular: boolean;
 };
 
+/*
+ * Listino dal 9/10/2026, IVA inclusa: l'annuale vale dieci mensilita'.
+ * La fonte e' apps/api/src/lib/plans.ts (e la strategia commerciale v3):
+ * se cambia un prezzo li', va cambiato anche qui e nella registrazione.
+ */
 const PLANS: Plan[] = [
   {
     key: 'starter',
     planId: 'starter',
     slug: 'START',
-    monthly: 14,
+    monthly: 15,
     yearly: 150,
     features: [
       'plan.starter.feat.1',
@@ -488,33 +550,51 @@ const PLANS: Plan[] = [
     key: 'pro',
     planId: 'professional',
     slug: 'PRO',
-    monthly: 21,
-    yearly: 225,
+    monthly: 30,
+    yearly: 300,
     features: [
       'plan.pro.feat.1',
       'plan.pro.feat.2',
       'plan.pro.feat.3',
       'plan.pro.feat.4',
       'plan.pro.feat.5',
-      'plan.pro.feat.6',
     ],
-    popular: true,
+    popular: false,
   },
   {
     key: 'ultra',
     planId: 'ultra',
     slug: 'ULTRA',
-    monthly: 30,
-    yearly: 320,
+    monthly: 35,
+    yearly: 350,
     features: [
       'plan.ultra.feat.1',
       'plan.ultra.feat.2',
       'plan.ultra.feat.3',
       'plan.ultra.feat.4',
+      'plan.ultra.feat.5',
     ],
-    popular: false,
+    // Il piano da spingere nell'offerta Individuale.
+    popular: true,
   },
 ];
+
+/** Offerta Club: piano unico, mostrato a tutta larghezza sotto i tre. */
+const CLUB_PLAN: Plan = {
+  key: 'club',
+  planId: 'club',
+  slug: 'CLUB',
+  monthly: 50,
+  yearly: 500,
+  features: [
+    'plan.club.feat.1',
+    'plan.club.feat.2',
+    'plan.club.feat.3',
+    'plan.club.feat.4',
+    'plan.club.feat.5',
+  ],
+  popular: false,
+};
 
 /* ─────────────────────────────────────────────────────────
  * Main page
@@ -555,6 +635,75 @@ export default function LandingPage() {
   }, []);
 
   const t = (key: TKey): string => T[locale][key] ?? T.it[key];
+
+  /** Card di un piano: la stessa per l'offerta Individuale e per il Club. */
+  const renderPlanCard = (plan: Plan, i: number, extraClass = '') => {
+    const price = billing === 'monthly' ? plan.monthly : plan.yearly;
+    const period =
+      billing === 'monthly' ? t('pricing.period.month') : t('pricing.period.year');
+    const monthlyEquivalent = (plan.yearly / 12).toLocaleString(
+      locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'it-IT',
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    );
+
+    return (
+      <article
+        key={plan.key}
+        className={`pc rv${plan.popular ? ' hot' : ''}${i === 1 ? ' d1' : i === 2 ? ' d2' : ''}${extraClass}`}
+      >
+        {plan.popular && <span className="pc-flag">{t('pricing.popular')}</span>}
+
+        <div className="pc-head">
+          <div className="mb-4 flex items-center gap-3">
+            <h3 className="!mb-0">{t(`plan.${plan.key}.name` as TKey)}</h3>
+            <span className="plan-tag">{plan.slug}</span>
+          </div>
+
+          <p className="tagline">{t(`plan.${plan.key}.tagline` as TKey)}</p>
+
+          <div className="pc-price">
+            <span className="pc-cur">€</span>
+            {price}
+            <span className="pc-per">{period}</span>
+          </div>
+          <div className="pc-eq mono">
+            {billing === 'yearly' &&
+              t('pricing.equivalent').replace('{price}', `€${monthlyEquivalent}`)}
+          </div>
+        </div>
+
+        <ul className="pc-feats">
+          {plan.features.map((featKey) => (
+            <li key={featKey}>
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 8.5l3.2 3.2L13 5" />
+              </svg>
+              <span>{t(featKey)}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Percorso relativo, non l'URL assoluto di sviluppo: cosi' funziona
+            anche in produzione sul dominio vero. Il piano viaggia nell'URL e
+            arriva preselezionato nel modulo di registrazione, dove resta
+            modificabile (anche verso la prova gratuita). */}
+        <Link
+          href={withForwarded(`/register?plan=${plan.planId}`, forwarded)}
+          className={`btn${plan.popular ? '' : ' btn-o'}`}
+        >
+          {t(`plan.${plan.key}.cta` as TKey)}
+        </Link>
+      </article>
+    );
+  };
 
   return (
     // `lp` attiva il design system LAB21 definito in styles/landing.css.
@@ -930,7 +1079,7 @@ export default function LandingPage() {
                 className={billing === 'yearly' ? 'on' : undefined}
               >
                 {t('pricing.toggle.yearly')}
-                <span className="save">−11%</span>
+                <span className="save">{t('pricing.toggle.badge')}</span>
               </button>
             </div>
             <div className="bt-note mono">
@@ -939,78 +1088,34 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Piani */}
-          <div className="pgrid">
-            {PLANS.map((plan, i) => {
-              const price = billing === 'monthly' ? plan.monthly : plan.yearly;
-              const period =
-                billing === 'monthly'
-                  ? t('pricing.period.month')
-                  : t('pricing.period.year');
-              const monthlyEquivalent = (plan.yearly / 12).toLocaleString(
-                locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'it-IT',
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-              );
-
-              return (
-                <article
-                  key={plan.key}
-                  className={`pc rv${plan.popular ? ' hot' : ''}${i === 1 ? ' d1' : i === 2 ? ' d2' : ''}`}
-                >
-                  {plan.popular && (
-                    <span className="pc-flag">{t('pricing.popular')}</span>
-                  )}
-
-                  <div className="mb-4 flex items-center gap-3">
-                    <h3 className="!mb-0">{t(`plan.${plan.key}.name` as TKey)}</h3>
-                    <span className="plan-tag">{plan.slug}</span>
-                  </div>
-
-                  <p className="tagline">{t(`plan.${plan.key}.tagline` as TKey)}</p>
-
-                  <div className="pc-price">
-                    <span className="pc-cur">€</span>
-                    {price}
-                    <span className="pc-per">{period}</span>
-                  </div>
-                  <div className="pc-eq mono">
-                    {billing === 'yearly' &&
-                      t('pricing.equivalent').replace('{price}', `€${monthlyEquivalent}`)}
-                  </div>
-
-                  <ul className="pc-feats">
-                    {plan.features.map((featKey) => (
-                      <li key={featKey}>
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M3 8.5l3.2 3.2L13 5" />
-                        </svg>
-                        <span>{t(featKey)}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Percorso relativo, non l'URL assoluto di sviluppo:
-                      cosi' funziona anche in produzione sul dominio vero.
-                      Il piano viaggia nell'URL e arriva preselezionato
-                      nel modulo di registrazione, dove resta modificabile. */}
-                  <Link
-                    href={withForwarded(`/register?plan=${plan.planId}`, forwarded)}
-                    className={`btn${plan.popular ? '' : ' btn-o'}`}
-                  >
-                    {t(`plan.${plan.key}.cta` as TKey)}
-                  </Link>
-                </article>
-              );
-            })}
+          {/* Prova gratuita: una strada separata dai piani, per entrambe le offerte. */}
+          <div className="trial-strip rv">
+            <div>
+              <h3>{t('pricing.trial.title')}</h3>
+              <p>{t('pricing.trial.sub')}</p>
+            </div>
+            <Link href={withForwarded('/register?plan=trial', forwarded)} className="btn">
+              {t('pricing.trial.cta')}
+            </Link>
           </div>
+
+          {/* Offerta Individuale */}
+          <div className="offer-h rv">
+            <h3>{t('pricing.individual.title')}</h3>
+            <p>{t('pricing.individual.sub')}</p>
+          </div>
+          <div className="pgrid">{PLANS.map((plan, i) => renderPlanCard(plan, i))}</div>
+
+          {/* Offerta Club: piano unico */}
+          <div className="offer-h rv">
+            <h3>{t('pricing.club.title')}</h3>
+            <p>{t('pricing.club.sub')}</p>
+          </div>
+          <div className="pgrid-club">{renderPlanCard(CLUB_PLAN, 0, ' pc-club')}</div>
+
+          <p className="pricing-note mono rv">
+            {t('pricing.ext')} {t('pricing.vat')}
+          </p>
         </div>
       </section>
 

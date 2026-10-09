@@ -102,7 +102,7 @@ export async function getTierBreakdown(): Promise<Array<{ tier: string; count: n
   );
   // Ordine fisso: i tre piani hanno un colore assegnato che non deve ballare
   // quando uno di loro resta a zero.
-  const order = ['STARTER', 'PROFESSIONAL', 'ULTRA'];
+  const order = ['STARTER', 'PROFESSIONAL', 'ULTRA', 'CLUB'];
   const map = new Map(rows.map((r) => [r.tier, n(r.count)]));
   return order.map((tier) => ({ tier, count: map.get(tier) ?? 0 }));
 }

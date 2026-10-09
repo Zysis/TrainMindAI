@@ -14,6 +14,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import cronParser from 'cron-parser';
 import { requireMinRole } from '../middleware/rbac.js';
+import { requirePlanFeature } from '../lib/plans.js';
 import { runScheduleNow } from '../services/report-scheduler-worker.js';
 import { reportAudienceSchema } from './reports.js';
 
@@ -60,7 +61,7 @@ function computeNextRun(cronExpression: string, timezone: string): Date | null {
 // ─── Routes ───────────────────────────────────────────────
 
 export async function reportScheduleRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
+  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER'), requirePlanFeature(app, 'reports')] };
 
   // ─── GET /reports/schedules ─────────────────────────
   app.get('/reports/schedules', auth, async (request: FastifyRequest, reply: FastifyReply) => {

@@ -97,7 +97,7 @@
       "genericError": "Error al cambiar la contraseña"
     },
     "currentPlan": "Plan actual",
-    "planUltraDesc": "Estás en el plan más alto: sin límites y con soporte prioritario incluido.",
+    "planUltraDesc": "Tienes el plan más completo de tu oferta. Si necesitas más equipos, atletas o usuarios, añádelos desde las extensiones.",
     "planUpgradeDesc": "Desbloquea más equipos, atletas y funciones avanzadas pasando al plan superior.",
     "planTop": "Plan más alto",
     "upgradePlan": "Mejorar plan",
@@ -120,8 +120,8 @@
       "fullTitle": "Plazas agotadas",
       "fullUpgradeHint": "Tu plan no tiene plazas libres. Subir de plan cuesta menos que comprar una plaza suelta.",
       "fullUpgradeCta": "Ver los planes",
-      "fullSeatHint": "Ya estás en el plan más alto. Puedes añadir plazas sueltas, cada una al precio de una suscripción Starter.",
-      "fullSeatCta": "Añadir una plaza",
+      "fullSeatHint": "Puedes añadir usuarios desde Suscripción → Extensiones: 10 € al mes por usuario.",
+      "fullSeatCta": "Ir a las extensiones",
       "role": {
         "ADMIN": "Administrador",
         "TRAINER": "Preparador",
@@ -131,7 +131,11 @@
       "inviteLinkHint": "Si el correo no llega, pasa este enlace directamente al colega. Vale 7 días y solo se ve ahora.",
       "copy": "Copiar",
       "copied": "Copiado"
-    }
+    },
+    "manageSubscription": "Gestionar suscripción",
+    "choosePlan": "Elegir un plan",
+    "planTrialDesc": "{days, plural, one {Queda # día} other {Quedan # días}} de prueba. Elige un plan cuando quieras: los datos se mantienen.",
+    "planTrialExpiredDesc": "La prueba ha terminado: los datos son de solo lectura hasta que elijas un plan."
   },
   "dashboard": {
     "title": "Panel",
@@ -1727,12 +1731,12 @@
   },
   "billing": {
     "title": "Suscripción",
-    "subtitle": "Gestiona tu plan y facturación",
+    "subtitle": "Tu plan, el uso y las extensiones",
     "free": "Gratuito",
     "plan": "Plan",
     "freePlan": "Plan Gratuito",
     "currentPlan": "Plan Actual",
-    "choosePlan": "Elegir Plan",
+    "choosePlan": "Elige tu plan",
     "recommended": "Recomendado",
     "perMonth": "/mes",
     "loading": "Cargando plan...",
@@ -1771,7 +1775,54 @@
     "featureRTP": "Lesiones y protocolos RTP",
     "featureAnalytics": "Analítica avanzada",
     "featureUnlimitedTeams": "Equipos ilimitados",
-    "featureApiAccess": "Acceso a la API"
+    "featureApiAccess": "Acceso a la API",
+    "choose": "Elegir",
+    "statusTrialDays": "Prueba gratuita · {days, plural, one {# día} other {# días}}",
+    "statusTrialExpired": "Prueba terminada · solo lectura",
+    "statusLegacy": "Cuenta histórica",
+    "trialName": "Prueba gratuita",
+    "cycleMonthly": "Mensual",
+    "cycleYearly": "Anual",
+    "cycleYearlySave": "Anual · 2 meses gratis",
+    "expiredHelp": "Puedes consultar y exportar todos tus datos. Elige un plan para volver a editarlos: no se pierde nada.",
+    "legacyHelp": "Tu cuenta es anterior a los planes actuales: por ahora no tiene límites. Aun así puedes elegir un plan.",
+    "refresh": "Actualizar",
+    "usageTitle": "Uso del plan",
+    "usageTeams": "Equipos",
+    "usageAthletes": "Atletas activos",
+    "usageUsers": "Usuarios del staff",
+    "usageAi": "Créditos de IA del mes",
+    "teamAthletes": "{n} / {cap} atletas",
+    "usageFootnote": "Atletas archivados reactivados este mes: {used} de {limit}. Los créditos de IA se renuevan el primer día del mes.",
+    "offerIndividual": "Strength and Conditioning Coach",
+    "offerClub": "Club",
+    "offerIndividualDesc": "Para el preparador físico que trabaja con uno o más equipos.",
+    "offerClubDesc": "Plan único para el staff de un club: conviene a partir de 4 usuarios o 6 equipos.",
+    "perYear": "/año",
+    "adminOnly": "Solo el administrador de la cuenta puede cambiar el plan.",
+    "vatIncluded": "Precios con IVA incluido.",
+    "activated": "Plan {plan} activado.",
+    "extensionsSaved": "Extensiones actualizadas.",
+    "extensionsTitle": "Extensiones",
+    "extensionsDesc": "Equipos, atletas y usuarios adicionales, cuando hagan falta. Disponibles con Ultra y Club.",
+    "extTeams": "Equipos adicionales",
+    "extTeamsPrice": "{monthly} €/mes o {yearly} €/año cada uno, con {credits} créditos de IA más",
+    "extUsers": "Usuarios adicionales",
+    "extUsersPrice": "{monthly} €/mes o {yearly} €/año cada uno",
+    "extPacks": "Atletas adicionales por equipo",
+    "extPacksPrice": "Paquetes de {size} atletas: {monthly} €/mes o {yearly} €/año cada uno",
+    "extTotal": "Extensiones: {total} al mes",
+    "extSave": "Guardar extensiones",
+    "feat": {
+      "teams": "{teams, plural, one {# equipo} other {# equipos}} · {athletes} atletas por equipo",
+      "users": "{n, plural, one {# usuario} other {Hasta # usuarios}}",
+      "reportsBase": "Informes básicos",
+      "reportsAdvanced": "Informe diario y post-partido",
+      "wellnessCalendar": "Wellness y calendario",
+      "ai": "AI Assistant · {credits} créditos al mes",
+      "analytics": "Analytics",
+      "extensions": "Equipos, atletas y usuarios adicionales"
+    }
   },
   "topbar": {
     "search": "Buscar atletas, ejercicios, sesiones...",
@@ -1862,8 +1913,8 @@
       "ruleUpper": "Al menos una letra mayúscula",
       "ruleNumber": "Al menos un número"
     },
-    "planLabel": "Plan",
-    "planHint": "Puedes cambiarlo cuando quieras desde ajustes.",
+    "planLabel": "¿Cómo quieres empezar?",
+    "planHint": "Precios con IVA incluido. Puedes cambiar de plan cuando quieras desde Suscripción.",
     "planStarter": "Starter",
     "planProfessional": "Professional",
     "planUltra": "Ultra",
@@ -1879,7 +1930,14 @@
       "TRAINER": "preparador",
       "MEDICAL": "staff médico",
       "VIEWER": "solo lectura"
-    }
+    },
+    "planTrial": "Prueba gratuita de 15 días",
+    "planTrialHint": "Sin tarjeta · 1 equipo de hasta 12 atletas",
+    "planFree": "Gratis",
+    "planOrBuy": "o compra un plan ahora",
+    "planClub": "Club",
+    "planOfferIndividual": "S&C Coach",
+    "planOfferClub": "Club"
   },
   "fieldTraining": {
     "title": "Entrenamiento de campo",
@@ -2304,7 +2362,20 @@
     "EMAIL_ALREADY_REGISTERED": "Esta dirección ya está registrada. Inicia sesión en lugar de crear una cuenta nueva.",
     "LAST_ADMIN": "Debe quedar al menos un administrador activo: nombra antes a otro administrador.",
     "CANNOT_DISABLE_SELF": "No puedes desactivar tu propia cuenta.",
-    "PRISMA_CLIENT_OUTDATED": "El cliente Prisma no está actualizado: ejecuta `pnpm db:generate` y `pnpm db:push`, luego reinicia la API."
+    "PRISMA_CLIENT_OUTDATED": "El cliente Prisma no está actualizado: ejecuta `pnpm db:generate` y `pnpm db:push`, luego reinicia la API.",
+    "PLAN_TEAM_LIMIT": "Has alcanzado los {limit} equipos de tu plan. {canExtend, select, yes {Puedes añadir más desde Suscripción → Extensiones.} other {Para tener más, pasa a un plan superior.}}",
+    "PLAN_ATHLETE_LIMIT": "Este equipo ha alcanzado el máximo de {limit} atletas. {canExtend, select, yes {Puedes añadir un paquete de 5 atletas desde Suscripción → Extensiones.} other {Archiva a quien ya no sigues o pasa a un plan superior.}}",
+    "PLAN_ATHLETE_TOTAL_LIMIT": "Tu plan incluye como máximo {limit} atletas activos. {canExtend, select, yes {Puedes añadir equipos o paquetes de atletas desde Suscripción → Extensiones.} other {Archiva a quien ya no sigues o pasa a un plan superior.}}",
+    "PLAN_REACTIVATION_LIMIT": "Has alcanzado las {limit} reactivaciones de atletas de este mes.",
+    "PLAN_FEATURE_UNAVAILABLE": "Esta función no está incluida en tu plan ({feature, select, ai {AI Assistant} analytics {Analytics} dailyReport {informe diario} gameReport {informe post-partido} reports {informes} adaptations {Adaptaciones IA} other {función avanzada}}).",
+    "AI_QUOTA_EXCEEDED": "Has usado todos los créditos de IA de este mes ({used} de {limit}). Se renuevan el día 1 del mes.",
+    "PLAN_READ_ONLY": "La prueba gratuita ha terminado: puedes consultar los datos, pero para editarlos debes elegir un plan.",
+    "PLAN_EXTENSIONS_UNAVAILABLE": "Las extensiones están disponibles con Ultra y Club.",
+    "PLAN_PRICE_MISSING": "El pago de este plan aún no está configurado.",
+    "EXTENSION_PRICE_MISSING": "El pago de las extensiones aún no está configurado.",
+    "EXTENSIONS_REDUCE_IN_PORTAL": "Para reducir las extensiones usa “Gestionar suscripción”.",
+    "PLAN_TRIAL_REPORT_LIMIT": "La prueba gratuita incluye un solo informe diario. Elige un plan para crear más.",
+    "PLAN_TRIAL_REPORT_SAVE_FIRST": "En la prueba gratuita el informe se exporta después de guardarlo."
   },
   "dailyReport": {
     "title": "Informe diario",
@@ -2376,7 +2447,11 @@
     "field_taping": "Vendaje / fisio",
     "field_treatment": "Pruebas y tratamiento",
     "field_trainingType": "Tipo de entrenamiento",
-    "field_forecast": "Previsión"
+    "field_forecast": "Previsión",
+    "trialAvailable": "En la prueba gratuita puedes guardar y exportar un informe diario: elige equipo y día, una vez guardado será ese.",
+    "trialUsed": "Este es el informe diario incluido en la prueba gratuita: puedes editarlo y exportarlo cuando quieras. Para crear más,",
+    "trialChoosePlan": "elige un plan.",
+    "trialExportHint": "En la prueba gratuita, guarda el informe antes de exportarlo."
   },
   "dailyVocab": {
     "nextTraining": {
@@ -2605,5 +2680,52 @@
     "staffOnlyTitle": "Área reservada al cuerpo técnico",
     "staffOnlyBody": "Tu cuenta está registrada como atleta. Este panel es para preparadores y personal médico: usa la app TrainMind Athlete para tus sesiones y el cuestionario de bienestar.",
     "goToAthleteApp": "Ir a la app del atleta"
+  },
+  "planBanner": {
+    "trial": "Prueba gratuita: {days, plural, one {queda # día} other {quedan # días}}. Elige un plan cuando quieras, tus datos se quedan.",
+    "expiredTitle": "La prueba gratuita ha terminado.",
+    "expiredBody": "Tus datos están a salvo: puedes consultarlos y exportarlos. Para volver a editarlos elige un plan.",
+    "choosePlan": "Elegir un plan",
+    "aiAlert": "Has usado {used} de tus {limit} créditos de IA este mes.",
+    "seeUsage": "Ver el uso",
+    "badgeTrial": "PRUEBA"
+  },
+  "planGate": {
+    "availableFrom": "{feature, select, reports {Incluidos en todos los planes de pago, desde Starter.} adaptations {Incluidas en todos los planes de pago, desde Starter.} other {Disponible desde el plan Professional y con Club.}}",
+    "cta": "Ver los planes",
+    "ai": {
+      "title": "AI Assistant no está incluido en tu plan",
+      "body": "Chat, generación de planes, insights de wellness y sugerencias de vuelta al juego escritas por la IA. Tú decides, la IA prepara."
+    },
+    "analytics": {
+      "title": "Analytics no está incluido en tu plan",
+      "body": "Carga, ACWR, wellness y asistencia comparados, por atleta y por equipo."
+    },
+    "dailyReport": {
+      "title": "El informe diario no está incluido en tu plan",
+      "body": "El estado del equipo cada día, listo para compartir con el staff."
+    },
+    "gameReport": {
+      "title": "El informe post-partido no está incluido en tu plan",
+      "body": "Minutos, carga y disponibilidad después de cada partido, en un documento exportable."
+    },
+    "reports": {
+      "title": "Los informes no están incluidos en la prueba gratuita",
+      "body": "El generador de informes, los envíos programados y los informes post-partido llegan con los planes de pago. La prueba incluye un informe diario, desde la tarjeta «Informe diario»."
+    },
+    "adaptations": {
+      "title": "Las Adaptaciones IA no están incluidas en la prueba gratuita",
+      "body": "Propuestas de ajuste de la carga según wellness y RPE, para aprobar o descartar. Elige un plan para desbloquearlas."
+    }
+  },
+  "planLimit": {
+    "teamsFull": "Has usado los {limit} equipos de tu plan.",
+    "teamsExtend": "Puedes añadir más desde Suscripción → Extensiones: {monthly} € al mes por equipo, con {credits} créditos de IA más.",
+    "athletesFull": "Equipo completo: {used} de {limit} atletas.",
+    "athletesExtend": "Puedes añadir un paquete de {size} atletas a este equipo desde Suscripción → Extensiones: {monthly} € al mes.",
+    "upgrade": "Para tener más, pasa a un plan superior.",
+    "askAdmin": "Pídeselo al administrador de la cuenta.",
+    "ctaExtend": "Ir a las extensiones",
+    "ctaUpgrade": "Ver los planes"
   }
 }

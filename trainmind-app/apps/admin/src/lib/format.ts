@@ -59,6 +59,8 @@ const TIER_LABEL: Record<string, string> = {
   STARTER: 'Starter',
   PROFESSIONAL: 'Professional',
   ULTRA: 'Ultra',
+  // Offerta Club / Societa', piano unico (dal 9/10/2026).
+  CLUB: 'Club',
 };
 
 export function fmtTier(tier: string | null | undefined): string {

@@ -96,7 +96,12 @@
       "saving": "Salvataggio...",
       "cancel": "Annulla",
       "genericError": "Errore durante il cambio password"
-    }
+    },
+    "planUltraDesc": "Hai il piano più completo della tua offerta. Se ti servono più squadre, atleti o utenti, aggiungili dalle estensioni.",
+    "manageSubscription": "Gestisci abbonamento",
+    "choosePlan": "Scegli un piano",
+    "planTrialDesc": "{days, plural, one {Manca # giorno} other {Mancano # giorni}} alla fine della prova. Scegli un piano quando vuoi: i dati restano.",
+    "planTrialExpiredDesc": "La prova è terminata: i dati sono in sola lettura finché non scegli un piano."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1552,12 +1557,12 @@
   },
   "billing": {
     "title": "Abbonamento",
-    "subtitle": "Gestisci il tuo piano e la fatturazione",
+    "subtitle": "Il tuo piano, l’uso e le estensioni",
     "free": "Gratuito",
     "plan": "Piano",
     "freePlan": "Piano Gratuito",
     "currentPlan": "Piano Attuale",
-    "choosePlan": "Scegli Piano",
+    "choosePlan": "Scegli il piano",
     "recommended": "Consigliato",
     "perMonth": "/mese",
     "loading": "Caricamento piano...",
@@ -1585,7 +1590,54 @@
     "featureAllProfessional": "Tutto Professional",
     "featurePrioritySupport": "Supporto prioritario",
     "feature2Athletes": "2 atleti",
-    "featureLimitedReports": "Report limitati"
+    "featureLimitedReports": "Report limitati",
+    "choose": "Scegli",
+    "statusTrialDays": "Prova gratuita · {days, plural, one {# giorno} other {# giorni}}",
+    "statusTrialExpired": "Prova terminata · sola lettura",
+    "statusLegacy": "Account storico",
+    "trialName": "Prova gratuita",
+    "cycleMonthly": "Mensile",
+    "cycleYearly": "Annuale",
+    "cycleYearlySave": "Annuale · 2 mesi gratis",
+    "expiredHelp": "Puoi consultare ed esportare tutti i tuoi dati. Scegli un piano per tornare a modificarli: niente va perso.",
+    "legacyHelp": "Il tuo account è nato prima dei piani attuali: per ora non ha limiti. Puoi comunque scegliere un piano.",
+    "refresh": "Aggiorna",
+    "usageTitle": "Uso del piano",
+    "usageTeams": "Squadre",
+    "usageAthletes": "Atleti attivi",
+    "usageUsers": "Utenti dello staff",
+    "usageAi": "Crediti AI del mese",
+    "teamAthletes": "{n} / {cap} atleti",
+    "usageFootnote": "Riattivazioni di atleti archiviati questo mese: {used} su {limit}. I crediti AI si rinnovano il primo giorno del mese.",
+    "offerIndividual": "Strength and Conditioning Coach",
+    "offerClub": "Club",
+    "offerIndividualDesc": "Per il preparatore atletico che segue una o più squadre.",
+    "offerClubDesc": "Piano unico per lo staff di una società: conviene da 4 utenti o 6 squadre in su.",
+    "perYear": "/anno",
+    "adminOnly": "Solo l’amministratore dell’account può cambiare il piano.",
+    "vatIncluded": "Prezzi IVA inclusa.",
+    "activated": "Piano {plan} attivato.",
+    "extensionsSaved": "Estensioni aggiornate.",
+    "extensionsTitle": "Estensioni",
+    "extensionsDesc": "Squadre, atleti e utenti in più, quando servono. Disponibili con Ultra e Club.",
+    "extTeams": "Squadre aggiuntive",
+    "extTeamsPrice": "{monthly} €/mese o {yearly} €/anno ciascuna, con {credits} crediti AI in più",
+    "extUsers": "Utenti aggiuntivi",
+    "extUsersPrice": "{monthly} €/mese o {yearly} €/anno ciascuno",
+    "extPacks": "Atleti aggiuntivi per squadra",
+    "extPacksPrice": "Pacchetti da {size} atleti: {monthly} €/mese o {yearly} €/anno ciascuno",
+    "extTotal": "Estensioni: {total} al mese",
+    "extSave": "Salva estensioni",
+    "feat": {
+      "teams": "{teams, plural, one {# squadra} other {# squadre}} · {athletes} atleti per squadra",
+      "users": "{n, plural, one {# utente} other {Fino a # utenti}}",
+      "reportsBase": "Report base",
+      "reportsAdvanced": "Report giornaliero e post-partita",
+      "wellnessCalendar": "Wellness e calendario",
+      "ai": "AI Assistant · {credits} crediti al mese",
+      "analytics": "Analytics",
+      "extensions": "Squadre, atleti e utenti aggiuntivi"
+    }
   },
   "topbar": {
     "search": "Cerca atleti, esercizi, sessioni...",
@@ -1675,7 +1727,16 @@
       "rule8": "Almeno 8 caratteri",
       "ruleUpper": "Almeno una lettera maiuscola",
       "ruleNumber": "Almeno un numero"
-    }
+    },
+    "planLabel": "Come vuoi iniziare?",
+    "planHint": "Prezzi IVA inclusa. Puoi cambiare piano in qualsiasi momento da Abbonamento.",
+    "planTrial": "Prova gratuita di 15 giorni",
+    "planTrialHint": "Senza carta · 1 squadra fino a 12 atleti",
+    "planFree": "Gratis",
+    "planOrBuy": "oppure acquista subito un piano",
+    "planClub": "Club",
+    "planOfferIndividual": "S&C Coach",
+    "planOfferClub": "Club"
   },
   "fieldTraining": {
     "title": "Allenamento in campo",
@@ -2114,6 +2175,66 @@
     "AI_FALLBACK_ERROR": "Errore nella generazione AI. Verifica la configurazione del servizio.",
     "AI_RESPONSE_TRUNCATED": "Il piano generato è stato troncato: è troppo lungo per una sola risposta. Riprova, oppure chiedi meno settimane.",
     "EMPTY_PLAN": "Il piano generato è vuoto.",
-    "EVENT_ALREADY_COMPLETED": "Questo allenamento è già stato completato: il carico registrato resterebbe negli analytics senza il foglio che lo spiega. Annullalo invece di eliminarlo."
+    "EVENT_ALREADY_COMPLETED": "Questo allenamento è già stato completato: il carico registrato resterebbe negli analytics senza il foglio che lo spiega. Annullalo invece di eliminarlo.",
+    "PLAN_TEAM_LIMIT": "Hai raggiunto le {limit} squadre del tuo piano. {canExtend, select, yes {Puoi aggiungerne altre da Abbonamento → Estensioni.} other {Per averne di più passa a un piano superiore.}}",
+    "PLAN_ATHLETE_LIMIT": "Questa squadra ha raggiunto il massimo di {limit} atleti. {canExtend, select, yes {Puoi aggiungere un pacchetto da 5 atleti da Abbonamento → Estensioni.} other {Archivia chi non segui più o passa a un piano superiore.}}",
+    "PLAN_ATHLETE_TOTAL_LIMIT": "Il tuo piano include al massimo {limit} atleti attivi. {canExtend, select, yes {Puoi aggiungere squadre o pacchetti di atleti da Abbonamento → Estensioni.} other {Archivia chi non segui più o passa a un piano superiore.}}",
+    "PLAN_REACTIVATION_LIMIT": "Hai raggiunto le {limit} riattivazioni di atleti di questo mese.",
+    "PLAN_FEATURE_UNAVAILABLE": "Questa funzione non è inclusa nel tuo piano ({feature, select, ai {AI Assistant} analytics {Analytics} dailyReport {report giornaliero} gameReport {report post-partita} reports {report} adaptations {Adattamenti AI} other {funzione avanzata}}).",
+    "AI_QUOTA_EXCEEDED": "Hai usato tutti i crediti AI di questo mese ({used} su {limit}). Si rinnovano il primo del mese.",
+    "PLAN_READ_ONLY": "La prova gratuita è terminata: puoi consultare i dati, ma per modificarli devi scegliere un piano.",
+    "PLAN_EXTENSIONS_UNAVAILABLE": "Le estensioni sono disponibili con Ultra e Club.",
+    "PLAN_PRICE_MISSING": "Il pagamento di questo piano non è ancora configurato.",
+    "EXTENSION_PRICE_MISSING": "Il pagamento delle estensioni non è ancora configurato.",
+    "EXTENSIONS_REDUCE_IN_PORTAL": "Per ridurre le estensioni usa “Gestisci abbonamento”.",
+    "PLAN_TRIAL_REPORT_LIMIT": "La prova gratuita comprende un solo report giornaliero. Per crearne altri scegli un piano.",
+    "PLAN_TRIAL_REPORT_SAVE_FIRST": "Nella prova gratuita il report si esporta dopo averlo salvato."
+  },
+  "planBanner": {
+    "trial": "Prova gratuita: {days, plural, one {# giorno rimasto} other {# giorni rimasti}}. Scegli un piano quando vuoi, i dati restano.",
+    "expiredTitle": "La prova gratuita è terminata.",
+    "expiredBody": "I tuoi dati sono al sicuro: puoi consultarli ed esportarli. Per tornare a modificarli scegli un piano.",
+    "choosePlan": "Scegli un piano",
+    "aiAlert": "Hai usato {used} dei {limit} crediti AI di questo mese.",
+    "seeUsage": "Vedi l’uso",
+    "badgeTrial": "PROVA"
+  },
+  "planGate": {
+    "availableFrom": "{feature, select, reports {Inclusi in tutti i piani a pagamento, a partire dallo Starter.} adaptations {Inclusi in tutti i piani a pagamento, a partire dallo Starter.} other {Disponibile dal piano Professional e con il Club.}}",
+    "cta": "Vedi i piani",
+    "ai": {
+      "title": "AI Assistant non incluso nel tuo piano",
+      "body": "Chat, generazione dei piani, insight sul wellness e suggerimenti di rientro scritti dall’AI. Tu decidi, l’AI prepara."
+    },
+    "analytics": {
+      "title": "Analytics non incluso nel tuo piano",
+      "body": "Carico, ACWR, wellness e presenze a confronto, per atleta e per squadra."
+    },
+    "dailyReport": {
+      "title": "Report giornaliero non incluso nel tuo piano",
+      "body": "Lo stato della squadra di ogni giorno, pronto da condividere con lo staff."
+    },
+    "gameReport": {
+      "title": "Report post-partita non incluso nel tuo piano",
+      "body": "Minuti, carico e prontezza dopo ogni partita, in un documento da esportare."
+    },
+    "reports": {
+      "title": "I report non sono inclusi nella prova gratuita",
+      "body": "Generatore di report, invii programmati e report post-partita arrivano con i piani a pagamento. Nella prova è compreso un report giornaliero, dalla versione web."
+    },
+    "adaptations": {
+      "title": "Adattamenti AI non inclusi nella prova gratuita",
+      "body": "Le proposte di adattamento del carico in base a wellness e RPE, da approvare o scartare. Scegli un piano per sbloccarle."
+    }
+  },
+  "planLimit": {
+    "teamsFull": "Hai usato tutte le {limit} squadre del piano.",
+    "teamsExtend": "Puoi aggiungerne altre da Abbonamento → Estensioni: {monthly} € al mese per squadra, con {credits} crediti AI in più.",
+    "athletesFull": "Squadra al completo: {used} atleti su {limit}.",
+    "athletesExtend": "Puoi aggiungere un pacchetto da {size} atleti a questa squadra da Abbonamento → Estensioni: {monthly} € al mese.",
+    "upgrade": "Per averne di più passa a un piano superiore.",
+    "askAdmin": "Chiedi all’amministratore dell’account.",
+    "ctaExtend": "Vai alle estensioni",
+    "ctaUpgrade": "Vedi i piani"
   }
 }

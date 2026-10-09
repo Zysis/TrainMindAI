@@ -7,6 +7,21 @@ import { recordAiUsage, extractUsage, parseUsageFromSseChunk } from '../services
 import { fullName } from '../lib/identity.js';
 import { createPseudonymizer, maskSelectedAthleteName } from '../lib/pseudonym.js';
 import { buildAthleteContext } from '../lib/athlete-context.js';
+import { assertAiAvailable, isPlanEnforcementEnabled, PlanLimitError, sendPlanError } from '../lib/plans.js';
+import type { AiOperation } from '../lib/ai-models.js';
+
+/**
+ * Operazione AI di ogni rotta che chiama il modello, per il controllo del
+ * piano: funzione inclusa e crediti del mese. Le rotte di sola lettura
+ * (/ai/usage, /ai/health) non ci sono e non vengono toccate.
+ */
+const AI_ROUTE_OPERATION: Record<string, AiOperation> = {
+  '/api/v1/ai/chat': 'CHAT',
+  '/api/v1/ai/coach': 'COACH',
+  '/api/v1/ai/generate': 'GENERATE',
+  '/api/v1/ai/wellness-insights': 'WELLNESS',
+  '/api/v1/ai/rtp-suggest': 'RTP',
+};
 
 /**
  * AI Service URL (Python FastAPI on port 3002)
@@ -145,6 +160,22 @@ function aiErrorResponse(error: unknown) {
 export async function aiRoutes(app: FastifyInstance) {
   // All AI routes require authentication
   app.addHook('preHandler', app.authenticate);
+
+  // Piano: AI inclusa e crediti del mese non esauriti. Gira dopo
+  // l'autenticazione (gli hook seguono l'ordine di registrazione) e non fa
+  // niente a interruttore spento o per gli account storici.
+  app.addHook('preHandler', async (request, reply) => {
+    if (reply.sent || !isPlanEnforcementEnabled()) return;
+    if (request.method !== 'POST') return;
+    const operation = AI_ROUTE_OPERATION[request.routeOptions?.url ?? ''];
+    if (!operation) return;
+    try {
+      await assertAiAvailable(app.prisma, request.user.organizationId, operation);
+    } catch (err) {
+      if (err instanceof PlanLimitError) return sendPlanError(reply, err);
+      throw err;
+    }
+  });
 
   // ─── POST /ai/chat — Chat with RAG (streaming or not) ────
   app.post('/ai/chat', async (request, reply) => {

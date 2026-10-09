@@ -83,8 +83,9 @@ export function Badge({
 }
 
 export function TierBadge({ tier }: { tier: string | null }) {
-  const tone = tier === 'ULTRA' ? 'teal' : tier === 'PROFESSIONAL' ? 'success' : 'neutral';
-  const label = tier === 'ULTRA' ? 'Ultra' : tier === 'PROFESSIONAL' ? 'Professional' : 'Starter';
+  const tone = tier === 'ULTRA' || tier === 'CLUB' ? 'teal' : tier === 'PROFESSIONAL' ? 'success' : 'neutral';
+  const label =
+    tier === 'CLUB' ? 'Club' : tier === 'ULTRA' ? 'Ultra' : tier === 'PROFESSIONAL' ? 'Professional' : 'Starter';
   return <Badge tone={tone}>{label}</Badge>;
 }
 

@@ -157,7 +157,14 @@ export interface RegisterInput {
   lastName: string;
   organizationName: string;
   dateOfBirth: string; // YYYY-MM-DD — gate 14+
-  plan?: 'starter' | 'professional' | 'ultra'; // piano scelto in registrazione
+  /**
+   * Strada scelta in registrazione: prova gratuita oppure un piano comprato
+   * subito (vedi apps/api/src/lib/plans.ts). Senza il campo l'API ricade su
+   * starter, come prima.
+   */
+  plan?: 'trial' | 'starter' | 'professional' | 'ultra' | 'club';
+  /** Solo con `trial`: il piano visto sulla landing, proposto a fine prova. */
+  intendedPlan?: 'starter' | 'professional' | 'ultra' | 'club';
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   consentHealthData?: boolean; // opt-in art. 9 GDPR

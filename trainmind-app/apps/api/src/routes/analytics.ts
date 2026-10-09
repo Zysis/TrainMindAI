@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { computeAcwr, calculateWellnessScore } from '@trainmind/utils';
 import { fullName } from '../lib/identity.js';
+import { requirePlanFeature } from '../lib/plans.js';
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS ROUTES — Sprint 3.2
@@ -17,6 +18,8 @@ const analyticsQuerySchema = z.object({
 
 export async function analyticsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
+  // Analytics non e' nello Starter (vedi lib/plans.ts). No-op a piano non applicato.
+  app.addHook('preHandler', requirePlanFeature(app, 'analytics'));
 
   // ─── Helper: resolve team athletes ───
   async function getTeamAthleteIds(organizationId: string, teamId?: string | null): Promise<Record<string, string[]>> {

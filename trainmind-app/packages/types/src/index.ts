@@ -63,7 +63,7 @@ export interface Organization extends BaseEntity {
   name: string;
   slug: string;
   sport: string;
-  tier: 'STARTER' | 'PROFESSIONAL' | 'ULTRA';
+  tier: 'STARTER' | 'PROFESSIONAL' | 'ULTRA' | 'CLUB';
 }
 
 export interface Athlete extends BaseEntity {

@@ -141,6 +141,11 @@ services:
       # x-registration-token). Se manca qui, il container non la vede e nessun
       # token funziona, per quanto giusto sia scritto in .env.deploy.
       REGISTRATION_ACCESS_TOKEN: ${REGISTRATION_ACCESS_TOKEN:-}
+      # Piani, prova gratuita e limiti (apps/api/src/lib/plans.ts). Spento di
+      # default: l'app si comporta come prima. Si accende con
+      # PLAN_ENFORCEMENT=true in .env.deploy quando pagamenti e partita IVA
+      # sono pronti. Anche questa deve stare qui, o il container non la vede.
+      PLAN_ENFORCEMENT: ${PLAN_ENFORCEMENT:-false}
       ATHLETE_APP_URL: https://${ATHLETE_DOMAIN}
       # CORS ragiona per origine (schema + host), il sottopercorso non conta:
       # qui va il dominio del sito, non piu' quello dell'app.

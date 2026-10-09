@@ -18,7 +18,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import {
   ArrowLeft, Save, Download, Loader2, Plus, X, Sparkles, Clock, Activity,
-  Stethoscope, ChevronDown, ChevronUp, ExternalLink,
+  Stethoscope, ChevronDown, ChevronUp, ExternalLink, Info,
 } from 'lucide-react';
 import {
   CLINICAL_FIELDS, NEXT_TRAINING_TONE, ACWR_TONE,
@@ -27,7 +27,8 @@ import {
 import { useToast } from '@/components/ui/toast';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { apiFetch } from '@/lib/auth/fetch';
+import { apiFetch, ApiError } from '@/lib/auth/fetch';
+import { usePlan } from '@/lib/plan/context';
 import { useApiError } from '@/lib/i18n/api-error';
 import { getAccessToken } from '@/lib/auth/api';
 import { API_BASE_URL, API_PREFIX } from '@/lib/constants';
@@ -135,14 +136,23 @@ function fmtMs(ms: number): string {
   return `${Math.floor(total / 60)}min ${total % 60}s`;
 }
 
-/** L'API risponde `{ error: { message } }`; il testo grezzo è l'ultima risorsa. */
-async function readApiError(res: Response): Promise<string> {
+/**
+ * L'API risponde `{ error: { code, message, details } }`: si ricostruisce un
+ * ApiError cosi' i codici noti (per esempio i limiti della prova) escono
+ * tradotti. Il testo grezzo è l'ultima risorsa.
+ */
+async function readApiError(res: Response): Promise<Error> {
   const text = await res.text();
   try {
-    const parsed = JSON.parse(text) as { error?: { message?: string }; message?: string };
-    return parsed.error?.message || parsed.message || text || `HTTP ${res.status}`;
+    const parsed = JSON.parse(text) as {
+      error?: { code?: string; message?: string; details?: Record<string, unknown> };
+      message?: string;
+    };
+    const message = parsed.error?.message || parsed.message || text || `HTTP ${res.status}`;
+    if (parsed.error?.code) return new ApiError(message, parsed.error.code, res.status, parsed.error.details);
+    return new Error(message);
   } catch {
-    return text || `HTTP ${res.status}`;
+    return new Error(text || `HTTP ${res.status}`);
   }
 }
 
@@ -178,8 +188,41 @@ export default function DailyReportPage() {
     else if (!teamId && teams.length > 0) setTeamId(teams[0].id);
   }, [selectedTeamId, teams, teamId]);
 
+  // ─── Prova gratuita: un solo report giornaliero ─────
+  // Nella prova (anche scaduta) si salva ed esporta UN report: una squadra,
+  // un giorno (apps/api/src/lib/plans.ts, assertTrialDailyReport). Se esiste
+  // già, la pagina si apre su quello e i selettori restano fermi; l'API
+  // rifiuterebbe comunque gli altri giorni.
+  // `trialReport`: undefined = non ancora verificato, null = nessun vincolo
+  // (piano a pagamento, o prova senza report salvato).
+  const { plan, loading: planLoading } = usePlan();
+  const trialMode = !!plan?.enforced && (plan.mode === 'trial' || plan.mode === 'expired');
+  const [trialReport, setTrialReport] = useState<{ teamId: string; date: string } | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (planLoading) return;
+    if (!trialMode) { setTrialReport(null); return; }
+    let cancelled = false;
+    apiFetch<{ data: Array<{ teamId: string; date: string }> }>('/daily-report/list?limit=1')
+      .then((res) => {
+        if (cancelled) return;
+        const first = res.data[0];
+        if (first) {
+          setTeamId(first.teamId);
+          setDate(first.date);
+          setTrialReport({ teamId: first.teamId, date: first.date });
+        } else {
+          setTrialReport(null);
+        }
+      })
+      .catch(() => { if (!cancelled) setTrialReport(null); });
+    return () => { cancelled = true; };
+  }, [planLoading, trialMode]);
+
+  const trialLocked = trialMode && !!trialReport;
+
   const load = useCallback(async () => {
-    if (!teamId || !date) return;
+    if (!teamId || !date || trialReport === undefined) return;
     setLoading(true);
     try {
       const res = await apiFetch<{ data: { report: DailyReport } }>(
@@ -198,7 +241,7 @@ export default function DailyReportPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, date, locale]);
+  }, [teamId, date, locale, trialReport]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -273,6 +316,7 @@ export default function DailyReportPage() {
       setEntries(r.entries);
       setTeamLines(r.teamLines ?? '');
       setDirty(false);
+      if (trialMode && !trialReport) setTrialReport({ teamId, date });
       toast('success', t('saved'));
     } catch (err) {
       toast('error', apiError(err, t('saveError')));
@@ -294,7 +338,7 @@ export default function DailyReportPage() {
         `${API_BASE_URL}${API_PREFIX}/daily-report/export?teamId=${encodeURIComponent(teamId)}&date=${date}&format=${format}&locale=${locale}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (!res.ok) throw new Error(await readApiError(res));
+      if (!res.ok) throw await readApiError(res);
 
       const blob = await res.blob();
       if (blob.size === 0) throw new Error(t('emptyFile'));
@@ -347,7 +391,8 @@ export default function DailyReportPage() {
           </button>
           <button
             onClick={() => download('PDF')}
-            disabled={!!downloading || loading || !teamId}
+            disabled={!!downloading || loading || !teamId || (trialMode && !report?.saved)}
+            title={trialMode && !report?.saved ? t('trialExportHint') : undefined}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             {downloading === 'PDF' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -355,7 +400,8 @@ export default function DailyReportPage() {
           </button>
           <button
             onClick={() => download('DOCX')}
-            disabled={!!downloading || loading || !teamId}
+            disabled={!!downloading || loading || !teamId || (trialMode && !report?.saved)}
+            title={trialMode && !report?.saved ? t('trialExportHint') : undefined}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             {downloading === 'DOCX' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -364,6 +410,18 @@ export default function DailyReportPage() {
         </div>
       </div>
 
+      {trialMode && trialReport !== undefined && (
+        <div className="flex items-start gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-100">
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600" />
+          <p className="flex-1">
+            {trialReport ? t('trialUsed') : t('trialAvailable')}{' '}
+            <Link href="/dashboard/billing" className="font-semibold underline underline-offset-2">
+              {t('trialChoosePlan')}
+            </Link>
+          </p>
+        </div>
+      )}
+
       {/* Selettori */}
       <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:grid-cols-3">
         <Select
@@ -371,8 +429,15 @@ export default function DailyReportPage() {
           options={teamOptions}
           value={teamId}
           onChange={(e) => setTeamId(e.target.value)}
+          disabled={trialLocked}
         />
-        <Input label={`${t('date')} *`} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <Input
+          label={`${t('date')} *`}
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          disabled={trialLocked}
+        />
         <div className="flex items-end">
           {report && (
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${

@@ -12,20 +12,26 @@ import { AuthShell } from '@/components/auth/auth-shell';
 import { fetchStaffInvite, type StaffInvitePreview } from '@/lib/auth/api';
 
 /* ─────────────────────────────────────────────────────────
- * Piani selezionabili in registrazione.
- * Gli id coincidono con i valori accettati dall'API, che li
- * traduce nel tier dell'organizzazione.
+ * Strade selezionabili in registrazione (dal 9/10/2026).
+ * Gli id coincidono con i valori accettati dall'API.
+ *
+ * Due strade separate: la prova gratuita (15 giorni, poi si
+ * sceglie) oppure un piano comprato subito. Finche' Stripe non
+ * e' collegato il piano viene assegnato come e' sempre successo.
+ * Prezzi IVA inclusa; la fonte e' apps/api/src/lib/plans.ts.
  * ───────────────────────────────────────────────────────── */
-type PlanId = 'starter' | 'professional' | 'ultra';
+type PaidPlanId = 'starter' | 'professional' | 'ultra' | 'club';
+type PlanId = 'trial' | PaidPlanId;
 
-const PLANS: Array<{ id: PlanId; labelKey: string; price: number }> = [
-  { id: 'starter', labelKey: 'planStarter', price: 14 },
-  { id: 'professional', labelKey: 'planProfessional', price: 21 },
-  { id: 'ultra', labelKey: 'planUltra', price: 30 },
+const PLANS: Array<{ id: PaidPlanId; labelKey: string; price: number; offerKey: string }> = [
+  { id: 'starter', labelKey: 'planStarter', price: 15, offerKey: 'planOfferIndividual' },
+  { id: 'professional', labelKey: 'planProfessional', price: 30, offerKey: 'planOfferIndividual' },
+  { id: 'ultra', labelKey: 'planUltra', price: 35, offerKey: 'planOfferIndividual' },
+  { id: 'club', labelKey: 'planClub', price: 50, offerKey: 'planOfferClub' },
 ];
 
-function isPlanId(v: string | null): v is PlanId {
-  return v === 'starter' || v === 'professional' || v === 'ultra';
+function isPaidPlanId(v: string | null): v is PaidPlanId {
+  return v === 'starter' || v === 'professional' || v === 'ultra' || v === 'club';
 }
 
 /**
@@ -56,13 +62,16 @@ function RegisterForm() {
   const [organizationName, setOrganizationName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
 
-  // Piano: preselezionato da ?plan= (arriva dalle card della landing),
-  // ma resta modificabile qui. Se il parametro manca o e' sconosciuto
-  // si parte da Starter.
+  // Strada: preselezionata da ?plan= (arriva dalle card della landing),
+  // ma resta modificabile qui. Senza parametro, o con ?plan=trial, si parte
+  // dalla prova gratuita.
   const planFromUrl = params.get('plan');
   const [plan, setPlan] = useState<PlanId>(
-    isPlanId(planFromUrl) ? planFromUrl : 'starter',
+    isPaidPlanId(planFromUrl) ? planFromUrl : 'trial',
   );
+  // Chi arriva da una card della landing e poi sceglie la prova: quel piano
+  // e' quello che la pagina Abbonamento gli proporra' a fine prova.
+  const intendedPlan = plan === 'trial' && isPaidPlanId(planFromUrl) ? planFromUrl : undefined;
 
   // Provenienza dell'iscrizione, letta una volta sola: se la calcolassimo al
   // momento dell'invio, un utente che nel frattempo ha ripulito l'indirizzo
@@ -177,6 +186,7 @@ function RegisterForm() {
         organizationName,
         dateOfBirth,
         plan,
+        intendedPlan,
         acceptTerms,
         acceptPrivacy,
         consentHealthData,
@@ -388,7 +398,38 @@ function RegisterForm() {
             dell'organizzazione, e il posto l'ha gia' pagato chi invita. */}
         <fieldset disabled={isSubmitting} className={staffInvite ? 'hidden' : undefined}>
           <legend className="label mb-1.5 block">{t('planLabel')}</legend>
-          <div className="grid grid-cols-3 gap-2">
+
+          {/* Prova gratuita: la strada di default, a tutta larghezza. */}
+          <label
+            className={`mb-2 flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
+              plan === 'trial'
+                ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
+                : 'border-slate-300 bg-white hover:border-slate-400'
+            }`}
+          >
+            <input
+              type="radio"
+              name="plan"
+              value="trial"
+              checked={plan === 'trial'}
+              onChange={() => setPlan('trial')}
+              className="sr-only"
+            />
+            <span className="flex flex-col">
+              <span className={`text-sm font-semibold ${plan === 'trial' ? 'text-teal-800' : 'text-slate-700'}`}>
+                {t('planTrial')}
+              </span>
+              <span className={`text-xs ${plan === 'trial' ? 'text-teal-700' : 'text-slate-500'}`}>
+                {t('planTrialHint')}
+              </span>
+            </span>
+            <span className={`text-xs font-semibold ${plan === 'trial' ? 'text-teal-700' : 'text-slate-500'}`}>
+              {t('planFree')}
+            </span>
+          </label>
+
+          <p className="mb-1.5 mt-3 text-xs font-medium text-slate-500">{t('planOrBuy')}</p>
+          <div className="grid grid-cols-2 gap-2">
             {PLANS.map((p) => {
               const active = plan === p.id;
               return (
@@ -408,6 +449,9 @@ function RegisterForm() {
                     onChange={() => setPlan(p.id)}
                     className="sr-only"
                   />
+                  <span className={`text-[0.6rem] font-semibold uppercase tracking-wider ${active ? 'text-teal-700' : 'text-slate-400'}`}>
+                    {t(p.offerKey)}
+                  </span>
                   <span
                     className={`text-sm font-semibold ${
                       active ? 'text-teal-800' : 'text-slate-700'

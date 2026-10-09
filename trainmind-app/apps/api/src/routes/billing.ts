@@ -7,6 +7,12 @@
  *   GET    /billing/subscription     Get current subscription status
  *   POST   /billing/seats            Buy extra staff seats
  *   POST   /billing/webhook          Stripe webhook handler (no auth)
+ *
+ * Dal 9/10/2026 (piani nuovi, vedi lib/plans.ts):
+ *   GET    /billing/entitlements     Piano, prova, limiti, uso e listino
+ *   POST   /billing/activate         Sceglie un piano (Stripe o, senza
+ *                                    Stripe, assegnazione diretta)
+ *   POST   /billing/extensions       Squadre, pacchetti atleti, utenti in piu'
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
@@ -15,6 +21,15 @@ import Stripe from 'stripe';
 import { requireRole } from '../middleware/rbac.js';
 import { getSeatUsage, SEATS_BY_TIER } from '../lib/seats.js';
 import { appPublicUrl } from '../lib/app-url.js';
+import {
+  getPlanOverview,
+  loadPlan,
+  MAX_EXTENSION_QTY,
+  PLAN_SPECS,
+  publicCatalog,
+  type BillingCycle,
+  type PlanTier,
+} from '../lib/plans.js';
 
 // ─── Stripe client (lazy init) ─────────────────────────
 
@@ -38,22 +53,30 @@ function isStripeConfigured(): boolean {
 
 // ─── Pricing tiers ─────────────────────────────────────
 
-const PRICING_TIERS = {
-  starter: {
-    name: 'Starter',
-    priceId: process.env.STRIPE_PRICE_STARTER || '',
-    features: ['1 squadra (12 atleti)', 'Report base', 'Wellness tracking', 'Calendario'],
-  },
-  professional: {
-    name: 'Professional',
-    priceId: process.env.STRIPE_PRICE_PROFESSIONAL || '',
-    features: ['3 squadre (12 atleti per squadra)', 'Report avanzati', 'AI Coach', 'Periodizzazione', 'RTP', 'Analytics'],
-  },
-  ultra: {
-    name: 'Ultra',
-    priceId: process.env.STRIPE_PRICE_ULTRA || '',
-    features: ['Squadre e atleti illimitati', 'Tutto Professional', 'API access', 'Supporto prioritario'],
-  },
+/**
+ * Price di Stripe per piano e ciclo. Le variabili nuove hanno il ciclo nel
+ * nome (STRIPE_PRICE_ULTRA_YEARLY); per il mensile si accetta ancora quella
+ * vecchia senza suffisso, cosi' una configurazione gia' fatta continua a
+ * funzionare. Nomi e funzioni dei piani stanno in lib/plans.ts.
+ */
+function planPriceId(tier: PlanTier, cycle: BillingCycle): string {
+  const suffix = cycle === 'yearly' ? 'YEARLY' : 'MONTHLY';
+  const specific = process.env[`STRIPE_PRICE_${tier}_${suffix}`];
+  if (specific) return specific;
+  return cycle === 'monthly' ? process.env[`STRIPE_PRICE_${tier}`] || '' : '';
+}
+
+/** Price delle estensioni: STRIPE_PRICE_EXTRA_TEAM / _ATHLETES / _SEAT, + _YEARLY. */
+function extensionPriceId(kind: 'teams' | 'athletes', cycle: BillingCycle): string {
+  const base = kind === 'teams' ? 'STRIPE_PRICE_EXTRA_TEAM' : 'STRIPE_PRICE_EXTRA_ATHLETES';
+  return (cycle === 'yearly' ? process.env[`${base}_YEARLY`] : process.env[base]) || '';
+}
+
+const PLAN_NAMES: Record<PlanTier, string> = {
+  STARTER: 'Starter',
+  PROFESSIONAL: 'Professional',
+  ULTRA: 'Ultra',
+  CLUB: 'Club',
 };
 
 /**
@@ -79,10 +102,11 @@ function seatPriceId(): string {
  * che i posti dipendono dal tier sarebbe un cliente che paga il Professional
  * e non riesce a invitare nessuno.
  */
-const TIER_TO_ENUM: Record<string, 'STARTER' | 'PROFESSIONAL' | 'ULTRA'> = {
+const TIER_TO_ENUM: Record<string, PlanTier> = {
   starter: 'STARTER',
   professional: 'PROFESSIONAL',
   ultra: 'ULTRA',
+  club: 'CLUB',
 };
 
 /**
@@ -106,9 +130,32 @@ export function sameOriginOr(requested: string | undefined, fallback: string): s
 // ─── Schemas ───────────────────────────────────────────
 
 const checkoutSchema = z.object({
-  tier: z.enum(['starter', 'professional', 'ultra']),
+  tier: z.enum(['starter', 'professional', 'ultra', 'club']),
+  cycle: z.enum(['monthly', 'yearly']).optional().default('monthly'),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
+});
+
+/** Scelta del piano dalla pagina Abbonamento. */
+const activateSchema = z.object({
+  tier: z.enum(['starter', 'professional', 'ultra', 'club']),
+  cycle: z.enum(['monthly', 'yearly']).default('monthly'),
+});
+
+/**
+ * Estensioni: valori ASSOLUTI desiderati, non incrementi. Cosi' la stessa
+ * richiesta mandata due volte (doppio clic, rete lenta) non compra il doppio.
+ * Senza Stripe si applicano subito; con Stripe si paga solo la differenza in
+ * piu' (le riduzioni passano dal portale clienti).
+ */
+const extensionsSchema = z.object({
+  extraTeams: z.number().int().min(0).max(MAX_EXTENSION_QTY).optional(),
+  extraSeats: z.number().int().min(0).max(MAX_EXTENSION_QTY).optional(),
+  teamPacks: z
+    .array(z.object({ teamId: z.string().min(1), packs: z.number().int().min(0).max(MAX_EXTENSION_QTY) }))
+    .max(100)
+    .optional(),
+  cycle: z.enum(['monthly', 'yearly']).default('monthly'),
 });
 
 /** Quanti posti comprare in una volta. Il tetto e' un argine ai refusi. */
@@ -127,13 +174,201 @@ export async function billingRoutes(app: FastifyInstance) {
     return reply.send({
       success: true,
       data: {
-        plans: Object.entries(PRICING_TIERS).map(([key, tier]) => ({
-          id: key,
-          name: tier.name,
-          features: tier.features,
+        plans: (Object.keys(PLAN_SPECS) as PlanTier[]).map((tier) => ({
+          id: tier.toLowerCase(),
+          name: PLAN_NAMES[tier],
+          offer: PLAN_SPECS[tier].offer,
+          price: PLAN_SPECS[tier].price,
         })),
+        catalog: publicCatalog(),
       },
     });
+  });
+
+  // ─── GET /billing/entitlements — Piano, prova, limiti e uso ──
+  // Letta da tutto lo staff: serve a banner, blocchi e pagina Abbonamento.
+  app.get('/billing/entitlements', {
+    preHandler: [app.authenticate],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const overview = await getPlanOverview(app.prisma, request.user.organizationId);
+    return reply.send({
+      success: true,
+      data: {
+        ...overview,
+        stripeConfigured: isStripeConfigured(),
+        catalog: publicCatalog(),
+      },
+    });
+  });
+
+  // ─── POST /billing/activate — Sceglie il piano ──────
+  // Due strade, decise dalla configurazione e non dal client:
+  //  - Stripe collegato: si apre il checkout del piano e del ciclo scelti; il
+  //    piano cambia quando arriva il webhook, cioe' a pagamento avvenuto.
+  //  - Stripe non collegato: il piano viene assegnato subito, come e' sempre
+  //    successo con il piano scelto in registrazione. E' il comportamento
+  //    deciso l'8/10/2026 finche' i pagamenti non sono pronti.
+  app.post('/billing/activate', {
+    preHandler: [app.authenticate, requireRole('ADMIN')],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const parsed = activateSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Parametri non validi' },
+      });
+    }
+    const { organizationId, userId, email } = request.user;
+    const tierEnum = TIER_TO_ENUM[parsed.data.tier];
+    const cycle = parsed.data.cycle;
+
+    if (isStripeConfigured()) {
+      const priceId = planPriceId(tierEnum, cycle);
+      if (!priceId) {
+        return reply.status(503).send({
+          success: false,
+          error: { code: 'PLAN_PRICE_MISSING', message: 'Prezzo del piano non configurato in Stripe' },
+        });
+      }
+      const stripe = getStripe();
+      const appUrl = appPublicUrl();
+      const customerId = await ensureStripeCustomer(app, stripe, organizationId, userId, email);
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'subscription',
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${appUrl}/dashboard/billing?billing=success`,
+        cancel_url: `${appUrl}/dashboard/billing?billing=cancelled`,
+        metadata: { organizationId, userId, tier: parsed.data.tier, cycle },
+        subscription_data: { metadata: { organizationId, tier: parsed.data.tier, cycle } },
+      });
+      return reply.send({ success: true, data: { url: session.url, activated: false } });
+    }
+
+    // Senza Stripe: assegnazione diretta. Le estensioni restano dove sono; se
+    // il piano nuovo non le prevede, lib/plans.ts semplicemente non le conta.
+    await app.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        tier: tierEnum,
+        subscriptionTier: parsed.data.tier,
+        billingCycle: cycle,
+        trialEndsAt: null,
+      },
+    });
+    request.log.info({ organizationId, tier: tierEnum, cycle }, 'Piano assegnato senza Stripe');
+    return reply.send({ success: true, data: { url: null, activated: true } });
+  });
+
+  // ─── POST /billing/extensions — Squadre, atleti, utenti in piu' ──
+  app.post('/billing/extensions', {
+    preHandler: [app.authenticate, requireRole('ADMIN')],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const parsed = extensionsSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Parametri non validi' },
+      });
+    }
+    const { organizationId, userId, email } = request.user;
+    const { extraTeams, extraSeats, teamPacks, cycle } = parsed.data;
+
+    const plan = await loadPlan(app.prisma, organizationId);
+    // Le estensioni esistono solo su Ultra e Club. Gli account storici le
+    // possono avere comunque (non hanno limiti, ma i numeri restano coerenti
+    // il giorno in cui smettono di essere esenti).
+    if (!plan.extensionsAllowed && plan.mode !== 'legacy') {
+      return reply.status(402).send({
+        success: false,
+        error: { code: 'PLAN_EXTENSIONS_UNAVAILABLE', message: 'Le estensioni sono disponibili con Ultra e Club' },
+      });
+    }
+
+    // Le squadre dei pacchetti devono essere dell'organizzazione.
+    if (teamPacks && teamPacks.length > 0) {
+      const ids = [...new Set(teamPacks.map((p) => p.teamId))];
+      const found = await app.prisma.team.count({ where: { id: { in: ids }, organizationId } });
+      if (found !== ids.length) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'INVALID_TEAM', message: 'Squadra non trovata' },
+        });
+      }
+    }
+
+    if (isStripeConfigured()) {
+      // Con Stripe si compra solo l'aumento; per ridurre c'e' il portale.
+      const org = await app.prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { extraTeams: true, extraSeats: true, teams: { select: { id: true, extraAthletePacks: true } } },
+      });
+      const currentPacks = new Map((org?.teams ?? []).map((t) => [t.id, t.extraAthletePacks]));
+      const lines: Array<{ price: string; quantity: number }> = [];
+      const teamsDelta = extraTeams !== undefined ? extraTeams - (org?.extraTeams ?? 0) : 0;
+      const seatsDelta = extraSeats !== undefined ? extraSeats - (org?.extraSeats ?? 0) : 0;
+      const packsDelta = (teamPacks ?? []).map((p) => ({ teamId: p.teamId, delta: p.packs - (currentPacks.get(p.teamId) ?? 0) }))
+        .filter((p) => p.delta > 0);
+      if (teamsDelta < 0 || seatsDelta < 0 || (teamPacks ?? []).some((p) => p.packs < (currentPacks.get(p.teamId) ?? 0))) {
+        return reply.status(409).send({
+          success: false,
+          error: { code: 'EXTENSIONS_REDUCE_IN_PORTAL', message: 'Per ridurre le estensioni usa il portale clienti' },
+        });
+      }
+      if (teamsDelta > 0) lines.push({ price: extensionPriceId('teams', cycle), quantity: teamsDelta });
+      if (seatsDelta > 0) lines.push({ price: seatPriceId(), quantity: seatsDelta });
+      const packsTotal = packsDelta.reduce((n, p) => n + p.delta, 0);
+      if (packsTotal > 0) lines.push({ price: extensionPriceId('athletes', cycle), quantity: packsTotal });
+      if (lines.length === 0) {
+        return reply.send({ success: true, data: { url: null, applied: false } });
+      }
+      if (lines.some((l) => !l.price)) {
+        return reply.status(503).send({
+          success: false,
+          error: { code: 'EXTENSION_PRICE_MISSING', message: 'Prezzo delle estensioni non configurato in Stripe' },
+        });
+      }
+      const stripe = getStripe();
+      const appUrl = appPublicUrl();
+      const customerId = await ensureStripeCustomer(app, stripe, organizationId, userId, email);
+      // I metadata di Stripe sono stringhe corte: i pacchetti viaggiano come
+      // "teamId:n,teamId:n". Il webhook li somma a quelli esistenti.
+      const meta = {
+        organizationId,
+        kind: 'extensions',
+        teams: String(Math.max(0, teamsDelta)),
+        seats: String(Math.max(0, seatsDelta)),
+        packs: packsDelta.map((p) => `${p.teamId}:${p.delta}`).join(',').slice(0, 480),
+      };
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'subscription',
+        line_items: lines,
+        success_url: `${appUrl}/dashboard/billing?extensions=success`,
+        cancel_url: `${appUrl}/dashboard/billing?extensions=cancelled`,
+        metadata: { ...meta, userId },
+        subscription_data: { metadata: meta },
+      });
+      return reply.send({ success: true, data: { url: session.url, applied: false } });
+    }
+
+    // Senza Stripe: si applicano subito, come per il piano.
+    await app.prisma.$transaction(async (tx) => {
+      if (extraTeams !== undefined || extraSeats !== undefined) {
+        await tx.organization.update({
+          where: { id: organizationId },
+          data: {
+            ...(extraTeams !== undefined ? { extraTeams } : {}),
+            ...(extraSeats !== undefined ? { extraSeats } : {}),
+          },
+        });
+      }
+      for (const p of teamPacks ?? []) {
+        await tx.team.update({ where: { id: p.teamId }, data: { extraAthletePacks: p.packs } });
+      }
+    });
+    request.log.info({ organizationId, extraTeams, extraSeats, teamPacks: teamPacks?.length ?? 0 }, 'Estensioni aggiornate senza Stripe');
+    return reply.send({ success: true, data: { url: null, applied: true } });
   });
 
   // ─── POST /billing/checkout — Create checkout session ──
@@ -158,7 +393,14 @@ export async function billingRoutes(app: FastifyInstance) {
     }
 
     const { userId, email, organizationId } = request.user;
-    const tier = PRICING_TIERS[parsed.data.tier];
+    const tierEnum = TIER_TO_ENUM[parsed.data.tier];
+    const priceId = planPriceId(tierEnum, parsed.data.cycle);
+    if (!priceId) {
+      return reply.status(503).send({
+        success: false,
+        error: { code: 'PLAN_PRICE_MISSING', message: 'Prezzo del piano non configurato in Stripe' },
+      });
+    }
     const stripe = getStripe();
     const appUrl = appPublicUrl();
 
@@ -188,12 +430,12 @@ export async function billingRoutes(app: FastifyInstance) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
-      line_items: [{ price: tier.priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: sameOriginOr(parsed.data.successUrl, `${appUrl}/dashboard/settings?billing=success`),
       cancel_url: sameOriginOr(parsed.data.cancelUrl, `${appUrl}/dashboard/settings?billing=cancelled`),
-      metadata: { organizationId, userId, tier: parsed.data.tier },
+      metadata: { organizationId, userId, tier: parsed.data.tier, cycle: parsed.data.cycle },
       subscription_data: {
-        metadata: { organizationId, tier: parsed.data.tier },
+        metadata: { organizationId, tier: parsed.data.tier, cycle: parsed.data.cycle },
       },
     });
 
@@ -414,7 +656,16 @@ export async function billingRoutes(app: FastifyInstance) {
           break;
         }
 
+        // Estensioni comprate dalla pagina Abbonamento: si sommano a quelle
+        // esistenti (il checkout contiene solo l'aumento).
+        if (session.metadata?.kind === 'extensions') {
+          await applyExtensionDelta(app, orgId, session.metadata, 1);
+          request.log.info({ orgId }, 'Extensions purchased');
+          break;
+        }
+
         const tier = session.metadata?.tier || 'starter';
+        const cycle = session.metadata?.cycle === 'yearly' ? 'yearly' : 'monthly';
         await app.prisma.organization.update({
           where: { id: orgId },
           data: {
@@ -422,6 +673,9 @@ export async function billingRoutes(app: FastifyInstance) {
             // L'enum va tenuto allineato alla stringa: e' quello che decide
             // quanti posti staff include il piano.
             ...(TIER_TO_ENUM[tier] ? { tier: TIER_TO_ENUM[tier] } : {}),
+            // Pagato: la prova, se c'era, finisce qui.
+            trialEndsAt: null,
+            billingCycle: cycle,
             subscriptionStatus: 'active',
             stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : undefined,
           },
@@ -436,7 +690,7 @@ export async function billingRoutes(app: FastifyInstance) {
         // Un pacchetto di posti non e' l'abbonamento dell'account: se va in
         // sofferenza non deve segnare l'intera organizzazione come morosa,
         // ne' spostarne la scadenza.
-        if (subscription.metadata?.kind === 'seats') break;
+        if (subscription.metadata?.kind === 'seats' || subscription.metadata?.kind === 'extensions') break;
         if (orgId) {
           await app.prisma.organization.update({
             where: { id: orgId },
@@ -475,6 +729,12 @@ export async function billingRoutes(app: FastifyInstance) {
           break;
         }
 
+        if (subscription.metadata?.kind === 'extensions') {
+          await applyExtensionDelta(app, orgId, subscription.metadata, -1);
+          request.log.info({ orgId }, 'Extensions cancelled');
+          break;
+        }
+
         await app.prisma.organization.update({
           where: { id: orgId },
           data: {
@@ -497,7 +757,7 @@ export async function billingRoutes(app: FastifyInstance) {
         if (subId) {
           try {
             const sub = await stripe.subscriptions.retrieve(subId);
-            if (sub.metadata?.kind === 'seats') {
+            if (sub.metadata?.kind === 'seats' || sub.metadata?.kind === 'extensions') {
               request.log.warn({ subId }, 'Seat package payment failed');
               break;
             }
@@ -532,3 +792,80 @@ export async function billingRoutes(app: FastifyInstance) {
     return reply.send({ received: true });
   });
 }
+
+// ─── Helper ────────────────────────────────────────────
+
+/** Cliente Stripe dell'organizzazione: lo crea al primo acquisto. */
+async function ensureStripeCustomer(
+  app: FastifyInstance,
+  stripe: Stripe,
+  organizationId: string,
+  userId: string,
+  email: string,
+): Promise<string> {
+  const org = await app.prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, stripeCustomerId: true },
+  });
+  if (org?.stripeCustomerId) return org.stripeCustomerId;
+  const customer = await stripe.customers.create({
+    email,
+    name: org?.name || email,
+    metadata: { organizationId, userId },
+  });
+  await app.prisma.organization.update({
+    where: { id: organizationId },
+    data: { stripeCustomerId: customer.id },
+  });
+  return customer.id;
+}
+
+function positiveInt(value: string | undefined): number {
+  const n = Number.parseInt(value ?? '0', 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * Somma (sign = 1) o toglie (sign = -1) le estensioni scritte nei metadata
+ * di un acquisto. Pavimento a zero, come per i posti: un evento ripetuto non
+ * deve portare nulla in negativo.
+ */
+async function applyExtensionDelta(
+  app: FastifyInstance,
+  organizationId: string,
+  metadata: Record<string, string>,
+  sign: 1 | -1,
+): Promise<void> {
+  const teams = positiveInt(metadata.teams) * sign;
+  const seats = positiveInt(metadata.seats) * sign;
+  const packs = (metadata.packs ?? '')
+    .split(',')
+    .map((pair) => pair.split(':'))
+    .filter((p) => p.length === 2 && p[0])
+    .map(([teamId, n]) => ({ teamId: teamId as string, delta: positiveInt(n) * sign }));
+
+  const org = await app.prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { extraTeams: true, extraSeats: true },
+  });
+  if (!org) return;
+  await app.prisma.organization.update({
+    where: { id: organizationId },
+    data: {
+      extraTeams: Math.max(0, org.extraTeams + teams),
+      extraSeats: Math.max(0, org.extraSeats + seats),
+    },
+  });
+  for (const p of packs) {
+    const team = await app.prisma.team.findFirst({
+      where: { id: p.teamId, organizationId },
+      select: { extraAthletePacks: true },
+    });
+    if (!team) continue;
+    await app.prisma.team.update({
+      where: { id: p.teamId },
+      data: { extraAthletePacks: Math.max(0, team.extraAthletePacks + p.delta) },
+    });
+  }
+}
+

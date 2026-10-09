@@ -31,7 +31,7 @@ export default async function Page() {
 
   // Griglia mese × piano: i mesi sulle righe, i tre piani sulle colonne.
   const months = Array.from(new Set(byTierMonth.map((r) => r.month))).sort();
-  const tiers = ['STARTER', 'PROFESSIONAL', 'ULTRA'];
+  const tiers = ['STARTER', 'PROFESSIONAL', 'ULTRA', 'CLUB'];
   const grid = new Map(byTierMonth.map((r) => [`${r.month}|${r.tier}`, r.count]));
 
   return (

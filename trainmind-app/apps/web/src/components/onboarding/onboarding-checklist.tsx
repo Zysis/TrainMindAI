@@ -11,6 +11,7 @@ import {
   Rocket,
   X,
 } from 'lucide-react';
+import { useFeatureAvailable } from '@/lib/plan/context';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -49,15 +50,23 @@ function saveState(state: ChecklistState) {
 
 export function OnboardingChecklist() {
   const t = useTranslations('onboarding');
+  // Senza AI o senza report nel piano (prova gratuita, Starter) quei passi
+  // non si possono completare: si tolgono dalla lista invece di lasciarli
+  // aperti per sempre.
+  const hasAi = useFeatureAvailable('ai');
+  const hasReports = useFeatureAvailable('reports');
+  // Nella prova c'e' solo il report giornaliero di prova: il passo porta li'.
+  const hasDaily = useFeatureAvailable('dailyReport');
+  const reportHref = hasReports ? '/dashboard/reports' : hasDaily ? '/dashboard/reports/daily' : null;
   const items = useMemo<ChecklistItem[]>(
     () => [
       { id: 'add_athlete', label: t('addAthlete'), href: '/dashboard/teams' },
-      { id: 'create_plan', label: t('createAIPlan'), href: '/dashboard/chat' },
+      ...(hasAi ? [{ id: 'create_plan', label: t('createAIPlan'), href: '/dashboard/chat' }] : []),
       { id: 'log_session', label: t('logSession'), href: '/dashboard/training' },
       { id: 'fill_wellness', label: t('fillWellness'), href: '/dashboard/wellness' },
-      { id: 'gen_report', label: t('genReport'), href: '/dashboard/reports' },
+      ...(reportHref ? [{ id: 'gen_report', label: t('genReport'), href: reportHref }] : []),
     ],
-    [t]
+    [t, hasAi, reportHref]
   );
   const [state, setState] = useState<ChecklistState>({ completed: [] });
   const [expanded, setExpanded] = useState(true);
@@ -102,7 +111,7 @@ export function OnboardingChecklist() {
 
   if (!mounted || dismissed) return null;
 
-  const completedCount = state.completed.length;
+  const completedCount = items.filter((i) => state.completed.includes(i.id)).length;
   const total = items.length;
   const pct = Math.round((completedCount / total) * 100);
 

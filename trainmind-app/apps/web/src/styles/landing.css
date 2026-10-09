@@ -1115,6 +1115,107 @@
   }
 }
 
+/* ── Offerte, prova gratuita e Club (dal 9/10/2026) ──────────
+   Due offerte una sotto l'altra: tre card per lo S&C coach, una
+   card larga per il Club. La prova gratuita sta sopra entrambe,
+   perche' e' una strada separata dai piani. */
+.lp .offer-h {
+  margin: 56px 0 22px;
+}
+.lp .offer-h h3 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.lp .offer-h p {
+  color: var(--txt-2);
+  font-size: 15px;
+  font-weight: 300;
+}
+
+.lp .trial-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+  padding: 26px 30px;
+  border: 1px solid var(--acc);
+  border-radius: 22px;
+  background: rgba(0, 201, 167, 0.07);
+}
+.lp .trial-strip h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.lp .trial-strip p {
+  color: var(--txt-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+.lp .trial-strip .btn {
+  flex: none;
+}
+
+/* Club: una card a tutta larghezza, testata a sinistra e
+   funzionalita' su due colonne a destra. */
+.lp .pgrid-club {
+  display: grid;
+}
+.lp .pc.pc-club {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  column-gap: 40px;
+  align-items: start;
+}
+.lp .pc.pc-club .pc-feats {
+  margin: 0;
+  padding-top: 0;
+  border-top: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.lp .pc.pc-club .btn {
+  grid-column: 2;
+  margin-top: 26px;
+  justify-self: end;
+  width: auto;
+  min-width: 220px;
+}
+
+.lp .pricing-note {
+  margin-top: 28px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--txt-2);
+  text-align: center;
+}
+
+@media (max-width: 940px) {
+  .lp .trial-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lp .pgrid-club,
+  .lp .offer-h {
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .lp .pc.pc-club {
+    display: flex;
+  }
+  .lp .pc.pc-club .pc-feats {
+    margin: 26px 0 30px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+  }
+  .lp .pc.pc-club .btn {
+    width: 100%;
+  }
+}
+
 /* ════════════════════════════════════════════════════════════
    HERO CHIARO  —  modificatore `.on-light`
    ------------------------------------------------------------
@@ -1292,6 +1393,19 @@
 }
 .lp .sec.dark .pc .tagline {
   color: rgba(255, 255, 255, 0.6);
+}
+/* Offerte e prova gratuita su fondo scuro */
+.lp .sec.dark .offer-h h3,
+.lp .sec.dark .trial-strip h3 {
+  color: #fff;
+}
+.lp .sec.dark .offer-h p,
+.lp .sec.dark .trial-strip p,
+.lp .sec.dark .pricing-note {
+  color: rgba(255, 255, 255, 0.6);
+}
+.lp .sec.dark .trial-strip {
+  background: rgba(0, 201, 167, 0.1);
 }
 .lp .sec.dark .pc .pc-per,
 .lp .sec.dark .pc .pc-eq {

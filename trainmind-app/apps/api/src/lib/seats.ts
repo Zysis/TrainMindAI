@@ -14,21 +14,20 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { LEGACY_SEATS_BY_TIER, resolvePlan } from './plans.js';
 
 // Stesso alias di refresh-tokens.ts: il client Prisma si prende da Fastify,
 // cosi' questo file non dipende da come `@trainmind/db` espone i tipi.
 type Db = FastifyInstance['prisma'];
 
 /**
- * Posti INCLUSI nel piano. Gli eventuali posti in piu' si comprano a parte
- * (uno per uno, al prezzo di un abbonamento Starter) e finiscono in
- * `Organization.extraSeats`.
+ * Posti INCLUSI nel piano prima dei piani nuovi (9/10/2026). Restano validi
+ * per gli account storici e per tutti finche' PLAN_ENFORCEMENT e' spento:
+ * con l'interruttore acceso la quota viene da lib/plans.ts (Starter 1,
+ * Professional 1, Ultra 2, Club 4, prova 1) e i posti in piu' si comprano
+ * a 10 euro l'uno, solo su Ultra e Club. Finiscono in `Organization.extraSeats`.
  */
-export const SEATS_BY_TIER: Record<string, number> = {
-  STARTER: 1,
-  PROFESSIONAL: 2,
-  ULTRA: 4,
-};
+export const SEATS_BY_TIER: Record<string, number> = LEGACY_SEATS_BY_TIER;
 
 /** Quota di sicurezza per un tier sconosciuto: il minimo, mai l'illimitato. */
 const FALLBACK_SEATS = 1;
@@ -88,11 +87,23 @@ export async function getSeatUsage(
 ): Promise<SeatUsage> {
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
-    select: { tier: true, extraSeats: true },
+    select: { tier: true, extraSeats: true, planLegacy: true, trialEndsAt: true, extraTeams: true },
   });
 
-  const included = org ? (SEATS_BY_TIER[org.tier] ?? FALLBACK_SEATS) : FALLBACK_SEATS;
-  const extra = org?.extraSeats ?? 0;
+  // Con il piano applicato decide lib/plans.ts; altrimenti (interruttore
+  // spento o account storico) i numeri di sempre.
+  const plan = org ? resolvePlan(org) : null;
+  let included: number;
+  let extra: number;
+  if (plan?.enforced) {
+    included = plan.limits.seats;
+    // Posti comprati su un piano che non prevede estensioni (per esempio
+    // prima di scendere da Ultra a Professional): non si contano.
+    extra = plan.extensionsAllowed ? org?.extraSeats ?? 0 : 0;
+  } else {
+    included = org ? (SEATS_BY_TIER[org.tier] ?? FALLBACK_SEATS) : FALLBACK_SEATS;
+    extra = org?.extraSeats ?? 0;
+  }
 
   const [members, pendingInvites] = await Promise.all([
     prisma.user.count({

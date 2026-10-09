@@ -17,6 +17,7 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { requirePlanFeature } from '../lib/plans.js';
 import { z } from 'zod';
 import { requireMinRole } from '../middleware/rbac.js';
 import { computeAcwr } from '@trainmind/utils';
@@ -181,7 +182,8 @@ function minutesFromMs(ms: number): number {
 
 
 export async function gameReportRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
+  // Il report post-partita non e' nello Starter (lib/plans.ts): no-op a piano non applicato.
+  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER'), requirePlanFeature(app, 'gameReport')] };
 
   /**
    * Il client Prisma non conosce le colonne nuove finche' non lo si rigenera:

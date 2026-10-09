@@ -19,6 +19,7 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { assertTrialDailyReport, PlanLimitError, requirePlanFeature, sendPlanError } from '../lib/plans.js';
 import { z } from 'zod';
 import { Prisma } from '@trainmind/db';
 import { computeAcwr } from '@trainmind/utils';
@@ -283,7 +284,8 @@ const RTP_PHASE_STATUS: Record<string, DailyStatus> = {
 };
 
 export async function dailyReportRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER')] };
+  // Il report giornaliero non e' nello Starter (lib/plans.ts): no-op a piano non applicato.
+  const auth = { preHandler: [app.authenticate, requireMinRole('TRAINER'), requirePlanFeature(app, 'dailyReport')] };
 
   /**
    * Il client Prisma e' generato da `schema.prisma`: finche' non lo si
@@ -777,6 +779,29 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
+  /**
+   * Prova gratuita: un solo report giornaliero (lib/plans.ts). Risponde lui
+   * con il 402 e restituisce false; true = si prosegue.
+   */
+  async function trialReportAllowed(
+    reply: FastifyReply,
+    organizationId: string,
+    teamId: string,
+    date: string,
+    opts: { requireSaved?: boolean } = {},
+  ): Promise<boolean> {
+    try {
+      await assertTrialDailyReport(app.prisma, organizationId, teamId, date, opts);
+      return true;
+    } catch (err) {
+      if (err instanceof PlanLimitError) {
+        sendPlanError(reply, err);
+        return false;
+      }
+      throw err;
+    }
+  }
+
   // ─── GET /daily-report ────────────────────────────────
   app.get('/daily-report', auth, async (request: FastifyRequest, reply: FastifyReply) => {
     const schema = z.object({
@@ -793,6 +818,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     }
     if (!prismaReady()) return notGenerated(reply);
     const { organizationId, userId } = request.user;
+    if (!(await trialReportAllowed(reply, organizationId, parsed.data.teamId, parsed.data.date))) return reply;
     try {
       const report = await buildReport(organizationId, userId, parsed.data.teamId, parsed.data.date, normalizeLocale(parsed.data.locale));
       return reply.send({ success: true, data: { report } });
@@ -842,6 +868,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     if (!prismaReady()) return notGenerated(reply);
     const { organizationId, userId } = request.user;
     const { teamId, date, activities, teamLines, entries } = parsed.data;
+    if (!(await trialReportAllowed(reply, organizationId, teamId, date))) return reply;
 
     const team = await app.prisma.team.findFirst({ where: { id: teamId, organizationId }, select: { id: true } });
     if (!team) {
@@ -970,6 +997,7 @@ export async function dailyReportRoutes(app: FastifyInstance) {
     if (!prismaReady()) return notGenerated(reply);
     const { organizationId, userId } = request.user;
     const { teamId, date, format } = parsed.data;
+    if (!(await trialReportAllowed(reply, organizationId, teamId, date, { requireSaved: true }))) return reply;
     const locale = normalizeLocale(parsed.data.locale);
 
     let report: DailyReportData;

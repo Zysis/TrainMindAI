@@ -61,3 +61,6 @@ documentation/login*
 # chiave di cifratura anagrafiche (solo sviluppo, MAI quella di produzione)
 .dev-identity.key
 *.identity.key
+
+# Dump del database locale (contengono dati personali e sanitari): mai su GitHub
+backup_*.sql

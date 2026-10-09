@@ -21,6 +21,7 @@ import type {
 import { seedDefaultExercises } from '../lib/seed-default-exercises.js';
 import { LEGAL_VERSIONS } from '../lib/legal.js';
 import { appPublicUrl } from '../lib/app-url.js';
+import { trialEndDate } from '../lib/plans.js';
 import { sendEmail, buildPasswordResetEmailHtml, getAuthFrom } from '../services/email-service.js';
 import {
   issueRefreshToken,
@@ -147,6 +148,7 @@ export async function authRoutes(app: FastifyInstance) {
       acceptMarketing,
       uiLanguage,
       plan,
+      intendedPlan,
       attribution,
     } = parsed.data;
 
@@ -174,13 +176,21 @@ export async function authRoutes(app: FastifyInstance) {
       .replace(/^-|-$/g, '');
 
     // Il piano scelto in registrazione diventa il tier dell'organizzazione.
-    // Lo schema garantisce uno dei tre valori, con starter come default.
+    // Lo schema garantisce un valore valido, con starter come default.
+    //
+    // La prova gratuita non e' un piano: l'organizzazione nasce con il tier
+    // minimo e `trialEndsAt` valorizzata, e i suoi limiti sono quelli della
+    // prova (lib/plans.ts). Scegliendo un piano, `trialEndsAt` si azzera.
     const PLAN_TO_TIER = {
       starter: 'STARTER',
       professional: 'PROFESSIONAL',
       ultra: 'ULTRA',
+      club: 'CLUB',
     } as const;
-    const tier = PLAN_TO_TIER[plan];
+    const isTrial = plan === 'trial';
+    const tier = isTrial ? 'STARTER' : PLAN_TO_TIER[plan];
+    const trialEndsAt = isTrial ? trialEndDate() : null;
+    const intendedTier = isTrial && intendedPlan ? PLAN_TO_TIER[intendedPlan] : null;
 
     const result = await app.prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
@@ -189,6 +199,8 @@ export async function authRoutes(app: FastifyInstance) {
           slug: `${slug}-${Date.now().toString(36)}`,
           sport: 'basketball',
           tier,
+          trialEndsAt,
+          intendedTier,
           // Provenienza dell'iscrizione. Le tre colonne dedicate sono quelle su
           // cui la console raggruppa; il resto sta nel JSON, che non ha bisogno
           // di una migrazione ogni volta che nasce un parametro nuovo.

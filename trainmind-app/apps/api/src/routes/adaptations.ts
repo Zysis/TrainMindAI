@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { calculateWellnessScore } from '@trainmind/utils';
 import { requireMinRole } from '../middleware/rbac.js';
 import { fullName } from '../lib/identity.js';
+import { requirePlanFeature } from '../lib/plans.js';
 
 // ═══════════════════════════════════════════════════════════
 // PLAN ADAPTATIONS — Sprint 3.4
@@ -332,6 +333,8 @@ function computeMetrics(
 
 export async function adaptationRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
+  // Adattamenti AI: fuori dalla prova gratuita (9/10/2026).
+  app.addHook('preHandler', requirePlanFeature(app, 'adaptations'));
 
   // ─── POST /ai/adapt — Generate adaptation proposal ──────
   app.post('/ai/adapt', {

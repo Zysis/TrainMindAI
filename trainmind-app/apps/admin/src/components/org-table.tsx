@@ -57,6 +57,7 @@ export function OrgTable({ rows }: { rows: OrgRow[] }) {
           <option value="STARTER">Starter</option>
           <option value="PROFESSIONAL">Professional</option>
           <option value="ULTRA">Ultra</option>
+          <option value="CLUB">Club</option>
         </select>
         <select
           value={sort}

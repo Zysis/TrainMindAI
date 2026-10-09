@@ -1,7 +1,11 @@
 # Sistema di marketing LAB21 → TrainMind
 
-**Documento operativo — versione 3.0 — 23 settembre 2026**
+**Documento operativo — versione 3.1 — 8 ottobre 2026**
 Base: *Piano_30_giorni_marketing_webapp_basket_AI.pdf* (aggiornato in parallelo a questo file).
+Pricing e prova gratuita: *Strategia_commerciale_basket_v3.docx* — in caso di differenze vale quel documento.
+
+> **Cosa cambia rispetto alla v3.0**
+> Offerta e prova gratuita allineate alla nuova strategia commerciale (v3): **Individuale** per lo *Strength and Conditioning Coach* con Starter / Professional / Ultra (Ultra da spingere) e **Club** a piano unico. Le due offerte si separano per numero di utenti e squadre. Quote AI in crediti per piano. Prova di **15 giorni** invece di 21. Prezzi IVA inclusa. Toccati §1, §3, §5, §11.3 e §14; il resto è invariato.
 
 > **Cosa cambia rispetto alla v2.0**
 > Due soli canali attivi — **Instagram e LinkedIn** — invece di sei. I primi contenuti sono **già online** (un post e un reel sulla pagina Instagram LAB21), quindi questa versione parte da una **brand review di quello che è stato pubblicato** invece che da ipotesi.
@@ -41,7 +45,7 @@ Presenti prima LAB21, crei curiosità su TrainMind, sposti il focus sul prodotto
 | **Chi parla** | LAB21, il laboratorio | TrainMind, il prodotto |
 | **Obiettivo** | Credibilità + contatti qualificati | Registrazioni, attivazioni, primi abbonamenti |
 | **Promessa** | "Traduciamo la scienza dello sport in strumenti usabili il lunedì mattina" | "Il report di squadra in dieci minuti invece che in tre ore" |
-| **CTA unica** | *Follow the lab* sui social, *Scopri di più* sul sito. Nessuna lista d'attesa (§15) | *Prova TrainMind — 21 giorni, senza carta* |
+| **CTA unica** | *Follow the lab* sui social, *Scopri di più* sul sito. Nessuna lista d'attesa (§15) | *Prova TrainMind — 15 giorni, senza carta* |
 | **KPI primario** | Salvataggi dei caroselli e follower da non-follower | 40+ registrazioni, 20+ attivati, 3–6 paganti |
 | **Cosa NON fare** | Vendere. Mai prezzi in Fase 1 | Parlare di AI prima del problema |
 
@@ -158,9 +162,9 @@ Palette e tipografia sono canonizzate dai mockup `LAB21/mockup-a.html` / `mockup
 
 | Pr. | Segmento | Volume IT | Piano atteso | Canale |
 |---|---|---|---|---|
-| **A** | Preparatore di club B Interregionale / B Naz / A2 | 250–350 | Staff | **Instagram** |
+| **A** | Preparatore di club B Interregionale / B Naz / A2 | 250–350 | Individuale Ultra | **Instagram** |
 | **A** | Responsabile performance academy 3+ squadre | 80–150 | Club | **LinkedIn** |
-| **B** | Preparatore indipendente con più club | 200–400 | Coach | **Instagram** |
+| **B** | Preparatore indipendente con più club | 200–400 | Individuale Ultra | **Instagram** |
 | **C** | Società senza preparatore dedicato | molte | Club | *non ora* |
 | **P** | Partner: formatori, clinic, docenti, creator | 30–50 | — | LinkedIn + DM |
 
@@ -182,7 +186,7 @@ Senza call, queste risposte vivono nella FAQ, nelle email di sequenza e nelle di
 |---|---|
 | "Excel mi basta" | "Excel è ottimo per registrare. Il problema è produrre. Quanto ci metti a fare il report settimanale?" |
 | "Non mi fido dell'AI sugli atleti" | "Giusto. L'AI qui non decide niente: prepara il report, tu firmi. Ogni output è modificabile." |
-| "Non ho budget" | "Meno di un pallone al mese. E i primi 21 giorni non chiedono nemmeno la carta." |
+| "Non ho budget" | "Meno di un pallone al mese. E i primi 15 giorni non chiedono nemmeno la carta." |
 | "Il mio staff non lo userà" | "Lo staff non inserisce niente. Legge. L'inserimento è solo tuo, cinque minuti a seduta." |
 | "Ci ho già provato con un'altra piattaforma" | "Le altre nascono per il calcio e le adattano. Questa nasce per il basket." |
 | "Devo sentire la società" | "C'è un PDF di una pagina già pronto da girare al DS. Lo scarichi qui." |
@@ -219,31 +223,79 @@ Senza call, queste risposte vivono nella FAQ, nelle email di sequenza e nelle di
 
 ## 5. Offerta e pricing
 
-| | **Coach** | **Staff** | **Club** |
+Due offerte: **Individuale** con tre piani (il piano da spingere è **Ultra**) e **Club** a piano unico. Prezzi **tondi e IVA inclusa**: il prezzo in pagina è quello che il cliente paga. Il dettaglio e il ragionamento sono in *Strategia_commerciale_basket_v3.docx*.
+
+### 5.1 Club / Società — piano unico
+
+| | **Club** |
+|---|---|
+| Squadre incluse | **6** |
+| Atleti per squadra | **20** |
+| Utenti dello staff | **fino a 4** |
+| Report | Avanzati |
+| Wellness e calendario | ✓ |
+| AI Assistant | ✓ — 750 crediti/mese |
+| Analytics | ✓ |
+| **Mensile** | **50 €** |
+| **Annuale (10 mensilità)** | **500 €** |
+
+Estensioni: **squadra aggiuntiva** 8 €/mese o 80 €/anno (+100 crediti AI); **pacchetto da 5 atleti** (su una squadra) 2 €/mese o 20 €/anno; **utente aggiuntivo** 10 €/mese o 100 €/anno. Stesso listino dell'Individuale: squadra e pacchetto costano entrambi 0,40 € per atleta.
+
+### 5.2 Individuale — Strength and Conditioning Coach
+
+| | Starter | Professional | **Ultra (consigliato)** |
 |---|---|---|---|
-| Per chi | preparatore singolo | preparatore + staff | società / academy |
-| Atleti | fino a 20 | fino a 45 | illimitati |
-| Utenti | 1 | fino a 4 | illimitati |
-| Squadre | 1 | 2 | illimitate |
-| Report AI/mese | 20 | 80 | illimitati* |
-| **Mensile** | **29 €** | **69 €** | **149 €** |
-| **Annuale (−20%)** | **278 €** | **662 €** | **1.430 €** |
+| Squadre incluse | 1 | 2 | **4** |
+| Atleti per squadra | 12 | 14 | **20** |
+| Utenti | 1 | 1 | **fino a 2** |
+| Report | Base* | Avanzati | Avanzati |
+| Wellness e calendario | ✓ | ✓ | ✓ |
+| AI Assistant | — | ✓ — 200 crediti/mese | ✓ — 500 crediti/mese |
+| Analytics | — | ✓ | ✓ |
+| **Mensile** | **15 €** | **30 €** | **35 €** |
+| **Annuale (10 mensilità)** | **150 €** | **300 €** | **350 €** |
 
-\* soglia tecnica alta non pubblicizzata (vedi `documentation/GUIDA_ROUTING_AI_E_CONSUMO.md`).
+Estensioni, solo su Ultra: **squadra aggiuntiva** 8 €/mese o 80 €/anno (+100 crediti AI); **pacchetto da 5 atleti** (su una squadra) 2 €/mese o 20 €/anno; **utente aggiuntivo** 10 €/mese o 100 €/anno.
 
-### L'ingresso: prova self-serve
+\* Report Base: esclusi il report giornaliero e il report post-partita.
 
-> **TrainMind — 21 giorni, senza carta di credito**
+### 5.3 Regole comuni
+
+- Contano solo gli **atleti attivi**. Archiviare un atleta libera il posto e ne conserva lo storico; le riattivazioni sono al massimo **10 al mese** per account.
+- Le estensioni (squadre e atleti) **non aumentano gli utenti inclusi**: per quelli c'è l'utente aggiuntivo.
+- **API e supporto prioritario non fanno parte dell'offerta.** Non vanno citati in pagina prezzi, FAQ o email.
+- **Quote dell'AI Assistant in crediti** (chat e wellness 1, report e coach 2, RTP 3, piano 5): avviso all'80%, blocco al 100% fino al rinnovo, i crediti inclusi non si accumulano. In pagina si comunicano in termini d'uso («circa 100 messaggi o 20 piani ogni 100 crediti»), mai in token. Stime da verificare su `ai_usage_logs` prima del lancio.
+- **Confine tra le offerte:** da 4 utenti o 6 squadre in su il Club costa meno dell'Individuale Ultra con estensioni. Le società più piccole comprano l'Individuale, ed è voluto: nessun controllo sull'intestatario.
+- **Come si presenta:** nella pagina prezzi dell'Individuale l'Ultra è preselezionato e marcato «Consigliato». Il Professional Individuale è volutamente a soli 5 € dall'Ultra: serve a far sembrare l'Ultra la scelta ovvia, non a essere venduto.
+
+### 5.4 L'ingresso: prova self-serve
+
+> **TrainMind — 15 giorni, senza carta di credito**
 > 1. Ti registri. **Entri già dentro una squadra dimostrativa completa**: 12 atleti, 8 settimane di storico, un sovraccarico e un rientro. Vedi il prodotto che funziona prima di caricare qualsiasi cosa tua.
 > 2. Quando vuoi, importi il tuo roster da Excel o CSV.
 > 3. Generi il primo report vero. Obiettivo: **entro dieci minuti dalla registrazione.**
-> 4. Il giorno 18 ricevi il riepilogo di cosa hai costruito e l'offerta.
+> 4. Il giorno 12 ricevi il riepilogo di cosa hai costruito e l'offerta.
+
+| Condizioni | Prova gratuita (unica per entrambe le offerte) |
+|---|---|
+| Durata | 15 giorni |
+| Capacità | 1 squadra, fino a 12 atleti |
+| Utenti | 1 coach |
+| Funzioni | base e avanzate di allenamento |
+| AI Assistant | no |
+| Carta richiesta / addebito automatico | no / no |
+
+> **Prova unica:** chi si registra parte come coach; la scelta tra Individuale e Club avviene alla scadenza, con l'Individuale Ultra preselezionato e il Club proposto a chi lavora con quattro o più utenti. Il multiutente non si prova: per le società valgono il PDF per il DS e l'abbonamento mensile disdicibile.
+>
+> **Squadra dimostrativa:** resta di 12 atleti ed è esclusa dal conteggio dei limiti della prova.
+>
+> **Attenzione al messaggio:** l'AI Assistant è escluso dalla prova, mentre la promessa di Fase 2 (§4.2) parla di un assistente che scrive la sintesi. Finché resta così, i contenuti che portano alla prova non promettono la sintesi AI *dentro la prova*: promettono il report in dieci minuti.
 
 **La modalità dimostrativa precaricata è il pezzo decisivo.** I trial self-serve muoiono perché l'utente entra in un prodotto vuoto e deve lavorare prima di ricevere valore. Con i dati demo l'ordine si inverte. È l'unico modo per sostituire la call di setup senza perdere il grosso delle registrazioni.
 
 **Ai beta tester attuali:** conversione **early adopter −40% a vita**, con scadenza a 30 giorni dall'apertura dei pagamenti.
 
-**Riserva onesta sul piano Club:** una società raramente firma 149 €/mese senza che nessuno le parli. Non serve una call di vendita, serve un equivalente asincrono — il **PDF di una pagina per il DS** e una risposta scritta entro 24 ore. Misura il Club separatamente e non stupirti se è lento.
+**Riserva onesta sul piano Club:** una società raramente firma un abbonamento senza che nessuno le parli. A 50 €/mese la soglia è molto più bassa del vecchio piano da 149 €, ma la decisione resta del DS. Non serve una call di vendita, serve un equivalente asincrono — il **PDF di una pagina per il DS** e una risposta scritta entro 24 ore. Misura il Club separatamente e non stupirti se è lento.
 
 ---
 
@@ -796,7 +848,7 @@ Link nel primo commento, mai nel corpo.
 | 3 | `registrazione` +24h **se** nessun `primo_report` | Ti sei fermato al primo passo? | Video da 90 secondi + "rispondi a questa mail" |
 | 4 | `primo_report` | Hai appena fatto in 10 minuti quello che ti prendeva 3 ore | Massimo entusiasmo: **qui chiedi l'import del roster vero** |
 | 5 | `roster_caricato` +7g | La seconda settimana è quella che conta | Come si legge lo storico |
-| 6 | trial giorno 18 | Cosa hai costruito in tre settimane | Riepilogo dei numeri reali + offerta + **PDF per il DS** |
+| 6 | trial giorno 12 | Cosa hai costruito in due settimane | Riepilogo dei numeri reali + offerta + **PDF per il DS** |
 | 7 | trial scaduto +3g | Chiudo qui, ma i tuoi dati restano | Ultima chiamata onesta. I dati restano 90 giorni |
 
 **L'email 3 è quella che vale di più** — intercetta il punto in cui un venditore alzerebbe il telefono. **L'email 7 converte più della 6.** Non saltarla.
@@ -865,6 +917,7 @@ Il costo reale è **il tuo tempo**: circa 8 ore a settimana, di cui 3 nel blocco
 | **L'onboarding self-serve non attiva** — chi si blocca sparisce in silenzio | **Alta** | Modalità demo precaricata + email 3 + query 5 ogni venerdì |
 | I social portano ampiezza ma non compratori | Alta | Ottimizza per **salvataggi e iscritti qualificati**, mai per follower |
 | Il piano Club non converte senza interlocutore | Alta | PDF per il DS + risposta scritta entro 24h. Misuralo separatamente |
+| Una società compra l'offerta Individuale per pagare meno | Certa sotto i 4 utenti — voluto | Utente aggiuntivo a 10 €: da 4 utenti o 6 squadre in su il Club costa meno. L'Individuale è la porta d'ingresso, il Club l'espansione |
 | Produrre in inglese per abitudine | Media | §2.5: tutto in italiano tranne il descrittore di marca |
 | Due canali diventano due lavori e si spegne tutto | Media | Un pilastro a settimana. Se salti una settimana, salti il pilastro — **non** recuperi raddoppiando |
 | Dipendenza dall'algoritmo | Media | La lista email è l'unico pubblico che possiedi davvero |

@@ -16,7 +16,7 @@ import { Users, UserPlus, X, Mail, Clock, ShieldCheck, ArrowUpRight } from 'luci
 import { useTranslations } from 'next-intl';
 import { apiFetch, ApiError } from '@/lib/auth/fetch';
 import { useAuth } from '@/hooks/use-auth';
-import { tierToPlanKey } from '@/components/brand/plan';
+import { isTopPlan, tierToPlanKey } from '@/components/brand/plan';
 
 type StaffRole = 'ADMIN' | 'TRAINER' | 'MEDICAL' | 'VIEWER';
 
@@ -61,7 +61,8 @@ export function StaffCard() {
   // Su Ultra non c'e' un piano superiore: l'unico modo di fare posto e'
   // comprarlo. Sotto, invece, passare di piano costa meno di un posto
   // singolo, quindi proporre il posto sarebbe un cattivo consiglio.
-  const canUpgradePlan = planKey !== 'ULTRA';
+  // Dal 9/10/2026 anche il Club e' un vertice (piano unico).
+  const canUpgradePlan = !isTopPlan(planKey);
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -298,7 +299,7 @@ export function StaffCard() {
                 {canUpgradePlan ? t('fullUpgradeHint') : t('fullSeatHint')}
               </p>
               <Link
-                href="/dashboard/billing"
+                href={canUpgradePlan ? '/dashboard/billing' : '/dashboard/billing#estensioni'}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-amber-500 px-4 py-2 text-sm font-semibold text-white shadow"
               >
                 {canUpgradePlan ? t('fullUpgradeCta') : t('fullSeatCta')}

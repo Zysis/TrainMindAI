@@ -1,7 +1,8 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { User, Building2, Bell, Shield, Palette, Sun, Moon, Globe } from 'lucide-react';
+import Link from 'next/link';
+import { User, Building2, Bell, Shield, Palette, Sun, Moon, CreditCard, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { useLocaleStore, LOCALES, localeLabels, localeFlags } from '@/lib/i18n/store';
@@ -12,6 +13,7 @@ export default function SettingsPage() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const t = useTranslations('settings');
+  const tBilling = useTranslations('billing');
   const { locale, setLocale } = useLocaleStore();
   const [mounted, setMounted] = useState(false);
 
@@ -138,6 +140,17 @@ export default function SettingsPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          <Link
+            href="/dashboard/billing"
+            className="card group block transition-colors hover:border-teal-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-teal-600"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <CreditCard className="h-5 w-5 text-teal-600" />
+              <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5" />
+            </div>
+            <h3 className="font-semibold text-slate-900 dark:text-white">{tBilling('title')}</h3>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{tBilling('subtitle')}</p>
+          </Link>
           <div className="card cursor-pointer transition-colors hover:border-teal-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-teal-600">
             <Bell className="mb-2 h-5 w-5 text-teal-600" />
             <h3 className="font-semibold text-slate-900 dark:text-white">{t('notifications')}</h3>

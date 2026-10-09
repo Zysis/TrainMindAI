@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { User, Building2, Bell, Shield, Palette, Sun, Moon, Sparkles, ArrowUpRight } from 'lucide-react';
+import { User, Building2, Bell, Shield, Palette, Sun, Moon, Sparkles, ArrowUpRight, CreditCard, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { useLocaleStore, LOCALES, localeLabels, localeFlags } from '@/lib/i18n/store';
 import { useEffect, useState } from 'react';
 import { BrandLogo } from '@/components/brand/brand-logo';
-import { PLAN_FULL_NAME, tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
+import { PLAN_FULL_NAME, isTopPlan, tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
+import { usePlan } from '@/lib/plan/context';
 import { ChangePasswordCard } from '@/components/settings/change-password-card';
 import { StaffCard } from '@/components/settings/staff-card';
 
@@ -21,10 +22,18 @@ export default function SettingsPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const planKey = tierToPlanKey(user?.organization?.tier);
-  const planSlug = tierToPlanSlug(user?.organization?.tier);
+  // Il piano letto da /billing/entitlements e' quello aggiornato (dopo un
+  // cambio di piano il tier nel profilo resta quello del login).
+  const { plan } = usePlan();
+  const tier = plan?.tier ?? user?.organization?.tier;
+  const planKey = tierToPlanKey(tier);
+  const planSlug = tierToPlanSlug(tier);
   const planName = planKey ? PLAN_FULL_NAME[planKey] : null;
-  const isUltra = planKey === 'ULTRA';
+  // Ultra e Club sono il vertice delle rispettive offerte.
+  const isUltra = isTopPlan(planKey);
+  const tBilling = useTranslations('billing');
+  // In prova il tier e' quello minimo: mostrarlo come "Starter" sarebbe falso.
+  const inTrial = !!plan?.enforced && (plan.mode === 'trial' || plan.mode === 'expired');
 
   return (
     <div className="space-y-6">
@@ -53,25 +62,42 @@ export default function SettingsPage() {
                       </span>
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      {planName}
+                      {inTrial ? tBilling('trialName') : planName}
                     </h2>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {isUltra ? t('planUltraDesc') : t('planUpgradeDesc')}
+                      {inTrial
+                        ? plan?.mode === 'expired'
+                          ? t('planTrialExpiredDesc')
+                          : t('planTrialDesc', { days: plan?.trialDaysLeft ?? 0 })
+                        : isUltra
+                          ? t('planUltraDesc')
+                          : t('planUpgradeDesc')}
                     </p>
                   </div>
                 </div>
 
-                {isUltra ? (
-                  <div className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {t('planTop')}
+                {isUltra && !inTrial ? (
+                  /* Ultra e Club: niente piano superiore, ma estensioni e
+                     cambio di piano passano comunque da Abbonamento. */
+                  <div className="flex flex-shrink-0 flex-col items-end gap-2">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {t('planTop')}
+                    </div>
+                    <Link
+                      href="/dashboard/billing"
+                      className="group inline-flex items-center gap-1.5 rounded-lg border border-teal-600/40 px-3 py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/20"
+                    >
+                      {t('manageSubscription')}
+                      <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </Link>
                   </div>
                 ) : (
                   <Link
                     href="/dashboard/billing"
                     className="group inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/20 transition hover:shadow-xl hover:shadow-amber-500/30"
                   >
-                    {t('upgradePlan')}
+                    {inTrial ? t('choosePlan') : t('upgradePlan')}
                     <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </Link>
                 )}
@@ -197,6 +223,17 @@ export default function SettingsPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          <Link
+            href="/dashboard/billing"
+            className="card group block transition-colors hover:border-teal-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-teal-600"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <CreditCard className="h-5 w-5 text-teal-600" />
+              <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5" />
+            </div>
+            <h3 className="font-semibold text-slate-900 dark:text-white">{tBilling('title')}</h3>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{tBilling('subtitle')}</p>
+          </Link>
           <div className="card cursor-pointer transition-colors hover:border-teal-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-teal-600">
             <Bell className="mb-2 h-5 w-5 text-teal-600" />
             <h3 className="font-semibold text-slate-900 dark:text-white">{t('notifications')}</h3>

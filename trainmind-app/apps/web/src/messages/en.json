@@ -97,7 +97,7 @@
       "genericError": "Error while changing the password"
     },
     "currentPlan": "Current plan",
-    "planUltraDesc": "You are on the top plan — no limits, priority support included.",
+    "planUltraDesc": "You have the most complete plan in your offer. If you need more teams, athletes or users, add them from the extensions.",
     "planUpgradeDesc": "Unlock more teams, athletes and advanced features by moving up a plan.",
     "planTop": "Top plan",
     "upgradePlan": "Upgrade plan",
@@ -120,8 +120,8 @@
       "fullTitle": "No seats left",
       "fullUpgradeHint": "Your plan has no free seats. Moving up a plan costs less than buying a single extra seat.",
       "fullUpgradeCta": "See plans",
-      "fullSeatHint": "You are already on the top plan. You can add single seats, each priced like a Starter subscription.",
-      "fullSeatCta": "Add a seat",
+      "fullSeatHint": "You can add users from Subscription → Extensions: €10 a month per user.",
+      "fullSeatCta": "Go to extensions",
       "role": {
         "ADMIN": "Administrator",
         "TRAINER": "Strength coach",
@@ -131,7 +131,11 @@
       "inviteLinkHint": "If the email doesn't arrive, send this link to your colleague directly. It is valid for 7 days and is shown only now.",
       "copy": "Copy",
       "copied": "Copied"
-    }
+    },
+    "manageSubscription": "Manage subscription",
+    "choosePlan": "Choose a plan",
+    "planTrialDesc": "{days, plural, one {# day} other {# days}} left in your trial. Choose a plan whenever you like: your data stays.",
+    "planTrialExpiredDesc": "Your trial has ended: data is read-only until you choose a plan."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1727,12 +1731,12 @@
   },
   "billing": {
     "title": "Subscription",
-    "subtitle": "Manage your plan and billing",
+    "subtitle": "Your plan, usage and extensions",
     "free": "Free",
     "plan": "Plan",
     "freePlan": "Free Plan",
     "currentPlan": "Current Plan",
-    "choosePlan": "Choose Plan",
+    "choosePlan": "Choose your plan",
     "recommended": "Recommended",
     "perMonth": "/month",
     "loading": "Loading plan...",
@@ -1771,7 +1775,54 @@
     "featureRTP": "Injuries and RTP protocols",
     "featureAnalytics": "Advanced analytics",
     "featureUnlimitedTeams": "Unlimited teams",
-    "featureApiAccess": "API access"
+    "featureApiAccess": "API access",
+    "choose": "Choose",
+    "statusTrialDays": "Free trial · {days, plural, one {# day} other {# days}}",
+    "statusTrialExpired": "Trial ended · read-only",
+    "statusLegacy": "Legacy account",
+    "trialName": "Free trial",
+    "cycleMonthly": "Monthly",
+    "cycleYearly": "Yearly",
+    "cycleYearlySave": "Yearly · 2 months free",
+    "expiredHelp": "You can view and export all your data. Choose a plan to edit it again: nothing is lost.",
+    "legacyHelp": "Your account predates the current plans: for now it has no limits. You can still choose a plan.",
+    "refresh": "Refresh",
+    "usageTitle": "Plan usage",
+    "usageTeams": "Teams",
+    "usageAthletes": "Active athletes",
+    "usageUsers": "Staff users",
+    "usageAi": "AI credits this month",
+    "teamAthletes": "{n} / {cap} athletes",
+    "usageFootnote": "Archived athletes reactivated this month: {used} of {limit}. AI credits renew on the first day of the month.",
+    "offerIndividual": "Strength and Conditioning Coach",
+    "offerClub": "Club",
+    "offerIndividualDesc": "For the S&C coach working with one or more teams.",
+    "offerClubDesc": "A single plan for a club’s staff: worth it from 4 users or 6 teams.",
+    "perYear": "/year",
+    "adminOnly": "Only the account administrator can change the plan.",
+    "vatIncluded": "Prices include VAT.",
+    "activated": "{plan} plan activated.",
+    "extensionsSaved": "Extensions updated.",
+    "extensionsTitle": "Extensions",
+    "extensionsDesc": "Extra teams, athletes and users, when you need them. Available with Ultra and Club.",
+    "extTeams": "Extra teams",
+    "extTeamsPrice": "€{monthly}/month or €{yearly}/year each, with {credits} more AI credits",
+    "extUsers": "Extra users",
+    "extUsersPrice": "€{monthly}/month or €{yearly}/year each",
+    "extPacks": "Extra athletes per team",
+    "extPacksPrice": "Packs of {size} athletes: €{monthly}/month or €{yearly}/year each",
+    "extTotal": "Extensions: {total} a month",
+    "extSave": "Save extensions",
+    "feat": {
+      "teams": "{teams, plural, one {# team} other {# teams}} · {athletes} athletes per team",
+      "users": "{n, plural, one {# user} other {Up to # users}}",
+      "reportsBase": "Basic reports",
+      "reportsAdvanced": "Daily and post-game reports",
+      "wellnessCalendar": "Wellness and calendar",
+      "ai": "AI Assistant · {credits} credits a month",
+      "analytics": "Analytics",
+      "extensions": "Extra teams, athletes and users"
+    }
   },
   "topbar": {
     "search": "Search athletes, exercises, sessions...",
@@ -1862,8 +1913,8 @@
       "ruleUpper": "At least one uppercase letter",
       "ruleNumber": "At least one number"
     },
-    "planLabel": "Plan",
-    "planHint": "You can change it any time from settings.",
+    "planLabel": "How do you want to start?",
+    "planHint": "Prices include VAT. You can change plan at any time from Subscription.",
     "planStarter": "Starter",
     "planProfessional": "Professional",
     "planUltra": "Ultra",
@@ -1879,7 +1930,14 @@
       "TRAINER": "strength coach",
       "MEDICAL": "medical staff",
       "VIEWER": "read only"
-    }
+    },
+    "planTrial": "15-day free trial",
+    "planTrialHint": "No card · 1 team of up to 12 athletes",
+    "planFree": "Free",
+    "planOrBuy": "or buy a plan right away",
+    "planClub": "Club",
+    "planOfferIndividual": "S&C Coach",
+    "planOfferClub": "Club"
   },
   "fieldTraining": {
     "title": "Field Training",
@@ -2304,7 +2362,20 @@
     "EMAIL_ALREADY_REGISTERED": "This address is already registered. Sign in instead of creating a new account.",
     "LAST_ADMIN": "At least one active administrator must remain: appoint another administrator first.",
     "CANNOT_DISABLE_SELF": "You cannot deactivate your own account.",
-    "PRISMA_CLIENT_OUTDATED": "The Prisma client is out of date: run `pnpm db:generate` and `pnpm db:push`, then restart the API."
+    "PRISMA_CLIENT_OUTDATED": "The Prisma client is out of date: run `pnpm db:generate` and `pnpm db:push`, then restart the API.",
+    "PLAN_TEAM_LIMIT": "You have reached the {limit} teams in your plan. {canExtend, select, yes {You can add more from Subscription → Extensions.} other {Move to a higher plan to get more.}}",
+    "PLAN_ATHLETE_LIMIT": "This team has reached its maximum of {limit} athletes. {canExtend, select, yes {You can add a pack of 5 athletes from Subscription → Extensions.} other {Archive those you no longer coach or move to a higher plan.}}",
+    "PLAN_ATHLETE_TOTAL_LIMIT": "Your plan includes up to {limit} active athletes. {canExtend, select, yes {You can add teams or athlete packs from Subscription → Extensions.} other {Archive those you no longer coach or move to a higher plan.}}",
+    "PLAN_REACTIVATION_LIMIT": "You have reached this month’s {limit} athlete reactivations.",
+    "PLAN_FEATURE_UNAVAILABLE": "This feature is not included in your plan ({feature, select, ai {AI Assistant} analytics {Analytics} dailyReport {daily report} gameReport {post-game report} reports {reports} adaptations {AI Adaptations} other {advanced feature}}).",
+    "AI_QUOTA_EXCEEDED": "You have used all your AI credits this month ({used} of {limit}). They renew on the first of the month.",
+    "PLAN_READ_ONLY": "Your free trial has ended: you can view your data, but you need to choose a plan to edit it.",
+    "PLAN_EXTENSIONS_UNAVAILABLE": "Extensions are available with Ultra and Club.",
+    "PLAN_PRICE_MISSING": "Payment for this plan is not configured yet.",
+    "EXTENSION_PRICE_MISSING": "Payment for extensions is not configured yet.",
+    "EXTENSIONS_REDUCE_IN_PORTAL": "To reduce extensions use “Manage subscription”.",
+    "PLAN_TRIAL_REPORT_LIMIT": "The free trial includes a single daily report. Choose a plan to create more.",
+    "PLAN_TRIAL_REPORT_SAVE_FIRST": "In the free trial the report can be exported once it is saved."
   },
   "dailyReport": {
     "title": "Daily report",
@@ -2376,7 +2447,11 @@
     "field_taping": "Taping / physio",
     "field_treatment": "Check and treatment",
     "field_trainingType": "Training type",
-    "field_forecast": "Forecast"
+    "field_forecast": "Forecast",
+    "trialAvailable": "In the free trial you can save and export one daily report: pick the team and day, once saved that is the one.",
+    "trialUsed": "This is the daily report included in the free trial: you can edit and export it whenever you like. To create more,",
+    "trialChoosePlan": "choose a plan.",
+    "trialExportHint": "In the free trial, save the report before exporting it."
   },
   "dailyVocab": {
     "nextTraining": {
@@ -2605,5 +2680,52 @@
     "staffOnlyTitle": "Staff-only area",
     "staffOnlyBody": "Your account is registered as an athlete. This dashboard is for coaches and medical staff: use the TrainMind Athlete app for your sessions and the wellness questionnaire.",
     "goToAthleteApp": "Go to the athlete app"
+  },
+  "planBanner": {
+    "trial": "Free trial: {days, plural, one {# day left} other {# days left}}. Choose a plan whenever you like, your data stays.",
+    "expiredTitle": "Your free trial has ended.",
+    "expiredBody": "Your data is safe: you can view and export it. Choose a plan to edit it again.",
+    "choosePlan": "Choose a plan",
+    "aiAlert": "You have used {used} of your {limit} AI credits this month.",
+    "seeUsage": "See usage",
+    "badgeTrial": "TRIAL"
+  },
+  "planGate": {
+    "availableFrom": "{feature, select, reports {Included in every paid plan, starting from Starter.} adaptations {Included in every paid plan, starting from Starter.} other {Available from the Professional plan and with Club.}}",
+    "cta": "See plans",
+    "ai": {
+      "title": "AI Assistant is not included in your plan",
+      "body": "Chat, plan generation, wellness insights and return-to-play suggestions written by the AI. You decide, the AI prepares."
+    },
+    "analytics": {
+      "title": "Analytics is not included in your plan",
+      "body": "Load, ACWR, wellness and attendance compared, per athlete and per team."
+    },
+    "dailyReport": {
+      "title": "The daily report is not included in your plan",
+      "body": "The team’s status every day, ready to share with the staff."
+    },
+    "gameReport": {
+      "title": "The post-game report is not included in your plan",
+      "body": "Minutes, load and readiness after every game, in a document you can export."
+    },
+    "reports": {
+      "title": "Reports are not included in the free trial",
+      "body": "The report generator, scheduled sends and post-game reports come with the paid plans. The trial includes one daily report, from the “Daily report” card."
+    },
+    "adaptations": {
+      "title": "AI Adaptations are not included in the free trial",
+      "body": "Load adjustment proposals based on wellness and RPE, for you to approve or discard. Choose a plan to unlock them."
+    }
+  },
+  "planLimit": {
+    "teamsFull": "You have used all {limit} teams in your plan.",
+    "teamsExtend": "You can add more from Subscription → Extensions: €{monthly} a month per team, with {credits} extra AI credits.",
+    "athletesFull": "Team full: {used} of {limit} athletes.",
+    "athletesExtend": "You can add a pack of {size} athletes to this team from Subscription → Extensions: €{monthly} a month.",
+    "upgrade": "Move to a higher plan to get more.",
+    "askAdmin": "Ask the account administrator.",
+    "ctaExtend": "Go to extensions",
+    "ctaUpgrade": "See plans"
   }
 }

@@ -1,10 +1,16 @@
 LOCALE
-             email             |  role   | isActive |       lastLoginAt       |         org         |     tier
--------------------------------+---------+----------+-------------------------+---------------------+--------------
- avispa@pro.com                | ADMIN   | t        | 2026-09-14 14:05:19.969 | Pro Demo Basket     | PROFESSIONAL
- avispa@starter.com            | ADMIN   | t        |                         | Starter Demo Basket | STARTER
- coach@example.com             | ADMIN   | t        | 2026-09-15 13:34:19.595 | TrainMind Demo      | ULTRA
- nicola.bortolotti@example.com | ATHLETE | t        | 2026-09-15 13:33:30.841 | TrainMind Demo      | ULTRA
+(per controllare nel db quanti account ci sono: docker exec trainmind-postgres psql -U trainmind -d trainmind_db --% -c "SELECT u.email, u.role, u.\"isActive\" AS attivo, o.name AS organizzazione, o.tier AS piano, o.\"planLegacy\" AS esente, o.\"trialEndsAt\"::date AS fine_prova, u.\"lastLoginAt\"::date AS ultimo_accesso FROM users u JOIN organizations o ON o.id = u.\"organizationId\" ORDER BY o.name, u.email;")
+             email              |  role   | attivo |  organizzazione   |    piano     | esente | fine_prova | ultimo_accesso
+--------------------------------+---------+--------+-------------------+--------------+--------+------------+----------------
+ camilla.coresi@demo.com        | ADMIN   | t      | CC Demo Legale    | ULTRA        | t      |            |
+ test_gratis@demo.com           | ADMIN   | t      | TG                | STARTER      | f      | 2026-10-24 | 2026-10-09
+ test_club@demo.com             | ADMIN   | t      | Test Club         | CLUB         | f      |            |
+ test_club_medico@demo.com      | MEDICAL | t      | Test Club         | CLUB         | f      |            |
+ test_club_preparatore@demo.com | TRAINER | t      | Test Club         | CLUB         | f      |            |
+ test_pro@demo.com              | ADMIN   | t      | Test Professional | PROFESSIONAL | f      |            |
+ test_starter@demo.com          | ADMIN   | t      | Test Starter      | STARTER      | f      |            |
+ test_ultra@demo.com            | ADMIN   | t      | Test Ultra        | ULTRA        | f      |            | 2026-10-09
+ coach@example.com              | ADMIN   | t      | TrainMind Demo    | ULTRA        | t      |            | 2026-09-28
 
 
 SERVER

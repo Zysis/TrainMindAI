@@ -58,6 +58,10 @@ enum OrganizationTier {
   STARTER
   PROFESSIONAL
   ULTRA
+  /// Offerta Club / Societa' (dall'8/10/2026): piano unico. STARTER,
+  /// PROFESSIONAL e ULTRA sono i tre piani dell'offerta Individuale.
+  /// Limiti e prezzi stanno in api/src/lib/plans.ts.
+  CLUB
 }
 
 enum ReportAudience {
@@ -137,6 +141,27 @@ model Organization {
   // percorsi che devono rispondere anche quando Stripe non e' raggiungibile.
   extraSeats Int @default(0)
 
+  // ─── Piani, prova gratuita ed estensioni (dal 9 ottobre 2026) ───
+  // Regole in api/src/lib/plans.ts, strategia in
+  // marketing/Strategia_commerciale_basket_v3.docx.
+  //
+  // planLegacy: account nati prima dei piani nuovi. Restano esenti da ogni
+  // limite finche' non si decide altrimenti. La migrazione mette TRUE alle
+  // righe esistenti e FALSE come default per le nuove: per questo la
+  // colonna va creata con il file SQL e NON con `db push`, che marcherebbe
+  // come nuove anche le organizzazioni di oggi.
+  planLegacy   Boolean           @default(false)
+  // Valorizzata = l'organizzazione e' in prova (o l'ha finita senza
+  // scegliere un piano). Si azzera quando il piano viene attivato.
+  trialEndsAt  DateTime?
+  // Piano scelto dalla landing prima di entrare in prova: e' quello che la
+  // pagina Abbonamento propone per primo alla scadenza.
+  intendedTier OrganizationTier?
+  // monthly | yearly, l'ultimo ciclo scelto attivando il piano.
+  billingCycle String?           @db.VarChar(10)
+  // Squadre comprate oltre quelle incluse (solo Ultra e Club).
+  extraTeams   Int               @default(0)
+
   users           User[]
   athletes        Athlete[]
   exercises       Exercise[]
@@ -155,6 +180,7 @@ model Organization {
   aiUsageLogs            AiUsageLog[]
   rtpTemplates           RTPTemplate[]
   calendarEvents         CalendarEvent[]
+  athleteReactivations   AthleteReactivation[]
 
   @@index([utmSource])
   @@map("organizations")
@@ -305,6 +331,9 @@ model Team {
   description    String?
   color          String?  // hex color for UI
   logoUrl        String?  // logo/foto della squadra, data URL come photoUrl dell'atleta
+  // Pacchetti da 5 atleti comprati oltre la capienza del piano (solo Ultra
+  // e Club). Valgono per questa squadra soltanto.
+  extraAthletePacks Int   @default(0)
   organizationId String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -376,9 +405,28 @@ model Athlete {
   gamePlayerEntries     GamePlayerEntry[]
   dailyReportEntries    DailyReportEntry[]
   athleteInvites        AthleteInvite[]
+  reactivations         AthleteReactivation[]
 
   @@index([organizationId])
   @@map("athletes")
+}
+
+/// Ogni ripristino di un atleta archiviato. Serve a contare le riattivazioni
+/// del mese (al massimo 10 per organizzazione, vedi api/src/lib/plans.ts):
+/// senza un tetto, archiviare e riattivare a rotazione aggirerebbe il limite
+/// di atleti per squadra.
+model AthleteReactivation {
+  id             String   @id @default(cuid())
+  organizationId String
+  athleteId      String
+  userId         String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  athlete      Athlete      @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("athlete_reactivations")
 }
 
 model TrainingPlan {

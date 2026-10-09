@@ -15,6 +15,8 @@ import { useTeam } from '@/hooks/use-team';
 import { positionShort } from '@/lib/constants/positions';
 import { AthleteFormModal } from '@/components/athletes/athlete-form-modal';
 import type { Team, TeamDetail } from '@/types';
+import { usePlan } from '@/lib/plan/context';
+import { PlanLimitNotice } from '@/components/plan/plan-limit-notice';
 
 const PRESET_COLORS = [
   '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
@@ -26,6 +28,8 @@ export default function TeamsPage() {
   const { toast } = useToast();
   const apiError = useApiError();
   const { refreshTeams, selectedTeamId, selectTeam } = useTeam();
+  // I contatori del piano (squadre, atleti per squadra) seguono ogni modifica.
+  const { refresh: refreshPlan } = usePlan();
   const t = useTranslations('teams');
   const tCommon = useTranslations('common');
 
@@ -133,6 +137,7 @@ export default function TeamsPage() {
       loadTeams();
       bumpRoster();
       refreshTeams();
+      void refreshPlan();
       if (selectedTeam && editingTeam?.id === selectedTeam.id) {
         loadTeamDetail(selectedTeam.id);
       }
@@ -153,6 +158,7 @@ export default function TeamsPage() {
       loadTeams();
       bumpRoster();
       refreshTeams();
+      void refreshPlan();
     } catch (err) {
       toast('error', apiError(err, t('deleteError')));
     }
@@ -185,6 +191,7 @@ export default function TeamsPage() {
       loadTeams();
       bumpRoster();
       refreshTeams();
+      void refreshPlan();
     } catch (err) {
       toast('error', apiError(err, tCommon('error')));
     } finally {
@@ -201,6 +208,7 @@ export default function TeamsPage() {
       loadTeams();
       bumpRoster();
       refreshTeams();
+      void refreshPlan();
     } catch (err) {
       toast('error', apiError(err, tCommon('error')));
     }
@@ -220,6 +228,9 @@ export default function TeamsPage() {
           {t('newTeam')}
         </button>
       </div>
+
+      {/* Limite squadre del piano, con la strada per superarlo */}
+      <PlanLimitNotice kind="teams" />
 
       {/* Search */}
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 max-w-md">
@@ -337,6 +348,8 @@ export default function TeamsPage() {
                 </div>
               </div>
 
+              <PlanLimitNotice kind="athletes" teamId={selectedTeam.id} />
+
               {/* Athletes in team */}
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -389,7 +402,7 @@ export default function TeamsPage() {
 
       {/* ─── Tutti gli atleti ──────────────────────────────── */}
       <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-        <AthleteDirectory refreshKey={rosterVersion} onChanged={() => { void loadTeams(); refreshTeams(); }} />
+        <AthleteDirectory refreshKey={rosterVersion} onChanged={() => { void loadTeams(); refreshTeams(); void refreshPlan(); }} />
       </div>
 
       {/* Create/Edit Team Modal */}
@@ -496,6 +509,7 @@ export default function TeamsPage() {
           loadTeams();
           bumpRoster();
           refreshTeams();
+          void refreshPlan();
         }}
       />
     </div>

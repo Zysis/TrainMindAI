@@ -12,6 +12,7 @@ import { useApiError } from '@/lib/i18n/api-error';
 import { getAccessToken } from '@/lib/auth/api';
 import { API_BASE_URL, API_PREFIX } from '@/lib/constants';
 import { useTeam } from '@/hooks/use-team';
+import { FeatureGate } from '@/components/plan/feature-gate';
 
 type Audience = 'STAFF' | 'MEDICAL' | 'MANAGEMENT';
 
@@ -246,6 +247,9 @@ export default function ReportsPage() {
         </Link>
       </div>
 
+      {/* Nella prova gratuita il generatore non c'e': resta il report
+          giornaliero di prova, raggiungibile dalla scheda qui sopra. */}
+      <FeatureGate feature="reports">
       {/* ─── Form ─────────────────────────────────────── */}
       <div className="card space-y-4">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
@@ -438,6 +442,7 @@ export default function ReportsPage() {
           </details>
         </div>
       )}
+      </FeatureGate>
     </div>
   );
 }

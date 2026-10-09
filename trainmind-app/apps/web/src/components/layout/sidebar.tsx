@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Lock,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@trainmind/ui';
@@ -30,6 +31,18 @@ import { useSidebar } from '@/lib/sidebar/context';
 import { useState, useRef, useEffect } from 'react';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { tierToPlanKey, tierToPlanSlug } from '@/components/brand/plan';
+import { usePlan, type PlanFeature } from '@/lib/plan/context';
+
+/**
+ * Voci del menu che corrispondono a una funzione del piano: se il piano e'
+ * applicato e non la include, accanto compare un lucchetto. La voce resta
+ * cliccabile e porta alla pagina, che spiega cosa sblocca il piano superiore.
+ */
+const NAV_FEATURE: Record<string, PlanFeature> = {
+  '/dashboard/analytics': 'analytics',
+  '/dashboard/chat': 'ai',
+  '/dashboard/adaptations': 'adaptations',
+};
 
 interface NavItem {
   label: string;
@@ -181,6 +194,11 @@ function TeamSelector({ collapsed }: { collapsed: boolean }) {
 // ─── Nav Group (collapsible) ────────────────────────────
 
 function NavGroup({ item, pathname, collapsed, t }: { item: NavItem; pathname: string; collapsed: boolean; t: (key: string) => string }) {
+  const { plan } = usePlan();
+  const isLocked = (href: string) => {
+    const feature = NAV_FEATURE[href];
+    return !!feature && !!plan?.enforced && plan.features[feature] === false;
+  };
   const childPaths = item.children?.map((c) => c.href) || [];
   const isChildActive = childPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
   const [open, setOpen] = useState(isChildActive);
@@ -226,6 +244,7 @@ function NavGroup({ item, pathname, collapsed, t }: { item: NavItem; pathname: s
                 >
                   <child.icon className="h-4 w-4" />
                   {t(child.label)}
+                  {isLocked(child.href) && <Lock className="ml-auto h-3 w-3 text-amber-500" aria-hidden="true" />}
                 </Link>
               );
             })}
@@ -264,6 +283,7 @@ function NavGroup({ item, pathname, collapsed, t }: { item: NavItem; pathname: s
               >
                 <child.icon className="h-4 w-4 flex-shrink-0" />
                 {t(child.label)}
+                {isLocked(child.href) && <Lock className="ml-auto h-3 w-3 text-amber-500" aria-hidden="true" />}
               </Link>
             );
           })}
@@ -280,8 +300,11 @@ export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
   const t = useTranslations('nav');
   const { user } = useAuth();
-  const planKey = tierToPlanKey(user?.organization?.tier);
-  const planSlug = tierToPlanSlug(user?.organization?.tier);
+  // Il piano letto da /billing/entitlements e' aggiornato anche dopo un
+  // cambio; il tier del profilo resta quello del login.
+  const { plan } = usePlan();
+  const planKey = tierToPlanKey(plan?.tier ?? user?.organization?.tier);
+  const planSlug = tierToPlanSlug(plan?.tier ?? user?.organization?.tier);
 
   return (
     <aside

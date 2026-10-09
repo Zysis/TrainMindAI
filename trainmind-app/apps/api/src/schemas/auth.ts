@@ -42,7 +42,15 @@ export const registerSchema = z
     uiLanguage: z.enum(['it', 'en', 'es']).optional().default('it'),
     // Piano scelto in registrazione. Opzionale: le vecchie chiamate senza
     // questo campo continuano a funzionare e ricadono su starter.
-    plan: z.enum(['starter', 'professional', 'ultra']).optional().default('starter'),
+    //
+    // Dal 9/10/2026 le strade sono due e separate: `trial` (prova gratuita di
+    // 15 giorni, poi si sceglie) oppure un piano acquistato subito, compreso
+    // `club`. Finche' Stripe non e' collegato il piano scelto viene assegnato
+    // come e' sempre successo; con Stripe passera' dal pagamento.
+    plan: z.enum(['trial', 'starter', 'professional', 'ultra', 'club']).optional().default('starter'),
+    // Solo con `trial`: il piano che l'utente aveva in mente (arriva dalle card
+    // della landing). La pagina Abbonamento lo propone per primo a fine prova.
+    intendedPlan: z.enum(['starter', 'professional', 'ultra', 'club']).optional(),
     // Provenienza dell'iscrizione: parametri UTM della campagna e referrer,
     // raccolti dal sito vetrina e inoltrati fin qui.
     //

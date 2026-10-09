@@ -4,6 +4,7 @@ import { requireMinRole } from '../middleware/rbac.js';
 import { sendError, notFound, duplicate, handleValidation, AppError } from '../lib/api-errors.js';
 import { findOrgEntity } from '../lib/org-guard.js';
 import { ordinaPerCognome } from '../lib/identity.js';
+import { assertCanCreateTeam, assertTeamHasRoom, PlanLimitError, sendPlanError } from '../lib/plans.js';
 
 // ─── Routes ─────────────────────────────────────────────
 
@@ -108,6 +109,15 @@ export async function teamRoutes(app: FastifyInstance) {
       return sendError(reply, duplicate('Team'));
     }
 
+    // Squadre incluse nel piano (piu' quelle comprate). No-op a piano non
+    // applicato: vedi lib/plans.ts.
+    try {
+      await assertCanCreateTeam(app.prisma, organizationId);
+    } catch (err) {
+      if (err instanceof PlanLimitError) return sendPlanError(reply, err);
+      throw err;
+    }
+
     const team = await app.prisma.team.create({
       data: { ...data, organizationId },
     });
@@ -176,6 +186,14 @@ export async function teamRoutes(app: FastifyInstance) {
 
     if (athletes.length !== data.athleteIds.length) {
       return sendError(reply, new AppError(400, 'INVALID_ATHLETES', 'Some athletes were not found'));
+    }
+
+    // Capienza della squadra: chi e' gia' in rosa non conta due volte.
+    try {
+      await assertTeamHasRoom(app.prisma, organizationId, id, data.athleteIds);
+    } catch (err) {
+      if (err instanceof PlanLimitError) return sendPlanError(reply, err);
+      throw err;
     }
 
     // Upsert — skipDuplicates so adding already-assigned athletes is idempotent

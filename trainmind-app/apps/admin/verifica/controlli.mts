@@ -38,6 +38,7 @@ check('mix piani in ordine fisso', await overview.getTierBreakdown(), [
   { tier: 'STARTER', count: 1 },
   { tier: 'PROFESSIONAL', count: 1 },
   { tier: 'ULTRA', count: 1 },
+  { tier: 'CLUB', count: 0 },
 ]);
 
 const fun = await activation.getActivationFunnel();

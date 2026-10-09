@@ -1,6 +1,7 @@
 import fp from 'fastify-plugin';
 import jwt from '@fastify/jwt';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { readOnlyViolation, sendPlanError } from '../lib/plans.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -106,6 +107,14 @@ export default fp(async (app: FastifyInstance) => {
           },
         });
       }
+      return;
     }
+
+    // Prova gratuita scaduta (solo con PLAN_ENFORCEMENT=true): lo staff legge
+    // ed esporta, ma non scrive finche' non sceglie un piano. Il controllo
+    // costa una query solo sulle richieste che modificano dati, e zero a
+    // interruttore spento. Vedi lib/plans.ts.
+    const violation = await readOnlyViolation(app.prisma, request);
+    if (violation) return sendPlanError(reply, violation);
   });
 }, { name: 'auth', dependencies: ['prisma'] });
