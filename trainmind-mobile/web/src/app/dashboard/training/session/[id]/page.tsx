@@ -213,6 +213,9 @@ export default function SessionDetailPage() {
 
   // Check if session can be recorded (not completed or cancelled)
   const canRecord = session.status === 'PLANNED' || session.status === 'IN_PROGRESS';
+  // Completata = esercizi in sola lettura: lo rifiuta anche l'API
+  // (SESSION_COMPLETED_READONLY), qui si evita di offrire comandi che fallirebbero.
+  const exercisesReadOnly = session.status === 'COMPLETED';
 
   // ---- Recording Mode ----
   if (recordingMode && canRecord && session.sessionExercises.length > 0) {
@@ -306,13 +309,15 @@ export default function SessionDetailPage() {
                 Completa
               </button>
             )}
-            <button
-              onClick={() => { setShowAddExercise(true); setLibrarySearch(''); }}
-              className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
-            >
-              <Plus className="h-4 w-4" />
-              Aggiungi Esercizio
-            </button>
+            {!exercisesReadOnly && (
+              <button
+                onClick={() => { setShowAddExercise(true); setLibrarySearch(''); }}
+                className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+              >
+                <Plus className="h-4 w-4" />
+                Aggiungi Esercizio
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -322,19 +327,26 @@ export default function SessionDetailPage() {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           Esercizi ({session.sessionExercises.length})
         </h2>
+        {exercisesReadOnly && (
+          <p className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
+            {t('exercisesReadOnly')}
+          </p>
+        )}
 
         {session.sessionExercises.length === 0 ? (
           <div className="card flex flex-col items-center justify-center py-12">
             <Dumbbell className="mb-3 h-10 w-10 text-slate-300" />
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('noExercisesAdded')}</p>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{t('noExercisesHint')}</p>
-            <button
-              onClick={() => { setShowAddExercise(true); setLibrarySearch(''); }}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
-            >
-              <Plus className="h-4 w-4" />
-              Aggiungi esercizio
-            </button>
+            {!exercisesReadOnly && (
+              <button
+                onClick={() => { setShowAddExercise(true); setLibrarySearch(''); }}
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
+              >
+                <Plus className="h-4 w-4" />
+                Aggiungi esercizio
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -365,6 +377,7 @@ export default function SessionDetailPage() {
                       <div className="flex items-center gap-1.5">
                         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Serie</label>
                         <input
+                          disabled={exercisesReadOnly}
                           type="number"
                           defaultValue={se.sets ?? ''}
                           className="w-14 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm dark:bg-slate-800 dark:text-white"
@@ -377,6 +390,7 @@ export default function SessionDetailPage() {
                       <div className="flex items-center gap-1.5">
                         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Reps</label>
                         <input
+                          disabled={exercisesReadOnly}
                           type="text"
                           defaultValue={se.reps ?? ''}
                           className="w-16 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm dark:bg-slate-800 dark:text-white"
@@ -407,6 +421,7 @@ export default function SessionDetailPage() {
                           </label>
                         )}
                         <input
+                          disabled={exercisesReadOnly}
                           type="number"
                           defaultValue={se.weight ?? ''}
                           placeholder={isBodyweightCategory(se.exercise.category) ? '0' : ''}
@@ -427,6 +442,7 @@ export default function SessionDetailPage() {
                       <div className="flex items-center gap-1.5">
                         <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Recupero</label>
                         <input
+                          disabled={exercisesReadOnly}
                           type="number"
                           defaultValue={se.restTime ?? ''}
                           className="w-16 rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-center text-sm dark:bg-slate-800 dark:text-white"
@@ -441,13 +457,15 @@ export default function SessionDetailPage() {
                   </div>
 
                   {/* Remove */}
-                  <button
-                    onClick={() => handleRemoveExercise(se.id)}
-                    className="rounded p-1.5 text-slate-400 dark:text-slate-500 hover:bg-red-50 hover:text-red-600"
-                    title={t('removeExercise')}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {!exercisesReadOnly && (
+                    <button
+                      onClick={() => handleRemoveExercise(se.id)}
+                      className="rounded p-1.5 text-slate-400 dark:text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      title={t('removeExercise')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

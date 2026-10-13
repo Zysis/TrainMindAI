@@ -1018,21 +1018,27 @@ async function aggregateTrainerSections(
   };
 
   // Recent adaptations
+  const adaptationSubject = (a: { athlete: Parameters<typeof fullName>[0]; team: { name: string } | null }) =>
+    a.athlete ? fullName(a.athlete) : (a.team?.name ?? 'Squadra');
   const recentAdaptations = await prisma.planAdaptation.findMany({
     where: {
       organizationId,
       createdAt: { gte: from, lte: to },
     },
-    include: { athlete: { select: { identity: { select: { firstName: true, lastName: true } } } } },
+    include: {
+      athlete: { select: { identity: { select: { firstName: true, lastName: true } } } },
+      // Le proposte di squadra non hanno atleta: si mostra la squadra.
+      team: { select: { name: true } },
+    },
     orderBy: { createdAt: 'desc' },
     take: 15,
   });
   const adaptations: ReportTable = {
     title: 'Adattamenti AI nel periodo',
-    columns: ['Data', 'Atleta', 'Δ Volume', 'Δ Intensità', 'Stato'],
+    columns: ['Data', 'Atleta / squadra', 'Δ Volume', 'Δ Intensità', 'Stato'],
     rows: recentAdaptations.map((a) => [
       a.createdAt.toLocaleDateString('it-IT'),
-      fullName(a.athlete),
+      adaptationSubject(a),
       a.volumeDelta != null ? `${(a.volumeDelta * 100).toFixed(0)}%` : '—',
       a.intensityDelta != null ? `${(a.intensityDelta * 100).toFixed(0)}%` : '—',
       a.status,
@@ -1048,7 +1054,7 @@ async function aggregateTrainerSections(
     title: 'Atleti con maggiori variazioni',
     columns: ['Atleta', 'Δ Volume', 'Motivo'],
     rows: movers.map((m) => [
-      fullName(m.athlete),
+      adaptationSubject(m),
       `${(m.volumeDelta! * 100).toFixed(0)}%`,
       m.reason.length > 60 ? m.reason.slice(0, 57) + '…' : m.reason,
     ]),

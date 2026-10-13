@@ -24,7 +24,13 @@ const basePath = (() => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  // Lo standalone serve solo all'immagine Docker (Linux). Su Windows crea
+  // symlink che il sistema vieta senza Modalita' sviluppatore, e `pnpm build`
+  // falliva sempre su "Collecting build traces" (EPERM). Sul PC lo si salta;
+  // NEXT_STANDALONE=1 lo forza anche li', se mai servisse.
+  ...(process.platform !== 'win32' || process.env.NEXT_STANDALONE === '1'
+    ? { output: 'standalone' }
+    : {}),
   ...(basePath ? { basePath, assetPrefix: basePath } : {}),
   eslint: {
     // Il lint non blocca la build di produzione (gli errori restano

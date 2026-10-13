@@ -19,6 +19,18 @@ import {
 } from '../schemas/training.js';
 import { requireMinRole } from '../middleware/rbac.js';
 
+// Una sessione completata ha i carichi gia' registrati: cambiarne gli
+// esercizi dopo farebbe dire alla scheda una cosa diversa da cio' che e'
+// stato fatto davvero (13/10/2026, scelta dell'utente). Vale per aggiunta,
+// modifica, rimozione e riordino; il registro della seduta resta libero.
+const COMPLETED_READONLY_ERROR = {
+  success: false,
+  error: {
+    code: 'SESSION_COMPLETED_READONLY',
+    message: 'La sessione è già stata completata: gli esercizi sono in sola lettura.',
+  },
+} as const;
+
 export async function trainingRoutes(app: FastifyInstance) {
   // All routes require authentication
   app.addHook('preHandler', app.authenticate);
@@ -1060,6 +1072,9 @@ export async function trainingRoutes(app: FastifyInstance) {
         error: { code: 'NOT_FOUND', message: 'Sessione non trovata' },
       });
     }
+    if (session.status === 'COMPLETED') {
+      return reply.status(409).send(COMPLETED_READONLY_ERROR);
+    }
 
     // Auto orderIndex if not provided
     let { orderIndex } = parsed.data;
@@ -1104,12 +1119,16 @@ export async function trainingRoutes(app: FastifyInstance) {
 
     const existing = await app.prisma.sessionExercise.findFirst({
       where: { id, trainingSession: { OR: [{ organizationId }, { week: { trainingPlan: { organizationId } } }] } },
+      include: { trainingSession: { select: { status: true } } },
     });
     if (!existing) {
       return reply.status(404).send({
         success: false,
         error: { code: 'NOT_FOUND', message: 'Esercizio sessione non trovato' },
       });
+    }
+    if (existing.trainingSession.status === 'COMPLETED') {
+      return reply.status(409).send(COMPLETED_READONLY_ERROR);
     }
 
     const updated = await app.prisma.sessionExercise.update({
@@ -1131,12 +1150,16 @@ export async function trainingRoutes(app: FastifyInstance) {
 
     const existing = await app.prisma.sessionExercise.findFirst({
       where: { id, trainingSession: { OR: [{ organizationId }, { week: { trainingPlan: { organizationId } } }] } },
+      include: { trainingSession: { select: { status: true } } },
     });
     if (!existing) {
       return reply.status(404).send({
         success: false,
         error: { code: 'NOT_FOUND', message: 'Esercizio sessione non trovato' },
       });
+    }
+    if (existing.trainingSession.status === 'COMPLETED') {
+      return reply.status(409).send(COMPLETED_READONLY_ERROR);
     }
 
     await app.prisma.sessionExercise.delete({ where: { id } });
@@ -1166,6 +1189,9 @@ export async function trainingRoutes(app: FastifyInstance) {
         success: false,
         error: { code: 'NOT_FOUND', message: 'Sessione non trovata' },
       });
+    }
+    if (session.status === 'COMPLETED') {
+      return reply.status(409).send(COMPLETED_READONLY_ERROR);
     }
 
     // Gli esercizi devono appartenere a QUESTA sessione. La guardia qui

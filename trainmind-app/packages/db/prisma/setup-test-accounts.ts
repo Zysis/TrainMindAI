@@ -198,7 +198,6 @@ function generatore(seme: string) {
     pick: <T>(arr: T[]): T => arr[Math.floor(next() * arr.length)],
   };
 }
-type Rng = ReturnType<typeof generatore>;
 
 // ─── Date ────────────────────────────────────────────────────────────────────
 

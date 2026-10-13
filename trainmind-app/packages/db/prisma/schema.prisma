@@ -346,6 +346,7 @@ model Team {
   fieldTrainingSessions FieldTrainingSession[]
   gameSessions          GameSession[]
   dailyReports          DailyReport[]
+  planAdaptations       PlanAdaptation[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -962,15 +963,26 @@ model Notification {
 model PlanAdaptation {
   id                String    @id @default(cuid())
   trainingSessionId String? // Session that triggered the adaptation (optional)
-  athleteId         String
+  // Adattamento individuale: l'atleta. Adattamento di squadra: null, e vale
+  // teamId. Prima le proposte di squadra prendevano come "ancora" il primo
+  // atleta della rosa, e il filtro per atleta le mostrava sotto quella persona.
+  athleteId         String?
+  teamId            String?
   organizationId    String
   proposedById      String // User who triggered/generated (usually AI, stored as the trainer)
-  status            String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED', 'MODIFIED'
+  // 'PENDING', 'APPROVED', 'REJECTED', 'MODIFIED', 'SUPERSEDED' (sostituita da
+  // una proposta piu' recente sulla stessa sessione), 'REVERTED' (applicata e
+  // poi annullata con "Ripristina originale").
+  status            String    @default("PENDING")
   reason            String // Short reason (e.g., "ACWR elevato", "Wellness basso")
   aiReasoning       String? // Full AI explanation
   metrics           Json // Snapshot: { acwr, wellnessScore, rpeAvg, targetRpe, completionRate }
   originalPlan      Json // Original session exercises snapshot
   proposedPlan      Json // Proposed adapted exercises
+  // Cio' che e' stato scritto davvero sulla sessione: la proposta per
+  // APPROVED, la versione corretta dal preparatore per MODIFIED. Null finche'
+  // non si applica (e sulle MODIFIED precedenti al 13/10/2026, mai salvate).
+  appliedPlan       Json?
   changes           Json // Diff summary: [{ type: 'volume'|'exercise'|'intensity', description, delta }]
   volumeDelta       Float? // Percentage volume change (e.g., -0.15 = -15%)
   intensityDelta    Float? // Percentage intensity change
@@ -978,14 +990,22 @@ model PlanAdaptation {
   reviewedAt        DateTime?
   reviewedById      String?
   reviewNotes       String?
+  revertedAt        DateTime?
+  revertedById      String?
+  supersededById    String? // id della proposta che l'ha sostituita
   createdAt         DateTime  @default(now())
 
-  athlete      Athlete      @relation(fields: [athleteId], references: [id])
+  // Restrict esplicito: e' la FK gia' presente nel database. Diventando
+  // opzionale, il default di Prisma sarebbe SetNull e un db push la cambierebbe.
+  athlete      Athlete?     @relation(fields: [athleteId], references: [id], onDelete: Restrict)
+  team         Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
   organization Organization @relation(fields: [organizationId], references: [id])
   proposedBy   User         @relation("AdaptationProposer", fields: [proposedById], references: [id])
   reviewedBy   User?        @relation("AdaptationReviewer", fields: [reviewedById], references: [id])
 
   @@index([athleteId, status])
+  @@index([teamId, status])
+  @@index([trainingSessionId, status])
   @@index([organizationId, status])
   @@index([createdAt])
   @@map("plan_adaptations")

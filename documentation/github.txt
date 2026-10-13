@@ -24,3 +24,16 @@ git status --short | Measure-Object -Line
 
 git commit -m "il tuo messaggio"
 git push -u origin main
+
+
+----------------------------------------------------------------
+
+cd C:\Users\TeamDS\Documents\projects\projects\TrainMindAI
+
+# 1. controlla cosa entra: non devono comparire file .sql
+git status --short
+
+# 2. commit e push
+git add -A
+git commit -m "Piani e prova gratuita: listino v3, limiti, estensioni, landing, account di prova"
+git push origin main
